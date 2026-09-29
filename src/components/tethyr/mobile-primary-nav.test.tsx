@@ -4,22 +4,12 @@ import { MobilePrimaryNav } from "./mobile-primary-nav";
 
 // The nav reads the current pathname via useRouterState({ select }). The mock
 // returns the selected value (the pathname string) directly.
-vi.mock("@tanstack/react-router", () => ({
-  Link: ({
-    to,
-    children,
-    ...rest
-  }: {
-    to: string;
-    children: React.ReactNode;
-    [k: string]: unknown;
-  }) => (
-    <a href={to} {...rest}>
-      {children}
-    </a>
-  ),
-  useRouterState: vi.fn(() => "/dashboard"),
-}));
+vi.mock("@tanstack/react-router", async () => {
+  const { reactRouterMock } = await import("@/test-utils/route-page");
+  return reactRouterMock({
+    useRouterState: vi.fn(() => "/dashboard"),
+  });
+});
 
 const { useRouterState } = await import("@tanstack/react-router");
 

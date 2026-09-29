@@ -85,6 +85,10 @@ async function login(page) {
 //   * skip clamped text (`-webkit-line-clamp`) — a Range rect over a clamped
 //     node reports the unclamped ink box, so a `line-clamp-1` description
 //     sitting 15px clear of the border measured as -1px;
+//   * skip ellipsis-truncated text (`truncate`: nowrap + hidden overflow) —
+//     same Range-rect pathology as line-clamp: the box reports the full
+//     untruncated run, so an ellipsized preview 14px clear of its card edge
+//     measured as 3px from the border;
 //   * skip overlay text (an `absolute`/`fixed` ancestor) — a bottom-anchored
 //     title on a cover thumbnail is placed against the frame on purpose, and
 //     eight of those were drowning out the real findings;
@@ -112,6 +116,13 @@ async function cardMetrics(page) {
         const cs = getComputedStyle(cur);
         if (cs.position === "absolute" || cs.position === "fixed") return false;
         if (cs.webkitLineClamp && cs.webkitLineClamp !== "none") return false;
+        // Ellipsis/clip truncation (`truncate`, `text-ellipsis`) hides ink the
+        // same way line-clamp does: a Range rect over the node reports the
+        // unclipped layout box, so fully visible text measured as touching or
+        // crossing the border (a preview 14px clear of its card edge measured
+        // 3px). Only clipped truncation counts — nowrap with visible overflow
+        // still spills and is a real finding.
+        if (cs.whiteSpace === "nowrap" && cs.overflowX !== "visible") return false;
         if (cs.clipPath && cs.clipPath !== "none") return false;
         if (cs.clip && cs.clip !== "auto") return false;
         const cr = cur.getBoundingClientRect();

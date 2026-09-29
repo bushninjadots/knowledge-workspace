@@ -5,15 +5,12 @@ import { DashboardSidebar } from "./dashboard-sidebar";
 
 // The sidebar reads the current pathname via useRouterState({ select }). The
 // mock returns the selected value (the pathname string) directly.
-vi.mock("@tanstack/react-router", () => ({
-  Link: ({ to, children, ...rest }: { to: string; children: React.ReactNode }) => (
-    <a href={to} {...rest}>
-      {children}
-    </a>
-  ),
-  useRouterState: vi.fn(() => "/dashboard"),
-  useNavigate: () => vi.fn(),
-}));
+vi.mock("@tanstack/react-router", async () => {
+  const { reactRouterMock } = await import("@/test-utils/route-page");
+  return reactRouterMock({
+    useRouterState: vi.fn(() => "/dashboard"),
+  });
+});
 
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: { auth: { signOut: vi.fn() } },

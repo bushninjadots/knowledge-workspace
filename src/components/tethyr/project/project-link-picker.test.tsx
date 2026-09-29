@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactElement } from "react";
 import { ProjectLinkPicker } from "./project-link-picker";
+import { renderRoutePage } from "@/test-utils/route-page";
 import { createFakeSupabase } from "../../../../tests/helpers/fake-supabase";
 
 const fake = vi.hoisted(() => ({
@@ -19,9 +19,9 @@ vi.mock("@/integrations/supabase/client", () => ({
 
 const handle = createFakeSupabase();
 
+/** Every render needs a QueryClient provider; the shared harness supplies it. */
 function renderWithProviders(ui: ReactElement) {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>);
+  return renderRoutePage(ui);
 }
 
 const baseProps = {

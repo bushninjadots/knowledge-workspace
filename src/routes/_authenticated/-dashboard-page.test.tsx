@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { screen } from "@testing-library/react";
 import { DashboardPage } from "./-dashboard-page";
+import { renderRoutePage } from "@/test-utils/route-page";
 
 // The needs-attention row reads three live counters; tests reshape these
 // between renders. Defaults are the all-clear state.
@@ -36,24 +36,10 @@ vi.mock("@/hooks/use-current-user", () => ({
   }),
 }));
 
-vi.mock("@tanstack/react-router", () => ({
-  Link: ({
-    to,
-    search,
-    children,
-    ...rest
-  }: {
-    to: string;
-    search?: Record<string, string>;
-    children: React.ReactNode;
-    [k: string]: unknown;
-  }) => (
-    <a href={to} data-search={JSON.stringify(search ?? null)} {...rest}>
-      {children}
-    </a>
-  ),
-  useNavigate: () => vi.fn(),
-}));
+vi.mock("@tanstack/react-router", async () => {
+  const { reactRouterMock } = await import("@/test-utils/route-page");
+  return reactRouterMock();
+});
 
 vi.mock("@/lib/reputation", () => ({
   checkAndAwardAchievements: vi.fn(async () => undefined),
@@ -95,12 +81,7 @@ vi.mock("@/components/tethyr/create-project-button", () => ({
 }));
 
 function renderPage() {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(
-    <QueryClientProvider client={qc}>
-      <DashboardPage />
-    </QueryClientProvider>,
-  );
+  return renderRoutePage(<DashboardPage />);
 }
 
 function activityRow() {

@@ -2,25 +2,12 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { ProfileLink } from "./profile-link";
 
-// Mock the router Link as a plain anchor, resolving $params like the real
-// router does (ProfileLink only ever uses /u/$handle).
-vi.mock("@tanstack/react-router", () => ({
-  Link: ({
-    to,
-    params,
-    children,
-    ...rest
-  }: {
-    to: string;
-    params?: Record<string, string>;
-    children: React.ReactNode;
-    [k: string]: unknown;
-  }) => (
-    <a href={params ? to.replace(/\$(\w+)/g, (_m, k) => params[k] ?? "") : to} {...rest}>
-      {children}
-    </a>
-  ),
-}));
+// The shared Link mock resolves $params like the real router does
+// (ProfileLink only ever uses /u/$handle).
+vi.mock("@tanstack/react-router", async () => {
+  const { reactRouterMock } = await import("@/test-utils/route-page");
+  return reactRouterMock();
+});
 
 describe("ProfileLink", () => {
   it("renders a link to /u/:handle when the profile has a handle", () => {

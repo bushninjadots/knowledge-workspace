@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ApplyToRoleButton } from "./project-role-applications";
+import { renderRoutePage } from "@/test-utils/route-page";
 import { createFakeSupabase } from "../../../../tests/helpers/fake-supabase";
 
 // --- Mocks ---------------------------------------------------------------
@@ -11,21 +11,10 @@ vi.mock("sonner", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
-vi.mock("@tanstack/react-router", () => ({
-  Link: ({
-    to,
-    children,
-    ...rest
-  }: {
-    to: string;
-    children: React.ReactNode;
-    [k: string]: unknown;
-  }) => (
-    <a href={to} {...rest}>
-      {children}
-    </a>
-  ),
-}));
+vi.mock("@tanstack/react-router", async () => {
+  const { reactRouterMock } = await import("@/test-utils/route-page");
+  return reactRouterMock();
+});
 
 const fake = vi.hoisted(() => ({
   supabase: {} as {
@@ -41,17 +30,14 @@ vi.mock("@/integrations/supabase/client", () => ({
 const handle = createFakeSupabase();
 
 function renderButton(props: Partial<Parameters<typeof ApplyToRoleButton>[0]> = {}) {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(
-    <QueryClientProvider client={qc}>
-      <ApplyToRoleButton
-        roleId="role-1"
-        projectId="project-1"
-        isOwner={false}
-        meId="user-1"
-        {...props}
-      />
-    </QueryClientProvider>,
+  return renderRoutePage(
+    <ApplyToRoleButton
+      roleId="role-1"
+      projectId="project-1"
+      isOwner={false}
+      meId="user-1"
+      {...props}
+    />,
   );
 }
 

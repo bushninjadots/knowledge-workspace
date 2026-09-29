@@ -1,8 +1,8 @@
 import { describe, expect, it, vi, beforeAll, beforeEach, afterEach } from "vitest";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ProjectShelf } from "./project-shelf";
+import { renderRoutePage } from "@/test-utils/route-page";
 import { createFakeSupabase } from "../../../../tests/helpers/fake-supabase";
 import type { ProjectRow } from "@/routes/_authenticated/explore";
 
@@ -18,30 +18,10 @@ vi.mock("@/integrations/supabase/client", () => ({
 
 const handle = createFakeSupabase();
 
-vi.mock("@tanstack/react-router", () => ({
-  Link: ({
-    to,
-    params,
-    children,
-    ...rest
-  }: {
-    to: string;
-    params?: Record<string, string>;
-    children: React.ReactNode;
-  }) => (
-    <a
-      href={
-        params
-          ? Object.entries(params).reduce((acc, [key, value]) => acc.replace(`$${key}`, value), to)
-          : to
-      }
-      {...rest}
-    >
-      {children}
-    </a>
-  ),
-  useNavigate: () => vi.fn(),
-}));
+vi.mock("@tanstack/react-router", async () => {
+  const { reactRouterMock } = await import("@/test-utils/route-page");
+  return reactRouterMock();
+});
 
 vi.mock("framer-motion", async (importOriginal) => {
   const actual = await importOriginal<typeof import("framer-motion")>();
@@ -122,10 +102,7 @@ function renderShelf(projects: ProjectRow[], openRoleCounts?: Map<string, number
 
 /** The overlay queries with react-query; every render needs a provider. */
 function renderWithClient(ui: React.ReactElement) {
-  const qc = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  });
-  return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>);
+  return renderRoutePage(ui);
 }
 
 beforeEach(() => {

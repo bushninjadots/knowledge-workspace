@@ -1,13 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactElement } from "react";
 import { SettingsPage } from "@/components/tethyr/settings-page";
+import { renderRoutePage } from "@/test-utils/route-page";
 
 function renderPage(ui: ReactElement = <SettingsPage />) {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>);
+  return renderRoutePage(ui);
 }
 
 // --- Mocks ---------------------------------------------------------------
@@ -51,25 +50,11 @@ vi.mock("@/hooks/use-current-user", () => ({
   }),
 }));
 
-vi.mock("@tanstack/react-router", () => ({
-  createFileRoute: () => () => ({}),
-  Link: ({
-    to,
-    children,
-    ...rest
-  }: {
-    to: string;
-    children: React.ReactNode;
-    [k: string]: unknown;
-  }) => (
-    <a href={to} {...rest}>
-      {children}
-    </a>
-  ),
-  useNavigate: () => vi.fn(),
-  // Navigation guard — inert in unit tests.
-  useBlocker: () => undefined,
-}));
+vi.mock("@tanstack/react-router", async () => {
+  const { reactRouterMock } = await import("@/test-utils/route-page");
+  // Route files call createFileRoute at module scope — present but inert here.
+  return reactRouterMock({ createFileRoute: () => () => ({}) });
+});
 
 vi.mock("@/lib/theme", () => ({
   ThemeProvider: ({ children }: { children: React.ReactNode }) => children,

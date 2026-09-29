@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { FirstSessionOnboarding } from "./first-session-onboarding";
+import { renderRoutePage } from "@/test-utils/route-page";
 import type { CurrentUserData } from "@/hooks/use-current-user";
 
 vi.mock("@/components/tethyr/create-project-button", () => ({
@@ -13,21 +14,10 @@ vi.mock("@/components/tethyr/create-project-button", () => ({
   ),
 }));
 
-vi.mock("@tanstack/react-router", () => ({
-  Link: ({
-    children,
-    onClick,
-    to,
-  }: {
-    children: React.ReactNode;
-    onClick?: () => void;
-    to: string;
-  }) => (
-    <a href={to} onClick={onClick}>
-      {children}
-    </a>
-  ),
-}));
+vi.mock("@tanstack/react-router", async () => {
+  const { reactRouterMock } = await import("@/test-utils/route-page");
+  return reactRouterMock();
+});
 
 function makeData(overrides: Partial<CurrentUserData> = {}): CurrentUserData {
   return {
@@ -50,12 +40,7 @@ const withStudio = {
 };
 
 function renderOnboarding(data = makeData()) {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <FirstSessionOnboarding data={data} />
-    </QueryClientProvider>,
-  );
+  return renderRoutePage(<FirstSessionOnboarding data={data} />);
 }
 
 beforeEach(() => {

@@ -72,7 +72,11 @@ function ProfileAchievementsBlock({ config, context }: BlockProps) {
         {achievements.map((a) => (
           <div
             key={a.id}
-            className="flex min-w-[min(11rem,100%)] flex-1 items-start gap-3 border-l-2 border-trust/40 pl-3"
+            // The text column asserts its word-width floor (~"Conversation"):
+            // when the studio column is narrower than icon+gap+floor, the item
+            // wraps and the text takes the full row instead of squeezing to a
+            // sliver that clips mid-word inside the block frame.
+            className="flex min-w-[min(11rem,100%)] flex-1 flex-wrap items-start gap-x-3 gap-y-1 border-l-2 border-trust/40 pl-3"
           >
             <div className="mt-0.5 rounded-full bg-trust-subtle p-1.5">
               {(() => {
@@ -80,7 +84,7 @@ function ProfileAchievementsBlock({ config, context }: BlockProps) {
                 return <Icon className="h-4 w-4 text-trust" aria-hidden="true" />;
               })()}
             </div>
-            <div className="min-w-0">
+            <div className="min-w-[5rem] flex-1">
               <p className="text-sm font-medium">{a.title}</p>
               {a.description && config.showDescription !== false && (
                 <p className="mt-0.5 text-xs leading-snug text-muted-foreground">{a.description}</p>

@@ -4,23 +4,12 @@ import { Navbar } from "./navbar";
 
 // The navbar reads the location via useLocation() and signs out via the
 // supabase client; both are replaced so the test renders in isolation.
-vi.mock("@tanstack/react-router", () => ({
-  Link: ({
-    to,
-    children,
-    ...rest
-  }: {
-    to: string;
-    children: React.ReactNode;
-    [k: string]: unknown;
-  }) => (
-    <a href={to} {...rest}>
-      {children}
-    </a>
-  ),
-  useLocation: vi.fn(() => ({ pathname: "/" })),
-  useNavigate: vi.fn(() => vi.fn()),
-}));
+vi.mock("@tanstack/react-router", async () => {
+  const { reactRouterMock } = await import("@/test-utils/route-page");
+  return reactRouterMock({
+    useLocation: vi.fn(() => ({ pathname: "/" })),
+  });
+});
 
 vi.mock("@/hooks/use-current-user", () => ({
   useCurrentUser: vi.fn(),
