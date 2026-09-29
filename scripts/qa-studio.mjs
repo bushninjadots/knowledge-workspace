@@ -98,22 +98,29 @@ async function openStudio(page) {
  *  so there is nothing to open at those widths. */
 async function ensureCustomizeOpen(page) {
   if ((page.viewportSize()?.width ?? 1024) < 1024) return false;
-  for (let i = 0; i < 3; i++) {
-    if (
-      await page
-        .locator("[data-studio-builder] aside")
-        .first()
-        .isVisible()
-        .catch(() => false)
-    )
-      return true;
+  for (let i = 0; i < 5; i++) {
+    const visible = await page
+      .locator("[data-studio-builder] aside")
+      .first()
+      .isVisible()
+      .catch(() => false);
+    if (visible) return true;
     const toggle = page
       .locator("[data-studio-builder] header")
       .getByRole("button", { name: /^(customize|templates?)$/i })
       .first();
-    if (!(await toggle.isVisible().catch(() => false))) break;
+    if (!(await toggle.isVisible().catch(() => false))) {
+      // Under a loaded dev server the header itself may still be mounting —
+      // wait for the builder rather than bailing after one look.
+      await page
+        .waitForSelector("[data-studio-builder] header", { timeout: 8000 })
+        .catch(() => {});
+      continue;
+    }
     await toggle.click({ timeout: 6000 }).catch(() => {});
-    await page.waitForTimeout(600);
+    await page
+      .waitForSelector("[data-studio-builder] aside", { state: "visible", timeout: 6000 })
+      .catch(() => {});
   }
   return page
     .locator("[data-studio-builder] aside")
@@ -134,15 +141,24 @@ async function expandMoreOptions(page) {
 // The phone editor is closed by default (audit P0) — the canvas shows first
 // and the "Edit Studio" FAB opens the sheet.
 async function openMobileEditor(page) {
-  const has = await page.evaluate(
+  // The FAB only renders below `lg`, and the sheet mounts when it is clicked —
+  // retry briefly: under a loaded dev server the first paint can lag.
+  for (let i = 0; i < 3; i++) {
+    const has = await page.evaluate(
+      () => !!document.querySelector('section[aria-label="Mobile Studio editor"]'),
+    );
+    if (has) return true;
+    const fab = page.getByRole("button", { name: "Edit Studio", exact: true });
+    if ((await fab.count()) === 0) {
+      await page.waitForTimeout(600);
+      continue;
+    }
+    await fab.click();
+    await page.waitForTimeout(500);
+  }
+  return page.evaluate(
     () => !!document.querySelector('section[aria-label="Mobile Studio editor"]'),
   );
-  if (has) return true;
-  const fab = page.getByRole("button", { name: "Edit Studio", exact: true });
-  if ((await fab.count()) === 0) return false;
-  await fab.click();
-  await page.waitForTimeout(400);
-  return true;
 }
 
 // ── page probes ─────────────────────────────────────────────────────────────
@@ -521,21 +537,62 @@ try {
       [360, 640],
     ];
     const shells = {};
-    for (const [w, h] of sizes) {
-      const page = await browser.newPage({ viewport: { width: w, height: h } });
-      await login(page);
-      await openStudio(page);
-      // Below `lg` the desktop aside is hidden and the phone sheet is the
-      // settings surface — but it is closed by default, so open it first.
-      if (w < 1024) await openMobileEditor(page);
-      shells[`${w}x${h}`] = {
-        ...(await page.evaluate(SHELL)),
-        asideOpen: await ensureCustomizeOpen(page),
+    // Viewport sizes are independent — measure them concurrently (bounded pool)
+    // instead of 11 sequential login+load cycles. Login happens once on the
+    // first worker; the rest adopt the session via localStorage seeding.
+    const CONCURRENCY = 4;
+    let sessionKey = null;
+    let sessionValue = null;
+    // Login mutex: exactly one worker signs in at a time; the rest wait for
+    // the captured session instead of hammering the dev server in parallel.
+    let loginChain = Promise.resolve();
+    const adoptSession = async (page) => {
+      if (!sessionKey) return false;
+      await page.addInitScript(([k, v]) => localStorage.setItem(k, v), [sessionKey, sessionValue]);
+      return true;
+    };
+    const loginOnce = async (page) => {
+      const run = async () => {
+        if (await adoptSession(page)) return;
+        await login(page);
+        const grabbed = await page.evaluate(() => {
+          const k = Object.keys(localStorage).find((key) => key.includes("auth-token"));
+          return k ? [k, localStorage.getItem(k)] : null;
+        });
+        if (grabbed) {
+          sessionKey = grabbed[0];
+          sessionValue = grabbed[1];
+        }
       };
-      if (shells[`${w}x${h}`].asideOpen)
-        shells[`${w}x${h}`] = { ...shells[`${w}x${h}`], ...(await page.evaluate(SHELL)) };
-      await page.close();
-    }
+      const p = loginChain.then(run, run);
+      loginChain = p.catch(() => {});
+      return p;
+    };
+    const queue = [...sizes.entries()];
+    const worker = async () => {
+      for (;;) {
+        const next = queue.shift();
+        if (!next) return;
+        const [i, [w, h]] = next;
+        const page = await browser.newPage({ viewport: { width: w, height: h } });
+        try {
+          await loginOnce(page);
+          await openStudio(page);
+          // Below `lg` the desktop aside is hidden and the phone sheet is the
+          // settings surface — but it is closed by default, so open it first.
+          if (w < 1024) await openMobileEditor(page);
+          const shell = {
+            ...(await page.evaluate(SHELL)),
+            asideOpen: await ensureCustomizeOpen(page),
+          };
+          if (shell.asideOpen) Object.assign(shell, await page.evaluate(SHELL));
+          shells[`${w}x${h}`] = shell;
+        } finally {
+          await page.close();
+        }
+      }
+    };
+    await Promise.all(Array.from({ length: CONCURRENCY }, worker));
     report.sections.shell = shells;
     const builderOver = Object.entries(shells).filter(
       ([, s]) => (s.builder?.overflowBelow ?? 0) > 1,

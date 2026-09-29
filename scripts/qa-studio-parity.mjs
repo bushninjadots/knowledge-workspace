@@ -54,6 +54,16 @@ async function census() {
   }));
 }
 
+/** Census after blocks have actually rendered — a fixed sleep races the SSR
+ *  client fill-in whenever the dev server is under load (public=0 flakes). */
+async function censusWhenReady() {
+  await page.waitForFunction(() => document.querySelectorAll(".studio-block").length > 0, {
+    timeout: 20000,
+  });
+  await page.waitForTimeout(600);
+  return census();
+}
+
 await login();
 
 // ── 1. Owner view: land on /profile, make sure a Studio exists and is live ──
@@ -72,7 +82,7 @@ if (
     await page.waitForTimeout(1500);
   }
 }
-const owner = await census();
+const owner = await censusWhenReady();
 log(
   "owner view renders studio blocks",
   owner.blocks > 0,
@@ -82,7 +92,7 @@ log(
 // ── 2. Public view: same layout, rendered for a visitor ──────────────────────
 await page.goto(`${BASE}/u/maya`, { waitUntil: "load" });
 await page.waitForTimeout(2500);
-const pub = await census();
+const pub = await censusWhenReady();
 log("public view renders studio blocks", pub.blocks > 0, `blocks=${pub.blocks}`);
 
 // ── 3. Parity: frame and full-bleed counts must match exactly ────────────────
@@ -105,10 +115,10 @@ log("no page errors", errors.length === 0, errors.slice(0, 2).join(" | "));
 await page.evaluate(() => localStorage.setItem("tethyr-theme", "dark"));
 await page.goto(`${BASE}/profile`, { waitUntil: "load" });
 await page.waitForTimeout(2500);
-const ownerDark = await census();
+const ownerDark = await censusWhenReady();
 await page.goto(`${BASE}/u/maya`, { waitUntil: "load" });
 await page.waitForTimeout(2500);
-const pubDark = await census();
+const pubDark = await censusWhenReady();
 await page.evaluate(() => localStorage.setItem("tethyr-theme", "light"));
 log(
   "dark mode: same studio-block frame count",
@@ -127,10 +137,10 @@ log("dark mode: no page errors", errors.length === 0, errors.slice(0, 2).join(" 
 await page.setViewportSize({ width: 390, height: 844 });
 await page.goto(`${BASE}/profile`, { waitUntil: "load" });
 await page.waitForTimeout(2500);
-const ownerMobile = await census();
+const ownerMobile = await censusWhenReady();
 await page.goto(`${BASE}/u/maya`, { waitUntil: "load" });
 await page.waitForTimeout(2500);
-const pubMobile = await census();
+const pubMobile = await censusWhenReady();
 await page.setViewportSize({ width: 1440, height: 900 });
 log(
   "mobile: same studio-block frame count",

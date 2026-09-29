@@ -91,6 +91,7 @@ export function CreationStudio({
   const [saving, setSaving] = useState(false);
   const [gridInteraction, setGridInteraction] = useState(false);
   const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const [publishNote, setPublishNote] = useState("");
   const [projectDialogOpen, setProjectDialogOpen] = useState(false);
   // The Customize panel's Background entry opens the same dialog the banner's
@@ -1136,8 +1137,34 @@ export function CreationStudio({
         lastSavedAt={lastSavedAt}
         autoRenameId={renameFocusId}
         onRenameFocusHandled={() => setRenameFocusId(null)}
-        onReset={resetStudio}
+        onReset={() => setResetConfirmOpen(true)}
       />
+      <Dialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
+        <DialogContent className="studio-editor-chrome sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Reset Studio to default?</DialogTitle>
+            <DialogDescription>
+              Your current arrangement, blocks, and appearance are replaced by the default layout.
+              This is one undo away, but any draft you haven't saved as a template is gone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:justify-start">
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => {
+                setResetConfirmOpen(false);
+                resetStudio();
+              }}
+            >
+              Reset Studio
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setResetConfirmOpen(false)}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <Dialog open={publishConfirmOpen} onOpenChange={setPublishConfirmOpen}>
         <DialogContent className="studio-editor-chrome sm:max-w-sm">
           <DialogHeader>

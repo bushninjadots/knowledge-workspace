@@ -540,6 +540,16 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
               maxWidth: deviceWidth ?? (props.mode === "preview" ? undefined : maxWidth),
             }}
           >
+            {deviceWidth !== undefined && (
+              <div
+                className="pointer-events-none sticky top-0 z-10 flex justify-end px-2 py-1"
+                aria-hidden
+              >
+                <span className="rounded-full border border-border bg-[var(--surface-elevated)] px-2 py-0.5 font-mono text-2xs text-muted-foreground">
+                  {deviceWidth}px
+                </span>
+              </div>
+            )}
             <GStudioCanvas
               {...props}
               sections={sections}
@@ -985,7 +995,13 @@ function GStudioCanvas({
 }) {
   return (
     <div
-      className="mx-auto w-full px-4 pb-24 pt-5 sm:px-6"
+      className={cn(
+        "mx-auto w-full px-4 pb-24 pt-5 sm:px-6",
+        // A device frame gets a hairline bezel so the simulated viewport reads
+        // as a viewport, not as the canvas shrinking.
+        frameWidth !== undefined &&
+          "border-x border-border bg-[var(--surface-sunken)] shadow-[0_0_0_1px_var(--background)]",
+      )}
       style={{ maxWidth: frameWidth ?? undefined }}
       onClick={() => editing && props.onSelect(null)}
     >

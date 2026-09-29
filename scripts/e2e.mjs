@@ -37,6 +37,7 @@ const SUITE = [
   ["studio-builder", "qa-studio.mjs"],
   ["studio-view", "qa-studio-view.mjs"],
   ["studio-blindspots", "qa-studio-blindspots.mjs"],
+  ["long-content", "qa-long-content.mjs"],
   ["avatar-shape", "qa-avatar-shape.mjs"],
   ["explore-overlay", "qa-explore-overlay.mjs"],
   ["project-loop", "qa-project-loop.mjs"],
@@ -52,25 +53,69 @@ if (suite.length === 0) {
 }
 
 const env = { ...process.env, QA_BASE: BASE };
-const results = [];
-for (const [name, file] of suite) {
+const runOne = ([name, file]) => {
   console.log(`\n━━━ ${name} (${file}) → ${BASE}`);
   const started = Date.now();
-  const code = await new Promise((resolve) => {
+  return new Promise((resolve) => {
     const child = spawn(process.execPath, [path.join(root, "scripts", file)], {
       stdio: "inherit",
       env,
     });
-    child.on("exit", (c) => resolve(c ?? 1));
-    child.on("error", () => resolve(1));
+    child.on("exit", (c) =>
+      resolve({ name, code: c ?? 1, secs: Math.round((Date.now() - started) / 1000) }),
+    );
+    child.on("error", () =>
+      resolve({ name, code: 1, secs: Math.round((Date.now() - started) / 1000) }),
+    );
   });
-  const secs = Math.round((Date.now() - started) / 1000);
-  results.push({ name, code, secs });
-  console.log(`━━━ ${name}: ${code === 0 ? "pass" : "FAIL"} (${secs}s)`);
+};
+
+// Two kinds of harness must stay strictly serial: the source-importing
+// workflow checks, and the loop harnesses that MUTATE shared seeded state
+// (reputation, follow counts) — run concurrently they race each other's
+// deltas and both flake.
+const SERIAL = new Set(["workflows", "project-loop", "challenge-loop"]);
+// Everything else COULD pool, but the dev server is a single Vite process
+// with on-demand transforms: two full browser harnesses at once starve each
+// other and a different one flakes every run. So the default pool is 1
+// (sequential, stable); opt into more with QA_E2E_POOL=2+ on a faster stack.
+const POOL = Math.max(1, Math.min(Number(process.env.QA_E2E_POOL) || 1, 4));
+// The long-content harness needs SUPABASE_SERVICE_ROLE_KEY (it seeds extreme
+// content straight to the DB). Skip it with a note when the key is absent.
+const NEEDS_SERVICE_KEY = new Set(["long-content"]);
+const results = [];
+const jobs = suite.filter(
+  ([n]) => !SERIAL.has(n) && !(NEEDS_SERVICE_KEY.has(n) && !env.SUPABASE_SERVICE_ROLE_KEY),
+);
+const serialJobs = suite.filter(([n]) => SERIAL.has(n));
+
+const queue = [...jobs];
+const worker = async () => {
+  for (;;) {
+    const job = queue.shift();
+    if (!job) return;
+    const r = await runOne(job);
+    results.push(r);
+    console.log(`━━━ ${r.name}: ${r.code === 0 ? "pass" : "FAIL"} (${r.secs}s)`);
+  }
+};
+await Promise.all(Array.from({ length: POOL }, worker));
+for (const job of serialJobs) {
+  const r = await runOne(job);
+  results.push(r);
+  console.log(`━━━ ${r.name}: ${r.code === 0 ? "pass" : "FAIL"} (${r.secs}s)`);
 }
 
+const byName = new Map(suite.map(([n]) => [n, []]));
+for (const r of results) byName.get(r.name)?.push(r);
+
 console.log("\n═══ e2e summary ═══");
-for (const r of results) console.log(` ${r.code === 0 ? "✓" : "✗"} ${r.name} (${r.secs}s)`);
+for (const [name] of suite) {
+  const runs = byName.get(name) ?? [];
+  const r = runs[0];
+  if (!r) console.log(` ? ${name} (skipped — needs SUPABASE_SERVICE_ROLE_KEY)`);
+  else console.log(` ${r.code === 0 ? "✓" : "✗"} ${name} (${r.secs}s)`);
+}
 const failed = results.filter((r) => r.code !== 0);
 console.log(
   failed.length

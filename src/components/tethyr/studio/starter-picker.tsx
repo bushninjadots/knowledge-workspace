@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import {
   BookOpen,
   Check,
@@ -136,6 +136,15 @@ export function StarterPicker({
   }, [mineRows, savedTemplateIds]);
 
   const publicRows = (templates.data ?? []).filter((row) => !savedIds.has(row.id));
+
+  // The picker mounts without a Radix trigger, so nothing restores focus on
+  // close — hand it back to the element that opened the dialog.
+  useEffect(() => {
+    const previous = document.activeElement as HTMLElement | null;
+    return () => {
+      previous?.focus?.();
+    };
+  }, []);
 
   return (
     <Dialog open onOpenChange={(next) => !next && onClose()}>
