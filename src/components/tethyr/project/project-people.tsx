@@ -5,17 +5,12 @@ import { ProfileLink } from "@/components/tethyr/profile-link";
 import type { Contributor, OpenRoleRow } from "@/hooks/use-projects";
 import { useProjectActivity } from "@/hooks/use-projects";
 import { bucketContributorActivity } from "@/lib/activity-heat";
+import { contributionRoleNoun } from "@/lib/contribution-role";
 import { cn } from "@/lib/utils";
 import { OpenRolesSection } from "./project-open-roles";
 import { useProjectTeams } from "@/hooks/use-teams";
 import { useConnections } from "@/hooks/use-connections";
 import { useCurrentUser } from "@/hooks/use-current-user";
-
-const ROLE_LABEL: Record<Contributor["role"], string> = {
-  creator: "Creator",
-  mentor: "Mentor",
-  contributor: "Contributor",
-};
 
 const ZERO_HEAT = [0, 0, 0, 0] as const;
 
@@ -272,7 +267,7 @@ export function ProjectPeopleTab({
                         {c.profile?.display_name || c.profile?.handle || "Unknown"}
                       </p>
                       <p className="truncate text-xs text-muted-foreground">
-                        {ROLE_LABEL[c.role]}
+                        {contributionRoleNoun(c.role)}
                         {c.profile?.creator_title ? ` · ${c.profile.creator_title}` : ""}
                       </p>
                     </div>

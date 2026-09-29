@@ -1,11 +1,6 @@
 import { cn } from "@/lib/utils";
 import { ProfileLink } from "@/components/tethyr/profile-link";
-
-export const PERSON_ROLE_LABEL: Record<string, string> = {
-  creator: "Creator",
-  mentor: "Mentor",
-  contributor: "Contributor",
-};
+import { contributionRoleNoun } from "@/lib/contribution-role";
 
 /**
  * Compact "person" chip: avatar + name (linked to /u/:handle) with an optional
@@ -37,7 +32,7 @@ export function PersonPill({
         ? "h-10 w-10 text-xs"
         : "h-7 w-7 text-[10px]";
   const initial = (name ?? handle ?? "?").charAt(0).toUpperCase();
-  const caption = role ? (PERSON_ROLE_LABEL[role] ?? role) : title;
+  const caption = role ? contributionRoleNoun(role) : title;
 
   return (
     <ProfileLink

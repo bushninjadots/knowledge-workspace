@@ -12,6 +12,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { BlockEmptyState } from "@/components/tethyr/blocks/block-empty-state";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import { registerBlock } from "@/lib/block-registry";
+import { contributionRoleVerb } from "@/lib/contribution-role";
+import { PROJECT_STATUS_LABEL, type ProjectStatus } from "@/components/tethyr/profile/types";
 import {
   getProfileProjectPresentation,
   PROFILE_PROJECT_PRESENTATIONS,
@@ -41,19 +43,6 @@ type CollaboratorRow = {
   } | null;
 };
 
-const STATUS_LABEL: Record<string, string> = {
-  planning: "Planning",
-  active: "Active",
-  paused: "Paused",
-  completed: "Completed",
-};
-
-/** Role verbs make the owner's part clear: built it, or contributed to it. */
-const ROLE_VERB: Record<string, string> = {
-  creator: "Built",
-  mentor: "Mentored",
-  contributor: "Contributed to",
-};
 const CARD_CLS =
   "flex h-fit flex-col rounded-lg border border-border bg-surface p-3 transition-colors hover:bg-surface-elevated";
 
@@ -170,7 +159,7 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
       <div className="flex items-start justify-between gap-2">
         <span className="text-sm font-medium text-foreground line-clamp-1">{project.title}</span>
         <span className="shrink-0 text-[11px] text-muted-foreground">
-          {ROLE_VERB[role] ?? role}
+          {contributionRoleVerb(role)}
         </span>
       </div>
       {project.description && (
@@ -179,7 +168,7 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
       <div className="mt-3 flex items-center gap-2">
         {showStatus && (
           <span className="rounded-full bg-surface-sunken px-2 py-0.5 text-[11px] leading-snug text-muted-foreground">
-            {STATUS_LABEL[project.status] ?? project.status}
+            {PROJECT_STATUS_LABEL[project.status as ProjectStatus] ?? project.status}
           </span>
         )}
         {showProgress && project.progress_percent > 0 && (
@@ -208,10 +197,10 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
             >
               <p className="truncate text-sm font-medium text-foreground">{project.title}</p>
               <p className="text-[11px] text-muted-foreground">
-                {ROLE_VERB[role] ?? role}
+                {contributionRoleVerb(role)}
                 {showStatus && project.status ? (
                   <span className="ml-2 text-muted-foreground/70">
-                    {STATUS_LABEL[project.status] ?? project.status}
+                    {PROJECT_STATUS_LABEL[project.status as ProjectStatus] ?? project.status}
                   </span>
                 ) : null}
               </p>
@@ -302,7 +291,7 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
           >
             {featured.project.cover_url ? <ProjectImage project={featured.project} /> : null}
             <span className="mb-1 text-[11px] text-muted-foreground">
-              {ROLE_VERB[featured.role] ?? featured.role}
+              {contributionRoleVerb(featured.role)}
             </span>
             <div className="flex items-start justify-between gap-2">
               <span className="text-base font-semibold text-foreground line-clamp-1">
@@ -315,7 +304,8 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
             <div className="mt-3 flex items-center gap-2">
               {showStatus && (
                 <span className="rounded-full bg-surface-sunken px-2 py-0.5 text-[11px] leading-snug text-muted-foreground">
-                  {STATUS_LABEL[featured.project.status] ?? featured.project.status}
+                  {PROJECT_STATUS_LABEL[featured.project.status as ProjectStatus] ??
+                    featured.project.status}
                 </span>
               )}
               {showProgress && featured.project.progress_percent > 0 && (

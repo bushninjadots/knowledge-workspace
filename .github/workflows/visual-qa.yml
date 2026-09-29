@@ -2,12 +2,28 @@ name: Visual QA
 
 on:
   # Nightly, after CI's drift check — visual regressions are caught on main.
+  # Also on pull_request: the Studio editor is the flagship customization
+  # surface, and the harnesses below are the only thing standing between a
+  # layout regression and the creator-facing product. They need a browser and
+  # a running Supabase stack, so this is the expensive job — it stays separate
+  # from ci.yml, which must stay fast and key-free.
+  pull_request:
+    paths:
+      - "src/components/tethyr/studio/**"
+      - "src/components/tethyr/blocks/**"
+      - "src/components/tethyr/page/**"
+      - "src/routes/**"
+      - "src/components/tethyr/project/**"
+      - "src/components/tethyr/profile/**"
+      - "scripts/qa-*.mjs"
+      - ".github/workflows/visual-qa.yml"
   schedule:
     - cron: "30 6 * * *"
   workflow_dispatch: {}
 
-# Forked PRs never see Supabase keys: the stack is fully local, so this job is
-# safe on schedule + manual runs only.
+# The local Supabase stack needs no secrets, so these jobs are safe to run on
+# any pull request. The repo guard below is about *runner availability*, not
+# about secret safety.
 permissions:
   contents: read
 
@@ -19,7 +35,7 @@ jobs:
   # 500s ("createServerFn is not a function") while dev and unit tests stay
   # green. AGENTS.md documents two shipped instances of this class.
   prod-bundle:
-    if: github.repository == 'bushninjadots/tethyr-main'
+    if: ${{ contains(fromJSON('["bushninjadots/tethyr-main","bushninjadots/tethyr-3b702bae"]'), github.repository) }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -73,11 +89,15 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ steps.keys.outputs.service_role }}
 
   visual-qa:
-    # The remote repos sharing this file have different runner availability;
-    # only the primary origin runs the full stack.
-    if: github.repository == 'bushninjadots/tethyr-main'
+    # Both remotes that share this file get the full stack: `origin` is the
+    # canonical repo, `loveable` is the Lovable-connected one whose pushed
+    # branch syncs back into the Lovable editor — a Studio regression landed
+    # there is visible to the user immediately, so it must be gated there too.
+    if: ${{ contains(fromJSON('["bushninjadots/tethyr-main","bushninjadots/tethyr-3b702bae"]'), github.repository) }}
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # Twelve browser harnesses, several of which own a browser for minutes
+    # (the project/challenge loop runners drive two accounts end to end).
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
 
@@ -187,6 +207,45 @@ jobs:
         run: node scripts/qa-avatar-shape.mjs
         env:
           QA_BASE: http://127.0.0.1:3000
+
+      # The Studio is the flagship customization surface (g-studio-surface.tsx
+      # is the single largest file in src/), so its audits are gates, not
+      # optional extras. These three cover the owner view, the editor, and the
+      # paths the 2026-09-27 audit explicitly did not.
+      - name: Run studio editor audit
+        run: node scripts/qa-studio.mjs
+        env:
+          QA_BASE: http://127.0.0.1:3000
+          QA_EMAIL: maya@tethyr.dev
+          QA_PASSWORD: password123
+
+      - name: Run studio owner-view audit
+        run: node scripts/qa-studio-view.mjs
+        env:
+          QA_BASE: http://127.0.0.1:3000
+          QA_EMAIL: maya@tethyr.dev
+          QA_PASSWORD: password123
+
+      # Reordering, dark-theme contrast, and the template publish round trip.
+      - name: Run studio blind-spot audit
+        run: node scripts/qa-studio-blindspots.mjs
+        env:
+          QA_BASE: http://127.0.0.1:3000
+          QA_EMAIL: maya@tethyr.dev
+          QA_PASSWORD: password123
+
+      # Text extremes: 2000-char bio, markdown-heavy README, 60-char names.
+      # Seeds straight to the DB, so it needs the service key (available here
+      # — this job already reads it from `supabase status`).
+      - name: Run long-content audit
+        run: node scripts/qa-long-content.mjs
+        env:
+          QA_BASE: http://127.0.0.1:3000
+          QA_EMAIL: maya@tethyr.dev
+          QA_PASSWORD: password123
+          SUPABASE_URL: http://127.0.0.1:54321
+          SUPABASE_PUBLISHABLE_KEY: ${{ steps.keys.outputs.publishable }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ steps.keys.outputs.service_role }}
 
       - name: Upload screenshots + report
         if: always()

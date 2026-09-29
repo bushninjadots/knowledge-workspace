@@ -22,7 +22,8 @@ import type { ProjectDetail } from "@/hooks/use-projects";
 import { PROJECT_STATUS_STYLE, PROJECT_LINK_KEYS } from "@/components/tethyr/profile-sections";
 import { safeHref } from "@/lib/validators";
 import { ProfileLink } from "@/components/tethyr/profile-link";
-import { PersonPill, PERSON_ROLE_LABEL } from "@/components/tethyr/person-pill";
+import { PersonPill } from "@/components/tethyr/person-pill";
+import { contributionRoleNoun } from "@/lib/contribution-role";
 import { ProjectCoverFallback } from "@/components/tethyr/project-cover-fallback";
 import { LANGUAGE_COLORS } from "@/lib/language-colors";
 import { canonicalProjectStatus, isLiveStatus, statusDotClass } from "@/lib/project-status";
@@ -219,7 +220,7 @@ export function ProjectHeader({
                         <ProfileLink
                           key={c.profile_id}
                           handle={c.profile?.handle}
-                          title={`${c.profile?.display_name ?? c.profile?.handle ?? "Anonymous"} · ${PERSON_ROLE_LABEL[c.role] ?? c.role}`}
+                          title={`${c.profile?.display_name ?? c.profile?.handle ?? "Anonymous"} · ${contributionRoleNoun(c.role)}`}
                           className="transition-lift inline-flex rounded-full p-0.5 -m-0.5"
                         >
                           <Avatar

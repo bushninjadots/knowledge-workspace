@@ -4,9 +4,42 @@
 > This is an implementation plan, not a permission to expand the product scope.
 > **Major redesign phases are tracked in [`TETHYR_REDESIGN_SPEC.md`](./TETHYR_REDESIGN_SPEC.md#19-phased-implementation).**
 
+> [!WARNING]
+> **This document is a dated execution log, not a description of the current
+> architecture.** The redesign (Stages 8–18) shipped on 2026-08-23 and was then
+> converged: the per-route editor chrome was consolidated into a single Studio
+> surface (`src/components/tethyr/studio/g-studio-surface.tsx` +
+> `creation-studio.tsx`). Read each stage for **what was decided**, not for
+> where the code lives.
+>
+> These paths are cited below but **no longer exist on disk** (verified
+> 2026-09-29 — this list is exhaustive for `src/` and `scripts/`):
+>
+> - `src/components/tethyr/page/editor-toolbar.tsx`, `theme-picker.tsx`,
+>   `studio-mode-bar.tsx`, `studio-content-panel.tsx`, `editor-chrome-boundary.tsx`
+> - `src/components/tethyr/studio/studio.tsx`, `studio-canvas.tsx`,
+>   `studio-inspector.tsx`, `studio-sidebar.tsx`, `section-presets.ts`,
+>   `appearance-panel.tsx`, `personality-picker.tsx`, `composition-picker.tsx`
+> - `src/components/tethyr/templates/made-with-tethyr.tsx`
+> - `src/hooks/use-studio-draft.test.ts` (logic moved to `src/lib/studio-history.ts`)
+> - `src/hooks/use-project-page.ts`
+> - `src/routes/dev.tsx`
+> - `src/routes/_authenticated/templates.tsx` and `templates.$id.tsx` — **there
+>   is no `/templates` route.** Templates are applied from the Studio's
+>   starter picker; the data model, fork/remix lineage, and `template-apply`
+>   logic all still work via `src/hooks/use-templates.ts`.
+>
+> For current ownership see [`TETHYR_ARCHITECTURE.md`](./TETHYR_ARCHITECTURE.md)
+> and [`studio-integration-plan.md`](./studio-integration-plan.md).
+
 ## Operating rule
 
 Implement the smallest change that improves coherence, trust, or the core collaboration loop. Each stage must be validated before the next stage begins. Do not add new top-level features while a higher-priority stage is incomplete.
+
+**Status (2026-09-29):** Stages 0–6 and 9–18 are complete; Stage 7 (deferred
+depth) is the only unimplemented stage and is intentionally still open. The
+gate below no longer applies — the redesign shipped and was triaged through
+[`studio-integration-plan.md`](./studio-integration-plan.md).
 
 The redesign (Stages 8–18 below) must not begin until the existing Stage 7 deferred items are triaged and the Phase 1 redesign audit is approved.
 
@@ -92,11 +125,16 @@ The redesign (Stages 8–18 below) must not begin until the existing Stage 7 def
 
 ## Stage 8–18 — Major Redesign (TETHYR_REDESIGN_SPEC.md)
 
-> **⚠️ Do not begin these stages until Phase 1 audit is complete and architecture is approved.**
+> **✅ Shipped 2026-08-23** (Phases 2–11), then converged into a single Studio
+> surface on 2026-09-03. The gating note that used to sit here no longer applies.
 
 These stages implement the block/page/template/fork system described in [`TETHYR_REDESIGN_SPEC.md`](./TETHYR_REDESIGN_SPEC.md) and [`TETHYR_REDESIGN_ARCHITECTURE.md`](./TETHYR_REDESIGN_ARCHITECTURE.md).
 
 ### Stage 8 — Redesign Phase 1: Full Audit
+
+> **✅ Complete.** The audit was produced and superseded by
+> [`TETHYR_REDESIGN_SPEC.md`](./TETHYR_REDESIGN_SPEC.md), which carries the
+> approved architecture. Boxes below are left unchecked as the original record.
 
 **Goal:** understand the complete codebase and produce the architectural proposal.
 
@@ -154,7 +192,7 @@ These stages implement the block/page/template/fork system described in [`TETHYR
 - `src/components/tethyr/blocks/project/team-block.tsx`
 - `src/components/tethyr/blocks/project/activity-block.tsx`
 - `src/components/tethyr/blocks/project/index.ts` — barrel
-- `src/routes/dev.tsx` — block system preview page
+- ~~`src/routes/dev.tsx`~~ — block system preview page. **Deleted** in the Studio convergence; block preview now lives in the editor's palette.
 - `supabase/migrations/20260823000000_page_system_foundation.sql` — pages/layouts/themes tables + RLS + defaults
 
 ### Stage 10 — Redesign Phase 3: Project Space ✅ DONE (2026-08-23)
@@ -250,14 +288,14 @@ These stages implement the block/page/template/fork system described in [`TETHYR
 - [x] Template serialization — layout sections + theme, no private content (layouts only contain structure).
 - [x] Template application — `useApplyTemplate` copies a template's sections into a page's layout.
 - [x] Template categories and metadata — `TemplateData` type with name, type, creator, block count.
-- [x] "Save as template" action in EditorToolbar.
-- [x] "Apply template" action in EditorToolbar (pick from user's own templates).
-- [x] Public templates browse route at `/templates`.
+- [x] "Save as template" action in the editor.
+- [x] "Apply template" action in the editor (pick from user's own templates).
+- [x] ~~Public templates browse route at `/templates`.~~ **Removed 2026-09-03** during the Studio convergence — see Stage 14.
 
 **Files created:**
 
-- `src/hooks/use-templates.ts` — `usePublicTemplates`, `useMyTemplates`, `useTemplate`, `useApplyTemplate`, `useUnpublishTemplate`.
-- `src/routes/_authenticated/templates.tsx` — public template gallery.
+- `src/hooks/use-templates.ts` — `usePublicTemplates`, `useMyTemplates`, `useTemplate`, `useApplyTemplate`, `useUnpublishTemplate`. *(still on disk; the public-gallery half is now unused by any route)*
+- ~~`src/routes/_authenticated/templates.tsx`~~ — public template gallery. **Deleted** in the Studio convergence; there is no `/templates` route in `src/routeTree.gen.ts`.
 
 **Files modified:**
 
@@ -269,8 +307,17 @@ These stages implement the block/page/template/fork system described in [`TETHYR
 
 ### Stage 14 — Redesign Phase 7: Template Library ✅ DONE (2026-08-23)
 
-- [x] Public template browsing at `/templates` (grid with preview strips, name, creator, block count, usage count).
-- [x] Template detail page at `/templates/$id` (section-by-section preview with block type tags, metadata, apply button).
+> [!NOTE]
+> **The two route-level items below shipped on 2026-08-23 and were removed
+> again on 2026-09-03.** `/templates` and `/templates/$id` are **not routes
+> today**. Templates are applied from the Studio's starter picker
+> (`src/components/tethyr/studio/starter-picker.tsx`) against the same
+> `use-templates.ts` hooks; the data model, fork/remix lineage, and
+> `template-apply` logic all still work. This was a deliberate consolidation,
+> not a regression — do not "restore" these routes without a product case.
+
+- [x] ~~Public template browsing at `/templates`~~ (grid with preview strips, name, creator, block count, usage count). **Route removed 2026-09-03.**
+- [x] ~~Template detail page at `/templates/$id`~~ (section-by-section preview with block type tags, metadata, apply button). **Route removed 2026-09-03.**
 - [x] Template search by name + filter by category (All, Minimal, Developer, Portfolio, Documentation, Startup, Community, Creative).
 - [x] Sort by newest or most used.
 - [x] "Made with Tethyr" / "Layout by @username" attribution component (`MadeWithTethyr`).

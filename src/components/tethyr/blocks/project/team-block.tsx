@@ -8,6 +8,7 @@ import { avatarShapeStyle, type ProfileBackground } from "@/lib/background-theme
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProfileLink } from "@/components/tethyr/profile-link";
 import { registerBlock } from "@/lib/block-registry";
+import { contributionRoleNoun } from "@/lib/contribution-role";
 import type { BlockProps } from "@/lib/page-blocks";
 
 type ContributorRow = {
@@ -23,12 +24,6 @@ type ContributorRow = {
     background: Pick<ProfileBackground, "avatarShape" | "avatarRing"> | null;
   } | null;
   signed_avatar_url: string | null;
-};
-
-const ROLE_LABEL: Record<string, string> = {
-  creator: "Creator",
-  mentor: "Mentor",
-  contributor: "Contributor",
 };
 
 function ProjectTeamBlock({ config, context }: BlockProps) {
@@ -115,7 +110,7 @@ function ProjectTeamBlock({ config, context }: BlockProps) {
                   {profile?.display_name ?? profile?.handle ?? "Unnamed"}
                 </ProfileLink>
                 {config.showRoles !== false && (
-                  <p className="text-xs text-muted-foreground">{ROLE_LABEL[c.role] ?? c.role}</p>
+                  <p className="text-xs text-muted-foreground">{contributionRoleNoun(c.role)}</p>
                 )}
               </div>
             </div>
