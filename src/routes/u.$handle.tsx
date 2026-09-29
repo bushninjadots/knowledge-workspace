@@ -17,12 +17,15 @@ export const Route = createFileRoute("/u/$handle")({
   loader: async ({ params, context: { queryClient } }) =>
     // Same shape as the component's useQuery cache (same key + fn), so the
     // component hydrates from here instead of refetching. A failed read
-    // returns null and head() falls back to generic meta.
+    // returns null and head() falls back to generic meta. retry is off: a
+    // structural failure (missing env) just delays the fallback the page
+    // already renders.
     await queryClient
       .ensureQueryData({
         queryKey: ["public-profile", params.handle],
         queryFn: () => fetchPublicProfile(params.handle),
         staleTime: 60_000,
+        retry: false,
       })
       .catch(() => null),
   // Optional, not defaulted: a default inserts `embed=false` into the search
@@ -30,14 +33,24 @@ export const Route = createFileRoute("/u/$handle")({
   // to match — a 307 hop on every profile visit and a crawler round-trip that
   // used to shed the route's own <head>. Undefined means false at the point
   // of use, so nothing else changes.
+  //
+  // Deliberately NOT z.coerce.boolean(): that is Boolean() on the raw value,
+  // so the string "false" coerces to true and a bookmarked /u/x?embed=false
+  // renders embed mode — chrome stripped, the opposite of what was asked.
   validateSearch: z.object({
-    embed: z.coerce.boolean().optional(),
+    embed: z
+      .union([z.boolean(), z.literal("true"), z.literal("false")])
+      .transform((v) => v === true || v === "true")
+      .optional(),
   }),
   head: ({ loaderData, params }) => {
     // loaderData is the same object fetchPublicProfile resolves to (or null).
     const p = loaderData?.profile ?? null;
     const handle = p?.handle ?? params.handle;
-    const name = p?.display_name || `@${handle}`;
+    const displayName = p?.display_name || null;
+    // With a profile: "Priya Nair (@priya) — Tethyr". Degraded (unreadable
+    // profile): "@priya — Tethyr" — never the double-@ "@priya (@priya)".
+    const title = displayName ? `${displayName} (@${handle})` : `@${handle}`;
     // The bio leads when present — it is what the visitor reads first. The
     // fallback names the one thing the profile actually shows: their work.
     const bio = p?.bio?.trim();
@@ -45,10 +58,10 @@ export const Route = createFileRoute("/u/$handle")({
       ? bio.length > 160
         ? `${bio.slice(0, 157)}…`
         : bio
-      : `${name}'s work, projects, and collaborators on Tethyr.`;
+      : `${displayName ? `${displayName}'s` : `@${handle}'s`} work, projects, and collaborators on Tethyr.`;
     return seoMeta({
       path: `/u/${encodeURIComponent(params.handle)}`,
-      title: `${name} (@${handle})`,
+      title,
       description,
       type: "profile",
     });
