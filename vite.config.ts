@@ -17,7 +17,23 @@ export default defineConfig({
       rollupOptions: {
         output: {
           advancedChunks: {
-            groups: [{ name: "toaster", test: /node_modules\/sonner/ }],
+            groups: [
+              { name: "toaster", test: /node_modules\/sonner/ },
+              // The app's server-function modules call createServerFn() at
+              // module scope. In the single-file fetch bundle (inlineDynamicImports)
+              // they must not be merged into a chunk that initializes before the
+              // tanstack-start core region defines createServerFn — that ordering
+              // is decided by rolldown's chunk-merge heuristics and flips with any
+              // unrelated content change (this exact failure shipped once: a
+              // dashboard edit moved these into the early router chunk and every
+              // SSR page 500'd with "createServerFn is not a function"). Pinning
+              // them into their own group keeps them in a dedicated, lazily
+              // initialized region regardless of graph shape.
+              {
+                name: "server-fns",
+                test: /(account-server|github-server|auth-middleware)/,
+              },
+            ],
           },
         },
       },
