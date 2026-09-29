@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BackgroundPickerDialog } from "./background-picker-dialog";
 import { BannerStrip } from "./banner-strip";
+import { renderRoutePage } from "@/test-utils/route-page";
 import { createFakeSupabase } from "../../../../tests/helpers/fake-supabase";
 
 /**
@@ -43,12 +43,9 @@ const baseBackground = {
 };
 
 function renderWithClient(ui: React.ReactElement) {
-  const qc = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  });
-  const invalidateSpy = vi.spyOn(qc, "invalidateQueries");
-  render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>);
-  return { invalidateSpy };
+  const { queryClient, ...result } = renderRoutePage(ui);
+  const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
+  return { invalidateSpy, ...result };
 }
 
 beforeEach(() => {

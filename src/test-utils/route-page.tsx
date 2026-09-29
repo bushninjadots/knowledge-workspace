@@ -7,7 +7,9 @@ import { vi } from "vitest";
  * Shared wiring for route-page unit tests.
  *
  * renderRoutePage wraps the page in a fresh QueryClient (retry off, so a
- * failing query settles immediately instead of stalling the test).
+ * failing query settles immediately instead of stalling the test) and returns
+ * the render result with that client attached, so tests can assert on cache
+ * behavior (e.g. spy on invalidateQueries) or invalidate manually.
  *
  * reactRouterMock is consumed from inside a vi.mock factory via a dynamic
  * import — vi.mock factories are hoisted above the test file's imports, so a
@@ -24,8 +26,9 @@ import { vi } from "vitest";
  * router resolves them (ProfileLink only ever uses /u/$handle).
  */
 export function renderRoutePage(ui: ReactElement) {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>);
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const result = render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+  return { ...result, queryClient };
 }
 
 export function reactRouterMock(overrides: Record<string, unknown> = {}) {
