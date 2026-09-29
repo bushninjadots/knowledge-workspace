@@ -252,12 +252,17 @@ function DashboardContent({
                       ? "You have activity"
                       : "No pending invites"
                   }
+                  // Only clickable when something actually needs attention —
+                  // an all-clear row that links to /messages is a control
+                  // leading nowhere the user asked to go.
                   href={
                     pendingSessionCount > 0
                       ? "/sessions"
                       : pendingConnectionCount > 0
                         ? "/connections"
-                        : "/messages"
+                        : unreadMessageCount > 0
+                          ? "/messages"
+                          : undefined
                   }
                   search={pendingSessionCount > 0 ? { tab: "requests" } : undefined}
                 >

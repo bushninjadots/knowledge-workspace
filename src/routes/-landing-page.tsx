@@ -103,14 +103,11 @@ export function HomePage() {
                   <>
                     <Button asChild size="lg" variant="default" className="transition-lift">
                       <Link to="/dashboard">
-                        Dashboard <ArrowRight className="h-4 w-4" />
+                        Back to your workspace <ArrowRight className="h-4 w-4" />
                       </Link>
                     </Button>
                     <Button asChild size="lg" variant="outline" className="transition-lift">
                       <Link to="/explore">Explore projects</Link>
-                    </Button>
-                    <Button asChild size="lg" variant="outline" className="transition-lift">
-                      <Link to="/profile">Your studio</Link>
                     </Button>
                   </>
                 ) : (
