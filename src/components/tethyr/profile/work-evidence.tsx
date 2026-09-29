@@ -63,9 +63,9 @@ export function ProfileWorkEvidence({
   return (
     <section aria-label="Work" className="mx-auto w-full max-w-2xl">
       <div className="flex items-baseline justify-between gap-3">
-        <h2 className="font-display text-sm font-medium tracking-wide text-muted-foreground uppercase">
-          Work
-        </h2>
+        {/* section-label: the canonical micro-label treatment — same utility the
+            dashboard, landing, and community surfaces use for grouped content. */}
+        <h2 className="section-label">Work</h2>
         {isOwner && <ArrangeYourStudioHint />}
       </div>
 
@@ -79,9 +79,7 @@ export function ProfileWorkEvidence({
 
       {data.collaborators.length > 0 && (
         <div className="mt-8">
-          <h2 className="font-display text-sm font-medium tracking-wide text-muted-foreground uppercase">
-            Builds with
-          </h2>
+          <h2 className="section-label">Builds with</h2>
           {/* The people you could reach through this person. Each links to their
               own Studio, so "who should I meet" is answerable from a profile. */}
           <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-3">
@@ -121,7 +119,7 @@ function WorkRow({ project }: { project: ProfileWorkProjectRow }) {
         // Name it after the claim the row actually makes — the verb plus the
         // work — which is the one thing a screen-reader user must not miss.
         aria-label={`${contributionRoleVerb(project.role)} ${project.title}`}
-        className="flex items-start gap-4 py-3.5 outline-none focus-visible:bg-surface"
+        className="flex items-start gap-4 py-3.5 outline-none transition-colors hover:bg-surface focus-visible:bg-surface"
       >
         {src && (
           <img

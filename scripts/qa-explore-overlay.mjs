@@ -96,6 +96,21 @@ await page.waitForTimeout(1500);
 const reopenCard = page.locator('button[aria-label^="View "]').first();
 await reopenCard.waitFor({ state: "visible", timeout: 20000 });
 const reopenOverlay = await openOverlayFrom(reopenCard);
+// Regression pin: the cover's decorative placeholder used to sit above this
+// button (fresh overlay mount, cover image not yet loaded) and swallow the
+// click — this exact click timed out on "subtree intercepts pointer events".
+// A decorative layer must never be the hit target for an interactive control.
+const hit = await reopenOverlay.getByRole("button", { name: "View Project" }).evaluate((el) => {
+  el.scrollIntoView({ block: "center" });
+  const r = el.getBoundingClientRect();
+  const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+  return { isSelf: top === el || el.contains(top), tag: top?.tagName ?? "null" };
+});
+log(
+  "View Project is its own hit target",
+  hit.isSelf,
+  hit.isSelf ? "button" : `intercepted by <${hit.tag}>`,
+);
 await reopenOverlay.getByRole("button", { name: "View Project" }).click();
 await page.waitForURL(/\/projects\//, { timeout: 20000 });
 await page.waitForTimeout(2000);
