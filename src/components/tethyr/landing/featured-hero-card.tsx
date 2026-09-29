@@ -82,7 +82,8 @@ export function FeaturedHeroCard() {
         <div className="mt-4">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5">
-              <Users className="h-3.5 w-3.5" /> {contributorCount ?? "–"} contributors
+              <Users className="h-3.5 w-3.5" /> {contributorCount ?? "–"}{" "}
+              {contributorCount === 1 ? "contributor" : "contributors"}
             </span>
             <span className="numeric">{progress}% complete</span>
           </div>

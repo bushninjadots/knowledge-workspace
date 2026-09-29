@@ -83,12 +83,16 @@ function ProfileDirectionBlock({ config, context }: BlockProps) {
     return null;
   }
   return (
-    <div className="grid gap-3 sm:grid-cols-3">
+    // Tiles wrap instead of squeezing: the block can be placed in a narrow
+    // studio column (e.g. 4/12 ≈ 235px), where a fixed 3-col grid left each
+    // tile ~59px wide and the labels broke one letter per line. The word
+    // floor (~"collaboration") pushes tiles to their own row below it.
+    <div className="flex flex-wrap gap-3">
       {data.active_project && config.showProject !== false && (
         <Link
           to="/projects/$id"
           params={{ id: data.active_project.id }}
-          className="rounded-lg border border-border bg-surface p-3 hover:bg-surface-elevated transition-colors group"
+          className="min-w-[9rem] flex-1 rounded-lg border border-border bg-surface p-3 hover:bg-surface-elevated transition-colors group"
         >
           <Hammer className="h-4 w-4 text-muted-foreground mb-1" />
           <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
@@ -101,7 +105,7 @@ function ProfileDirectionBlock({ config, context }: BlockProps) {
         </Link>
       )}
       {data.availability && config.showAvailability !== false && (
-        <div className="rounded-lg border border-border bg-surface p-3">
+        <div className="min-w-[9rem] flex-1 rounded-lg border border-border bg-surface p-3">
           <Users className="h-4 w-4 text-muted-foreground mb-1" />
           <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
             Open to
@@ -112,7 +116,7 @@ function ProfileDirectionBlock({ config, context }: BlockProps) {
         </div>
       )}
       {data.learning_goals && config.showGoals !== false && (
-        <div className="rounded-lg border border-border bg-surface p-3">
+        <div className="min-w-[9rem] flex-1 rounded-lg border border-border bg-surface p-3">
           <Compass className="h-4 w-4 text-muted-foreground mb-1" />
           <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
             Growing toward

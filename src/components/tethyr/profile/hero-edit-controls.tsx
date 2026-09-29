@@ -114,9 +114,17 @@ export function HeroEditControls({
     refresh();
   }
 
+  // The chip row floats over the banner when there is one. Without a banner
+  // it would sit on the display name (40px name vs 30px chips = ~18px of
+  // overlap), so in banner-less headers it becomes a normal right-aligned row
+  // above the identity block instead.
   return (
     <>
-      <div className="absolute right-3 top-3 z-20 flex flex-wrap items-center justify-end gap-2">
+      <div
+        className={`z-20 flex flex-wrap items-center justify-end gap-2 ${
+          hasBanner ? "absolute right-3 top-3" : "relative mb-3 w-full"
+        }`}
+      >
         <button
           type="button"
           onClick={() => {
