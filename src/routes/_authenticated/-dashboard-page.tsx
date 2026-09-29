@@ -334,8 +334,8 @@ function DashboardContent({
                   {reputationScore} rep
                 </p>
               )}
-            </div>
-            <p className="max-w-xs text-right text-xs leading-relaxed text-muted-foreground">
+            </div>{" "}
+            <p className="max-w-xs text-left text-xs leading-relaxed text-muted-foreground sm:text-right">
               Pick up an active project, respond to people, or make your work easier to discover.
             </p>
           </div>
