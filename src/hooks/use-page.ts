@@ -61,6 +61,15 @@ export function parseVersionLayoutSections(raw: unknown): LayoutSection[] {
     : ((raw as PageLayout | null)?.sections ?? []);
 }
 
+/** Public pages render the last published snapshot; owners editing a draft see the live layout. */
+export function resolvePageLayout(
+  liveLayout: PageLayout,
+  publishedLayout: PageLayout | null,
+  includeDraft: boolean,
+): PageLayout {
+  return !includeDraft && publishedLayout ? publishedLayout : liveLayout;
+}
+
 /**
  * Fetch the page for a profile or project. Includes the joined layout sections
  * and theme tokens in a single query.
@@ -113,7 +122,7 @@ export function usePage({ ownerId, ownerType, includeDraft = false }: FetchPageP
         .eq("id", pageRow.layout_id ?? "")
         .maybeSingle();
 
-      const layout: PageLayout = {
+      const liveLayout: PageLayout = {
         sections: ((layoutRow as unknown as LayoutRow | null)?.sections ??
           []) as unknown as PageLayout["sections"],
       };
@@ -154,6 +163,9 @@ export function usePage({ ownerId, ownerType, includeDraft = false }: FetchPageP
           note: typeof row.note === "string" && row.note.length > 0 ? row.note : null,
         };
       });
+
+      const publishedLayout = versions[0]?.layout ?? null;
+      const layout = resolvePageLayout(liveLayout, publishedLayout, includeDraft);
 
       return {
         id: pageRow.id,

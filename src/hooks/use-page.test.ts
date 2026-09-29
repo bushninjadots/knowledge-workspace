@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseVersionLayoutSections } from "@/hooks/use-page";
+import { parseVersionLayoutSections, resolvePageLayout } from "@/hooks/use-page";
 import type { LayoutSection, PageLayout } from "@/lib/page-blocks";
 
 function makeSection(id: string): LayoutSection {
@@ -10,6 +10,23 @@ function makeSection(id: string): LayoutSection {
     blocks: [],
   };
 }
+
+describe("resolvePageLayout", () => {
+  const liveLayout = { sections: [makeSection("draft")] };
+  const publishedLayout = { sections: [makeSection("published")] };
+
+  it("uses the published snapshot for public pages", () => {
+    expect(resolvePageLayout(liveLayout, publishedLayout, false)).toBe(publishedLayout);
+  });
+
+  it("uses the live layout while editing drafts", () => {
+    expect(resolvePageLayout(liveLayout, publishedLayout, true)).toBe(liveLayout);
+  });
+
+  it("falls back to the live layout for legacy published pages without a snapshot", () => {
+    expect(resolvePageLayout(liveLayout, null, false)).toBe(liveLayout);
+  });
+});
 
 describe("parseVersionLayoutSections", () => {
   it("passes a bare sections array through unchanged", () => {
