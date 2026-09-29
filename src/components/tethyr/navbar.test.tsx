@@ -78,9 +78,7 @@ describe("Navbar", () => {
   it("gives signed-in members an account menu trigger", () => {
     vi.mocked(useCurrentUser).mockReturnValue(AUTHED as never);
     render(<Navbar />);
-    expect(
-      screen.getByRole("button", { name: "Account menu for Maya Lind" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Account menu for Maya Lind" })).toBeInTheDocument();
   });
 
   it("keeps the create-project action prominent for signed-in members", () => {

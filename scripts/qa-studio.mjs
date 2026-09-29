@@ -112,9 +112,7 @@ async function ensureCustomizeOpen(page) {
     if (!(await toggle.isVisible().catch(() => false))) {
       // Under a loaded dev server the header itself may still be mounting —
       // wait for the builder rather than bailing after one look.
-      await page
-        .waitForSelector("[data-studio-builder] header", { timeout: 8000 })
-        .catch(() => {});
+      await page.waitForSelector("[data-studio-builder] header", { timeout: 8000 }).catch(() => {});
       continue;
     }
     await toggle.click({ timeout: 6000 }).catch(() => {});
