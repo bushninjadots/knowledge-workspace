@@ -29,7 +29,6 @@ import { useSessionRequests } from "@/hooks/use-sessions";
 import { useConnections } from "@/hooks/use-connections";
 import { useUnreadCounts } from "@/hooks/use-messages";
 import { useProjectReturnChanges } from "@/hooks/use-project-loop";
-import { BannerStrip } from "@/components/tethyr/profile/banner-strip";
 
 // Code-split module: the interactive page for its route. See the route
 // file for the eager surface (loader/head) and the lazyRouteComponent wire-up.
@@ -156,6 +155,7 @@ function DashboardContent({
     () => data?.profile?.display_name?.split(/\s+/)[0] ?? data?.profile?.handle ?? "member",
     [data?.profile],
   );
+  const reputationScore = data?.profile?.reputation_score ?? null;
   const unreadMessageCount = useMemo(() => unreadData?.total ?? 0, [unreadData]);
   const activeProjects = useMemo(
     () => selectActiveProjects(data?.projects ?? []),
@@ -311,36 +311,35 @@ function DashboardContent({
       unreadMessageCount,
     ],
   );
-
   return (
     <div className="animate-room-enter min-h-screen bg-noise">
       <div className="mx-auto max-w-7xl space-y-8 px-4 py-6 sm:px-6 sm:py-8">
+        {/* Compact greeting — the workspace starts at "what am I working on",
+            not a second landing page. Studio and create-project live where
+            they're used: the first-session guide, the Today module, the
+            workspace grid, and the account menu. */}
         <section aria-labelledby="dashboard-next-move-heading" className="space-y-6">
-          <div>
-            <p className="section-label">Your workspace</p>
-            <h1
-              id="dashboard-next-move-heading"
-              className="mt-1 font-display text-2xl font-semibold tracking-tight sm:text-3xl"
-            >
-              Your next move
-            </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="section-label">Welcome back</p>
+              <h1
+                id="dashboard-next-move-heading"
+                className="mt-1 font-display text-xl font-semibold tracking-tight sm:text-2xl"
+              >
+                Hey {firstName}
+              </h1>
+              {reputationScore != null && (
+                <p className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                  <Award className="h-3.5 w-3.5 text-[var(--user-accent,var(--trust))]" />
+                  {reputationScore} rep
+                </p>
+              )}
+            </div>
+            <p className="max-w-xs text-right text-xs leading-relaxed text-muted-foreground">
               Pick up an active project, respond to people, or make your work easier to discover.
             </p>
           </div>
           <FirstSessionOnboarding data={data} />
-          <DashboardWelcomeBanner
-            bannerSigned={data?.bannerSigned ?? null}
-            bannerCaption={data?.profile?.banner_caption ?? null}
-            bannerOverlay={data?.background?.bannerOverlay ?? "soft"}
-            bannerCaptionPosition={data?.background?.bannerCaptionPosition ?? "right"}
-            userId={data.userId}
-            onBannerChange={queryClient.invalidateQueries.bind(queryClient, {
-              queryKey: ["current-user"],
-            })}
-            firstName={firstName}
-            reputationScore={data?.profile?.reputation_score ?? null}
-          />
           {renderModule("today")}
           <ProjectReturnShelf />
           <FocusBand
@@ -387,86 +386,6 @@ function DashboardContent({
         </section>
       </div>
     </div>
-  );
-}
-
-/* ── Welcome banner ── */
-
-function DashboardWelcomeBanner({
-  bannerSigned,
-  bannerCaption,
-  bannerOverlay,
-  bannerCaptionPosition,
-  userId,
-  onBannerChange,
-  firstName,
-  reputationScore,
-}: {
-  bannerSigned: string | null;
-  bannerCaption: string | null;
-  bannerOverlay: string | null;
-  bannerCaptionPosition: "left" | "center" | "right" | null;
-  userId: string;
-  onBannerChange: () => void;
-  firstName: string;
-  reputationScore: number | null;
-}) {
-  return (
-    <section
-      aria-labelledby="dashboard-welcome-heading"
-      className="overflow-hidden rounded-xl bg-surface-elevated/30"
-    >
-      <BannerStrip
-        bannerSigned={bannerSigned}
-        bannerCaption={bannerCaption}
-        overlay={bannerOverlay}
-        captionPosition={bannerCaptionPosition}
-        userId={userId}
-        onChange={onBannerChange}
-        readonly
-      />
-      <div className="flex flex-wrap items-center justify-between gap-4 p-6 sm:p-8">
-        <div className="min-w-0">
-          <p className="section-label">Welcome back</p>
-          <h2
-            id="dashboard-welcome-heading"
-            className="mt-1 max-w-2xl font-title text-3xl font-semibold tracking-[-0.035em] sm:text-5xl"
-          >
-            Hey {firstName},{" "}
-            <span className="text-[var(--user-accent,var(--trust))]">what will you make move?</span>
-          </h2>
-          <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
-            <Link
-              to="/profile"
-              className="font-medium text-foreground underline decoration-border-strong underline-offset-4 transition-colors hover:text-[var(--user-accent,var(--trust))]"
-            >
-              Open your Studio
-            </Link>
-            <span aria-hidden="true" className="text-border-strong">
-              /
-            </span>
-            <CreateProjectButton
-              label="Start a project"
-              variant="ghost"
-              className="h-auto p-0 font-medium text-foreground hover:bg-transparent hover:text-[var(--user-accent,var(--trust))]"
-            />
-          </div>
-        </div>
-        <div className="flex shrink-0 items-center gap-3">
-          {reputationScore != null && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--user-accent-subtle,var(--learning-subtle))]/80 px-3 py-1.5 text-xs font-medium text-[var(--user-accent,var(--trust))]">
-              <Award className="h-3.5 w-3.5" />
-              {reputationScore} rep
-            </span>
-          )}
-          <span className="hidden text-right text-xs text-muted-foreground sm:block">
-            Your workspace
-            <br />
-            <span className="font-medium text-foreground">is yours to arrange</span>
-          </span>
-        </div>
-      </div>
-    </section>
   );
 }
 

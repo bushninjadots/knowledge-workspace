@@ -58,6 +58,22 @@ export function Footer() {
                     Settings
                   </Link>
                 </li>
+                <li>
+                  <Link
+                    to="/skills"
+                    className="text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    Skills
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/teams"
+                    className="text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    Teams
+                  </Link>
+                </li>
               </ul>
             </div>
           )}
@@ -90,6 +106,22 @@ export function Footer() {
                   >
                     Community spaces
                   </a>
+                </li>
+                <li>
+                  <Link
+                    to="/skills"
+                    className="text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    Skills
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/teams"
+                    className="text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    Teams
+                  </Link>
                 </li>
               </ul>
             </div>

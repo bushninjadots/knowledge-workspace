@@ -4,22 +4,29 @@ import { Menu, X, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { Logo } from "./logo";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "./theme-toggle";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { supabase } from "@/integrations/supabase/client";
 import { CreateProjectButton } from "./create-project-button";
 
 /**
- * The one and only top navigation. Every public page renders this same bar:
- * same section links, same auth-aware actions, same mobile menu — so moving
- * between landing, explore, profiles and project pages never changes the
- * chrome under the user's hands.
+ * The one and only top navigation for public pages. It carries Tethyr's major
+ * areas — discovery and community — while the user's own spaces (workspace,
+ * studio, messages, settings) live in the account menu, mirroring the
+ * authenticated shell's hierarchy instead of duplicating it as equal peers.
  */
 const primaryNavigation = [
   { to: "/explore", label: "Explore" },
-  { to: "/skills", label: "Skills" },
+  { to: "/community", label: "Community" },
   { to: "/challenges", label: "Challenges" },
-  { to: "/teams", label: "Teams" },
 ] as const;
 
 /** Shared animated-underline link styling for the desktop bar. */
@@ -111,17 +118,10 @@ export function Navbar() {
           ) : isAuthed ? (
             <>
               <CreateProjectButton size="sm" label="Create project" className="rounded-full" />
-              <Button asChild variant="default" size="sm" className="rounded-full">
-                <Link to="/dashboard">Dashboard</Link>
-              </Button>
-              <button
-                onClick={handleSignOut}
-                className="rounded-full p-2 text-muted-foreground transition-lift hover:bg-surface hover:text-foreground"
-                aria-label="Sign out"
-                title="Sign out"
-              >
-                <LogOut className="h-4 w-4" />
-              </button>
+              <AccountMenu
+                name={me?.profile?.display_name ?? me?.profile?.handle ?? "Member"}
+                onSignOut={handleSignOut}
+              />
             </>
           ) : (
             <>
@@ -221,21 +221,22 @@ export function Navbar() {
 
               <div className="mt-3 border-t border-border/60 pt-3">
                 {isAuthed ? (
-                  <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
                     <CreateProjectButton
                       size="default"
                       label="Create project"
-                      className="w-full rounded-full"
+                      className="flex-1 rounded-full"
                       onCreated={() => setOpen(false)}
                     />
-                    <Button asChild variant="default" className="w-full rounded-full">
-                      <Link to="/dashboard" onClick={() => setOpen(false)}>
-                        Dashboard
-                      </Link>
-                    </Button>
-                    <Button variant="ghost" className="w-full" onClick={handleSignOut}>
-                      <LogOut className="mr-1.5 h-4 w-4" />
-                      Sign out
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="rounded-full"
+                      onClick={handleSignOut}
+                      aria-label="Sign out"
+                      title="Sign out"
+                    >
+                      <LogOut className="h-4 w-4" />
                     </Button>
                   </div>
                 ) : (
@@ -258,5 +259,62 @@ export function Navbar() {
         </>
       )}
     </header>
+  );
+}
+
+/* ── Account menu: the user's own spaces on public pages ────────────────────
+ * Same destinations as the authenticated shell's Workspace/You groups so the
+ * hierarchy reads the same everywhere, and the dashboard never has to compete
+ * with the navbar over navigation.
+ */
+function AccountMenu({ name, onSignOut }: { name: string; onSignOut: () => void }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className="rounded-full"
+          aria-label={`Account menu for ${name}`}
+        >
+          {name}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel>Your Tethyr</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link to="/dashboard">Your workspace</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to="/profile">Your Studio</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to="/messages">Messages</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to="/notifications">Notifications</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to="/sessions">Sessions</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to="/connections">Connections</Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link to="/settings">Settings</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onSelect={(event) => {
+            event.preventDefault();
+            onSignOut();
+          }}
+        >
+          <LogOut className="h-4 w-4" />
+          Sign out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
