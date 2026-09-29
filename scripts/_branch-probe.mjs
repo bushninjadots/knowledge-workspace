@@ -40,7 +40,8 @@ for (const handle of handles) {
       h1: document.querySelector("h1")?.textContent,
     };
   });
-  const branch = r.studioBlocks > 0 ? "PUBLISHED STUDIO" : r.fallbackWork ? "fallback" : "fallback (no work)";
+  const branch =
+    r.studioBlocks > 0 ? "PUBLISHED STUDIO" : r.fallbackWork ? "fallback" : "fallback (no work)";
   console.log(
     `  ${handle.padEnd(10)} blocks=${String(r.studioBlocks).padStart(2)}  work=${String(r.fallbackWork).padEnd(5)}  → ${branch}`,
   );

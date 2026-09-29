@@ -20,16 +20,35 @@ const sb = supabase;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export const Route = createFileRoute("/projects/$id")({
-  // Lightweight title fetch so the SSR/meta carries the real project name
-  // (the component's useQuery still drives the full detail). Best-effort:
-  // on any error we fall back to the generic title rather than failing the page.
+  // Lightweight fetch so the SSR/meta carries the real project name and cover
+  // (the component's useQuery still drives the full detail). Best-effort: on
+  // any error we fall back to generic meta rather than failing the page.
   loader: async ({ params }) => {
     if (!UUID_RE.test(params.id)) throw notFound();
     try {
-      const { data } = await sb.from("projects").select("title").eq("id", params.id).maybeSingle();
-      return { title: (data?.title ?? null) as string | null };
+      const { data } = await sb
+        .from("projects")
+        .select("title, cover_url")
+        .eq("id", params.id)
+        .maybeSingle();
+      // Covers live in a private bucket — sign a short-lived URL for the
+      // social card. Covers stored as absolute http(s) URLs pass through.
+      const coverPath = (data?.cover_url ?? null) as string | null;
+      const coverUrl = coverPath?.startsWith("http")
+        ? coverPath
+        : coverPath
+          ? await sb.storage
+              .from("project-media")
+              .createSignedUrl(coverPath, 60 * 60)
+              .then((r) => r.data?.signedUrl ?? null)
+              .catch(() => null)
+          : null;
+      return {
+        title: (data?.title ?? null) as string | null,
+        coverUrl: coverUrl as string | null,
+      };
     } catch {
-      return { title: null };
+      return { title: null, coverUrl: null };
     }
   },
   head: ({ loaderData, params }) => {
@@ -37,10 +56,16 @@ export const Route = createFileRoute("/projects/$id")({
     const description = loaderData?.title
       ? `Explore ${loaderData.title} and the work being built with Tethyr.`
       : "Explore this project and the work being built with Tethyr.";
+    // The project's own cover makes the share card recognizable; seoMeta
+    // falls back to the shared og-image when there is no cover. The signed
+    // URL is already absolute (it points at the Supabase storage host), so
+    // it passes through untouched.
+    const image = loaderData?.coverUrl ?? undefined;
     return seoMeta({
       path: `/projects/${encodeURIComponent(params.id)}`,
       title,
       description,
+      image,
     });
   },
   validateSearch: (search: Record<string, unknown>) => search as Record<string, string | undefined>,

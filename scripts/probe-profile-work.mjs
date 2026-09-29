@@ -33,9 +33,11 @@ async function inspect(width, height, label) {
     const rows = work
       ? [...work.querySelectorAll("li a")].map((a) => a.textContent.replace(/\s+/g, " ").trim())
       : null;
-    const heads = [...work?.querySelectorAll("h2") ?? []].map((h) => h.textContent.trim());
+    const heads = [...(work?.querySelectorAll("h2") ?? [])].map((h) => h.textContent.trim());
     const arrange = work
-      ? [...work.querySelectorAll("a")].some((a) => /Arrange this in your Studio/.test(a.textContent))
+      ? [...work.querySelectorAll("a")].some((a) =>
+          /Arrange this in your Studio/.test(a.textContent),
+        )
       : false;
     return {
       workSection: !!work,

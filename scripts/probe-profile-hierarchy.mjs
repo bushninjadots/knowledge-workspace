@@ -40,7 +40,7 @@ const report = await page.evaluate(() => {
     top: top(el),
     label:
       el.querySelector("h2")?.textContent?.trim() ??
-      (el.tagName === "H1" ? "identity" : el.textContent?.trim().slice(0, 28) ?? ""),
+      (el.tagName === "H1" ? "identity" : (el.textContent?.trim().slice(0, 28) ?? "")),
   }));
 
   return {
@@ -79,7 +79,9 @@ console.log("all focusable:", report.focusable);
 
 const ordered = report.metaTop === null || report.identityTop < report.workTop;
 const workBeforeMeta = report.metaTop === null || report.workTop < report.metaTop;
-console.log(`\nHIERARCHY identity < work < metadata: ${ordered && workBeforeMeta ? "PASS" : "FAIL"}`);
+console.log(
+  `\nHIERARCHY identity < work < metadata: ${ordered && workBeforeMeta ? "PASS" : "FAIL"}`,
+);
 console.log(`METADATA PRESERVED: ${report.chipPresent ? "PASS" : "FAIL"}`);
 
 await browser.close();
