@@ -563,6 +563,11 @@
   }
 }
 
+/* Shared elevation for focused Studio overlays and floating controls. */
+@utility shadow-panel {
+  box-shadow: var(--shadow-lifted, 0 12px 30px rgb(0 0 0 / 0.16));
+}
+
 /* Small uppercase section label used above grouped content. */
 @utility section-label {
   font-size: 0.6875rem;
