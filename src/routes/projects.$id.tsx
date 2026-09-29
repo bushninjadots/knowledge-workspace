@@ -9,7 +9,7 @@
 // and is code-split via lazyRouteComponent so the entry chunk stays small.
 import { createFileRoute, lazyRouteComponent, notFound } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { canonicalLinks } from "@/lib/seo";
+import { seoMeta } from "@/lib/seo";
 
 const sb = supabase;
 
@@ -20,8 +20,8 @@ const sb = supabase;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export const Route = createFileRoute("/projects/$id")({
-  // Lightweight title fetch so the SSR/meta <title> carries the real project
-  // name (the component's useQuery still drives the full detail). Best-effort:
+  // Lightweight title fetch so the SSR/meta carries the real project name
+  // (the component's useQuery still drives the full detail). Best-effort:
   // on any error we fall back to the generic title rather than failing the page.
   loader: async ({ params }) => {
     if (!UUID_RE.test(params.id)) throw notFound();
@@ -32,20 +32,17 @@ export const Route = createFileRoute("/projects/$id")({
       return { title: null };
     }
   },
-  head: ({ loaderData, params }) => ({
-    meta: [
-      {
-        title: loaderData?.title ? `${loaderData.title} — Tethyr` : "Project — Tethyr",
-      },
-      {
-        name: "description",
-        content: loaderData?.title
-          ? `Explore ${loaderData.title} and the work being built with Tethyr.`
-          : "Explore this project and the work being built with Tethyr.",
-      },
-    ],
-    links: canonicalLinks(`/projects/${encodeURIComponent(params.id)}`),
-  }),
+  head: ({ loaderData, params }) => {
+    const title = loaderData?.title ?? "Project";
+    const description = loaderData?.title
+      ? `Explore ${loaderData.title} and the work being built with Tethyr.`
+      : "Explore this project and the work being built with Tethyr.";
+    return seoMeta({
+      path: `/projects/${encodeURIComponent(params.id)}`,
+      title,
+      description,
+    });
+  },
   validateSearch: (search: Record<string, unknown>) => search as Record<string, string | undefined>,
   // Code-split: the ~900-line workspace component lives in -projects-page.tsx
   // so it stays out of the entry chunk. Loader/head stay eager.

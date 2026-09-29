@@ -28,7 +28,9 @@ import { fetchPublicProfile, type PublicProfile } from "./-u.$handle-data";
 
 export function PublicProfileRoute() {
   const { handle } = useParams({ from: "/u/$handle" });
-  const { embed } = useSearch({ from: "/u/$handle" });
+  // embed is optional in the search schema (see the route file: a default
+  // would force a 307 on every param-less visit), so undefined means false.
+  const { embed = false } = useSearch({ from: "/u/$handle" });
   const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery({

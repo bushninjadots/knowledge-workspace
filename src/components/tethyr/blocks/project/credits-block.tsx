@@ -4,6 +4,7 @@ import { ProfileLink } from "@/components/tethyr/profile-link";
 import { BlockEmptyState } from "@/components/tethyr/blocks/block-empty-state";
 import { useProjectCredits } from "@/hooks/use-credits";
 import { registerBlock } from "@/lib/block-registry";
+import { contributionRoleNoun } from "@/lib/contribution-role";
 import type { BlockProps } from "@/lib/page-blocks";
 
 function ProjectCreditsBlock({ config, context }: BlockProps) {
@@ -39,7 +40,7 @@ function ProjectCreditsBlock({ config, context }: BlockProps) {
                   {c.display_name}
                 </ProfileLink>
                 <p className="text-xs text-muted-foreground">
-                  {c.role}
+                  {contributionRoleNoun(c.role)}
                   {c.credit_text && config.showCreditText !== false ? ` — ${c.credit_text}` : ""}
                 </p>
               </div>

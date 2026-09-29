@@ -49,15 +49,35 @@ if (typeof handler.fetch !== "function") {
   process.exit(1);
 }
 
-// Routes verified against the seeded database. The title snippets assert real
-// SSR content (not just a 200 shell) where the route renders server-side data.
+// Routes verified against the seeded database. The `contains` snippets assert
+// real SSR content — and, for the profile/project entries, the per-route SSR
+// <head>: title, description, and social tags come from each route's head(),
+// not the root defaults, so a head merge regression fails here instead of
+// shipping pages whose share cards read as the landing page. /u/priya without
+// a search param also pins the absent embed-default redirect (must be 200,
+// not a 307 to ?embed=false).
 const ROUTES = [
-  { path: "/", status: 200, contains: "Tethyr" },
+  { path: "/", status: 200, contains: "Build together, get known for what you make" },
   { path: "/login", status: 200, contains: "Log in" },
   { path: "/signup", status: 200, contains: "Sign up" },
   { path: "/skills", status: 200, contains: "Tethyr" },
   { path: "/explore", status: 200, contains: "Tethyr" },
   { path: "/community", status: 200, contains: "Tethyr" },
+  {
+    path: "/u/priya",
+    status: 200,
+    contains: "<title>Priya Nair (@priya) — Tethyr</title>",
+  },
+  {
+    path: "/u/priya?embed=true",
+    status: 200,
+    contains: 'property="og:title" content="Priya Nair (@priya) — Tethyr"',
+  },
+  {
+    path: "/projects/20000000-0000-0000-0000-000000000004",
+    status: 200,
+    contains: "<title>Threadline — Tethyr</title>",
+  },
   { path: "/this-route-does-not-exist", status: 404, contains: null },
 ];
 

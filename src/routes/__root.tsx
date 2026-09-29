@@ -104,7 +104,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "preload",
         as: "style",
         href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap",
-        crossOrigin: "anonymous",
+        // Must match the stylesheet link's (absent) crossOrigin exactly: a
+        // preloaded resource is only reused by a request with the same
+        // credentials mode, so a mismatched preload is fetched and wasted —
+        // the "preloaded but not used" console warning on every page.
       },
       {
         rel: "stylesheet",

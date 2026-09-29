@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BlockEmptyState } from "@/components/tethyr/blocks/block-empty-state";
 import { registerBlock } from "@/lib/block-registry";
+import { PROJECT_STATUS_LABEL, type ProjectStatus } from "@/components/tethyr/profile/types";
 import type { BlockProps } from "@/lib/page-blocks";
 
 type StatusData = {
@@ -19,12 +20,6 @@ type StatusData = {
   tools: string[];
 };
 
-const STATUS_LABEL: Record<string, string> = {
-  planning: "Planning",
-  active: "Active",
-  paused: "Paused",
-  completed: "Completed",
-};
 const SEASON_LABEL: Record<string, string> = {
   research: "Researching",
   prototype: "Prototyping",
@@ -71,7 +66,7 @@ function ProjectStatusBlock({ context }: BlockProps) {
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-muted-foreground">Status</span>
           <Badge variant="secondary" className="text-xs">
-            {STATUS_LABEL[resolvedData.status] ?? resolvedData.status}
+            {PROJECT_STATUS_LABEL[resolvedData.status as ProjectStatus] ?? resolvedData.status}
           </Badge>
         </div>
 

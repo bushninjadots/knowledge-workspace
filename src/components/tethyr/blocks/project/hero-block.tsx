@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { BlockEmptyState } from "@/components/tethyr/blocks/block-empty-state";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import { registerBlock } from "@/lib/block-registry";
+import { PROJECT_STATUS_LABEL, type ProjectStatus } from "@/components/tethyr/profile/types";
 import type { BlockProps } from "@/lib/page-blocks";
 
 type ProjectHeroData = {
@@ -29,12 +30,6 @@ type ProjectHeroData = {
   looking_for_feedback: boolean;
 };
 
-const STATUS_LABEL: Record<string, string> = {
-  planning: "Planning",
-  active: "Active",
-  paused: "Paused",
-  completed: "Completed",
-};
 const STAGE_LABEL: Record<string, string> = {
   planning: "Planning",
   building: "Building",
@@ -128,7 +123,8 @@ function ProjectHeroBlock({ config, context }: BlockProps) {
         {/* Status + Stage badges */}
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <Badge variant="secondary" className="text-xs">
-            {STATUS_LABEL[resolvedProject.status] ?? resolvedProject.status}
+            {PROJECT_STATUS_LABEL[resolvedProject.status as ProjectStatus] ??
+              resolvedProject.status}
           </Badge>
           {resolvedProject.stage && (
             <Badge variant="outline" className="text-xs">
