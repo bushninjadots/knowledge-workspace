@@ -84,6 +84,12 @@ const DESTINATIONS: ReadonlyArray<{
     to: () => ({ to: "/profile" }),
   },
   {
+    label: "Studio editor",
+    description: "Customize your profile layout and blocks",
+    keywords: ["studio editor", "edit studio", "studio builder", "blocks", "layout editor"],
+    to: () => ({ to: "/studio" }),
+  },
+  {
     label: "Explore",
     description: "Projects, people, and open roles",
     keywords: ["explore", "discover", "browse", "projects", "people", "hire", "recruit"],
