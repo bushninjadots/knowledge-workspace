@@ -43,7 +43,7 @@ jobs:
 
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: v2.116.0
 
       # The probe asserts SSR content that depends on seeded data, so the
       # local stack must be up — same pattern the visual-qa job uses.
@@ -103,7 +103,7 @@ jobs:
 
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: v2.116.0
 
       # Brings up postgres/auth/rest/storage, applies all migrations + seed.
       - name: Start Supabase
