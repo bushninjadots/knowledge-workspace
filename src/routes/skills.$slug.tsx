@@ -9,11 +9,21 @@ import { fetchSkillBySlug, skillQueryKey } from "./-skills.$slug-data";
 
 export const Route = createFileRoute("/skills/$slug")({
   loader: async ({ params, context: { queryClient } }) => {
-    const skill = await queryClient.fetchQuery({
-      queryKey: skillQueryKey(params.slug),
-      queryFn: () => fetchSkillBySlug(params.slug),
-      staleTime: 5 * 60 * 1000,
-    });
+    // Degrade instead of throw: an unreadable catalog (missing env on a
+    // key-free runner, transient Supabase outage) must render the route's
+    // "Skill not found — try again" fallback with a 200, not a 500 whose
+    // only difference is the status code. A real miss also resolves to null
+    // here, and head() already falls back to the raw slug either way.
+    const skill = await queryClient
+      .fetchQuery({
+        queryKey: skillQueryKey(params.slug),
+        queryFn: () => fetchSkillBySlug(params.slug),
+        staleTime: 5 * 60 * 1000,
+        // Loader fetches are one-shot: retrying a structural failure (missing
+        // env) just delays the graceful fallback the page already renders.
+        retry: false,
+      })
+      .catch(() => null);
     return { skill };
   },
   head: ({ loaderData, params }) => {
