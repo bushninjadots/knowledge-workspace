@@ -36,10 +36,12 @@
 
 Implement the smallest change that improves coherence, trust, or the core collaboration loop. Each stage must be validated before the next stage begins. Do not add new top-level features while a higher-priority stage is incomplete.
 
-**Status (2026-09-29):** Stages 0–6 and 9–18 are complete; Stage 7 (deferred
-depth) is the only unimplemented stage and is intentionally still open. The
-gate below no longer applies — the redesign shipped and was triaged through
-[`studio-integration-plan.md`](./studio-integration-plan.md).
+**Status (2026-09-30):** Stages 0–6 and 9–18 are complete. Stage 7's four
+evaluations were performed 2026-09-30 (verdicts recorded on the checkboxes
+below) — all four came back **deferred with explicit triggers**; none has a
+concrete product case today. The stage's deliverable is the evaluation, not
+the features. The gate below no longer applies — the redesign shipped and was
+triaged through [`studio-integration-plan.md`](./studio-integration-plan.md).
 
 The redesign (Stages 8–18 below) must not begin until the existing Stage 7 deferred items are triaged and the Phase 1 redesign audit is approved.
 
@@ -118,10 +120,54 @@ The redesign (Stages 8–18 below) must not begin until the existing Stage 7 def
 
 **Goal:** only build additional platform depth after the existing loop has usage evidence.
 
-- [ ] Evaluate video/audio sessions.
-- [ ] Evaluate external calendar sync.
-- [ ] Evaluate push/email notifications.
-- [ ] Evaluate API, analytics, leaderboards, and native mobile only with a concrete product case.
+- [x] Evaluate video/audio sessions. **(2026-09-30: deferred — no case.)**
+      Sessions already coordinate and link: the schedule wizard stores `meeting_url`
+      (`schedule-session-wizard.tsx`), so participants bring their own Zoom/Meet
+      room. The enum lifecycle (`skill_exchange` … `workshop`) and the
+      `session_status` machine are in place; what's missing is only the media
+      transport, which is WebRTC infrastructure (SFU vendor or self-hosted LiveKit)
+      — the heaviest item on this list by an order of magnitude. No evidence that
+      anyone abandoned a session over the external-link hop. **Trigger:** paid or
+      recurring sessions where the context switch measurably costs attendance, or
+      workshop formats that need in-page screenshare/recording.
+- [x] Evaluate external calendar sync. **(2026-09-30: deferred — slice
+      identified, trigger not met.)** `sessions` already carries `starts_at`/
+      `ends_at` timestamptz and a sessions calendar UI, so a per-session `.ics`
+      download (and later a feed URL) is a pure data-format render — no vendor, no
+      keys, no background jobs; it is the smallest item here. Deferred on the same
+      rule as everything else: no evidence yet that participants juggle sessions
+      against external calendars. **Trigger:** recurring session scheduling where
+      no-shows trace to forgotten external commitments.
+- [x] Evaluate push/email notifications. **(2026-09-30: deferred — strongest
+      eventual case, design constraint recorded.)** Notifications are realtime,
+      in-app only (`.channel(` subscriptions in `use-notifications.ts`); there is
+      no email, web-push, or service worker anywhere in `src/`. The gap is real:
+      session invites, role applications, and challenge outcomes are time-sensitive
+      and currently require the user to open the app. But it needs a provider +
+      edge function + templates, and there is no retention evidence saying users
+      are lost to silence. **Design constraint for whoever builds it:** the mute
+      schema (`profiles.notification_preferences` → 7 `NotificationCategory`
+      values) is already channel-agnostic and must gate every out-of-app channel;
+      destinations come from `src/lib/notification-destinations.ts`, not ad-hoc
+      queries. **Trigger:** daily-active retention flattening, or session no-shows
+      attributed to unseen invites.
+- [x] Evaluate API, analytics, leaderboards, and native mobile. **(2026-09-30:
+      deferred; leaderboards additionally flagged as identity-risk.)** No public
+      API exists today (SSR pages + RLS-scoped PostgREST only) and no third party
+      has asked for one — an API without a consumer is surface area without
+      value. Error telemetry is covered (Sentry, server + client); product usage
+      analytics would need a privacy-respecting choice (self-hosted Plausible/
+      Umami vs hosted PostHog) — a decision to make when there are users to
+      measure, not before. **Leaderboards carry a product-identity risk**, not
+      just a deferred one: reputation here is framed as personal progress toward
+      "known for what you make," and ranking surfaces gamify it toward claim
+      culture — do not build without an explicit product decision that revisits
+      [`TETHYR_PRODUCT.md`](./TETHYR_PRODUCT.md). Native mobile: the web app is
+      responsive; an app-store presence is a distribution play that presumes an
+      audience worth porting to. **Triggers:** API — a concrete third-party
+      integration request; analytics — first cohort of daily-active users;
+      native — evidence that a meaningful share of the loop happens on mobile
+      and web retention shows it.
 
 ## Stage 8–18 — Major Redesign (TETHYR_REDESIGN_SPEC.md)
 
@@ -294,7 +340,7 @@ These stages implement the block/page/template/fork system described in [`TETHYR
 
 **Files created:**
 
-- `src/hooks/use-templates.ts` — `usePublicTemplates`, `useMyTemplates`, `useTemplate`, `useApplyTemplate`, `useUnpublishTemplate`. *(still on disk; the public-gallery half is now unused by any route)*
+- `src/hooks/use-templates.ts` — `usePublicTemplates`, `useMyTemplates`, `useTemplate`, `useApplyTemplate`, `useUnpublishTemplate`. _(still on disk; the public-gallery half is now unused by any route)_
 - ~~`src/routes/_authenticated/templates.tsx`~~ — public template gallery. **Deleted** in the Studio convergence; there is no `/templates` route in `src/routeTree.gen.ts`.
 
 **Files modified:**
@@ -694,3 +740,26 @@ Two shipped decisions turned out to be half-applied: one because a later migrati
 - **Both passes were mutation-checked rather than trusted.** A test is worth what it catches, so the four behavioural assumptions above were reverted one at a time and the suite re-run: dropping `use-now`'s last-subscriber stop, dropping `use-online-status`'s post-mount sync, hard-coding `use-unsaved-changes`'s blocker to allow navigation, and dropping `use-space-read-state`'s refetch each fail their own test and nothing else. This is the same standard the pgTAP suites are held to. (`npm run verify` also caught `scripts/qa-csp.mjs` failing Prettier — an unformatted edit from the previous pass that had slipped through — now fixed.)
 
 **Verification:** `npm run verify` green — typecheck, lint, **823 tests across 102 files**, Prettier, zero unused exports, zero hand-rolled cards. Production artifact: `build:prod` + `serve:prod` serve the enforced nonce CSP; `qa-audit` 21 pages / 0 errors, `qa-csp --require-enforced` 5/5, `qa-explore-overlay` and `qa-studio-parity` pass, `qa-workflows` 12/14 with the two misses being dev-server-only source-import checks.
+
+### 2026-09-30 — Stage 7 evaluation (deferred depth) — stage closed
+
+All four Stage 7 items were evaluated against the codebase as it ships (not
+against ambition) and each received a **deferred verdict with an explicit
+revisit trigger**, recorded on the checkboxes above. The evidence gathered:
+
+- Sessions already store a `meeting_url` (schedule wizard) and carry a full
+  type/status enum lifecycle — video/audio is only missing the media
+  transport, which is WebRTC/SFU infrastructure and the heaviest item here.
+- `sessions.starts_at/ends_at` + the sessions calendar mean an `.ics` export
+  is a pure data-format render — the smallest item, still deferred on the
+  same no-evidence rule as the rest.
+- Notifications are realtime + in-app only; the 7-category mute schema and
+  the notification-destinations map are the channel-agnostic design an
+  out-of-app channel must reuse when its trigger fires.
+- No public API, no product analytics, no native app; leaderboards were
+  additionally flagged as a product-identity risk, not just a deferred one.
+
+**With all stages now closed or deferred-with-triggers, the next build work
+should come from the primary loop or a Stage 7 trigger — not from this
+document.** Per the operating rule, no new top-level features without a
+concrete product case.
