@@ -960,7 +960,7 @@ export function ExplorePage() {
                                     Open role
                                   </span>
                                   {skillMatchCount > 0 && (
-                                    <span className="inline-flex items-center gap-1 rounded-full border border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] px-1.5 py-0 text-[11px] font-medium text-[var(--user-accent,var(--primary))]">
+                                    <span className="inline-flex items-center gap-1 rounded-full border border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] px-1.5 py-0 text-[11px] font-medium text-[var(--user-accent-emphasis,var(--user-accent,var(--primary)))]">
                                       <BadgeCheck className="h-3 w-3" />
                                       {skillMatchCount} match{skillMatchCount !== 1 ? "es" : ""}
                                     </span>
@@ -992,7 +992,7 @@ export function ExplorePage() {
                                       key={skill}
                                       className={`rounded-full border px-2.5 py-1 text-[11px] ${
                                         isMySkill
-                                          ? "border-[var(--user-accent,var(--primary))]/25 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
+                                          ? "border-[var(--user-accent,var(--primary))]/25 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent-emphasis,var(--user-accent,var(--primary)))]"
                                           : "border-primary/25 bg-primary/5 text-primary"
                                       }`}
                                     >
