@@ -174,7 +174,7 @@ function SkillsDirectoryPage() {
 
   if (catalog.isLoading) {
     return (
-      <SectionShell>
+      <SectionShell className="bg-noise">
         <div className="px-4 py-12 sm:px-6">
           <div
             className="mx-auto max-w-6xl animate-pulse space-y-8"
@@ -200,7 +200,7 @@ function SkillsDirectoryPage() {
 
   if (catalog.isError) {
     return (
-      <SectionShell>
+      <SectionShell className="bg-noise">
         <div className="flex min-h-[calc(100dvh-3rem)] items-center justify-center px-4">
           <EmptyState
             title="Couldn't load the skills directory"
@@ -215,7 +215,7 @@ function SkillsDirectoryPage() {
   }
 
   return (
-    <SectionShell backTo="/explore">
+    <SectionShell backTo="/explore" className="bg-noise">
       <header className="px-4 pb-10 pt-12 sm:px-6">
         <div className="mx-auto max-w-6xl">
           <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">

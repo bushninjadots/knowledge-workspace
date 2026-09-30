@@ -85,7 +85,10 @@ export function AuthenticatedShell() {
       </Dialog>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-border bg-background px-3 sm:px-4">
+        {/* Connected chrome: same surface as the sidebar, no bottom border —
+            the sidebar's border-r is the one seam through the full height.
+            The sidebar's collapse control is unaffected (same h-12 strip). */}
+        <header className="sticky top-0 z-30 flex h-12 items-center gap-2 bg-surface px-3 sm:px-4">
           <button
             className="rounded-md p-1.5 hover:bg-surface-sunken md:hidden"
             onClick={() => setOpen(true)}

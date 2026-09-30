@@ -178,7 +178,12 @@ export function SectionShell({
       </Dialog>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-border bg-background px-3 sm:px-4">
+        {/* The topbar joins the sidebar's surface and drops its own bottom
+            border: with the sidebar's border-r running the full height, the
+            two read as one connected frame — a single seam, a single color —
+            instead of two strips. The sidebar's collapse control (its width
+            transition) is untouched by this: same height, same colors. */}
+        <header className="sticky top-0 z-30 flex h-12 items-center gap-2 bg-surface px-3 sm:px-4">
           <button
             type="button"
             onClick={goBack}
