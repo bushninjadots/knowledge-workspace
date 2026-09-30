@@ -90,6 +90,25 @@ async function fetchRepoMeta(fullName) {
   };
 }
 
+async function fetchCommitActivity(fullName) {
+  try {
+    const res = await fetch(`https://api.github.com/repos/${fullName}/stats/commit_activity`, {
+      headers: ghHeaders(),
+    });
+    if (res.status === 202) return { pending: true, weeks: null, notFound: false };
+    if (res.status === 404) return { pending: false, weeks: null, notFound: true };
+    if (!res.ok) return { pending: false, weeks: null, notFound: false };
+    const json = await res.json();
+    if (!Array.isArray(json)) return { pending: false, weeks: null, notFound: false };
+    const weeks = json
+      .filter((w) => typeof w.week === "number" && Array.isArray(w.days))
+      .map((w) => ({ week: w.week, total: w.total ?? 0, days: (w.days ?? []).slice(0, 7) }));
+    return { pending: false, weeks: weeks.slice(-52), notFound: false };
+  } catch {
+    return { pending: false, weeks: null, notFound: false };
+  }
+}
+
 // ── Supabase (service role — RLS does not apply) ─────────────────────────────
 async function rest(path, init = {}) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
@@ -166,18 +185,39 @@ for (const row of rows) {
     continue;
   }
 
+  const prevActivity = Array.isArray(row.metadata?.commit_activity)
+    ? row.metadata.commit_activity
+    : null;
+  const metadata = { ...result.meta };
+
+  // Contribution graph: fresh weeks when GitHub has them, previous cache when
+  // it's still computing (202), nothing on a hard 404.
+  if (result.meta && !DRY_RUN) {
+    const activity = await fetchCommitActivity(fullName);
+    if (activity.weeks) metadata.commit_activity = activity.weeks;
+    else if (prevActivity && !activity.notFound) metadata.commit_activity = prevActivity;
+  } else if (result.meta && prevActivity) {
+    metadata.commit_activity = prevActivity; // dry run keeps it in the report only
+  }
+
   if (DRY_RUN) {
+    const graph = metadata.commit_activity
+      ? ` · graph (${metadata.commit_activity.reduce((n, w) => n + w.total, 0)} commits/yr)`
+      : "";
     console.log(
-      `→ would update ${fullName} — ★${result.meta.stargazers_count} · ${result.meta.language ?? "?"} · branch ${result.meta.default_branch}${result.meta.private ? " · private" : ""}`,
+      `→ would update ${fullName} — ★${result.meta.stargazers_count} · ${result.meta.language ?? "?"} · branch ${result.meta.default_branch}${result.meta.private ? " · private" : ""}${graph}`,
     );
     updated++;
     continue;
   }
 
   try {
-    await updateMetadata(row.id, result.meta);
+    await updateMetadata(row.id, metadata);
+    const graph = metadata.commit_activity
+      ? ` · graph (${metadata.commit_activity.reduce((n, w) => n + w.total, 0)} commits/yr)`
+      : "";
     console.log(
-      `✓ backfilled ${fullName} — ★${result.meta.stargazers_count} · ${result.meta.language ?? "?"} · branch ${result.meta.default_branch}${result.meta.private ? " · private" : ""}`,
+      `✓ backfilled ${fullName} — ★${metadata.stargazers_count} · ${metadata.language ?? "?"} · branch ${metadata.default_branch}${metadata.private ? " · private" : ""}${graph}`,
     );
     updated++;
   } catch (err) {

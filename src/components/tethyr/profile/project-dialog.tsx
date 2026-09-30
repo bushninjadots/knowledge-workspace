@@ -5,7 +5,12 @@ import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
 import { validateImageFile, isSafeUrl } from "@/lib/validators";
-import { fetchRepoMetaServer, fetchRepoReadmeServer, listGithubRepos } from "@/lib/github-server";
+import {
+  fetchRepoCommitActivityServer,
+  fetchRepoMetaServer,
+  fetchRepoReadmeServer,
+  listGithubRepos,
+} from "@/lib/github-server";
 import { absolutizeRelativeLinks, repoFullNameToTitle } from "@/lib/github";
 import type { RepoMeta } from "@/lib/github";
 import { GitHubConnect } from "./github-connect";
@@ -102,6 +107,15 @@ export function ProjectDialog({
   const [repoSearch, setRepoSearch] = useState("");
   const queryClient = useQueryClient();
 
+  // What to pull from the picked repo — everything stays editable afterwards;
+  // these just decide what the import pre-fills in the first place.
+  const [importChoices, setImportChoices] = useState({
+    readme: true,
+    description: true,
+    language: true,
+    topics: true,
+  });
+
   const reposQuery = useQuery({
     queryKey: ["github-repos-for-import"],
     queryFn: () => listGithubRepos(),
@@ -150,9 +164,9 @@ export function ProjectDialog({
     setImportedReadme(null);
     setImportedMeta(null);
     setTitle(repoFullNameToTitle(fullName));
-    if (repo.description) setDescription(repo.description);
+    if (importChoices.description && repo.description) setDescription(repo.description);
     const language = repo.language;
-    if (language) {
+    if (importChoices.language && language) {
       // Prefer a catalog skill match; otherwise keep the language as a tag so
       // the information survives without inventing a skill that isn't there.
       const match = allSkills.find((s) => s.name.toLowerCase() === language.toLowerCase());
@@ -162,12 +176,17 @@ export function ProjectDialog({
     setImportingReadme(true);
     try {
       // Snapshot the full repo metadata (stars, forks, topics, default branch,
-      // visibility) alongside the README so the linked repo row starts with a
-      // real cached state instead of a stub — the project page renders it.
+      // visibility) plus the 52-week commit history, alongside the README —
+      // the linked repo row starts with a real cached state instead of a
+      // stub, and the project page renders stats and the contribution graph
+      // without per-view GitHub calls.
       const [owner, repoName] = fullName.split("/");
-      const [meta, { text, rateLimited, unauthorized }] = await Promise.all([
+      const [meta, activity, readme] = await Promise.all([
         owner && repoName
           ? fetchRepoMetaServer({ data: { owner, repo: repoName } }).catch(() => null)
+          : Promise.resolve(null),
+        owner && repoName
+          ? fetchRepoCommitActivityServer({ data: { fullName } }).catch(() => null)
           : Promise.resolve(null),
         fetchRepoReadmeServer({ data: { fullName } }),
       ]);
@@ -182,7 +201,15 @@ export function ProjectDialog({
             stargazers_count: repo.stargazers_count,
             private: repo.private,
           };
+      if (activity?.weeks && activity.weeks.length > 0) snapshot.commit_activity = activity.weeks;
       setImportedMeta(snapshot);
+
+      if (importChoices.topics) {
+        const topics = (meta?.topics ?? []).filter((t) => t && !tags.includes(t));
+        if (topics.length) setTags((prev) => [...prev, ...topics.filter((t) => !prev.includes(t))]);
+      }
+
+      const { text, rateLimited, unauthorized } = readme;
       if (unauthorized) {
         toast.error(
           "GitHub rejected the saved token — reconnect it in Settings to import the README",
@@ -200,7 +227,11 @@ export function ProjectDialog({
       // Relative image/link paths get absolutized against the source repo, so
       // GitHub-hosted screenshots and GIFs render inside the project page. The
       // real default branch beats "HEAD" when GitHub told us what it is.
-      setImportedReadme(absolutizeRelativeLinks(text, fullName, snapshot.default_branch || "HEAD"));
+      if (importChoices.readme) {
+        setImportedReadme(
+          absolutizeRelativeLinks(text, fullName, snapshot.default_branch || "HEAD"),
+        );
+      }
       toast.success("Imported — review everything below before publishing");
     } finally {
       setImportingReadme(false);
@@ -215,6 +246,7 @@ export function ProjectDialog({
       setImportedReadme(null);
       setImportedMeta(null);
       setRepoSearch("");
+      setImportChoices({ readme: true, description: true, language: true, topics: true });
     }
   }, [open, project?.id]);
 
@@ -499,6 +531,34 @@ export function ProjectDialog({
             )}
             {!project && sourceChoice === "github" && (
               <div className="rounded-lg border border-border bg-surface-sunken/40 p-3">
+                {!importedRepo && (
+                  <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <span className="text-[11px] font-medium text-muted-foreground">Pull in:</span>
+                    {(
+                      [
+                        ["readme", "README"],
+                        ["description", "Description"],
+                        ["language", "Language → skill"],
+                        ["topics", "Topics → tags"],
+                      ] as const
+                    ).map(([key, label]) => (
+                      <label
+                        key={key}
+                        className="flex cursor-pointer items-center gap-1.5 text-[11px] text-muted-foreground"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={importChoices[key]}
+                          onChange={(e) =>
+                            setImportChoices((prev) => ({ ...prev, [key]: e.target.checked }))
+                          }
+                          className="accent-primary"
+                        />
+                        {label}
+                      </label>
+                    ))}
+                  </div>
+                )}
                 {importedRepo ? (
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex min-w-0 items-center gap-2 text-sm">

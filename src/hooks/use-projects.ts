@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { ProjectPresentationPreset } from "@/lib/project-presentation";
+import type { GithubDisplay } from "@/lib/github";
+import { supabasePending } from "@/lib/supabase-pending-schema";
 
 const sb = supabase;
 
@@ -64,6 +66,7 @@ export type ProjectDetail = {
   uploaded_files?: Record<string, unknown>[];
   readme?: string | null;
   tools?: string[];
+  github_display?: GithubDisplay | null;
   created_at: string;
   updated_at: string;
 };
@@ -960,6 +963,42 @@ export function useUpdateProjectPresentation() {
               project: { ...old.project, presentation_preset: input.presentationPreset },
             }
           : old,
+      );
+      return { previous };
+    },
+    onError: (_error, input, context) => {
+      if (context?.previous) qc.setQueryData(PROJECT_KEY(input.projectId), context.previous);
+    },
+    onSuccess: (_data, input) => {
+      qc.invalidateQueries({ queryKey: PROJECT_KEY(input.projectId) });
+    },
+  });
+}
+
+/**
+ * Per-project GitHub showcase preferences (which cached repo data the code
+ * panel renders). Optimistic like the presentation toggle so hiding a block
+ * feels instant; a null column means "all on".
+ */
+export function useUpdateGithubDisplay() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { projectId: string; display: GithubDisplay }) => {
+      // github_display ships in 20260930140000 and isn't in the generated
+      // Database types yet — routed through the pending-schema handle until it
+      // lands there (same pattern as the other post-generation columns).
+      const { error } = await supabasePending
+        .from("projects")
+        .update({ github_display: input.display })
+        .eq("id", input.projectId);
+      if (error) throw error;
+    },
+    onMutate: async (input) => {
+      const key = PROJECT_KEY(input.projectId);
+      await qc.cancelQueries({ queryKey: key });
+      const previous = qc.getQueryData<ProjectDetailCache>(key);
+      qc.setQueryData<ProjectDetailCache>(key, (old) =>
+        old ? { ...old, project: { ...old.project, github_display: input.display } } : old,
       );
       return { previous };
     },

@@ -2,6 +2,7 @@ import { lazy, Suspense, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { MARKDOWN_COMPONENTS } from "@/components/tethyr/blocks/readme-markdown";
 import {
   Pencil,
   Download,
@@ -26,7 +27,6 @@ import { buildTree, treeToAscii } from "@/lib/file-tree";
 import { diffLines, diffStats } from "@/lib/line-diff";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
-import { CodeBlock } from "./code-block";
 import { ProjectCodePanel } from "./project-code-panel";
 import { ReadmeToc, ReadmeTocCollapsed } from "./readme-toc";
 import { ReadingProgress, README_ARTICLE_ID } from "./reading-progress";
@@ -183,10 +183,15 @@ export function ProjectReadmeTab({
   }, [project.readme, fallbackDoc]);
   const headingComponents = useMemo(() => makeHeadingComponents(readmeSections), [readmeSections]);
 
-  // Read-mode markdown renderer: anchored headings + fenced code blocks become
-  // copyable, highlighted CodeBlocks while inline code keeps the theme's look.
+  // Read-mode markdown renderer: anchored headings plus the shared code
+  // overrides (fenced blocks become copyable, highlighted CodeBlocks; inline
+  // code keeps the theme's chip look) — identical to the profile README and
+  // About blocks. The old `code: MarkdownCode` override assumed react-markdown
+  // v9's `inline` prop; v10 dropped it, so paragraph-embedded code rendered a
+  // block <pre> inside a <p> and tripped a hydration warning on every code
+  // sample in the README.
   const markdownComponents = useMemo(
-    () => ({ ...headingComponents, code: MarkdownCode }),
+    () => ({ ...headingComponents, ...MARKDOWN_COMPONENTS }),
     [headingComponents],
   );
 
@@ -684,30 +689,6 @@ function makeHeadingComponents(sections: { id: string; text: string; level: numb
       <HeadingWithId level={6} sections={sections} {...props} />
     ),
   };
-}
-
-// Fenced code blocks become copyable CodeBlocks (highlighting is code-split);
-// inline `code` keeps the theme's chip treatment.
-function MarkdownCode({
-  inline,
-  className,
-  children,
-}: {
-  inline?: boolean;
-  className?: string;
-  children?: React.ReactNode;
-}) {
-  if (!inline) {
-    const language =
-      typeof className === "string" ? /language-([\w-]+)/.exec(className)?.[1] : undefined;
-    const text = Array.isArray(children)
-      ? children.filter((c): c is string => typeof c === "string").join("")
-      : typeof children === "string"
-        ? children
-        : "";
-    return <CodeBlock code={text.replace(/\n$/, "")} language={language} />;
-  }
-  return <code className={className}>{children}</code>;
 }
 
 function EditorSkeleton() {

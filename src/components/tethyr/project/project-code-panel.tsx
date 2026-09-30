@@ -1,28 +1,94 @@
-import { useState } from "react";
-import { Link2, Lock, Plus, RefreshCw, Settings2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import {
+  CalendarDays,
+  CalendarClock,
+  Link2,
+  Lock,
+  Plus,
+  RefreshCw,
+  Scale,
+  Settings2,
+  Sparkles,
+} from "lucide-react";
 import { formatDistanceToNowStrict } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { languageColor } from "@/lib/language-colors";
-import { getRepoFullName } from "@/lib/github";
+import { buildContributionCalendar, getRepoFullName, githubDisplayShows } from "@/lib/github";
+import type { CommitActivityWeek, ContributionCalendar, GithubDisplay } from "@/lib/github";
 import { fetchProjectReadmeSource, readmeSourceMessage } from "@/lib/project-readme-source";
-import { useUpdateProjectReadme } from "@/hooks/use-projects";
+import { safeHref } from "@/lib/validators";
+import { useUpdateGithubDisplay, useUpdateProjectReadme } from "@/hooks/use-projects";
 import { useRefreshRepoMetadata } from "@/hooks/use-project-repos";
 import type { ProjectRepo } from "@/hooks/use-project-repos";
 
 type ProjectCodePanelProps = {
-  project: { id: string; readme?: string | null };
+  project: { id: string; readme?: string | null; github_display?: GithubDisplay | null };
   repos: ProjectRepo[] | undefined;
   isOwner: boolean;
   className?: string;
   onLinkRepo?: () => void;
 };
 
+/** Heat colors for the contribution graph — the user's accent, banded. */
+const GRAPH_LEVEL_CLASS = [
+  "bg-border/50",
+  "bg-[var(--user-accent,var(--primary))]/25",
+  "bg-[var(--user-accent,var(--primary))]/45",
+  "bg-[var(--user-accent,var(--primary))]/70",
+  "bg-[var(--user-accent,var(--primary))]",
+] as const;
+
+const DISPLAY_OPTIONS: { key: keyof GithubDisplay; label: string }[] = [
+  { key: "show_stats", label: "Stars, forks & issues" },
+  { key: "show_topics", label: "Topics" },
+  { key: "show_graph", label: "Contribution graph" },
+  { key: "show_details", label: "License & details" },
+];
+
 /**
- * Compact GitHub surface for the project page: primary repo, key stats, topics,
- * and a one-click "Sync from GitHub" for owners (README + cached stats in one
- * action). On desktop it lives in the sticky rail beside the README; on mobile
- * it renders as a full-width band below it.
+ * GitHub's 52-week commit history as the familiar contribution grid: one
+ * column per week, Sun–Sat rows, intensity banded by the busiest day. Stays
+ * inside the cached snapshot — no GitHub call per page view.
+ */
+function ContributionGraph({ calendar }: { calendar: ContributionCalendar }) {
+  return (
+    <div className="space-y-1.5">
+      <p className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
+        <CalendarDays className="h-3 w-3" />
+        <span className="tabular-nums">{calendar.total.toLocaleString()}</span> commits in the last
+        year
+      </p>
+      <div className="overflow-x-auto pb-1">
+        <div
+          role="img"
+          aria-label={`Contribution graph: ${calendar.total} commits over the last 52 weeks`}
+          className="flex w-max gap-[3px]"
+        >
+          {calendar.weeks.map((column, i) => (
+            <div key={i} className="flex flex-col gap-[3px]">
+              {column.map((cell, j) => (
+                <span
+                  key={j}
+                  title={`${cell.count} commit${cell.count === 1 ? "" : "s"}`}
+                  className={cn("h-[8px] w-[8px] rounded-[2px]", GRAPH_LEVEL_CLASS[cell.level])}
+                />
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Compact GitHub surface for the project page: primary repo, key stats,
+ * topics, the 52-week contribution graph, and a one-click "Sync from GitHub"
+ * for owners (README + cached stats in one action). Owners choose which
+ * sections show via the per-project display preferences. On desktop it lives
+ * in the sticky rail beside the README; on mobile it renders as a full-width
+ * band below it.
  */
 export function ProjectCodePanel({
   project,
@@ -33,14 +99,16 @@ export function ProjectCodePanel({
 }: ProjectCodePanelProps) {
   const updateReadme = useUpdateProjectReadme();
   const refreshMeta = useRefreshRepoMetadata();
+  const updateDisplay = useUpdateGithubDisplay();
   const [syncing, setSyncing] = useState(false);
+  const [customizing, setCustomizing] = useState(false);
 
   const primary = repos?.[0];
   const secondary = repos?.slice(1, 4) ?? [];
 
   // One click pulls both faces of the repo: the README (with relative links
   // absolutized against the real default branch) and the cached metadata
-  // snapshot (stars, language, topics, pushed-at) the panel itself renders.
+  // snapshot (stars, language, topics, contribution graph) the panel renders.
   // The metadata refresh merges over the last good snapshot, so a failed meta
   // fetch never wipes stats; the README only saves when it actually changed.
   const syncFromGithub = async () => {
@@ -72,10 +140,39 @@ export function ProjectCodePanel({
     }
   };
 
+  const toggleDisplay = (key: keyof GithubDisplay) => {
+    const current = project.github_display ?? {};
+    updateDisplay.mutate(
+      { projectId: project.id, display: { ...current, [key]: !githubDisplayShows(current, key) } },
+      {
+        onSuccess: () => {
+          toast.success(
+            githubDisplayShows(current, key)
+              ? "Hidden from the project page"
+              : "Visible on the project page",
+          );
+        },
+      },
+    );
+  };
+
   const meta = primary?.metadata ?? {};
+  const cachedWeeks = Array.isArray(meta.commit_activity)
+    ? (meta.commit_activity as CommitActivityWeek[])
+    : null;
+  const calendar = useMemo(
+    () => (cachedWeeks && cachedWeeks.length > 0 ? buildContributionCalendar(cachedWeeks) : null),
+    [cachedWeeks],
+  );
   const language = meta.language ?? null;
   const langDot = languageColor(language);
   const lastPush = meta.updated_at ? formatDistanceToNowStrict(new Date(meta.updated_at)) : null;
+  const createdAgo = meta.created_at ? formatDistanceToNowStrict(new Date(meta.created_at)) : null;
+  const showStats = githubDisplayShows(project.github_display, "show_stats");
+  const showTopics = githubDisplayShows(project.github_display, "show_topics");
+  const showGraph = githubDisplayShows(project.github_display, "show_graph");
+  const showDetails = githubDisplayShows(project.github_display, "show_details");
+  const hasGraph = showGraph && calendar !== null;
 
   return (
     <section aria-label="Code" className={cn("space-y-3", className)}>
@@ -121,29 +218,34 @@ export function ProjectCodePanel({
             )}
           </div>
 
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-muted-foreground">
-            {language && (
-              <span className="inline-flex items-center gap-1.5">
-                {langDot && (
-                  <span
-                    aria-hidden="true"
-                    className="h-2 w-2 rounded-full"
-                    style={{ background: langDot }}
-                  />
-                )}
-                {language}
-              </span>
-            )}
-            {typeof meta.stargazers_count === "number" && (
-              <span className="tabular-nums">{meta.stargazers_count.toLocaleString()} ★</span>
-            )}
-            {typeof meta.forks_count === "number" && (
-              <span className="tabular-nums">{meta.forks_count} forks</span>
-            )}
-            {lastPush && <span>pushed {lastPush} ago</span>}
-          </div>
+          {showStats && (
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-muted-foreground">
+              {language && (
+                <span className="inline-flex items-center gap-1.5">
+                  {langDot && (
+                    <span
+                      aria-hidden="true"
+                      className="h-2 w-2 rounded-full"
+                      style={{ background: langDot }}
+                    />
+                  )}
+                  {language}
+                </span>
+              )}
+              {typeof meta.stargazers_count === "number" && (
+                <span className="tabular-nums">{meta.stargazers_count.toLocaleString()} ★</span>
+              )}
+              {typeof meta.forks_count === "number" && (
+                <span className="tabular-nums">{meta.forks_count} forks</span>
+              )}
+              {typeof meta.open_issues_count === "number" && meta.open_issues_count > 0 && (
+                <span className="tabular-nums">{meta.open_issues_count} open issues</span>
+              )}
+              {lastPush && <span>pushed {lastPush} ago</span>}
+            </div>
+          )}
 
-          {meta.topics && meta.topics.length > 0 && (
+          {showTopics && meta.topics && meta.topics.length > 0 && (
             <ul className="flex flex-wrap gap-1">
               {meta.topics.slice(0, 5).map((topic) => (
                 <li
@@ -155,6 +257,38 @@ export function ProjectCodePanel({
               ))}
             </ul>
           )}
+
+          {showDetails && (meta.license || meta.homepage || createdAgo) && (
+            <ul className="space-y-1 text-[12px] text-muted-foreground">
+              {meta.license && (
+                <li className="flex items-center gap-1.5">
+                  <Scale className="h-3 w-3 shrink-0" />
+                  {meta.license} license
+                </li>
+              )}
+              {meta.homepage && safeHref(meta.homepage) && (
+                <li className="flex items-center gap-1.5">
+                  <Link2 className="h-3 w-3 shrink-0" />
+                  <a
+                    href={safeHref(meta.homepage) as string}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="min-w-0 truncate hover:text-foreground hover:underline"
+                  >
+                    {meta.homepage.replace(/^https?:\/\//, "")}
+                  </a>
+                </li>
+              )}
+              {createdAgo && (
+                <li className="flex items-center gap-1.5">
+                  <CalendarClock className="h-3 w-3 shrink-0" />
+                  started {createdAgo} ago
+                </li>
+              )}
+            </ul>
+          )}
+
+          {hasGraph && calendar && <ContributionGraph calendar={calendar} />}
 
           {secondary.length > 0 && (
             <ul className="space-y-1 border-t border-border/40 pt-2">
@@ -198,6 +332,50 @@ export function ProjectCodePanel({
                   Manage repositories
                 </button>
               )}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setCustomizing((v) => !v)}
+                  aria-expanded={customizing}
+                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-md px-2.5 py-1 text-[12px] font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <Sparkles className="h-3 w-3" />
+                  Customize
+                </button>
+                {customizing && (
+                  <div className="mt-1 space-y-0.5 rounded-lg border border-border/60 bg-background/40 p-2">
+                    {DISPLAY_OPTIONS.map(({ key, label }) => {
+                      const on = githubDisplayShows(project.github_display, key);
+                      return (
+                        <label
+                          key={key}
+                          className="flex cursor-pointer items-center justify-between gap-3 rounded-md px-1.5 py-1 text-xs text-foreground hover:bg-surface-elevated"
+                        >
+                          <span>{label}</span>
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={on}
+                            aria-label={label}
+                            onClick={() => toggleDisplay(key)}
+                            className={cn(
+                              "relative h-4.5 w-8 shrink-0 rounded-full transition-lift",
+                              on ? "bg-primary" : "bg-border",
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                "absolute top-0.5 h-3.5 w-3.5 rounded-full bg-background transition-spatial",
+                                on ? "left-4" : "left-0.5",
+                              )}
+                            />
+                          </button>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </>
           )}
         </div>

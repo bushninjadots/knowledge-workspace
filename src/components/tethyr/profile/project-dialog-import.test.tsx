@@ -11,10 +11,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 const listGithubRepos = vi.fn();
 const fetchRepoReadmeServer = vi.fn();
 const fetchRepoMetaServer = vi.fn();
+const fetchRepoCommitActivityServer = vi.fn();
 vi.mock("@/lib/github-server", () => ({
   listGithubRepos: (...a: unknown[]) => listGithubRepos(...a),
   fetchRepoReadmeServer: (...a: unknown[]) => fetchRepoReadmeServer(...a),
   fetchRepoMetaServer: (...a: unknown[]) => fetchRepoMetaServer(...a),
+  fetchRepoCommitActivityServer: (...a: unknown[]) => fetchRepoCommitActivityServer(...a),
 }));
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
@@ -84,6 +86,9 @@ beforeEach(() => {
   listGithubRepos.mockReset();
   fetchRepoReadmeServer.mockReset();
   fetchRepoMetaServer.mockReset();
+  fetchRepoCommitActivityServer.mockReset();
+  // Default: no commit activity unless a test provides it (202-equivalent).
+  fetchRepoCommitActivityServer.mockResolvedValue({ weeks: null, pending: false, notFound: false });
   from.mockClear();
   insertCalls.length = 0;
 });

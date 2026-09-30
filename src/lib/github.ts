@@ -41,7 +41,80 @@ export type RepoMeta = {
   topics?: string[] | null;
   private?: boolean | null;
   default_branch?: string | null;
+  homepage?: string | null;
+  license?: string | null;
+  open_issues_count?: number | null;
+  created_at?: string | null;
+  /** Cached 52-week commit history for the contribution graph (optional). */
+  commit_activity?: CommitActivityWeek[] | null;
 };
+
+/** One week of the repo's commit history, as returned by the stats API. */
+export type CommitActivityWeek = {
+  /** Unix timestamp of the week's Monday (seconds, GitHub's shape). */
+  week: number;
+  total: number;
+  /** Commits per day, Sunday-first, matching GitHub's stats endpoint. */
+  days: number[];
+};
+
+export type CommitActivityResult = {
+  weeks: CommitActivityWeek[] | null;
+  /** GitHub is computing fresh stats — try again shortly. */
+  pending: boolean;
+  notFound: boolean;
+  rateLimited: boolean;
+};
+
+/** Which parts of the linked repo's cached GitHub data a project page shows. */
+export type GithubDisplay = {
+  show_stats?: boolean;
+  show_topics?: boolean;
+  show_graph?: boolean;
+  show_details?: boolean;
+};
+
+/** Absent keys (and a null column) mean "show it" — owners only opt OUT. */
+export function githubDisplayShows(
+  display: GithubDisplay | null | undefined,
+  key: keyof GithubDisplay,
+): boolean {
+  return display?.[key] !== false;
+}
+
+type ContributionCalendarCell = {
+  /** 0 = no commits, 1–4 = quartiles of the busiest day. */
+  level: 0 | 1 | 2 | 3 | 4;
+  count: number;
+};
+
+export type ContributionCalendar = {
+  /** Columns of 7 cells (Sunday-first), matching GitHub's own layout. */
+  weeks: ContributionCalendarCell[][];
+  total: number;
+};
+
+/**
+ * Turn GitHub's 52-week commit-activity shape into the contribution-graph
+ * grid: one column per week, 7 cells per column (Sun–Sat), levels banded by
+ * quartiles of the busiest single day — pure so the panel stays testable.
+ */
+export function buildContributionCalendar(weeks: CommitActivityWeek[]): ContributionCalendar {
+  const dayMax = Math.max(0, ...weeks.flatMap((w) => w.days));
+  const levelFor = (count: number): ContributionCalendarCell["level"] => {
+    if (count <= 0 || dayMax <= 0) return 0;
+    if (count <= dayMax * 0.25) return 1;
+    if (count <= dayMax * 0.5) return 2;
+    if (count <= dayMax * 0.75) return 3;
+    return 4;
+  };
+  let total = 0;
+  const columns = weeks.map((w) => {
+    total += w.total;
+    return w.days.map((count) => ({ level: levelFor(count), count }));
+  });
+  return { weeks: columns, total };
+}
 
 /** Extract "owner/repo" from a linked repo's stored metadata or URL. */
 export function getRepoFullName(repo: {
@@ -276,7 +349,21 @@ export async function fetchRepoMeta(
       headers,
     });
     if (!res?.ok) return null;
-    const json = (await res.json()) as RepoMeta;
+    const json = (await res.json()) as {
+      full_name?: string;
+      description?: string | null;
+      language?: string | null;
+      stargazers_count?: number;
+      forks_count?: number;
+      updated_at?: string;
+      topics?: string[];
+      private?: boolean;
+      default_branch?: string;
+      homepage?: string | null;
+      open_issues_count?: number;
+      created_at?: string;
+      license?: { spdx_id?: string | null } | null;
+    };
     return {
       full_name: json.full_name,
       description: json.description,
@@ -287,9 +374,57 @@ export async function fetchRepoMeta(
       topics: json.topics,
       private: json.private,
       default_branch: json.default_branch,
+      homepage: json.homepage,
+      license:
+        json.license?.spdx_id && json.license.spdx_id !== "NOASSERTION"
+          ? json.license.spdx_id
+          : null,
+      open_issues_count: json.open_issues_count,
+      created_at: json.created_at,
     };
   } catch {
     return null;
+  }
+}
+
+/**
+ * Fetch the repo's last 52 weeks of commit activity (GitHub's stats API).
+ * The first call for a rarely-queried repo returns 202 while GitHub computes
+ * the stats — the caller should treat that as "try again later" and keep the
+ * previous cached value rather than hammering the endpoint.
+ */
+export async function fetchRepoCommitActivity(
+  fullName: string,
+  token?: string,
+): Promise<CommitActivityResult> {
+  const headers: Record<string, string> = { Accept: "application/vnd.github.v3+json" };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  try {
+    const res = await fetchWithTimeout(
+      `https://api.github.com/repos/${fullName}/stats/commit_activity`,
+      { headers },
+    );
+    if (!res) return { weeks: null, pending: false, notFound: false, rateLimited: false };
+    if (res.status === 202)
+      return { weeks: null, pending: true, notFound: false, rateLimited: false };
+    if (res.status === 404)
+      return { weeks: null, pending: false, notFound: true, rateLimited: false };
+    if (res.status === 403 || res.status === 429)
+      return { weeks: null, pending: false, notFound: false, rateLimited: true };
+    if (!res.ok) return { weeks: null, pending: false, notFound: false, rateLimited: false };
+    const json = (await res.json()) as { week?: number; total?: number; days?: number[] }[];
+    if (!Array.isArray(json))
+      return { weeks: null, pending: false, notFound: false, rateLimited: false };
+    const weeks = json
+      .filter((w) => typeof w.week === "number" && Array.isArray(w.days))
+      .map((w) => ({
+        week: w.week as number,
+        total: w.total ?? 0,
+        days: (w.days ?? []).slice(0, 7),
+      }));
+    return { weeks: weeks.slice(-52), pending: false, notFound: false, rateLimited: false };
+  } catch {
+    return { weeks: null, pending: false, notFound: false, rateLimited: false };
   }
 }
 

@@ -6,9 +6,12 @@ import {
   fetchRepoFile,
   fetchRepoMeta,
   fetchRepoCommits,
+  fetchRepoCommitActivity,
   validateGitHubToken,
   githubTokenErrorMessage,
   repoFullNameToTitle,
+  buildContributionCalendar,
+  githubDisplayShows,
 } from "./github";
 
 function mockFetch(handler: (url: string, init?: RequestInit) => Promise<Response>) {
@@ -186,6 +189,106 @@ describe("absolutizeRelativeLinks", () => {
     expect(out).toBe(
       "[DEPLOYMENT.md](https://github.com/owner/repo/blob/main/DEPLOYMENT.md) and ![shot](https://raw.githubusercontent.com/owner/repo/main/shot.png)",
     );
+  });
+});
+
+describe("fetchRepoMeta — extended snapshot", () => {
+  it("captures license (spdx), homepage, open issues and created date", async () => {
+    mockFetch(async () =>
+      Response.json({
+        full_name: "owner/repo",
+        homepage: "https://example.com",
+        open_issues_count: 9,
+        created_at: "2024-03-01T00:00:00Z",
+        license: { spdx_id: "MIT" },
+      }),
+    );
+    const meta = await fetchRepoMeta("owner", "repo");
+    expect(meta).toMatchObject({
+      homepage: "https://example.com",
+      open_issues_count: 9,
+      created_at: "2024-03-01T00:00:00Z",
+      license: "MIT",
+    });
+  });
+
+  it("maps NOASSERTION and missing licenses to null", async () => {
+    mockFetch(async () => Response.json({ license: { spdx_id: "NOASSERTION" } }));
+    expect((await fetchRepoMeta("owner", "repo"))?.license).toBeNull();
+
+    mockFetch(async () => Response.json({}));
+    expect((await fetchRepoMeta("owner", "repo"))?.license).toBeNull();
+  });
+});
+
+describe("fetchRepoCommitActivity", () => {
+  it("returns the last 52 weeks of the stats response", async () => {
+    const week = (n: number, total: number) => ({
+      week: 1_700_000_000 + n * 604_800,
+      total,
+      days: [0, 1, 2, 0, 0, 0, 0],
+    });
+    mockFetch(async () => Response.json(Array.from({ length: 60 }, (_, i) => week(i, i))));
+    const result = await fetchRepoCommitActivity("owner/repo");
+    expect(result.pending).toBe(false);
+    expect(result.weeks).toHaveLength(52);
+    expect(result.weeks?.[0].total).toBe(8); // 60 - 52
+  });
+
+  it("flags 202 as pending and keeps the caller's cache decision with it", async () => {
+    mockFetch(async () => new Response("", { status: 202 }));
+    const result = await fetchRepoCommitActivity("owner/repo");
+    expect(result).toEqual({ weeks: null, pending: true, notFound: false, rateLimited: false });
+  });
+
+  it("marks 404 repos as notFound and 403 as rate-limited", async () => {
+    mockFetch(async () => new Response("", { status: 404 }));
+    expect((await fetchRepoCommitActivity("owner/gone")).notFound).toBe(true);
+
+    mockFetch(async () => new Response("", { status: 403 }));
+    expect((await fetchRepoCommitActivity("owner/repo")).rateLimited).toBe(true);
+  });
+});
+
+describe("buildContributionCalendar", () => {
+  it("builds one column of 7 cells per week and totals commits", () => {
+    const weeks = [
+      { week: 0, total: 4, days: [0, 0, 0, 0, 1, 1, 2] },
+      { week: 1, total: 6, days: [2, 2, 2, 0, 0, 0, 0] },
+    ];
+    const calendar = buildContributionCalendar(weeks);
+    expect(calendar.weeks).toHaveLength(2);
+    expect(calendar.weeks[0]).toHaveLength(7);
+    expect(calendar.total).toBe(10);
+  });
+
+  it("bands levels by quartiles of the busiest day", () => {
+    const weeks = [{ week: 0, total: 10, days: [0, 2, 4, 6, 8, 0, 0] }];
+    const calendar = buildContributionCalendar(weeks);
+    const levels = calendar.weeks[0].map((c) => c.level);
+    // dayMax = 8 → bands at 2/4/6; 0→0, 2→1, 4→2, 6→3, 8→4.
+    expect(levels).toEqual([0, 1, 2, 3, 4, 0, 0]);
+  });
+
+  it("stays level 0 for an all-empty history", () => {
+    const calendar = buildContributionCalendar([
+      { week: 0, total: 0, days: [0, 0, 0, 0, 0, 0, 0] },
+    ]);
+    expect(calendar.total).toBe(0);
+    expect(calendar.weeks[0].every((c) => c.level === 0)).toBe(true);
+  });
+});
+
+describe("githubDisplayShows", () => {
+  it("defaults to shown when the column is null or the key is absent", () => {
+    expect(githubDisplayShows(null, "show_graph")).toBe(true);
+    expect(githubDisplayShows({}, "show_graph")).toBe(true);
+    expect(githubDisplayShows(undefined, "show_stats")).toBe(true);
+  });
+
+  it("respects explicit opt-outs", () => {
+    expect(githubDisplayShows({ show_graph: false }, "show_graph")).toBe(false);
+    expect(githubDisplayShows({ show_graph: false }, "show_stats")).toBe(true);
   });
 });
 

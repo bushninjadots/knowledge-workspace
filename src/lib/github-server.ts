@@ -8,6 +8,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   fetchRepoCommits,
+  fetchRepoCommitActivity,
   fetchRepoFile,
   fetchRepoMeta,
   fetchRepoReadme,
@@ -17,6 +18,7 @@ import {
   type GithubRepoLite,
   type RepoMeta,
   type RepoReadmeResult,
+  type CommitActivityResult,
 } from "./github";
 import { parseGithubSource, type GithubSource } from "./github-source";
 
@@ -211,6 +213,20 @@ export const fetchRepoMetaServer = createServerFn({ method: "POST" })
   .handler(async ({ context, data }): Promise<RepoMeta | null> => {
     const token = await getStoredToken(context.userId);
     return fetchRepoMeta(data.owner, data.repo, token ?? undefined);
+  });
+
+/**
+ * Fetch a repo's 52-week commit activity (contribution graph data) on the
+ * server, using the stored token when present. Pending (202) responses are
+ * surfaced so the client can keep its cached weeks rather than store empty
+ * ones while GitHub computes the stats.
+ */
+export const fetchRepoCommitActivityServer = createServerFn({ method: "POST" })
+  .validator((d: { fullName: string }) => ({ fullName: d.fullName.trim() }))
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context, data }): Promise<CommitActivityResult> => {
+    const token = await getStoredToken(context.userId);
+    return fetchRepoCommitActivity(data.fullName, token ?? undefined);
   });
 
 /** Attach (or replace) a GitHub file link on a library item. Owner-only. */

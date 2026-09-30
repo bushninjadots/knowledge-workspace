@@ -2,8 +2,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
-import { fetchRepoMetaServer } from "@/lib/github-server";
-import type { RepoMeta } from "@/lib/github";
+import { fetchRepoCommitActivityServer, fetchRepoMetaServer } from "@/lib/github-server";
+import { getRepoFullName } from "@/lib/github";
+import type { CommitActivityWeek, RepoMeta } from "@/lib/github";
 import { supabasePending } from "@/lib/supabase-pending-schema";
 
 const sb = supabase;
@@ -127,11 +128,25 @@ export function useRefreshRepoMetadata() {
         const match = input.url.match(/github\.com\/([^/]+)\/([^/]+?)(?:\.git)?$/);
         if (match) {
           const [, owner, repo] = match;
-          try {
-            const meta = await fetchRepoMetaServer({ data: { owner, repo } });
-            if (meta) metadata = meta;
-          } catch {
-            /* keep the previous snapshot — the update below becomes a no-op */
+          const fullName = getRepoFullName(input);
+          const [meta, activity] = await Promise.allSettled([
+            fetchRepoMetaServer({ data: { owner, repo } }),
+            // Cached alongside the stats snapshot so the contribution graph
+            // renders on the project page without a GitHub call per view.
+            fetchRepoCommitActivityServer({ data: { fullName } }),
+          ]);
+          if (meta.status === "fulfilled" && meta.value) metadata = meta.value;
+          if (
+            activity.status === "fulfilled" &&
+            activity.value?.weeks &&
+            activity.value.weeks.length > 0
+          ) {
+            metadata.commit_activity = activity.value.weeks as CommitActivityWeek[];
+          }
+          // A pending/failed activity fetch keeps the previously cached weeks;
+          // only a hard 404 (repo gone) clears them.
+          if (activity.status === "fulfilled" && activity.value?.notFound) {
+            delete metadata.commit_activity;
           }
         }
       }

@@ -787,6 +787,22 @@ linked before the view fix — run against the local seed it backfilled the
 real repos (including a private one, via a token) and skipped the fictional
 seed repos on 404 without touching their rows.
 
+Second pass, same day: the snapshot now also caches the repo's 52-week
+commit history (GitHub's stats API, 202-pending-safe), and the code panel
+renders it as the familiar contribution grid — accent-tinted, quartile-banded,
+zero per-view GitHub calls. Owners choose which sections show via a per-
+project `projects.github_display` preference (stats, topics, graph, license
+& details — NULL means all on, `useUpdateGithubDisplay` writes it
+optimistically); the import dialog gained a "pull in:" chooser (README,
+description, language→skill, topics→tags) and caches the graph at import.
+The extended snapshot adds license (SPDX), homepage, open issues, and
+created-at. Separately, the project README renderer was still using
+react-markdown v9's `inline` prop (removed in v10), so paragraph-embedded
+code rendered a block `<pre>` inside a `<p>` and hydrated with a nesting
+warning — it now shares the profile README's `MARKDOWN_COMPONENTS` (pre-
+override) so both renderers are structurally identical and the warning is
+gone.
+
 ### 2026-09-30 — Open-work badges on the profile (Find people → Collaborate seam)
 
 The loop's weakest transition was the restart: a visitor landing on a person's
