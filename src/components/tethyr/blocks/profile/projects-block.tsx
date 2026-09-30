@@ -13,6 +13,8 @@ import { BlockEmptyState } from "@/components/tethyr/blocks/block-empty-state";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import { registerBlock } from "@/lib/block-registry";
 import { contributionRoleVerb } from "@/lib/contribution-role";
+import { useProjectOpenWork, type ProjectOpenWork } from "@/hooks/use-profile-work";
+import { OpenWorkBadge } from "@/components/tethyr/open-work-badge";
 import { PROJECT_STATUS_LABEL, type ProjectStatus } from "@/components/tethyr/profile/types";
 import {
   getProfileProjectPresentation,
@@ -93,6 +95,11 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
       (row): row is { project: NonNullable<ProjectRow["projects"]>; role: string } =>
         row.project !== null,
     );
+  // Which of these projects need people right now — the entry-point signal.
+  // Called unconditionally (rules of hooks); the id list is null while empty.
+  const { data: openWork } = useProjectOpenWork(
+    projects.length > 0 ? projects.map((p) => p.project.id) : null,
+  );
   useEffect(() => {
     if (isLoading || isEditing || !blockId) return;
     onBlockEmptyChange?.(blockId, projects.length === 0);
@@ -148,6 +155,7 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
   };
   const body = (
     project: {
+      id: string;
       title: string;
       description: string | null;
       status: string;
@@ -165,7 +173,8 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
       {project.description && (
         <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{project.description}</p>
       )}
-      <div className="mt-3 flex items-center gap-2">
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <OpenWorkBadge openWork={openWork} projectId={project.id} />
         {showStatus && (
           <span className="rounded-full bg-surface-sunken px-2 py-0.5 text-[11px] leading-snug text-muted-foreground">
             {PROJECT_STATUS_LABEL[project.status as ProjectStatus] ?? project.status}
@@ -174,7 +183,7 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
         {showProgress && project.progress_percent > 0 && (
           <Progress
             value={project.progress_percent}
-            className="h-1 flex-1"
+            className="h-1 min-w-12 flex-1"
             aria-label={`${project.title}: ${project.progress_percent}% complete`}
           />
         )}
@@ -194,6 +203,7 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
               label={project.title}
               showProgress={showProgress}
               progress={project.progress_percent}
+              openWork={openWork}
             >
               <p className="truncate text-sm font-medium text-foreground">{project.title}</p>
               <p className="text-[11px] text-muted-foreground">
@@ -301,7 +311,8 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
             {featured.project.description && (
               <p className="mt-1 text-xs text-muted-foreground">{featured.project.description}</p>
             )}
-            <div className="mt-3 flex items-center gap-2">
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <OpenWorkBadge openWork={openWork} projectId={featured.project.id} />
               {showStatus && (
                 <span className="rounded-full bg-surface-sunken px-2 py-0.5 text-[11px] leading-snug text-muted-foreground">
                   {PROJECT_STATUS_LABEL[featured.project.status as ProjectStatus] ??
@@ -309,7 +320,10 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
                 </span>
               )}
               {showProgress && featured.project.progress_percent > 0 && (
-                <Progress value={featured.project.progress_percent} className="h-1 flex-1" />
+                <Progress
+                  value={featured.project.progress_percent}
+                  className="h-1 min-w-12 flex-1"
+                />
               )}
             </div>
             <CollaboratorRowInline
@@ -373,12 +387,14 @@ function ProjectRowLink({
   label,
   showProgress,
   progress,
+  openWork,
   children,
 }: {
   id: string;
   label: string;
   showProgress?: boolean | null;
   progress: number;
+  openWork?: Map<string, ProjectOpenWork>;
   children?: ReactNode;
 }) {
   return (
@@ -391,13 +407,16 @@ function ProjectRowLink({
       />
       <div className="relative flex items-center justify-between gap-3">
         <div className="min-w-0">{children}</div>
-        {showProgress && progress > 0 && (
-          <Progress
-            value={progress}
-            className="h-1 w-24"
-            aria-label={`${label}: ${progress}% complete`}
-          />
-        )}
+        <div className="flex shrink-0 items-center gap-2">
+          <OpenWorkBadge openWork={openWork} projectId={id} />
+          {showProgress && progress > 0 && (
+            <Progress
+              value={progress}
+              className="h-1 w-24"
+              aria-label={`${label}: ${progress}% complete`}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

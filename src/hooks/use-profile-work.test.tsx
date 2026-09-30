@@ -22,7 +22,7 @@ vi.mock("@/integrations/supabase/client", () => ({
   supabase: { from: (...a: unknown[]) => from(...a) },
 }));
 
-import { useProfileWork } from "./use-profile-work";
+import { useProfileWork, useProjectOpenWork, openWorkCount } from "./use-profile-work";
 
 function chain(result: unknown) {
   const q = {
@@ -31,6 +31,15 @@ function chain(result: unknown) {
     neq: () => q,
     in: () => q,
     limit: () => Promise.resolve({ data: result, error: null }),
+  };
+  return q;
+}
+
+/** Chain without .limit — the open-work reads terminate on the builder itself. */
+function openChain(result: unknown, error: unknown = null) {
+  const q = {
+    select: () => q,
+    in: () => Promise.resolve({ data: result, error }),
   };
   return q;
 }
@@ -146,6 +155,52 @@ describe("useProfileWork", () => {
 
   it("stays disabled without a profile id", () => {
     renderHook(() => useProfileWork(null), { wrapper: wrapper() });
+    expect(from).not.toHaveBeenCalled();
+  });
+});
+
+describe("useProjectOpenWork", () => {
+  it("counts unfilled needs and roles per project in one batched read", async () => {
+    from
+      .mockReturnValueOnce(
+        openChain([
+          { project_id: "p1", is_filled: false },
+          { project_id: "p1", is_filled: false },
+          { project_id: "p1", is_filled: true }, // filled — not a spot
+          { project_id: "p2", is_filled: false },
+        ]),
+      )
+      .mockReturnValueOnce(openChain([{ project_id: "p2", is_filled: false }]));
+
+    const { result } = renderHook(() => useProjectOpenWork(["p1", "p2"]), {
+      wrapper: wrapper(),
+    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    const open = result.current.data;
+    expect(open?.get("p1")).toEqual({ roles: 0, needs: 2 });
+    expect(open?.get("p2")).toEqual({ roles: 1, needs: 1 });
+    expect(openWorkCount(open, "p1")).toBe(2);
+    expect(openWorkCount(open, "p2")).toBe(2);
+    // A project with no open work is simply absent.
+    expect(open?.has("p3")).toBe(false);
+    expect(openWorkCount(open, "p3")).toBe(0);
+  });
+
+  it("degrades to no-signal when a read fails — never a wrong badge", async () => {
+    from
+      .mockReturnValueOnce(openChain(null, { message: "rls error" }))
+      .mockReturnValueOnce(openChain([{ project_id: "p1", is_filled: false }]));
+
+    const { result } = renderHook(() => useProjectOpenWork(["p1"]), { wrapper: wrapper() });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    // The map exists and is empty: the badge omits itself, cards still render.
+    expect(result.current.data?.size).toBe(0);
+  });
+
+  it("stays disabled with no project ids", () => {
+    renderHook(() => useProjectOpenWork(null), { wrapper: wrapper() });
     expect(from).not.toHaveBeenCalled();
   });
 });

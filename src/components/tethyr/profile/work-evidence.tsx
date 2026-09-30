@@ -22,11 +22,13 @@
 
 import { Link } from "@tanstack/react-router";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
-import { useProfileWork } from "@/hooks/use-profile-work";
+import { useProfileWork, useProjectOpenWork } from "@/hooks/use-profile-work";
 import { contributionRoleVerb } from "@/lib/contribution-role";
 import { PROJECT_STATUS_LABEL, type ProjectStatus } from "@/components/tethyr/profile/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PersonPill } from "@/components/tethyr/person-pill";
+import { OpenWorkBadge } from "@/components/tethyr/open-work-badge";
+import type { ProjectOpenWork } from "@/hooks/use-profile-work";
 
 /**
  * Renders nothing at all when there is no work. A person with no projects yet
@@ -42,6 +44,14 @@ export function ProfileWorkEvidence({
   isOwner: boolean;
 }) {
   const { data, isLoading, isError } = useProfileWork(profileId);
+
+  // Which of these projects need people right now. Called unconditionally
+  // (rules of hooks) with a null id list while loading; rides the same
+  // lifecycle as the work read, and a failure just means no badge, never an
+  // error state.
+  const { data: openWork } = useProjectOpenWork(
+    data?.hasWork && data.projects.length > 0 ? data.projects.map((p) => p.id) : null,
+  );
 
   if (isLoading) {
     return (
@@ -73,7 +83,7 @@ export function ProfileWorkEvidence({
           and the page surface should stay quiet. Border separates, not shadow. */}
       <ul className="mt-3 divide-y divide-border border-y border-border">
         {data.projects.map((project) => (
-          <WorkRow key={project.id} project={project} />
+          <WorkRow key={project.id} project={project} openWork={openWork} />
         ))}
       </ul>
 
@@ -104,7 +114,13 @@ export function ProfileWorkEvidence({
 }
 
 /** One project, as a row: what they did, what it is, where it is going. */
-function WorkRow({ project }: { project: ProfileWorkProjectRow }) {
+function WorkRow({
+  project,
+  openWork,
+}: {
+  project: ProfileWorkProjectRow;
+  openWork?: Map<string, ProjectOpenWork>;
+}) {
   const { data: coverSigned } = useSignedStorageUrl("project-media", project.cover_url);
   const src = coverSigned ?? (project.cover_url?.startsWith("http") ? project.cover_url : null);
   const status = PROJECT_STATUS_LABEL[project.status as ProjectStatus] ?? project.status;
@@ -143,6 +159,7 @@ function WorkRow({ project }: { project: ProfileWorkProjectRow }) {
           )}
         </div>
         <div className="flex shrink-0 items-center gap-2 pt-0.5">
+          <OpenWorkBadge openWork={openWork} projectId={project.id} />
           {status && (
             <span className="rounded-full bg-surface-sunken px-2 py-0.5 text-[11px] leading-snug text-muted-foreground">
               {status}

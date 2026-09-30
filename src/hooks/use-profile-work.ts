@@ -159,3 +159,63 @@ export function useProfileWork(profileId: string | null | undefined) {
     staleTime: 60_000,
   });
 }
+
+/** Unfilled needs + open roles per project, for the "needs people" signal. */
+export type ProjectOpenWork = {
+  roles: number;
+  needs: number;
+};
+
+/**
+ * Which of the given projects currently need people, in one batched read per
+ * table — the same facts the project page's "N needs" header pill and Explore's
+ * open-role counts show, surfaced where a visitor decides whether to enter.
+ * Projects missing from the result have no open work (the badge just doesn't
+ * render); a failed read degrades to "no signal", never an error state.
+ *
+ * Only ids the caller already resolved to visible projects may be passed — the
+ * profile work paths filter private projects out before this runs, so nothing
+ * here can leak an unfilled need behind a private door.
+ */
+export function useProjectOpenWork(projectIds: string[] | null | undefined) {
+  const key = (projectIds ?? []).join(",");
+  return useQuery({
+    queryKey: ["profile-open-work", key],
+    queryFn: async () => {
+      const ids = key ? key.split(",") : [];
+      if (ids.length === 0) return new Map<string, ProjectOpenWork>();
+      const [needsRes, rolesRes] = await Promise.all([
+        supabase.from("project_needs").select("project_id, is_filled").in("project_id", ids),
+        supabase.from("project_open_roles").select("project_id, is_filled").in("project_id", ids),
+      ]);
+      // A read failure means we cannot say — render no badge rather than a
+      // wrong one. The cards themselves are unaffected.
+      if (needsRes.error || rolesRes.error) return new Map<string, ProjectOpenWork>();
+      const open = new Map<string, ProjectOpenWork>();
+      const bump = (projectId: string, field: keyof ProjectOpenWork) => {
+        if (!projectId) return;
+        const entry = open.get(projectId) ?? { roles: 0, needs: 0 };
+        entry[field] += 1;
+        open.set(projectId, entry);
+      };
+      for (const row of (needsRes.data ?? []) as { project_id: string; is_filled: boolean }[]) {
+        if (!row.is_filled) bump(row.project_id, "needs");
+      }
+      for (const row of (rolesRes.data ?? []) as { project_id: string; is_filled: boolean }[]) {
+        if (!row.is_filled) bump(row.project_id, "roles");
+      }
+      return open;
+    },
+    enabled: !!projectIds && projectIds.length > 0,
+    // Same lifecycle as the work evidence itself: changes when someone joins,
+    // not on a timer.
+    staleTime: 60_000,
+  });
+}
+
+/** Total unfilled spots for a project, 0 when none or unknown. */
+export function openWorkCount(open: Map<string, ProjectOpenWork> | undefined, projectId: string) {
+  const entry = open?.get(projectId);
+  if (!entry) return 0;
+  return entry.roles + entry.needs;
+}

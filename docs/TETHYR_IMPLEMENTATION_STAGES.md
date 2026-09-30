@@ -741,6 +741,20 @@ Two shipped decisions turned out to be half-applied: one because a later migrati
 
 **Verification:** `npm run verify` green — typecheck, lint, **823 tests across 102 files**, Prettier, zero unused exports, zero hand-rolled cards. Production artifact: `build:prod` + `serve:prod` serve the enforced nonce CSP; `qa-audit` 21 pages / 0 errors, `qa-csp --require-enforced` 5/5, `qa-explore-overlay` and `qa-studio-parity` pass, `qa-workflows` 12/14 with the two misses being dev-server-only source-import checks.
 
+### 2026-09-30 — Open-work badges on the profile (Find people → Collaborate seam)
+
+The loop's weakest transition was the restart: a visitor landing on a person's
+Studio saw the work but not which of it needed people — the open needs/roles
+were one hop away on each project page. Both profile work surfaces (the Studio
+projects block across all four presentations, and the default work-evidence
+rows) now show a small accent-tinted "N open spots" chip on projects with
+unfilled needs or open roles, driven by one batched pair of reads
+(`useProjectOpenWork`) over the ids already resolved to visible projects.
+No badge when there is nothing open or the read fails — optional signals never
+reserve layout or render wrong. Verified against the served prod bundle with a
+seeded unfilled need (badge appears, counts correct), full audit 21/0, token
+probe green, seed state restored.
+
 ### 2026-09-30 — Stage 7 evaluation (deferred depth) — stage closed
 
 All four Stage 7 items were evaluated against the codebase as it ships (not
