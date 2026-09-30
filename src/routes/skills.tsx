@@ -18,6 +18,7 @@ import { groupSkillsByCategory, skillActivityTotal, type SkillCategoryGroup } fr
 import { EmptyState } from "@/components/tethyr/empty-state";
 import { SectionShell } from "@/components/tethyr/section-shell";
 import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 import { seoMeta } from "@/lib/seo";
 
 const skillsSearchSchema = z.object({
@@ -266,24 +267,26 @@ function SkillsDirectoryPage() {
                   Ranked by people and projects actively using each skill
                 </p>
               </div>
-              <ul className="overflow-hidden rounded-xl border card-border bg-surface/40 divide-y divide-border/40">
-                {trending.map((skill) => (
-                  <li key={skill.id}>
-                    <Link
-                      to="/skills/$slug"
-                      params={{ slug: skill.slug }}
-                      preload="intent"
-                      className="group flex items-center rounded-none transition-colors hover:bg-surface-sunken focus-visible:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-                    >
-                      <SkillRow
-                        name={skill.name}
-                        description={skill.category}
-                        counts={stats.data?.[skill.id]}
-                      />
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+              <Card asChild className="divide-y divide-border/40 bg-surface/40">
+                <ul>
+                  {trending.map((skill) => (
+                    <li key={skill.id}>
+                      <Link
+                        to="/skills/$slug"
+                        params={{ slug: skill.slug }}
+                        preload="intent"
+                        className="group flex items-center rounded-none transition-colors hover:bg-surface-sunken focus-visible:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                      >
+                        <SkillRow
+                          name={skill.name}
+                          description={skill.category}
+                          counts={stats.data?.[skill.id]}
+                        />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
             </section>
           )}
 
@@ -313,24 +316,26 @@ function SkillsDirectoryPage() {
                   >
                     {group.category}
                   </h2>
-                  <ul className="mt-3 overflow-hidden rounded-xl border card-border bg-surface/40 divide-y divide-border/40">
-                    {group.skills.map((skill) => (
-                      <li key={skill.id}>
-                        <Link
-                          to="/skills/$slug"
-                          params={{ slug: skill.slug }}
-                          preload="intent"
-                          className="group flex items-center rounded-none transition-colors hover:bg-surface-sunken focus-visible:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-                        >
-                          <SkillRow
-                            name={skill.name}
-                            description={skill.description}
-                            counts={stats.data?.[skill.id]}
-                          />
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
+                  <Card asChild className="mt-3 divide-y divide-border/40 bg-surface/40">
+                    <ul>
+                      {group.skills.map((skill) => (
+                        <li key={skill.id}>
+                          <Link
+                            to="/skills/$slug"
+                            params={{ slug: skill.slug }}
+                            preload="intent"
+                            className="group flex items-center rounded-none transition-colors hover:bg-surface-sunken focus-visible:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                          >
+                            <SkillRow
+                              name={skill.name}
+                              description={skill.description}
+                              counts={stats.data?.[skill.id]}
+                            />
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </Card>
                 </section>
               ))}
             </div>

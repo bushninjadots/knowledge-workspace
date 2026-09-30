@@ -107,6 +107,7 @@ jobs:
           curl -fsS http://127.0.0.1:8790/ >/dev/null
           node scripts/qa-audit.mjs --base http://127.0.0.1:8790
           node scripts/qa-csp.mjs --base http://127.0.0.1:8790 --require-enforced
+          node scripts/qa-token-scale.mjs --base http://127.0.0.1:8790
           kill $SERVER_PID
         env:
           # SSR inside the served bundle reaches the local stack directly; the
@@ -202,6 +203,15 @@ jobs:
       # here as a violation instead of only breaking production.
       - name: Run CSP nonce check
         run: node scripts/qa-csp.mjs
+        env:
+          QA_BASE: http://127.0.0.1:3000
+
+      # Token definitions aren't compile-checked: a radius-ladder edit, a dead
+      # hsl(var(--token)) rule, or a broken color-mix utility compiles fine and
+      # drifts the design system silently. This probes the invariants in a
+      # real browser.
+      - name: Run design-token scale probe
+        run: node scripts/qa-token-scale.mjs
         env:
           QA_BASE: http://127.0.0.1:3000
 
