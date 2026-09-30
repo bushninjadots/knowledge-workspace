@@ -98,7 +98,7 @@ export function FeaturedProjects() {
                     ))}
                   </div>
                 )}
-                <div className="mt-auto pt-5">
+                <div className="mt-auto border-t border-border/40 pt-4">
                   <div className="mb-2 flex items-center justify-between gap-3 text-xs">
                     <span className="truncate text-muted-foreground">
                       Built by {p.profiles?.display_name || p.profiles?.handle || "Member"}
