@@ -142,6 +142,48 @@ export function HomePage() {
       </section>
 
       <LandingStats />
+
+      <section className="border-y border-border/50 bg-surface/35" aria-labelledby="tethyr-loop-title">
+        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-14">
+          <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-xl">
+              <p className="section-label mb-3">The Tethyr loop</p>
+              <h2 id="tethyr-loop-title" className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+                Let the work lead the way.
+              </h2>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                Every useful connection starts with something made. Move from discovery to contribution without losing the thread.
+              </p>
+            </div>
+            <Link
+              to="/explore"
+              className="inline-flex shrink-0 items-center gap-2 text-sm font-medium text-primary transition-colors hover:text-foreground"
+            >
+              Start exploring <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+          <div className="mt-9 grid gap-px overflow-hidden rounded-xl border border-border/60 bg-border/60 sm:grid-cols-3">
+            {[
+              { step: "01", title: "Discover work", text: "Find projects with a point of view.", href: "/explore" },
+              { step: "02", title: "Meet builders", text: "See who is making the work real.", href: "/explore" },
+              { step: "03", title: "Contribute", text: "Join a project and become known.", href: "/signup" },
+            ].map((item) => (
+              <Link
+                key={item.step}
+                to={item.href}
+                className="group flex min-h-32 flex-col justify-between bg-background/80 p-5 transition-colors hover:bg-surface-elevated"
+              >
+                <span className="numeric text-xs text-muted-foreground">{item.step}</span>
+                <span>
+                  <span className="block font-display text-lg font-semibold group-hover:text-primary">{item.title}</span>
+                  <span className="mt-1 block text-sm text-muted-foreground">{item.text}</span>
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Same id as every other frame so the global skip link lands here too */}
       <main id="main-content">
         <SectionReveal id="how-it-works" className="content-visibility-auto">
