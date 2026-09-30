@@ -28,8 +28,7 @@ function makeViteLogger() {
 // `npm run dev`) we pin Vite's conventional default, because 8080 is commonly
 // squatted by other compose projects and a random fallback port breaks the
 // muscle-memory URL.
-const sandboxLike =
-  process.env.LOVABLE_SANDBOX === "1" || !!process.env.DEV_SERVER__PROJECT_PATH;
+const sandboxLike = process.env.LOVABLE_SANDBOX === "1" || !!process.env.DEV_SERVER__PROJECT_PATH;
 
 // Colocated route-surface tests (u.$handle.test.ts, teams.$slug.test.ts) run in
 // vitest, not the router; without this the generator logs a "does not export a

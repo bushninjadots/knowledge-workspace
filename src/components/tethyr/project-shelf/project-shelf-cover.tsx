@@ -56,7 +56,6 @@ function ProjectShelfFace({
         <div className="relative w-full" style={{ aspectRatio: "16 / 9" }}>
           <CoverGradient coverUrl={project.cover_url} fit="contain" hoverZoom />
 
-
           {/* Status badge */}
           <div className="absolute left-3 top-3 z-10 flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-background/60 px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wider text-foreground">

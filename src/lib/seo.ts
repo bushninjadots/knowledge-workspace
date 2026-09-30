@@ -4,8 +4,7 @@ type MetaTag = DetailedHTMLProps<MetaHTMLAttributes<HTMLMetaElement>, HTMLMetaEl
 
 // An empty-string value (compose leaves the var defined-but-empty when the
 // platform host suffix is absent) must count as unset — hence "|| undefined".
-const configuredSiteUrl =
-  import.meta.env.VITE_PUBLIC_SITE_URL?.replace(/\/+$/, "") || undefined;
+const configuredSiteUrl = import.meta.env.VITE_PUBLIC_SITE_URL?.replace(/\/+$/, "") || undefined;
 
 let warnedMissingSiteUrl = false;
 

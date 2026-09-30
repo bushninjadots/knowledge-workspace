@@ -121,7 +121,8 @@ export function FeaturedProjects() {
                     />
                   </div>
                   <div className="mt-4 flex items-center gap-1.5 text-xs font-medium text-primary">
-                    Open project <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                    Open project{" "}
+                    <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
                   </div>
                 </div>
               </div>

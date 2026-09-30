@@ -25,7 +25,7 @@ import { supabase } from "@/integrations/supabase/client";
 const MAX_PROJECTS = 6;
 const MAX_COLLABORATORS = 12;
 
-export type ProfileWorkProject = {
+type ProfileWorkProject = {
   id: string;
   title: string;
   description: string | null;
@@ -35,7 +35,7 @@ export type ProfileWorkProject = {
   role: string;
 };
 
-export type ProfileWorkCollaborator = {
+type ProfileWorkCollaborator = {
   profile_id: string;
   sharedProjectCount: number;
   profile: {
