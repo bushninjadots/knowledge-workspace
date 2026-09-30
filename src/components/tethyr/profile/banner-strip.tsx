@@ -142,7 +142,7 @@ export function BannerStrip({
       {isAnimatedBanner && (
         <span
           aria-label="Animated GIF banner"
-          className="absolute bottom-3 left-3 z-10 rounded-md border border-white/20 bg-background/75 px-2 py-1 text-[10px] font-medium text-foreground backdrop-blur-sm"
+          className="absolute bottom-3 left-3 z-10 rounded-md border on-media-control px-2 py-1 text-[10px] font-medium text-foreground backdrop-blur-sm"
         >
           Animated
         </span>
@@ -157,7 +157,7 @@ export function BannerStrip({
             }}
             disabled={uploading}
             aria-label={bannerCaption ? "Edit banner caption" : "Add a banner caption"}
-            className="flex items-center gap-1.5 rounded-md border border-white/20 bg-background/80 px-3 py-1.5 text-xs text-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-md border on-media-control px-3 py-1.5 text-xs text-foreground backdrop-blur-sm transition-colors hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
           >
             <Sparkles className="h-3.5 w-3.5" />
             {bannerCaption ? "Edit caption" : "Add caption"}
@@ -169,7 +169,7 @@ export function BannerStrip({
             }}
             disabled={uploading}
             aria-label={bannerSigned ? "Change profile banner" : "Add profile banner"}
-            className="flex items-center gap-1.5 rounded-md border border-white/20 bg-background/80 px-3 py-1.5 text-xs text-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-md border on-media-control px-3 py-1.5 text-xs text-foreground backdrop-blur-sm transition-colors hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
           >
             <Camera className="h-3.5 w-3.5" />
             {uploading ? "Uploading…" : bannerSigned ? "Change banner" : "Add banner"}
@@ -180,7 +180,7 @@ export function BannerStrip({
 
       {readonly && showCaption && bannerCaption && (
         <span
-          className={`absolute bottom-4 z-20 w-[calc(100%-2rem)] truncate rounded-full bg-background/70 px-3 py-1.5 text-sm text-foreground backdrop-blur-sm ring-1 ring-border/40 ${captionPosition === "left" ? "left-4 text-left" : captionPosition === "center" ? "left-1/2 -translate-x-1/2 text-center" : "right-4 text-right"}`}
+          className={`absolute bottom-4 z-20 w-[calc(100%-2rem)] truncate rounded-full border on-media-control px-3 py-1.5 text-sm text-foreground backdrop-blur-sm ${captionPosition === "left" ? "left-4 text-left" : captionPosition === "center" ? "left-1/2 -translate-x-1/2 text-center" : "right-4 text-right"}`}
         >
           {bannerCaption}
         </span>
@@ -189,7 +189,7 @@ export function BannerStrip({
       {!readonly &&
         (editingCaption ? (
           <div
-            className="absolute bottom-3 left-3 right-3 z-20 flex flex-col gap-2 rounded-lg border border-white/20 bg-background/90 p-3 shadow-lg backdrop-blur-md sm:bottom-4 sm:left-32 sm:right-4"
+            className="absolute bottom-3 left-3 right-3 z-20 flex flex-col gap-2 rounded-lg border border-white/20 on-media-control p-3 shadow-lg backdrop-blur-md sm:bottom-4 sm:left-32 sm:right-4"
             onClick={(e) => e.stopPropagation()}
           >
             <Input
@@ -248,7 +248,7 @@ export function BannerStrip({
             <button
               onClick={openCaptionEditor}
               aria-label="Edit banner caption"
-              className={`absolute bottom-4 z-20 w-[calc(100%-2rem)] truncate rounded-md border border-white/20 bg-background/80 px-3 py-1.5 text-sm text-foreground shadow-sm backdrop-blur-sm transition-lift hover:bg-background/95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${captionPosition === "left" ? "left-4 text-left" : captionPosition === "center" ? "left-1/2 -translate-x-1/2 text-center" : "right-4 text-right"}`}
+              className={`absolute bottom-4 z-20 w-[calc(100%-2rem)] truncate rounded-md border on-media-control px-3 py-1.5 text-sm text-foreground backdrop-blur-sm transition-lift hover:bg-background/95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${captionPosition === "left" ? "left-4 text-left" : captionPosition === "center" ? "left-1/2 -translate-x-1/2 text-center" : "right-4 text-right"}`}
               title="Edit banner caption"
             >
               {bannerCaption}

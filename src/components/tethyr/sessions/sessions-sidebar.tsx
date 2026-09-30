@@ -103,7 +103,7 @@ export function SessionsSidebar({
             }`}
           >
             {isActive && (
-              <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-gradient-to-b from-[var(--user-accent,var(--trust))] to-[var(--ai)]" />
+              <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-[var(--user-accent,var(--trust))]" />
             )}
             <Icon
               className={`h-4 w-4 transition-colors ${isActive ? "text-[var(--user-accent,var(--trust))]" : ""}`}

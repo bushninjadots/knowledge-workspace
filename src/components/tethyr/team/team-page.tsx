@@ -465,7 +465,7 @@ function TeamBanner({ team, isLead }: { team: TeamRow; isLead: boolean }) {
                 fileRef.current?.click();
               }}
               disabled={uploading}
-              className="inline-flex items-center gap-1.5 rounded-md border border-white/20 bg-background/80 px-2.5 py-1.5 text-xs text-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-md border on-media-control px-2.5 py-1.5 text-xs text-foreground backdrop-blur-sm transition-colors hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
               aria-label={team.cover_url ? "Change crew banner" : "Add crew banner"}
             >
               <Camera className="h-3.5 w-3.5" />
@@ -490,7 +490,7 @@ function TeamBanner({ team, isLead }: { team: TeamRow; isLead: boolean }) {
                   })();
                 }}
                 disabled={uploading}
-                className="inline-flex items-center gap-1.5 rounded-md border border-white/20 bg-background/80 px-2.5 py-1.5 text-xs text-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-md border on-media-control px-2.5 py-1.5 text-xs text-foreground backdrop-blur-sm transition-colors hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
                 aria-label="Remove crew banner"
               >
                 <X className="h-3.5 w-3.5" />

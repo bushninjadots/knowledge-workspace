@@ -168,11 +168,11 @@ export function Navbar() {
             type="button"
             aria-label="Close menu"
             onClick={() => setOpen(false)}
-            className="animate-in fade-in-0 fixed inset-0 top-16 z-40 cursor-default bg-background/60 backdrop-blur-sm duration-200 md:hidden"
+            className="animate-in fade-in-0 fixed inset-0 top-16 z-40 cursor-default bg-background/60 duration-200 md:hidden"
           />
           <div
             id="mobile-menu"
-            className="animate-in fade-in-0 slide-in-from-top-2 absolute inset-x-0 top-full z-50 border-b border-border/60 bg-background/95 shadow-lg backdrop-blur-xl duration-200 md:hidden"
+            className="animate-in fade-in-0 slide-in-from-top-2 absolute inset-x-0 top-full z-50 border-b border-border/60 bg-background duration-200 md:hidden"
           >
             <div className="flex flex-col gap-1 px-4 py-4">
               <nav aria-label="Mobile primary navigation" className="flex flex-col gap-1">

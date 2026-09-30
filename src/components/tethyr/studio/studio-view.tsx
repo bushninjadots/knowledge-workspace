@@ -297,7 +297,7 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
                 "min-h-[calc(100vh-7rem)] w-full border-0 bg-background transition-opacity duration-200",
                 !previewLoaded && "opacity-0",
                 previewDevice !== "desktop" &&
-                  "rounded-lg shadow-[0_12px_40px_-24px_hsl(var(--foreground)/0.5)]",
+                  "rounded-lg shadow-[0_12px_40px_-24px_color-mix(in_oklab,var(--foreground)_50%,transparent)]",
               )}
               style={{
                 maxWidth: PREVIEW_DEVICE_WIDTHS[previewDevice],

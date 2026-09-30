@@ -209,6 +209,9 @@ function ProfileSetupForm({
     social_links: profile?.social_links ?? {},
   });
   const [saving, setSaving] = useState(false);
+  // First-save celebration: a real element instead of injected HTML, so it
+  // inherits the accent context and rides on the token system.
+  const [celebrate, setCelebrate] = useState(false);
   const [bgOpen, setBgOpen] = useState(false);
   const { requestCrop, dialog: cropDialog } = useCropConfirm();
 
@@ -365,18 +368,8 @@ function ProfileSetupForm({
     const key = `tethyr:first-save:${userId}`;
     if (!sessionStorage.getItem(key)) {
       sessionStorage.setItem(key, "1");
-      const existing = document.getElementById("setup-celebration");
-      if (!existing) {
-        const el = document.createElement("div");
-        el.id = "setup-celebration";
-        el.innerHTML = `
-          <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 rounded-xl border border-[var(--user-accent,var(--trust))]/30 bg-[var(--user-accent-subtle,var(--learning-subtle))] px-5 py-3 text-sm font-medium text-[var(--user-accent-foreground,var(--background))] shadow-lg animate-bounce">
-            ✨ Your studio is taking shape — keep going!
-          </div>
-        `;
-        document.body.appendChild(el);
-        setTimeout(() => el.remove(), 4000);
-      }
+      setCelebrate(true);
+      setTimeout(() => setCelebrate(false), 4000);
     }
     onSaved();
   }
@@ -386,6 +379,17 @@ function ProfileSetupForm({
       className={`animate-room-enter mx-auto max-w-7xl bg-noise px-4 py-6 sm:px-6 sm:py-8 ${background?.density === "compact" ? "tethyr-density-compact" : ""}`}
       style={accentStyle}
     >
+      {/* First-save celebration: tokenized element (accent-aware card border,
+          no bounce), rendered through React instead of injected HTML. */}
+      {celebrate && (
+        <div
+          id="setup-celebration"
+          role="status"
+          className="animate-in fade-in-0 slide-in-from-bottom-2 fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-lg border card-border bg-surface-elevated px-5 py-3 text-sm font-medium text-foreground shadow-lg duration-200"
+        >
+          ✨ Your studio is taking shape — keep going!
+        </div>
+      )}
       <div className="space-y-6">
         {/* BANNER + HEADER */}
         <Card className="relative overflow-hidden p-5 sm:p-6">

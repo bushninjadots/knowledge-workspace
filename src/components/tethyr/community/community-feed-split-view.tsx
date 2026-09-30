@@ -132,7 +132,7 @@ export function CommunityFeedSplitView({
   return (
     <div className="hidden min-h-[min(72vh,760px)] grid-cols-[minmax(20rem,26rem)_minmax(0,1fr)] overflow-hidden rounded-xl border border-border/60 bg-surface/30 lg:grid">
       <aside className="min-h-0 overflow-y-auto border-r border-border/60" aria-label="Posts">
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border/60 bg-surface/95 px-4 py-3 backdrop-blur-sm">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border/60 bg-surface px-4 py-3">
           <div>
             <p className="section-label">Reading list</p>
             <p className="mt-1 text-xs text-muted-foreground">{posts.length} loaded posts</p>

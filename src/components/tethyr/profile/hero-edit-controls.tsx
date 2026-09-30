@@ -132,7 +132,7 @@ export function HeroEditControls({
             setEditingCaption(true);
             setTimeout(() => captionRef.current?.focus(), 0);
           }}
-          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background/80 px-2.5 py-1.5 text-xs font-medium text-foreground backdrop-blur-sm transition-lift hover:bg-background"
+          className="inline-flex items-center gap-1.5 rounded-md border on-media-control px-2.5 py-1.5 text-xs font-medium text-foreground backdrop-blur-sm transition-lift hover:bg-background"
         >
           <Sparkles className="h-3.5 w-3.5" />
           {identity.banner_caption ? "Edit caption" : "Add caption"}
@@ -151,7 +151,7 @@ export function HeroEditControls({
         <button
           type="button"
           onClick={() => onCompleteProfile?.()}
-          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background/80 px-2.5 py-1.5 text-xs font-medium text-foreground backdrop-blur-sm transition-lift hover:bg-background"
+          className="inline-flex items-center gap-1.5 rounded-md border on-media-control px-2.5 py-1.5 text-xs font-medium text-foreground backdrop-blur-sm transition-lift hover:bg-background"
         >
           <Pencil className="h-3.5 w-3.5" />
           Edit details
@@ -160,7 +160,7 @@ export function HeroEditControls({
         <button
           type="button"
           onClick={() => setAppearanceOpen(true)}
-          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background/80 px-2.5 py-1.5 text-xs font-medium text-foreground backdrop-blur-sm transition-lift hover:bg-background"
+          className="inline-flex items-center gap-1.5 rounded-md border on-media-control px-2.5 py-1.5 text-xs font-medium text-foreground backdrop-blur-sm transition-lift hover:bg-background"
         >
           <Palette className="h-3.5 w-3.5" />
           Appearance
@@ -180,7 +180,7 @@ export function HeroEditControls({
       />
 
       {editingCaption && (
-        <div className="absolute inset-x-3 bottom-3 z-30 flex flex-col gap-2 rounded-lg border border-border bg-background/95 p-3 backdrop-blur-sm">
+        <div className="absolute inset-x-3 bottom-3 z-30 flex flex-col gap-2 rounded-lg border on-media-control bg-background/95 p-3 backdrop-blur-sm">
           <Input
             ref={captionRef}
             value={captionDraft}

@@ -150,7 +150,7 @@ export function StarterPicker({
     <Dialog open onOpenChange={(next) => !next && onClose()}>
       <DialogContent
         aria-label="Choose how your Studio feels"
-        className="flex max-h-[85vh] w-full max-w-4xl flex-col gap-0 overflow-hidden rounded-lg sm:rounded-lg border-card-border bg-surface-elevated p-0 shadow-xl card"
+        className="flex max-h-[85vh] w-full max-w-4xl flex-col gap-0 overflow-hidden rounded-lg border-card-border bg-surface-elevated p-0 shadow-lg card"
       >
         <header className="shrink-0 border-b border-card-border px-5 py-4">
           <div className="flex items-start justify-between gap-4">

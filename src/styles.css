@@ -684,6 +684,17 @@
   );
 }
 
+/* Controls and chips placed on user-supplied imagery (banner captions,
+   hero edit buttons, team banner controls). One definition of the
+   translucent-on-media treatment — pairs with a width class (`border`) and
+   backdrop-blur-sm at the call site — so the hairline can't drift between
+   surfaces or disappear against light images the way a raw border-white/20
+   does. Sets colors only, mirroring the card-border precedent. */
+@utility on-media-control {
+  background: color-mix(in oklab, var(--background) 82%, transparent);
+  border-color: color-mix(in oklab, var(--background) 18%, transparent);
+}
+
 /* Shared containment contract for independent cards and workspace content. */
 @utility content-safe {
   min-width: 0;

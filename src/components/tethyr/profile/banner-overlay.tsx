@@ -67,7 +67,7 @@ export function BannerOverlayPicker({
               {/* Mini caption chip at the position captions actually render */}
               <span
                 aria-hidden="true"
-                className="absolute bottom-1.5 right-1.5 max-w-[80%] truncate rounded-full bg-background/70 px-1.5 py-0.5 text-[8px] leading-none text-foreground backdrop-blur-sm ring-1 ring-border/40"
+                className="absolute bottom-1.5 right-1.5 max-w-[80%] truncate rounded-full border on-media-control px-1.5 py-0.5 text-[8px] leading-none text-foreground backdrop-blur-sm"
               >
                 Your caption
               </span>

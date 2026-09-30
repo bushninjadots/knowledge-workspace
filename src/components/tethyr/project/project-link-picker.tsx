@@ -100,7 +100,7 @@ export function ProjectLinkPicker({
         )}
       </div>
       {open && query.trim().length >= 2 && (
-        <div className="absolute z-30 mt-1 w-full overflow-hidden rounded-md border border-border bg-background shadow-sm">
+        <div className="absolute z-30 mt-1 w-full overflow-hidden rounded-md border border-border bg-background shadow-lg">
           {results.length === 0 ? (
             <p className="px-3 py-2 text-xs text-muted-foreground">No matching projects</p>
           ) : (

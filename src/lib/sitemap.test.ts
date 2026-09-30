@@ -47,6 +47,11 @@ async function importSitemap() {
 beforeEach(() => {
   state.queues = {};
   state.queries = [];
+  // A developer's gitignored .env may legitimately set the public origin (it
+  // is required in production). Pin it to empty — behaviorally identical to
+  // unset for normalizeOrigin — so tests assert the fallback path rather than
+  // inheriting machine-specific configuration.
+  vi.stubEnv("VITE_PUBLIC_SITE_URL", "");
 });
 
 afterEach(() => {
