@@ -17,7 +17,14 @@ services:
     env_file:
       - ./.env.supabase-runtime
     environment:
-      - VITE_PUBLIC_SITE_URL=https://3000-${BASE44_PUBLIC_HOST_SUFFIX}
+      # Only set the canonical origin when the platform host suffix exists;
+      # on a plain local run an empty value makes src/lib/seo.ts fall back to
+      # the serving origin (the https://3000- form would be a nonexistent host).
+      - VITE_PUBLIC_SITE_URL=${BASE44_PUBLIC_HOST_SUFFIX:+https://3000-${BASE44_PUBLIC_HOST_SUFFIX}}
+      # Mirror the Base44 platform (which runs this stack as its sandbox): the
+      # wrapper then forces port 8080/strictPort, matching the "3000:8080"
+      # mapping below, and vite.config.ts skips its bare-metal 5173 pin.
+      - LOVABLE_SANDBOX=1
     extra_hosts:
       - "host.docker.internal:host-gateway" # so SSR can reach Supabase on the host
     command: sh -c "npm install --no-audit --no-fund --prefer-offline && npm run dev"
