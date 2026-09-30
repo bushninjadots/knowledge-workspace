@@ -32,7 +32,7 @@ const primaryNavigation = [
 /** Shared animated-underline link styling for the desktop bar. */
 function desktopLinkClass(active: boolean) {
   return [
-    "relative rounded-md px-3 py-2 text-sm transition-colors duration-200",
+    "relative rounded-md px-3 py-2 text-sm transition-colors duration-200 hover:bg-surface/70",
     "hover:text-foreground focus-visible:outline-none focus-visible:ring-2",
     "focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
     "after:absolute after:inset-x-3 after:bottom-1 after:h-0.5 after:rounded-full",

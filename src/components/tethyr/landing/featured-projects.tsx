@@ -45,10 +45,13 @@ export function FeaturedProjects() {
     <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
       <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-2xl">
-          <p className="section-label mb-3">Featured projects</p>
+          <p className="section-label mb-3">Discover / Featured work</p>
           <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
             What the community is building
           </h2>
+          <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">
+            Follow the work, meet the people behind it, and find your next way to contribute.
+          </p>
         </div>
         <Link
           to="/explore"
@@ -65,7 +68,7 @@ export function FeaturedProjects() {
               key={p.id}
               to="/projects/$id"
               params={{ id: p.id }}
-              className="group flex flex-col overflow-hidden rounded-xl border border-transparent bg-surface-elevated/30 transition-lift hover:border-border/60 hover:bg-surface-elevated/50"
+              className="group flex flex-col overflow-hidden rounded-lg border border-border/40 bg-surface-elevated/30 transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated/50"
             >
               <div className="relative h-36 overflow-hidden bg-surface-sunken">
                 <ProjectCardCover path={p.cover_url} />

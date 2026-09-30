@@ -359,8 +359,8 @@ export function ProjectHeader({
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex flex-wrap items-center justify-end gap-2">
+          {/* Actions stay in the project header so discovery, discussion, and contribution remain one connected path. */}
+          <div className="flex flex-wrap items-center justify-end gap-2" aria-label="Project actions">
             {openNeedCount > 0 && (
               <button
                 onClick={onOpenNeeds}
