@@ -88,6 +88,44 @@ jobs:
           SUPABASE_PUBLISHABLE_KEY: ${{ steps.keys.outputs.publishable }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ steps.keys.outputs.service_role }}
 
+      # The import probe can't see what only exists over HTTP: the *enforced*
+      # nonce CSP (dev serves report-only) and hydration/auth behavior of the
+      # real artifact. Serve the bundle exactly like the deployment does and
+      # run the browser harnesses against it. scripts/serve-prod-build.mjs
+      # documents why the bundle must be the one from build:prod above.
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Serve the bundle and audit it (21 pages + enforced CSP)
+        run: |
+          node scripts/serve-prod-build.mjs --port 8790 > /tmp/serve-prod.log 2>&1 &
+          SERVER_PID=$!
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8790/ >/dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8790/ >/dev/null
+          node scripts/qa-audit.mjs --base http://127.0.0.1:8790
+          node scripts/qa-csp.mjs --base http://127.0.0.1:8790 --require-enforced
+          kill $SERVER_PID
+        env:
+          # SSR inside the served bundle reaches the local stack directly; the
+          # browser reaches it at the same URL because server and browser
+          # share the runner.
+          SUPABASE_URL: http://127.0.0.1:54321
+          SUPABASE_PUBLISHABLE_KEY: ${{ steps.keys.outputs.publishable }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ steps.keys.outputs.service_role }}
+          QA_EMAIL: maya@tethyr.dev
+          QA_PASSWORD: password123
+
+      - name: Upload prod-bundle artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-artifacts-prod-bundle
+          path: qa-artifacts/
+          retention-days: 14
+
   visual-qa:
     # Both remotes that share this file get the full stack: `origin` is the
     # canonical repo, `loveable` is the Lovable-connected one whose pushed
