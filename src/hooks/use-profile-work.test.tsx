@@ -22,7 +22,7 @@ vi.mock("@/integrations/supabase/client", () => ({
   supabase: { from: (...a: unknown[]) => from(...a) },
 }));
 
-import { useProfileWork, useProjectOpenWork, openWorkCount } from "./use-profile-work";
+import { useProfileWork, useProjectOpenWork, hasOpenWork } from "./use-profile-work";
 
 function chain(result: unknown) {
   const q = {
@@ -180,11 +180,11 @@ describe("useProjectOpenWork", () => {
     const open = result.current.data;
     expect(open?.get("p1")).toEqual({ roles: 0, needs: 2 });
     expect(open?.get("p2")).toEqual({ roles: 1, needs: 1 });
-    expect(openWorkCount(open, "p1")).toBe(2);
-    expect(openWorkCount(open, "p2")).toBe(2);
+    expect(hasOpenWork(open, "p1")).toBe(true);
+    expect(hasOpenWork(open, "p2")).toBe(true);
     // A project with no open work is simply absent.
     expect(open?.has("p3")).toBe(false);
-    expect(openWorkCount(open, "p3")).toBe(0);
+    expect(hasOpenWork(open, "p3")).toBe(false);
   });
 
   it("degrades to no-signal when a read fails — never a wrong badge", async () => {

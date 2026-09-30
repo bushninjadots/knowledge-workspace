@@ -25,6 +25,14 @@ import { isColumnSchemaError } from "@/lib/supabase-errors";
 /** Secondary row actions share one weight so the demoted rows read as one list. */
 const ROW_ACTION = "text-[11px] font-medium text-primary hover:underline";
 
+/** Open-work summary in the product's own nouns: roles first, needs as the tail. */
+function openSummary(roles: number, needs: number) {
+  const parts: string[] = [];
+  if (roles > 0) parts.push(`${roles} open role${roles === 1 ? "" : "s"}`);
+  if (needs > 0) parts.push(`${needs} need${needs === 1 ? "" : "s"}`);
+  return parts.length > 0 ? ` · ${parts.join(" · ")}` : "";
+}
+
 type ApplicationRow = {
   id: string;
   status: string;
@@ -125,10 +133,8 @@ export function ProjectsModuleRow({ projects }: { projects: ProjectRow[] }) {
   // Hook is unconditional; a failure just leaves the summary without the count.
   const projectIds = useMemo(() => projects.map((project) => project.id), [projects]);
   const { data: openWork } = useProjectOpenWork(projectIds.length > 0 ? projectIds : null);
-  const openSpots = [...(openWork?.values() ?? [])].reduce(
-    (sum, entry) => sum + entry.roles + entry.needs,
-    0,
-  );
+  const openRoles = [...(openWork?.values() ?? [])].reduce((sum, entry) => sum + entry.roles, 0);
+  const openNeeds = [...(openWork?.values() ?? [])].reduce((sum, entry) => sum + entry.needs, 0);
 
   const preview = projects
     .slice(0, 3)
@@ -142,7 +148,7 @@ export function ProjectsModuleRow({ projects }: { projects: ProjectRow[] }) {
       subtitle={
         projects.length === 0
           ? "Give people a clear place to find what you're building."
-          : `${projects.length} active${openSpots > 0 ? ` · ${openSpots} open spot${openSpots === 1 ? "" : "s"}` : ""}`
+          : `${projects.length} active${openSummary(openRoles, openNeeds)}`
       }
       action={
         projects.length === 0 ? (

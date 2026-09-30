@@ -13,7 +13,7 @@ import { BlockEmptyState } from "@/components/tethyr/blocks/block-empty-state";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import { registerBlock } from "@/lib/block-registry";
 import { contributionRoleVerb } from "@/lib/contribution-role";
-import { useProjectOpenWork, type ProjectOpenWork } from "@/hooks/use-profile-work";
+import { useProjectOpenWork, hasOpenWork, type ProjectOpenWork } from "@/hooks/use-profile-work";
 import { OpenWorkBadge } from "@/components/tethyr/open-work-badge";
 import { PROJECT_STATUS_LABEL, type ProjectStatus } from "@/components/tethyr/profile/types";
 import {
@@ -204,6 +204,7 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
               showProgress={showProgress}
               progress={project.progress_percent}
               openWork={openWork}
+              needsPeople={hasOpenWork(openWork, project.id)}
             >
               <p className="truncate text-sm font-medium text-foreground">{project.title}</p>
               <p className="text-[11px] text-muted-foreground">
@@ -235,6 +236,7 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
               key={project.id}
               id={project.id}
               label={project.title}
+              openWork={openWork}
               className="min-w-[240px] shrink-0 sm:min-w-[280px]"
             >
               <ProjectImage project={project} />
@@ -262,6 +264,7 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
               key={featured.project.id}
               id={featured.project.id}
               label={featured.project.title}
+              openWork={openWork}
               className="md:col-span-2 md:row-span-2"
             >
               <ProjectImage project={featured.project} />
@@ -273,7 +276,7 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
             </ProjectCard>
           )}
           {rest.map(({ project, role }) => (
-            <ProjectCard key={project.id} id={project.id} label={project.title}>
+            <ProjectCard key={project.id} id={project.id} label={project.title} openWork={openWork}>
               <ProjectImage project={project} />
               {body(project, role)}
               <CollaboratorRowInline
@@ -297,6 +300,7 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
             key={featured.project.id}
             id={featured.project.id}
             label={featured.project.title}
+            openWork={openWork}
             className="sm:px-4 sm:py-4"
           >
             {featured.project.cover_url ? <ProjectImage project={featured.project} /> : null}
@@ -335,7 +339,12 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
         {rest.length > 0 && (
           <div className="grid gap-2 sm:grid-cols-2">
             {rest.map(({ project, role }) => (
-              <ProjectCard key={project.id} id={project.id} label={project.title}>
+              <ProjectCard
+                key={project.id}
+                id={project.id}
+                label={project.title}
+                openWork={openWork}
+              >
                 <ProjectImage project={project} />
                 {body(project, role)}
                 <CollaboratorRowInline
@@ -360,20 +369,25 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
 function ProjectCard({
   id,
   label,
+  openWork,
   className,
   children,
 }: {
   id: string;
   label: string;
+  /** When the project needs people, the card's accessible name says so —
+   *  the badge itself sits outside the stretched link's name. */
+  openWork?: Map<string, ProjectOpenWork>;
   className?: string;
   children?: ReactNode;
 }) {
+  const needsPeople = hasOpenWork(openWork, id);
   return (
     <div className={`${CARD_CLS} group relative ${className ?? ""}`}>
       <Link
         to="/projects/$id"
         params={{ id }}
-        aria-label={label}
+        aria-label={needsPeople ? `${label} — has open roles` : label}
         className="absolute inset-0 z-0 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring"
       />
       {children}
@@ -388,6 +402,7 @@ function ProjectRowLink({
   showProgress,
   progress,
   openWork,
+  needsPeople,
   children,
 }: {
   id: string;
@@ -395,6 +410,7 @@ function ProjectRowLink({
   showProgress?: boolean | null;
   progress: number;
   openWork?: Map<string, ProjectOpenWork>;
+  needsPeople?: boolean;
   children?: ReactNode;
 }) {
   return (
@@ -402,7 +418,7 @@ function ProjectRowLink({
       <Link
         to="/projects/$id"
         params={{ id }}
-        aria-label={label}
+        aria-label={needsPeople ? `${label} — has open roles` : label}
         className="absolute inset-0 z-0 outline-none focus-visible:ring-2 focus-visible:ring-ring"
       />
       <div className="relative flex items-center justify-between gap-3">

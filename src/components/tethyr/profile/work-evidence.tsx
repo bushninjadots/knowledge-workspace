@@ -22,7 +22,7 @@
 
 import { Link } from "@tanstack/react-router";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
-import { useProfileWork, useProjectOpenWork } from "@/hooks/use-profile-work";
+import { useProfileWork, useProjectOpenWork, hasOpenWork } from "@/hooks/use-profile-work";
 import { contributionRoleVerb } from "@/lib/contribution-role";
 import { PROJECT_STATUS_LABEL, type ProjectStatus } from "@/components/tethyr/profile/types";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -83,7 +83,12 @@ export function ProfileWorkEvidence({
           and the page surface should stay quiet. Border separates, not shadow. */}
       <ul className="mt-3 divide-y divide-border border-y border-border">
         {data.projects.map((project) => (
-          <WorkRow key={project.id} project={project} openWork={openWork} />
+          <WorkRow
+            key={project.id}
+            project={project}
+            openWork={openWork}
+            needsPeople={hasOpenWork(openWork, project.id)}
+          />
         ))}
       </ul>
 
@@ -117,9 +122,11 @@ export function ProfileWorkEvidence({
 function WorkRow({
   project,
   openWork,
+  needsPeople,
 }: {
   project: ProfileWorkProjectRow;
   openWork?: Map<string, ProjectOpenWork>;
+  needsPeople?: boolean;
 }) {
   const { data: coverSigned } = useSignedStorageUrl("project-media", project.cover_url);
   const src = coverSigned ?? (project.cover_url?.startsWith("http") ? project.cover_url : null);
@@ -134,7 +141,8 @@ function WorkRow({
         // unreadable run-on ("BuiltThreadlineAsync video feedback...Active").
         // Name it after the claim the row actually makes — the verb plus the
         // work — which is the one thing a screen-reader user must not miss.
-        aria-label={`${contributionRoleVerb(project.role)} ${project.title}`}
+        // The open-work fact joins the name: the badge sits outside it.
+        aria-label={`${contributionRoleVerb(project.role)} ${project.title}${needsPeople ? " — has open roles" : ""}`}
         className="flex items-start gap-4 py-3.5 outline-none transition-colors hover:bg-surface focus-visible:bg-surface"
       >
         {src && (

@@ -213,9 +213,8 @@ export function useProjectOpenWork(projectIds: string[] | null | undefined) {
   });
 }
 
-/** Total unfilled spots for a project, 0 when none or unknown. */
-export function openWorkCount(open: Map<string, ProjectOpenWork> | undefined, projectId: string) {
+/** True when the project has any unfilled need or open role. */
+export function hasOpenWork(open: Map<string, ProjectOpenWork> | undefined, projectId: string) {
   const entry = open?.get(projectId);
-  if (!entry) return 0;
-  return entry.roles + entry.needs;
+  return Boolean(entry && (entry.roles > 0 || entry.needs > 0));
 }
