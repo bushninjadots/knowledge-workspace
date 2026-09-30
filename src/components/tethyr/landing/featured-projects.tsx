@@ -95,13 +95,31 @@ export function FeaturedProjects() {
                     ))}
                   </div>
                 )}
-                <div className="mt-auto flex items-center justify-between pt-4">
-                  <span className="text-xs text-muted-foreground">
-                    {p.profiles?.display_name || p.profiles?.handle || "Member"}
-                  </span>
-                  <span className="numeric text-xs text-muted-foreground">
-                    {p.progress_percent ?? 0}% complete
-                  </span>
+                <div className="mt-auto pt-5">
+                  <div className="mb-2 flex items-center justify-between gap-3 text-xs">
+                    <span className="truncate text-muted-foreground">
+                      Built by {p.profiles?.display_name || p.profiles?.handle || "Member"}
+                    </span>
+                    <span className="numeric shrink-0 text-muted-foreground">
+                      {p.progress_percent ?? 0}% complete
+                    </span>
+                  </div>
+                  <div
+                    className="h-1 overflow-hidden rounded-full bg-surface-sunken"
+                    role="progressbar"
+                    aria-label={`${p.progress_percent ?? 0}% complete`}
+                    aria-valuenow={p.progress_percent ?? 0}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                  >
+                    <div
+                      className="h-full rounded-full bg-[var(--user-accent,var(--trust))] transition-[width]"
+                      style={{ width: `${p.progress_percent ?? 0}%` }}
+                    />
+                  </div>
+                  <div className="mt-4 flex items-center gap-1.5 text-xs font-medium text-primary">
+                    Open project <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                  </div>
                 </div>
               </div>
             </Link>

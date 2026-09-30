@@ -364,7 +364,7 @@ export function ProjectHeader({
             {openNeedCount > 0 && (
               <button
                 onClick={onOpenNeeds}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs font-medium text-destructive transition-lift hover:bg-destructive/10"
+                className="inline-flex items-center gap-1.5 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs font-medium text-destructive transition-lift hover:bg-destructive/10"
               >
                 <Zap className="h-3.5 w-3.5" />
                 {openNeedCount} need{openNeedCount !== 1 ? "s" : ""}
@@ -373,7 +373,7 @@ export function ProjectHeader({
             {communityPostCount > 0 && (
               <button
                 onClick={onOpenDiscussions}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-learning/40 bg-learning/10 px-3 py-2 text-xs font-medium text-learning transition-lift hover:bg-learning/20"
+                className="inline-flex items-center gap-1.5 rounded-md border border-learning/40 bg-learning/10 px-3 py-2 text-xs font-medium text-learning transition-lift hover:bg-learning/20"
               >
                 <MessageCircle className="h-3.5 w-3.5" />
                 {communityPostCount} post{communityPostCount !== 1 ? "s" : ""}
@@ -381,7 +381,7 @@ export function ProjectHeader({
             )}
             <button
               onClick={copyLink}
-              className="inline-flex items-center justify-center rounded-xl border border-border/60 bg-surface px-3 py-2 text-muted-foreground transition-lift hover:text-foreground"
+              className="inline-flex items-center justify-center rounded-md border border-border/60 bg-surface px-3 py-2 text-muted-foreground transition-lift hover:border-border-strong hover:text-foreground"
               aria-label="Copy link"
               title="Copy link"
             >
@@ -390,7 +390,7 @@ export function ProjectHeader({
             {onJoin ? (
               <button
                 onClick={onJoin}
-                className="inline-flex items-center gap-2 rounded-xl bg-[var(--user-accent,var(--trust))] px-4 py-2 text-sm font-semibold text-[var(--user-accent-foreground,var(--background))] transition-fade hover:opacity-90"
+                className="inline-flex items-center gap-2 rounded-md bg-[var(--user-accent,var(--trust))] px-4 py-2 text-sm font-semibold text-[var(--user-accent-foreground,var(--background))] transition-fade hover:opacity-90"
               >
                 <UserPlus className="h-4 w-4" />
                 Join Project
@@ -398,7 +398,7 @@ export function ProjectHeader({
             ) : onPostUpdate ? (
               <button
                 onClick={onPostUpdate}
-                className="inline-flex items-center gap-2 rounded-xl bg-[var(--user-accent,var(--trust))] px-4 py-2 text-sm font-semibold text-[var(--user-accent-foreground,var(--background))] transition-fade hover:opacity-90"
+                className="inline-flex items-center gap-2 rounded-md bg-[var(--user-accent,var(--trust))] px-4 py-2 text-sm font-semibold text-[var(--user-accent-foreground,var(--background))] transition-fade hover:opacity-90"
               >
                 <PenSquare className="h-4 w-4" />
                 Post update
@@ -406,7 +406,7 @@ export function ProjectHeader({
             ) : onSignIn ? (
               <button
                 onClick={onSignIn}
-                className="inline-flex items-center gap-2 rounded-xl bg-[var(--user-accent,var(--trust))] px-4 py-2 text-sm font-semibold text-[var(--user-accent-foreground,var(--background))] transition-fade hover:opacity-90"
+                className="inline-flex items-center gap-2 rounded-md bg-[var(--user-accent,var(--trust))] px-4 py-2 text-sm font-semibold text-[var(--user-accent-foreground,var(--background))] transition-fade hover:opacity-90"
               >
                 <UserPlus className="h-4 w-4" />
                 Sign in to join

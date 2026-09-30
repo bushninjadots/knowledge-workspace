@@ -89,8 +89,8 @@ export function Navbar() {
 
   return (
     <header
-      className={`sticky top-0 z-50 border-b bg-background/95 bg-noise backdrop-blur transition-shadow duration-300 ${
-        scrolled ? "border-border shadow-[0_8px_24px_-16px_rgba(0,0,0,0.4)]" : "border-border/70"
+      className={`sticky top-0 z-50 border-b bg-background bg-noise transition-colors duration-300 ${
+        scrolled ? "border-border" : "border-border/70"
       }`}
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">

@@ -20,7 +20,14 @@ export function SectionCard({
         <div className="flex items-center gap-2">
           {action}
           {onEdit && (
-            <Button variant="ghost" size="icon" className="rounded-full" onClick={onEdit}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-md"
+              onClick={onEdit}
+              aria-label={`Edit ${typeof title === "string" ? title : "section"}`}
+              title={`Edit ${typeof title === "string" ? title : "section"}`}
+            >
               <Pencil className="h-4 w-4" />
             </Button>
           )}
