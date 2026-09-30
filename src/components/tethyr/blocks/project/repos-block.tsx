@@ -16,6 +16,12 @@ type RepoRow = {
   stars?: number | null;
 };
 
+/** Cached snapshot shape on project_repositories.metadata (via the safe view). */
+type RepoMetadata = {
+  full_name?: string | null;
+  stargazers_count?: number | null;
+};
+
 function ProjectReposBlock({ config, context }: BlockProps) {
   const isProject = context.ownerType === "project";
   const projectId = isProject ? context.ownerId : null;
@@ -26,13 +32,20 @@ function ProjectReposBlock({ config, context }: BlockProps) {
       if (!projectId) return [];
       const { data: d } = await supabasePending
         .from("project_repositories_safe")
-        .select("id, provider, url")
+        .select("id, provider, url, metadata")
         .eq("project_id", projectId)
         .order("provider");
-      return ((d ?? []) as unknown as RepoRow[]).map((repo) => ({
-        ...repo,
-        name: (repo.url ?? "").replace(/^https?:\/\//, "").replace(/\/$/, ""),
-      }));
+      return ((d ?? []) as unknown as (RepoRow & { metadata?: RepoMetadata | null })[]).map(
+        (repo) => ({
+          ...repo,
+          // Prefer the cached full_name so stars/lang-cased names survive URL
+          // normalization; fall back to parsing the stored URL.
+          name:
+            repo.metadata?.full_name ??
+            (repo.url ?? "").replace(/^https?:\/\//, "").replace(/\/$/, ""),
+          stars: repo.stars ?? repo.metadata?.stargazers_count ?? null,
+        }),
+      );
     },
     enabled: isProject,
   });

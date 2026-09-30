@@ -89,6 +89,9 @@ function RepoCard({
                 project_id: repo.project_id,
                 url: repo.url,
                 provider: repo.provider,
+                // Kept on a failed/rate-limited refresh so the card never
+                // falls back to an empty snapshot.
+                metadata: repo.metadata,
               })
             }
             disabled={refreshMeta.isPending}

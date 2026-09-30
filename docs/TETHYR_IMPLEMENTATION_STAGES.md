@@ -760,6 +760,28 @@ with its picker tag and importing cleanly) — both confirmed against the
 owner's own repositories, with all seeded state removed afterward. Four
 offline component tests pin the pre-fill and degradation paths.
 
+### 2026-09-30 — Import carries the repo's real metadata into the project view
+
+Follow-up to the GitHub import: the linked-repo row is no longer written with
+a `{ full_name, default_branch: "HEAD" }` stub. Picking a repo now snapshots
+GitHub's metadata (stars, forks, language, topics, description, visibility,
+real default branch) server-side in parallel with the README fetch, falls
+back to the fields the picker already proved when the meta call fails, and
+absolutizes README images against the real default branch instead of HEAD.
+The deeper fix was in the read path: `project_repositories_safe` had been
+stripped of its `metadata` column by the S5 hardening pass (a precaution
+copied from `connected_accounts`, where metadata can carry tokens — this
+table has never stored secrets), so stars/language/branch were written but
+unreachable by every client reader. `20260930120000` re-exposes the column
+through the security-invoker view (pgTAP contract test added), the repo
+cards' refresh now merges over the last good snapshot instead of wiping it
+on a failed fetch, and the studio repos block prefers the cached full_name
+and shows cached stars. The picker's empty state is now an inline connect
+prompt (the shared GitHubConnect block) instead of a pointer to Settings;
+connecting from inside the dialog refetches the repo list automatically.
+Metadata stays refresh-on-visit (the card's refresh button) — no background
+sync infrastructure exists and none is warranted yet.
+
 ### 2026-09-30 — Open-work badges on the profile (Find people → Collaborate seam)
 
 The loop's weakest transition was the restart: a visitor landing on a person's

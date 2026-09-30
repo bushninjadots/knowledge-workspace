@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Camera, Check, Github, Loader2, Search as SearchIcon, X } from "lucide-react";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
 import { validateImageFile, isSafeUrl } from "@/lib/validators";
-import { fetchRepoReadmeServer, listGithubRepos } from "@/lib/github-server";
+import { fetchRepoMetaServer, fetchRepoReadmeServer, listGithubRepos } from "@/lib/github-server";
 import { absolutizeRelativeLinks, repoFullNameToTitle } from "@/lib/github";
+import type { RepoMeta } from "@/lib/github";
+import { GitHubConnect } from "./github-connect";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -95,8 +97,10 @@ export function ProjectDialog({
     url: string;
   } | null>(null);
   const [importedReadme, setImportedReadme] = useState<string | null>(null);
+  const [importedMeta, setImportedMeta] = useState<RepoMeta | null>(null);
   const [importingReadme, setImportingReadme] = useState(false);
   const [repoSearch, setRepoSearch] = useState("");
+  const queryClient = useQueryClient();
 
   const reposQuery = useQuery({
     queryKey: ["github-repos-for-import"],
@@ -115,10 +119,36 @@ export function ProjectDialog({
     );
   }, [reposQuery.data, repoSearch]);
 
+  // The picker's empty state doubles as the GitHub connect prompt: as soon as
+  // an account (or a token for the already-connected username) gets connected
+  // from inside the dialog, the repo list refetches and the picker takes over.
+  const pickerNeedsConnect =
+    open &&
+    !project &&
+    sourceChoice === "github" &&
+    !reposQuery.isLoading &&
+    !reposQuery.isError &&
+    (reposQuery.data ?? []).length === 0;
+  const refetchRepos = reposQuery.refetch;
+  useEffect(() => {
+    if (!pickerNeedsConnect) return;
+    return queryClient.getQueryCache().subscribe((event) => {
+      const key = event.query.queryKey[0];
+      if (
+        (key === "connected-accounts" || key === "github-token-status") &&
+        event.type === "updated" &&
+        event.action?.type === "success"
+      ) {
+        void refetchRepos();
+      }
+    });
+  }, [pickerNeedsConnect, queryClient, refetchRepos]);
+
   async function pickRepo(repo: GithubRepoLite) {
     const fullName = repo.full_name;
     setImportedRepo({ fullName, url: repo.html_url });
     setImportedReadme(null);
+    setImportedMeta(null);
     setTitle(repoFullNameToTitle(fullName));
     if (repo.description) setDescription(repo.description);
     const language = repo.language;
@@ -131,9 +161,28 @@ export function ProjectDialog({
     }
     setImportingReadme(true);
     try {
-      const { text, rateLimited, unauthorized } = await fetchRepoReadmeServer({
-        data: { fullName },
-      });
+      // Snapshot the full repo metadata (stars, forks, topics, default branch,
+      // visibility) alongside the README so the linked repo row starts with a
+      // real cached state instead of a stub — the project page renders it.
+      const [owner, repoName] = fullName.split("/");
+      const [meta, { text, rateLimited, unauthorized }] = await Promise.all([
+        owner && repoName
+          ? fetchRepoMetaServer({ data: { owner, repo: repoName } }).catch(() => null)
+          : Promise.resolve(null),
+        fetchRepoReadmeServer({ data: { fullName } }),
+      ]);
+      // Keep what the picker already proved even when the meta call came back
+      // empty (rate limit, network) — never regress to less than we know.
+      const snapshot: RepoMeta = meta
+        ? { ...meta, full_name: meta.full_name || fullName }
+        : {
+            full_name: fullName,
+            description: repo.description,
+            language: repo.language,
+            stargazers_count: repo.stargazers_count,
+            private: repo.private,
+          };
+      setImportedMeta(snapshot);
       if (unauthorized) {
         toast.error(
           "GitHub rejected the saved token — reconnect it in Settings to import the README",
@@ -149,8 +198,9 @@ export function ProjectDialog({
         return;
       }
       // Relative image/link paths get absolutized against the source repo, so
-      // GitHub-hosted screenshots and GIFs render inside the project page.
-      setImportedReadme(absolutizeRelativeLinks(text, fullName, "HEAD"));
+      // GitHub-hosted screenshots and GIFs render inside the project page. The
+      // real default branch beats "HEAD" when GitHub told us what it is.
+      setImportedReadme(absolutizeRelativeLinks(text, fullName, snapshot.default_branch || "HEAD"));
       toast.success("Imported — review everything below before publishing");
     } finally {
       setImportingReadme(false);
@@ -163,6 +213,7 @@ export function ProjectDialog({
       setSourceChoice("scratch");
       setImportedRepo(null);
       setImportedReadme(null);
+      setImportedMeta(null);
       setRepoSearch("");
     }
   }, [open, project?.id]);
@@ -315,7 +366,10 @@ export function ProjectDialog({
         project_id: projectId,
         url: importedRepo.url,
         provider: "github",
-        metadata: { full_name: importedRepo.fullName, default_branch: "HEAD" },
+        // Full snapshot captured at pick time (stars, language, topics,
+        // default branch, visibility) — the code panel and repo cards read
+        // this back through project_repositories_safe.
+        metadata: importedMeta ?? { full_name: importedRepo.fullName, default_branch: "HEAD" },
       });
       if (repoError) {
         toast.error(
@@ -410,6 +464,7 @@ export function ProjectDialog({
                     setSourceChoice("scratch");
                     setImportedRepo(null);
                     setImportedReadme(null);
+                    setImportedMeta(null);
                   }}
                   className={`rounded-lg border px-3 py-2.5 text-left transition-colors ${
                     sourceChoice === "scratch"
@@ -461,6 +516,7 @@ export function ProjectDialog({
                       onClick={() => {
                         setImportedRepo(null);
                         setImportedReadme(null);
+                        setImportedMeta(null);
                       }}
                     >
                       Change
@@ -493,13 +549,22 @@ export function ProjectDialog({
                       )}
                       {!reposQuery.isLoading &&
                         !reposQuery.isError &&
-                        filteredRepos.length === 0 && (
+                        filteredRepos.length === 0 &&
+                        ((reposQuery.data ?? []).length === 0 ? (
+                          <div className="space-y-2 px-1 py-2">
+                            <p className="text-xs text-muted-foreground">
+                              Connect your GitHub account to list your repositories here — public
+                              repos work without a token, a token adds private ones.
+                            </p>
+                            <div className="rounded-lg border border-border/60 bg-background/40 p-2">
+                              <GitHubConnect />
+                            </div>
+                          </div>
+                        ) : (
                           <p className="px-1 py-2 text-xs text-muted-foreground">
-                            {(reposQuery.data ?? []).length === 0
-                              ? "No repositories found — connect GitHub in Settings first, or start from scratch."
-                              : "Nothing matches that search."}
+                            Nothing matches that search.
                           </p>
-                        )}
+                        ))}
                       {filteredRepos.map((repo) => (
                         <button
                           key={repo.full_name}

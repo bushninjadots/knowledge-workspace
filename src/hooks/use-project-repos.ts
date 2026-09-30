@@ -13,7 +13,7 @@ export type ProjectRepo = {
   project_id: string;
   url: string;
   provider: string;
-  metadata: RepoMetadata;
+  metadata: RepoMeta;
   created_at: string;
   updated_at: string;
 };
@@ -26,7 +26,7 @@ export function useProjectRepos(projectId: string) {
     queryFn: async (): Promise<ProjectRepo[]> => {
       const { data, error } = await supabasePending
         .from("project_repositories_safe")
-        .select("id, project_id, url, provider, created_at, updated_at")
+        .select("id, project_id, url, provider, metadata, created_at, updated_at")
         .eq("project_id", projectId)
         .order("created_at", { ascending: true });
       if (error) throw error;
@@ -103,7 +103,12 @@ export function useRemoveProjectRepo() {
   });
 }
 
-// Refresh metadata for a repo (e.g., to update star count)
+/**
+ * Re-pull a linked repo's stats from GitHub (stars, language, pushed-at, …)
+ * and refresh the cached metadata. Merges over what's stored rather than
+ * replacing it, so a failed/rate-limited fetch can never wipe the last good
+ * snapshot — the card keeps showing something until GitHub answers again.
+ */
 export function useRefreshRepoMetadata() {
   const queryClient = useQueryClient();
 
@@ -113,8 +118,10 @@ export function useRefreshRepoMetadata() {
       project_id: string;
       url: string;
       provider: string;
+      /** Current cached metadata — kept on failure instead of being lost. */
+      metadata?: RepoMeta;
     }) => {
-      let metadata: RepoMetadata = {};
+      let metadata: RepoMetadata = input.metadata ?? {};
 
       if (input.provider === "github") {
         const match = input.url.match(/github\.com\/([^/]+)\/([^/]+?)(?:\.git)?$/);
@@ -124,7 +131,7 @@ export function useRefreshRepoMetadata() {
             const meta = await fetchRepoMetaServer({ data: { owner, repo } });
             if (meta) metadata = meta;
           } catch {
-            /* ignore */
+            /* keep the previous snapshot — the update below becomes a no-op */
           }
         }
       }
