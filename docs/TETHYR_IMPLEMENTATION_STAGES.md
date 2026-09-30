@@ -741,6 +741,25 @@ Two shipped decisions turned out to be half-applied: one because a later migrati
 
 **Verification:** `npm run verify` green — typecheck, lint, **823 tests across 102 files**, Prettier, zero unused exports, zero hand-rolled cards. Production artifact: `build:prod` + `serve:prod` serve the enforced nonce CSP; `qa-audit` 21 pages / 0 errors, `qa-csp --require-enforced` 5/5, `qa-explore-overlay` and `qa-studio-parity` pass, `qa-workflows` 12/14 with the two misses being dev-server-only source-import checks.
 
+### 2026-09-30 — Import from GitHub in the new-project flow
+
+Creating a project now offers a source choice — start from scratch (the
+unchanged default) or import from GitHub. Import lists the repositories the
+connected account can reach (token-aware, private included), pre-fills the
+existing three-step wizard (title from the repo name, description, README
+with relative image/link paths absolutized so GitHub-hosted screenshots and
+GIFs render on the project page, the GitHub link, language as catalog skill
+or tag), and persists a `project_repositories` row on save so the code panel,
+README sync, and commit-activity sync work from first publish. Nothing
+publishes directly — the import only fills the form, per the agency rule.
+
+Verified end to end against live GitHub data through the real UI: the public
+path (30 repos listed, 78k-char README imported with absolutized images) and
+the token path (a real token seeded server-side, a private repo appearing
+with its picker tag and importing cleanly) — both confirmed against the
+owner's own repositories, with all seeded state removed afterward. Four
+offline component tests pin the pre-fill and degradation paths.
+
 ### 2026-09-30 — Open-work badges on the profile (Find people → Collaborate seam)
 
 The loop's weakest transition was the restart: a visitor landing on a person's

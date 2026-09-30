@@ -232,7 +232,8 @@ function DashboardContent({
                   ) : (
                     <>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        Create your first project to start building in public.
+                        Create your first project to start building in public — or import one from
+                        GitHub.
                       </p>
                       <CreateProjectButton
                         label="Create project"
