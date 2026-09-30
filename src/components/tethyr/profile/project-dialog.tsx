@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Camera, Check, Search as SearchIcon, X } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Camera, Check, Github, Loader2, Search as SearchIcon, X } from "lucide-react";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
 import { validateImageFile, isSafeUrl } from "@/lib/validators";
+import { fetchRepoReadmeServer, listGithubRepos } from "@/lib/github-server";
+import { absolutizeRelativeLinks, repoFullNameToTitle } from "@/lib/github";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,6 +30,7 @@ import type { ProjectRow, ProjectSkill, ProjectStatus } from "./types";
 import { Field } from "./section-card";
 
 import type { Database } from "@/integrations/supabase/types";
+import type { GithubRepoLite } from "@/lib/github";
 
 const sb = supabase;
 type ProjectInsert = Database["public"]["Tables"]["projects"]["Insert"];
@@ -81,8 +85,86 @@ export function ProjectDialog({
   const [creationStep, setCreationStep] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // ── GitHub import (new projects only) ────────────────────────────────────
+  // The import pre-fills the same fields the manual form edits — nothing is
+  // published without passing through this dialog, and everything stays
+  // editable after import (product rule 6: user agency).
+  const [sourceChoice, setSourceChoice] = useState<"scratch" | "github">("scratch");
+  const [importedRepo, setImportedRepo] = useState<{
+    fullName: string;
+    url: string;
+  } | null>(null);
+  const [importedReadme, setImportedReadme] = useState<string | null>(null);
+  const [importingReadme, setImportingReadme] = useState(false);
+  const [repoSearch, setRepoSearch] = useState("");
+
+  const reposQuery = useQuery({
+    queryKey: ["github-repos-for-import"],
+    queryFn: () => listGithubRepos(),
+    enabled: open && !project && sourceChoice === "github",
+    staleTime: 60_000,
+  });
+
+  const filteredRepos = useMemo(() => {
+    const repos = reposQuery.data ?? [];
+    if (!repoSearch.trim()) return repos;
+    const q = repoSearch.toLowerCase();
+    return repos.filter(
+      (r) =>
+        r.full_name.toLowerCase().includes(q) || (r.description ?? "").toLowerCase().includes(q),
+    );
+  }, [reposQuery.data, repoSearch]);
+
+  async function pickRepo(repo: GithubRepoLite) {
+    const fullName = repo.full_name;
+    setImportedRepo({ fullName, url: repo.html_url });
+    setImportedReadme(null);
+    setTitle(repoFullNameToTitle(fullName));
+    if (repo.description) setDescription(repo.description);
+    const language = repo.language;
+    if (language) {
+      // Prefer a catalog skill match; otherwise keep the language as a tag so
+      // the information survives without inventing a skill that isn't there.
+      const match = allSkills.find((s) => s.name.toLowerCase() === language.toLowerCase());
+      if (match) setSkillIds((prev) => new Set(prev).add(match.id));
+      else setTags((prev) => (prev.includes(language) ? prev : [...prev, language]));
+    }
+    setImportingReadme(true);
+    try {
+      const { text, rateLimited, unauthorized } = await fetchRepoReadmeServer({
+        data: { fullName },
+      });
+      if (unauthorized) {
+        toast.error(
+          "GitHub rejected the saved token — reconnect it in Settings to import the README",
+        );
+        return;
+      }
+      if (rateLimited) {
+        toast.info("GitHub is rate-limited — the README can be pulled later from the project page");
+        return;
+      }
+      if (text === null) {
+        toast.info("No README in that repo — everything else is filled in");
+        return;
+      }
+      // Relative image/link paths get absolutized against the source repo, so
+      // GitHub-hosted screenshots and GIFs render inside the project page.
+      setImportedReadme(absolutizeRelativeLinks(text, fullName, "HEAD"));
+      toast.success("Imported — review everything below before publishing");
+    } finally {
+      setImportingReadme(false);
+    }
+  }
+
   useEffect(() => {
-    if (open) setCreationStep(0);
+    if (open) {
+      setCreationStep(0);
+      setSourceChoice("scratch");
+      setImportedRepo(null);
+      setImportedReadme(null);
+      setRepoSearch("");
+    }
   }, [open, project?.id]);
 
   const panelClass = (step: number) => (project || creationStep === step ? "space-y-3" : "hidden");
@@ -224,6 +306,33 @@ export function ProjectDialog({
       }
     }
 
+    // GitHub import: persist the repo link so the project page's code panel,
+    // README sync, and commit-activity sync all work from first publish.
+    // Best-effort — the project itself is saved; a failed link write is a
+    // toast, not a rollback.
+    if (importedRepo && !project && projectId) {
+      const { error: repoError } = await supabase.from("project_repositories").insert({
+        project_id: projectId,
+        url: importedRepo.url,
+        provider: "github",
+        metadata: { full_name: importedRepo.fullName, default_branch: "HEAD" },
+      });
+      if (repoError) {
+        toast.error(
+          "Project published, but linking the repo failed — add it from the project page",
+        );
+      }
+      if (importedReadme) {
+        const { error: readmeError } = await supabase
+          .from("projects")
+          .update({ readme: importedReadme })
+          .eq("id", projectId);
+        if (readmeError) {
+          toast.error("The README couldn't be saved — pull it again from the project page");
+        }
+      }
+    }
+
     setSaving(false);
     toast.success(project ? "Project updated" : "Project published");
     onSaved();
@@ -285,6 +394,147 @@ export function ProjectDialog({
         )}
         <div className="max-h-[min(65vh,38rem)] space-y-3 overflow-y-auto pr-1">
           <div className={panelClass(0)}>
+            {/* Source choice — new projects only. Import pre-fills the fields
+                below from a GitHub repo; everything stays editable. */}
+            {!project && (
+              <div
+                role="radiogroup"
+                aria-label="Project source"
+                className="grid gap-2 sm:grid-cols-2"
+              >
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={sourceChoice === "scratch"}
+                  onClick={() => {
+                    setSourceChoice("scratch");
+                    setImportedRepo(null);
+                    setImportedReadme(null);
+                  }}
+                  className={`rounded-lg border px-3 py-2.5 text-left transition-colors ${
+                    sourceChoice === "scratch"
+                      ? "border-[var(--user-accent-border,var(--border-strong))] bg-[var(--user-accent-subtle,var(--learning-subtle))]"
+                      : "border-border hover:border-border-strong"
+                  }`}
+                >
+                  <span className="block text-sm font-medium">Start from scratch</span>
+                  <span className="block text-xs text-muted-foreground">
+                    Fill in the details yourself
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={sourceChoice === "github"}
+                  onClick={() => setSourceChoice("github")}
+                  className={`rounded-lg border px-3 py-2.5 text-left transition-colors ${
+                    sourceChoice === "github"
+                      ? "border-[var(--user-accent-border,var(--border-strong))] bg-[var(--user-accent-subtle,var(--learning-subtle))]"
+                      : "border-border hover:border-border-strong"
+                  }`}
+                >
+                  <span className="flex items-center gap-1.5 text-sm font-medium">
+                    <Github className="h-3.5 w-3.5" /> Import from GitHub
+                  </span>
+                  <span className="block text-xs text-muted-foreground">
+                    Pre-fill from a repository — README, screenshots and all
+                  </span>
+                </button>
+              </div>
+            )}
+            {!project && sourceChoice === "github" && (
+              <div className="rounded-lg border border-border bg-surface-sunken/40 p-3">
+                {importedRepo ? (
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex min-w-0 items-center gap-2 text-sm">
+                      <Github className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <span className="truncate font-medium">{importedRepo.fullName}</span>
+                      {importingReadme ? (
+                        <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-muted-foreground" />
+                      ) : importedReadme ? (
+                        <Check className="h-3.5 w-3.5 shrink-0 text-primary" />
+                      ) : null}
+                    </div>
+                    <button
+                      type="button"
+                      className="shrink-0 text-xs font-medium text-primary hover:underline"
+                      onClick={() => {
+                        setImportedRepo(null);
+                        setImportedReadme(null);
+                      }}
+                    >
+                      Change
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <Input
+                      placeholder="Search your repositories…"
+                      value={repoSearch}
+                      onChange={(e) => setRepoSearch(e.target.value)}
+                    />
+                    <div className="mt-2 max-h-56 space-y-1 overflow-y-auto">
+                      {reposQuery.isLoading && (
+                        <div className="flex items-center gap-2 px-1 py-2 text-xs text-muted-foreground">
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading repositories…
+                        </div>
+                      )}
+                      {reposQuery.isError && (
+                        <p className="px-1 py-2 text-xs text-muted-foreground">
+                          Couldn't load repositories.{" "}
+                          <button
+                            type="button"
+                            className="underline"
+                            onClick={() => void reposQuery.refetch()}
+                          >
+                            Retry
+                          </button>
+                        </p>
+                      )}
+                      {!reposQuery.isLoading &&
+                        !reposQuery.isError &&
+                        filteredRepos.length === 0 && (
+                          <p className="px-1 py-2 text-xs text-muted-foreground">
+                            {(reposQuery.data ?? []).length === 0
+                              ? "No repositories found — connect GitHub in Settings first, or start from scratch."
+                              : "Nothing matches that search."}
+                          </p>
+                        )}
+                      {filteredRepos.map((repo) => (
+                        <button
+                          key={repo.full_name}
+                          type="button"
+                          onClick={() => void pickRepo(repo)}
+                          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-surface-elevated"
+                        >
+                          <Github className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm font-medium">
+                              {repo.full_name}
+                              {repo.private && (
+                                <span className="ml-1.5 rounded-sm bg-border-strong/40 px-1 text-[10px] font-medium text-foreground">
+                                  private
+                                </span>
+                              )}
+                            </span>
+                            {repo.description && (
+                              <span className="block truncate text-xs text-muted-foreground">
+                                {repo.description}
+                              </span>
+                            )}
+                          </span>
+                          {repo.language && (
+                            <span className="shrink-0 text-[11px] text-muted-foreground">
+                              {repo.language}
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
             <button
               type="button"
               onClick={() => fileRef.current?.click()}

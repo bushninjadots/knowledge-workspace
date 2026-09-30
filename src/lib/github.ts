@@ -58,6 +58,23 @@ export function getRepoFullName(repo: {
 }
 
 /**
+ * A human title from a repo's full name: the repo segment only, with `-`/`_`
+ * runs spaced and words capitalized ("threadline-app" → "Threadline App").
+ * Import pre-fills the project title from this; the creator edits from there.
+ */
+export function repoFullNameToTitle(fullName: string): string {
+  const repoSegment = fullName.split("/").pop() ?? fullName;
+  const spaced = repoSegment.replace(/[-_]+/g, " ").replace(/\s+/g, " ").trim();
+  if (!spaced) return "";
+  // Capitalize only words written entirely in lowercase; mixed-case words
+  // ("iOS", "jQuery") are brands the author already cased deliberately.
+  return spaced
+    .split(" ")
+    .map((word) => (/[A-Z]/.test(word) ? word : word.charAt(0).toUpperCase() + word.slice(1)))
+    .join(" ");
+}
+
+/**
  * Point relative URLs in an imported README at the source repo so they resolve
  * on Tethyr instead of 404ing against local routes. Images go to
  * raw.githubusercontent.com; links go to the file on github.com. Absolute

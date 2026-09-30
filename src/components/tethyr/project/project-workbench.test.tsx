@@ -239,7 +239,9 @@ describe("guided project creation", () => {
 
   it("shows only the next guided section after a title is provided", async () => {
     const user = userEvent.setup();
-    render(
+    // The dialog now reads the GitHub repo list (react-query) even when the
+    // import path is never opened — it must render inside a QueryClient.
+    renderRoutePage(
       <ProjectDialog
         project={null}
         userId="user-1"

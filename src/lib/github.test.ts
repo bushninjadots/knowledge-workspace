@@ -8,6 +8,7 @@ import {
   fetchRepoCommits,
   validateGitHubToken,
   githubTokenErrorMessage,
+  repoFullNameToTitle,
 } from "./github";
 
 function mockFetch(handler: (url: string, init?: RequestInit) => Promise<Response>) {
@@ -383,5 +384,28 @@ describe("fetchRepoFile", () => {
       rateLimited: false,
       unauthorized: false,
     });
+  });
+});
+
+describe("repoFullNameToTitle", () => {
+  it("uses the repo segment, not the owner", () => {
+    expect(repoFullNameToTitle("maya/threadline-app")).toBe("Threadline App");
+  });
+
+  it("spaces underscore and repeated separators, collapsing runs", () => {
+    expect(repoFullNameToTitle("o/my_cool--tool")).toBe("My Cool Tool");
+  });
+
+  it("keeps dots as part of a word (node.js-style names keep their identity)", () => {
+    expect(repoFullNameToTitle("o/js.web.app")).toBe("Js.web.app");
+    expect(repoFullNameToTitle("o/node.js")).toBe("Node.js");
+  });
+
+  it("leaves already-capitalized words alone", () => {
+    expect(repoFullNameToTitle("o/iOS-Tools")).toBe("iOS Tools");
+  });
+
+  it("returns empty for an empty name", () => {
+    expect(repoFullNameToTitle("")).toBe("");
   });
 });
