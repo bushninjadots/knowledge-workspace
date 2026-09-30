@@ -803,6 +803,20 @@ warning — it now shares the profile README's `MARKDOWN_COMPONENTS` (pre-
 override) so both renderers are structurally identical and the warning is
 gone.
 
+Third pass, same day: the GitHub facts now reach the profile. The default
+work evidence (and any surface reading `useProfileRepoSnapshot`) renders one
+aggregate 52-week commit graph above the work rows — the union of every
+visible project's linked-repo history, merged client-side by week
+(`mergeCommitActivity`), from cache only — plus a quiet per-row repo line
+(`owner/repo · N★ · private`) where a project has one. The grid is a shared
+`CommitGraph` component, deliberately named apart from the profile's existing
+community-points `ContributionGraph` (in-app contributions vs. repository
+commits — related ideas that must not blur). Optional as ever: no cached
+history, no strip; seed profiles render unchanged. `scripts/backfill-repo-
+metadata.mjs` gained a scheduled GitHub Actions runner
+(`repo-metadata-backfill.yml`, daily 18:30 UTC, secrets-guarded so forked
+repos skip) so the cached snapshots stop drifting between manual syncs.
+
 ### 2026-09-30 — Open-work badges on the profile (Find people → Collaborate seam)
 
 The loop's weakest transition was the restart: a visitor landing on a person's

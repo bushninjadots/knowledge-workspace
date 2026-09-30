@@ -21,14 +21,18 @@
 // section of rows on a page surface, not a grid of floating cards.
 
 import { Link } from "@tanstack/react-router";
+import { Star } from "lucide-react";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import { useProfileWork, useProjectOpenWork, hasOpenWork } from "@/hooks/use-profile-work";
+import { useProfileRepoSnapshot } from "@/hooks/use-profile-repo-snapshot";
 import { contributionRoleVerb } from "@/lib/contribution-role";
 import { PROJECT_STATUS_LABEL, type ProjectStatus } from "@/components/tethyr/profile/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PersonPill } from "@/components/tethyr/person-pill";
 import { OpenWorkBadge } from "@/components/tethyr/open-work-badge";
+import { CommitGraph } from "@/components/tethyr/project/commit-graph";
 import type { ProjectOpenWork } from "@/hooks/use-profile-work";
+import type { RepoSnapshot } from "@/hooks/use-profile-repo-snapshot";
 
 /**
  * Renders nothing at all when there is no work. A person with no projects yet
@@ -50,6 +54,13 @@ export function ProfileWorkEvidence({
   // lifecycle as the work read, and a failure just means no badge, never an
   // error state.
   const { data: openWork } = useProjectOpenWork(
+    data?.hasWork && data.projects.length > 0 ? data.projects.map((p) => p.id) : null,
+  );
+
+  // Cached GitHub snapshots for the visible projects: per-row stats plus the
+  // one aggregate contribution graph. All cache, no GitHub calls; a profile
+  // whose projects have no linked repos renders exactly as before.
+  const { data: repoSnapshot } = useProfileRepoSnapshot(
     data?.hasWork && data.projects.length > 0 ? data.projects.map((p) => p.id) : null,
   );
 
@@ -79,6 +90,17 @@ export function ProfileWorkEvidence({
         {isOwner && <ArrangeYourStudioHint />}
       </div>
 
+      {/* The aggregate graph leads only when there is something to show —
+          optional signals never reserve layout (same rule as the badges). */}
+      {repoSnapshot && repoSnapshot.reposWithHistory > 0 && (
+        <div className="mt-3">
+          <CommitGraph
+            weeks={repoSnapshot.aggregateWeeks}
+            ariaLabel={`Contribution graph: ${repoSnapshot.totalCommits} commits across ${repoSnapshot.reposWithHistory} repositor${repoSnapshot.reposWithHistory === 1 ? "y" : "ies"} over the last 52 weeks`}
+          />
+        </div>
+      )}
+
       {/* Divided rows rather than cards: a stack of related entries is a list,
           and the page surface should stay quiet. Border separates, not shadow. */}
       <ul className="mt-3 divide-y divide-border border-y border-border">
@@ -86,6 +108,7 @@ export function ProfileWorkEvidence({
           <WorkRow
             key={project.id}
             project={project}
+            repo={repoSnapshot?.byProject.get(project.id)}
             openWork={openWork}
             needsPeople={hasOpenWork(openWork, project.id)}
           />
@@ -121,10 +144,12 @@ export function ProfileWorkEvidence({
 /** One project, as a row: what they did, what it is, where it is going. */
 function WorkRow({
   project,
+  repo,
   openWork,
   needsPeople,
 }: {
   project: ProfileWorkProjectRow;
+  repo?: RepoSnapshot;
   openWork?: Map<string, ProjectOpenWork>;
   needsPeople?: boolean;
 }) {
@@ -163,6 +188,20 @@ function WorkRow({
           {project.description && (
             <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
               {project.description}
+            </p>
+          )}
+          {/* The repo's cached fact, when there is one — a quiet inline signal
+              of where the code lives and how it is doing, never a GitHub card. */}
+          {repo && (repo.stargazersCount !== null || repo.fullName) && (
+            <p className="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground">
+              {repo.fullName && <span className="truncate font-mono">{repo.fullName}</span>}
+              {typeof repo.stargazersCount === "number" && repo.stargazersCount > 0 && (
+                <span className="inline-flex shrink-0 items-center gap-0.5 tabular-nums">
+                  <Star className="h-3 w-3" />
+                  {repo.stargazersCount.toLocaleString()}
+                </span>
+              )}
+              {repo.private === true && <span className="shrink-0">· private</span>}
             </p>
           )}
         </div>

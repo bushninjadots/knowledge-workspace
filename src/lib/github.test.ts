@@ -11,6 +11,7 @@ import {
   githubTokenErrorMessage,
   repoFullNameToTitle,
   buildContributionCalendar,
+  mergeCommitActivity,
   githubDisplayShows,
 } from "./github";
 
@@ -276,6 +277,33 @@ describe("buildContributionCalendar", () => {
     ]);
     expect(calendar.total).toBe(0);
     expect(calendar.weeks[0].every((c) => c.level === 0)).toBe(true);
+  });
+});
+
+describe("mergeCommitActivity", () => {
+  it("sums per-day across repos, aligned by week timestamp", () => {
+    const merged = mergeCommitActivity([
+      [{ week: 100, total: 3, days: [1, 2, 0, 0, 0, 0, 0] }],
+      [{ week: 100, total: 4, days: [0, 2, 2, 0, 0, 0, 0] }],
+    ]);
+    expect(merged).toEqual([{ week: 100, total: 7, days: [1, 4, 2, 0, 0, 0, 0] }]);
+  });
+
+  it("unions weeks only one repo has and sorts chronologically", () => {
+    const merged = mergeCommitActivity([
+      [{ week: 200, total: 1, days: [1, 0, 0, 0, 0, 0, 0] }],
+      [
+        { week: 100, total: 2, days: [2, 0, 0, 0, 0, 0, 0] },
+        { week: 200, total: 1, days: [0, 1, 0, 0, 0, 0, 0] },
+      ],
+    ]);
+    expect(merged.map((w) => w.week)).toEqual([100, 200]);
+    expect(merged[0].total).toBe(2);
+    expect(merged[1].days).toEqual([1, 1, 0, 0, 0, 0, 0]);
+  });
+
+  it("returns an empty list for nothing cached", () => {
+    expect(mergeCommitActivity([])).toEqual([]);
   });
 });
 

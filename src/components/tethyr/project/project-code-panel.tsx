@@ -1,6 +1,5 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
-  CalendarDays,
   CalendarClock,
   Link2,
   Lock,
@@ -14,8 +13,9 @@ import { formatDistanceToNowStrict } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { languageColor } from "@/lib/language-colors";
-import { buildContributionCalendar, getRepoFullName, githubDisplayShows } from "@/lib/github";
-import type { CommitActivityWeek, ContributionCalendar, GithubDisplay } from "@/lib/github";
+import { getRepoFullName, githubDisplayShows } from "@/lib/github";
+import type { CommitActivityWeek, GithubDisplay } from "@/lib/github";
+import { CommitGraph } from "./commit-graph";
 import { fetchProjectReadmeSource, readmeSourceMessage } from "@/lib/project-readme-source";
 import { safeHref } from "@/lib/validators";
 import { useUpdateGithubDisplay, useUpdateProjectReadme } from "@/hooks/use-projects";
@@ -30,57 +30,12 @@ type ProjectCodePanelProps = {
   onLinkRepo?: () => void;
 };
 
-/** Heat colors for the contribution graph — the user's accent, banded. */
-const GRAPH_LEVEL_CLASS = [
-  "bg-border/50",
-  "bg-[var(--user-accent,var(--primary))]/25",
-  "bg-[var(--user-accent,var(--primary))]/45",
-  "bg-[var(--user-accent,var(--primary))]/70",
-  "bg-[var(--user-accent,var(--primary))]",
-] as const;
-
 const DISPLAY_OPTIONS: { key: keyof GithubDisplay; label: string }[] = [
   { key: "show_stats", label: "Stars, forks & issues" },
   { key: "show_topics", label: "Topics" },
   { key: "show_graph", label: "Contribution graph" },
   { key: "show_details", label: "License & details" },
 ];
-
-/**
- * GitHub's 52-week commit history as the familiar contribution grid: one
- * column per week, Sun–Sat rows, intensity banded by the busiest day. Stays
- * inside the cached snapshot — no GitHub call per page view.
- */
-function ContributionGraph({ calendar }: { calendar: ContributionCalendar }) {
-  return (
-    <div className="space-y-1.5">
-      <p className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
-        <CalendarDays className="h-3 w-3" />
-        <span className="tabular-nums">{calendar.total.toLocaleString()}</span> commits in the last
-        year
-      </p>
-      <div className="overflow-x-auto pb-1">
-        <div
-          role="img"
-          aria-label={`Contribution graph: ${calendar.total} commits over the last 52 weeks`}
-          className="flex w-max gap-[3px]"
-        >
-          {calendar.weeks.map((column, i) => (
-            <div key={i} className="flex flex-col gap-[3px]">
-              {column.map((cell, j) => (
-                <span
-                  key={j}
-                  title={`${cell.count} commit${cell.count === 1 ? "" : "s"}`}
-                  className={cn("h-[8px] w-[8px] rounded-[2px]", GRAPH_LEVEL_CLASS[cell.level])}
-                />
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 /**
  * Compact GitHub surface for the project page: primary repo, key stats,
@@ -160,19 +115,17 @@ export function ProjectCodePanel({
   const cachedWeeks = Array.isArray(meta.commit_activity)
     ? (meta.commit_activity as CommitActivityWeek[])
     : null;
-  const calendar = useMemo(
-    () => (cachedWeeks && cachedWeeks.length > 0 ? buildContributionCalendar(cachedWeeks) : null),
-    [cachedWeeks],
-  );
+  const hasGraph =
+    githubDisplayShows(project.github_display, "show_graph") &&
+    !!cachedWeeks &&
+    cachedWeeks.length > 0;
   const language = meta.language ?? null;
   const langDot = languageColor(language);
   const lastPush = meta.updated_at ? formatDistanceToNowStrict(new Date(meta.updated_at)) : null;
   const createdAgo = meta.created_at ? formatDistanceToNowStrict(new Date(meta.created_at)) : null;
   const showStats = githubDisplayShows(project.github_display, "show_stats");
   const showTopics = githubDisplayShows(project.github_display, "show_topics");
-  const showGraph = githubDisplayShows(project.github_display, "show_graph");
   const showDetails = githubDisplayShows(project.github_display, "show_details");
-  const hasGraph = showGraph && calendar !== null;
 
   return (
     <section aria-label="Code" className={cn("space-y-3", className)}>
@@ -288,7 +241,12 @@ export function ProjectCodePanel({
             </ul>
           )}
 
-          {hasGraph && calendar && <ContributionGraph calendar={calendar} />}
+          {hasGraph && cachedWeeks && (
+            <CommitGraph
+              weeks={cachedWeeks}
+              ariaLabel={`Contribution graph: ${cachedWeeks.reduce((n, w) => n + w.total, 0)} commits over the last 52 weeks`}
+            />
+          )}
 
           {secondary.length > 0 && (
             <ul className="space-y-1 border-t border-border/40 pt-2">

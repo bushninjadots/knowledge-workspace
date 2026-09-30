@@ -95,6 +95,33 @@ export type ContributionCalendar = {
 };
 
 /**
+ * Merge several repos' 52-week commit histories into one aggregate grid:
+ * aligned by week timestamp (GitHub keys weeks to Mondays), per-day sums.
+ * Pure so the profile aggregate stays testable — a person's contribution
+ * graph is the union of their linked repos' cached histories, never a fetch.
+ */
+export function mergeCommitActivity(weeksList: CommitActivityWeek[][]): CommitActivityWeek[] {
+  const byWeek = new Map<number, number[]>();
+  for (const weeks of weeksList) {
+    for (const w of weeks) {
+      const days = byWeek.get(w.week);
+      if (!days) {
+        byWeek.set(w.week, [...w.days]);
+        continue;
+      }
+      for (let i = 0; i < Math.min(7, w.days.length); i++) days[i] += w.days[i] ?? 0;
+    }
+  }
+  return [...byWeek.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([week, days]) => ({
+      week,
+      total: days.reduce((n, d) => n + d, 0),
+      days,
+    }));
+}
+
+/**
  * Turn GitHub's 52-week commit-activity shape into the contribution-graph
  * grid: one column per week, 7 cells per column (Sun–Sat), levels banded by
  * quartiles of the busiest single day — pure so the panel stays testable.

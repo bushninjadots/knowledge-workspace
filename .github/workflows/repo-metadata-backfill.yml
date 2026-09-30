@@ -1,0 +1,68 @@
+name: Repo metadata backfill
+
+# The cached GitHub snapshots on project_repositories (stars, language,
+# default branch, 52-week commit history) are the only data the project pages
+# render — there is no per-view GitHub call by design. Without a schedule the
+# stats drift: stars move, READMEs get pushed, graphs go stale, and nothing
+# notices until someone clicks "Sync from GitHub".
+#
+# Secrets required (repo → Settings → Secrets and variables → Actions):
+#   SUPABASE_URL               hosted project URL (https://<ref>.supabase.co)
+#   SUPABASE_SERVICE_ROLE_KEY  service key — the backfill bypasses RLS by design
+#   BACKFILL_GITHUB_TOKEN      optional; without it the run is rate-limited
+#                              (60 req/hr) and only sees public repos
+#
+# Skips quietly when the secrets are absent, so forks and fresh clones don't
+# fail on a schedule they never asked for.
+
+on:
+  schedule:
+    - cron: "30 18 * * *" # daily 18:30 UTC ≈ 20:30 Europe/Berlin
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: repo-metadata-backfill
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Guard — secrets present?
+        id: guard
+        run: |
+          if [ -z "${{ secrets.SUPABASE_URL }}" ] || [ -z "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set — skipping."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - run: npm ci
+        if: steps.guard.outputs.skip == 'false'
+
+      - name: Backfill cached repo snapshots
+        if: steps.guard.outputs.skip == 'false'
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GITHUB_TOKEN: ${{ secrets.BACKFILL_GITHUB_TOKEN }}
+        run: |
+          set -o pipefail
+          node scripts/backfill-repo-metadata.mjs | tee backfill-output.txt
+          {
+            echo "## Repo metadata backfill"
+            echo '```'
+            cat backfill-output.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
