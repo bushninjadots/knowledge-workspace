@@ -18,6 +18,7 @@ import { useConnections } from "@/hooks/use-connections";
 import { useCurrentUser, useTrendingSkills } from "@/hooks/use-current-user";
 import { useMyProjects } from "@/hooks/use-projects";
 import { useWatchedProjects } from "@/hooks/use-project-loop";
+import { useProjectOpenWork } from "@/hooks/use-profile-work";
 import { supabase } from "@/integrations/supabase/client";
 import { isColumnSchemaError } from "@/lib/supabase-errors";
 
@@ -119,6 +120,16 @@ function ModuleRowLoading({ title }: { title: string }) {
 /* ── Work ─────────────────────────────────────────────────────────────────── */
 
 export function ProjectsModuleRow({ projects }: { projects: ProjectRow[] }) {
+  // Same open-work signal the profile work rows show: unfilled needs/roles on
+  // the member's own projects read as "spots to fill or people to invite".
+  // Hook is unconditional; a failure just leaves the summary without the count.
+  const projectIds = useMemo(() => projects.map((project) => project.id), [projects]);
+  const { data: openWork } = useProjectOpenWork(projectIds.length > 0 ? projectIds : null);
+  const openSpots = [...(openWork?.values() ?? [])].reduce(
+    (sum, entry) => sum + entry.roles + entry.needs,
+    0,
+  );
+
   const preview = projects
     .slice(0, 3)
     .map((project) => `${project.title} ${project.progress_percent ?? 0}%`)
@@ -131,7 +142,7 @@ export function ProjectsModuleRow({ projects }: { projects: ProjectRow[] }) {
       subtitle={
         projects.length === 0
           ? "Give people a clear place to find what you're building."
-          : `${projects.length} active`
+          : `${projects.length} active${openSpots > 0 ? ` · ${openSpots} open spot${openSpots === 1 ? "" : "s"}` : ""}`
       }
       action={
         projects.length === 0 ? (
