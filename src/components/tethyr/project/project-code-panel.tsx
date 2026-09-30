@@ -7,6 +7,7 @@ import { languageColor } from "@/lib/language-colors";
 import { getRepoFullName } from "@/lib/github";
 import { fetchProjectReadmeSource, readmeSourceMessage } from "@/lib/project-readme-source";
 import { useUpdateProjectReadme } from "@/hooks/use-projects";
+import { useRefreshRepoMetadata } from "@/hooks/use-project-repos";
 import type { ProjectRepo } from "@/hooks/use-project-repos";
 
 type ProjectCodePanelProps = {
@@ -19,8 +20,9 @@ type ProjectCodePanelProps = {
 
 /**
  * Compact GitHub surface for the project page: primary repo, key stats, topics,
- * and a one-click "Sync README" for owners. On desktop it lives in the sticky
- * rail beside the README; on mobile it renders as a full-width band below it.
+ * and a one-click "Sync from GitHub" for owners (README + cached stats in one
+ * action). On desktop it lives in the sticky rail beside the README; on mobile
+ * it renders as a full-width band below it.
  */
 export function ProjectCodePanel({
   project,
@@ -30,26 +32,41 @@ export function ProjectCodePanel({
   onLinkRepo,
 }: ProjectCodePanelProps) {
   const updateReadme = useUpdateProjectReadme();
+  const refreshMeta = useRefreshRepoMetadata();
   const [syncing, setSyncing] = useState(false);
 
   const primary = repos?.[0];
   const secondary = repos?.slice(1, 4) ?? [];
 
-  const syncReadme = async () => {
+  // One click pulls both faces of the repo: the README (with relative links
+  // absolutized against the real default branch) and the cached metadata
+  // snapshot (stars, language, topics, pushed-at) the panel itself renders.
+  // The metadata refresh merges over the last good snapshot, so a failed meta
+  // fetch never wipes stats; the README only saves when it actually changed.
+  const syncFromGithub = async () => {
     if (syncing) return;
     setSyncing(true);
     try {
+      if (primary) {
+        refreshMeta.mutate({
+          id: primary.id,
+          project_id: primary.project_id,
+          url: primary.url,
+          provider: primary.provider,
+          metadata: primary.metadata,
+        });
+      }
       const result = await fetchProjectReadmeSource(primary);
       if (!result.ok) {
         toast.error(readmeSourceMessage(result.reason));
         return;
       }
       if (result.text === project.readme) {
-        toast.success("README is already up to date");
+        toast.success("Already up to date — README and stats refreshed from GitHub");
         return;
       }
       await updateReadme.mutateAsync({ projectId: project.id, readme: result.text });
-      toast.success("README synced from GitHub");
+      toast.success("Synced from GitHub — README and stats updated");
     } finally {
       setSyncing(false);
     }
@@ -164,12 +181,12 @@ export function ProjectCodePanel({
             <>
               <button
                 type="button"
-                onClick={syncReadme}
+                onClick={syncFromGithub}
                 disabled={syncing}
                 className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border/60 px-2.5 py-1.5 text-[12px] font-medium text-foreground transition-colors hover:bg-surface-elevated disabled:opacity-60"
               >
                 <RefreshCw className={cn("h-3 w-3", syncing && "animate-spin")} />
-                {syncing ? "Pulling…" : "Sync README"}
+                {syncing ? "Syncing…" : "Sync from GitHub"}
               </button>
               {onLinkRepo && (
                 <button

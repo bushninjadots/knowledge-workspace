@@ -779,8 +779,13 @@ on a failed fetch, and the studio repos block prefers the cached full_name
 and shows cached stars. The picker's empty state is now an inline connect
 prompt (the shared GitHubConnect block) instead of a pointer to Settings;
 connecting from inside the dialog refetches the repo list automatically.
-Metadata stays refresh-on-visit (the card's refresh button) — no background
-sync infrastructure exists and none is warranted yet.
+Metadata stays refresh-on-visit — no background sync infrastructure exists
+and none is warranted yet. The code panel's owner action became a one-click
+"Sync from GitHub" (README + cached stats in one action, still merge-safe),
+and `scripts/backfill-repo-metadata.mjs` fills the cached snapshot for rows
+linked before the view fix — run against the local seed it backfilled the
+real repos (including a private one, via a token) and skipped the fictional
+seed repos on 404 without touching their rows.
 
 ### 2026-09-30 — Open-work badges on the profile (Find people → Collaborate seam)
 

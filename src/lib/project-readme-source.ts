@@ -1,6 +1,7 @@
 // Shared GitHub→Tethyr README import. Both the README tab's "Preview from
-// GitHub" / "Pull from GitHub" and the code panel's one-click "Sync README" go
-// through here so failure copy and relative-link rewriting stay in one place.
+// GitHub" / "Pull from GitHub" and the code panel's one-click "Sync from
+// GitHub" go through here so failure copy and relative-link rewriting stay
+// in one place.
 import { fetchRepoReadmeServer } from "@/lib/github-server";
 import { absolutizeRelativeLinks, getRepoFullName } from "@/lib/github";
 import type { ProjectRepo } from "@/hooks/use-project-repos";
