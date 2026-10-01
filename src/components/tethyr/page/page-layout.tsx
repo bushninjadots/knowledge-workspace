@@ -375,7 +375,7 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
         const hasGrid = !context.isEditing && (section.grid?.length ?? 0) > 0;
         const gridByBlock = new Map((section.grid ?? []).map((item) => [item.i, item]));
         const blocks = section.blocks
-          .filter((b) => context.isEditing || b.visible !== false)
+          .filter((b) => context.isEditing || (b.visible !== false && !emptyBlockIds.has(b.id)))
           .sort((a, b) => a.position - b.position);
         const persistedBlocks = layout.sections[layoutSectionIndex]?.blocks ?? [];
 
