@@ -376,7 +376,10 @@ export function ProjectPage() {
       // the header can attribute the fork to it.
       let forkedFrom: { id: string; title: string; handle: string | null } | null = null;
       if (project.forked_from_project_id) {
-        const parentCols = "id, title, profiles(handle)";
+        // The FK hint is load-bearing: since project_ai_tags (20261001130000)
+        // added a second projects→profiles path, a bare profiles() embed is
+        // ambiguous to PostgREST and 400s with PGRST201.
+        const parentCols = "id, title, profiles!projects_profile_id_fkey(handle)";
         const { data: parentRow } = await sb
           .from("projects")
           .select(parentCols)
