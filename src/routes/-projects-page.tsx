@@ -35,6 +35,7 @@ import { getRepoFullName } from "@/lib/github";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ProjectFile } from "@/components/tethyr/project/project-files";
 import { SectionShell } from "@/components/tethyr/section-shell";
+import { ProjectGraphSummary } from "@/components/tethyr/project/project-graph-summary";
 
 const ProjectNeeds = lazy(() =>
   import("@/components/tethyr/project/project-needs").then((m) => ({ default: m.ProjectNeeds })),
@@ -645,6 +646,34 @@ export function ProjectPage() {
                   </Suspense>
                 </div>
               </section>
+            </div>
+
+            <div className="min-w-0" style={sectionStyle("work")}>
+              <ProjectGraphSummary
+                input={{
+                  project: {
+                    id: project.id,
+                    title: project.title,
+                    description: project.description,
+                    visibility: project.visibility,
+                    profile_id: project.profile_id,
+                    status: project.status,
+                    stage: project.stage,
+                  },
+                  contributors: contributors.map((contributor) => ({
+                    profile_id: contributor.profile_id,
+                    role: contributor.role,
+                    profile: contributor.profile,
+                    skills_used: contributor.skills_used,
+                  })),
+                  milestones: milestones.map((milestone) => ({
+                    id: milestone.id,
+                    title: milestone.title,
+                    description: milestone.description,
+                    status: milestone.status,
+                  })),
+                }}
+              />
             </div>
 
             <div className="min-w-0" style={sectionStyle("work")}>

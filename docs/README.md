@@ -40,6 +40,7 @@ If a change should alter product direction or a binding rule, update the appropr
 
 ## Context Documents
 
+- [`TETHYR_GRAPH_SPEC.md`](./TETHYR_GRAPH_SPEC.md) — working specification for Tethyr Graph relationships, views, lineage, contribution trails, privacy, and staged implementation
 - [`TETHYR_REDESIGN_SPEC.md`](./TETHYR_REDESIGN_SPEC.md) — major redesign specification
 - [`TETHYR_REDESIGN_ARCHITECTURE.md`](./TETHYR_REDESIGN_ARCHITECTURE.md) — redesign architecture proposal
 - [`TETHYR_REDESIGN_AUDIT_2026-08-23.md`](./TETHYR_REDESIGN_AUDIT_2026-08-23.md) — **Phase 1 audit report** (complete)

@@ -6,7 +6,7 @@
 // In edit mode, blocks are wrapped in SortableBlock with move/remove controls
 // and drag-and-drop reordering.
 
-import { memo, useCallback, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import { ChevronDown, Copy, Eye, EyeOff, LayoutGrid, MoreVertical, Trash2 } from "lucide-react";
 import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
 import { SortableBlock } from "@/components/tethyr/page/sortable-block";
@@ -38,7 +38,10 @@ import type {
 } from "@/lib/page-blocks";
 import { getBlock } from "@/lib/block-registry";
 import { blockFrameStyle } from "@/lib/studio-config";
-import { shouldRenderSectionInView } from "@/lib/studio-visibility";
+import {
+  isDefinitelyEmptyBlock,
+  shouldRenderSectionInView,
+} from "@/lib/studio-visibility";
 
 interface PageLayoutRendererProps {
   layout: PageLayoutType;
@@ -72,6 +75,13 @@ export const SECTION_GRID: Record<SectionLayoutType, string> = {
 };
 
 /** Section layouts whose rhythm is length/whitespace-driven instead of boxy. */
+const WHITESPACE_LED_LAYOUTS = new Set<SectionLayoutType>([
+  "featured_work",
+  "asymmetric",
+  "split",
+  "image_lead",
+  "compact_list",
+]);
 const BLOCK_LABELS: Record<string, string> = {
   "profile-header": "Header",
   "profile-projects": "Your work",
@@ -89,13 +99,20 @@ function blockLabel(type: string): string {
   return BLOCK_LABELS[type] ?? type.replace(/^profile-/, "").replace(/-/g, " ");
 }
 
-const WHITESPACE_LED_LAYOUTS = new Set<SectionLayoutType>([
-  "featured_work",
-  "asymmetric",
-  "split",
-  "image_lead",
-  "compact_list",
-]);
+/**
+ * A template should not preserve an elaborate multi-column composition after
+ * empty blocks have been removed. Falling back to flow for one public block,
+ * and reducing three columns to two when only two blocks remain, keeps sparse
+ * sections intentional instead of leaving a lonely card in an oversized lane.
+ */
+function sparseSafeGridClass(layout: SectionLayoutType, blockCount: number): string {
+  if (blockCount <= 1) return "";
+  if (layout === "three_column" && blockCount === 2) {
+    return "grid grid-cols-1 gap-6 md:grid-cols-2";
+  }
+  return SECTION_GRID[layout] ?? "";
+}
+
 
 /**
  * Renders the full page composition: sections → blocks.
@@ -155,14 +172,33 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
     });
   }, []);
 
+  // Remove reports for deleted blocks and reset them when returning to edit
+  // mode. This prevents stale empty ids from hiding a newly reused block id.
+  useEffect(() => {
+    const blockIds = new Set(sections.flatMap((section) => section.blocks).map((block) => block.id));
+    setEmptyBlockIds((previous) => {
+      const next = new Set([...previous].filter((id) => blockIds.has(id)));
+      return next.size === previous.size ? previous : next;
+    });
+  }, [sections]);
+
   // In view mode, drop sections whose visible blocks are all empty so the
   // public Studio renders only real content. Editing always shows every section
   // (empty blocks get their inline "add content" affordance).
   const sectionsToRender = context.isEditing
     ? sections
-    : sections.filter((section) => shouldRenderSectionInView(section, emptyBlockIds));
+    : sections.filter((section) =>
+        shouldRenderSectionInView(
+          section,
+          new Set(
+            section.blocks
+              .filter((block) => isDefinitelyEmptyBlock(block))
+              .map((block) => block.id),
+          ),
+        ),
+      );
 
-  // ── Block actions ──────────────────────────────────────────────────────
+  // ── Block actions ───────────────────────────���──────────────────────────
   const handleMoveUp = useCallback(
     (sectionIdx: number, blockIdx: number) => {
       if (!onLayoutChange || blockIdx === 0) return;
@@ -369,14 +405,20 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
         const layoutSectionIndex = layout.sections.findIndex(
           (candidate) => candidate.id === section.id,
         );
-        const gridClass = SECTION_GRID[section.layout] ?? "";
         /** Grid-based (builder) sections render from their persisted 12-col
          *  grid; template sections fall back to SECTION_GRID + block.span. */
         const hasGrid = !context.isEditing && (section.grid?.length ?? 0) > 0;
         const gridByBlock = new Map((section.grid ?? []).map((item) => [item.i, item]));
         const blocks = section.blocks
-          .filter((b) => context.isEditing || b.visible !== false)
+          .filter(
+            (b) =>
+              context.isEditing ||
+              (b.visible !== false &&
+                !emptyBlockIds.has(b.id) &&
+                !isDefinitelyEmptyBlock(b)),
+          )
           .sort((a, b) => a.position - b.position);
+        const gridClass = sparseSafeGridClass(section.layout, blocks.length);
         const persistedBlocks = layout.sections[layoutSectionIndex]?.blocks ?? [];
 
         const isWhitespaceLed = WHITESPACE_LED_LAYOUTS.has(section.layout);
