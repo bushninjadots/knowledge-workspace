@@ -35,11 +35,13 @@ function ProfileExperienceBlock({ config, context }: BlockProps) {
   const hasContent =
     !!data &&
     ((showYears && data.years_experience != null) || (showStyle && !!data.teaching_style));
-  // Report emptiness so the page renderer can collapse this section in view mode.
+  // Report emptiness so the page renderer can collapse this section in view
+  // mode. Never report while loading — a premature "empty" gets the block
+  // unmounted by the renderer before the query resolves.
   useEffect(() => {
-    if (isEditing || !blockId) return;
+    if (isLoading || isEditing || !blockId) return;
     onBlockEmptyChange?.(blockId, !hasContent);
-  }, [isEditing, blockId, onBlockEmptyChange, hasContent]);
+  }, [isLoading, isEditing, blockId, onBlockEmptyChange, hasContent]);
 
   if (isLoading) return <Skeleton className="h-20 w-full rounded-xl" />;
   const hasExp = showYears && data?.years_experience != null;

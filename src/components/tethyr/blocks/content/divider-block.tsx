@@ -37,6 +37,7 @@ registerBlock({
   description: "A horizontal rule to separate sections. Optionally add a label.",
   icon: "Minus",
   defaults: { label: "", weight: 1, labelColor: "" },
+  contentSource: "config",
   fields: [
     { key: "label", label: "Divider label", type: "text", placeholder: "Optional label..." },
     { key: "weight", label: "Thickness", type: "range", min: 1, max: 6 },

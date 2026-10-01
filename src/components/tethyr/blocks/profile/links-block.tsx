@@ -34,11 +34,13 @@ function ProfileLinksBlock({ context, config }: BlockProps) {
   const hasPortfolio = (data?.portfolio_links?.length ?? 0) > 0;
   const hasSocial = Object.values(data?.social_links ?? {}).some((v) => !!v);
   const hasContent = hasPortfolio || hasSocial;
-  // Report emptiness so the page renderer can collapse this section in view mode.
+  // Report emptiness so the page renderer can collapse this section in view
+  // mode. Never report while loading — a premature "empty" gets the block
+  // unmounted by the renderer before the query resolves.
   useEffect(() => {
-    if (isEditing || !blockId) return;
+    if (isLoading || isEditing || !blockId) return;
     onBlockEmptyChange?.(blockId, !hasContent);
-  }, [isEditing, blockId, onBlockEmptyChange, hasContent]);
+  }, [isLoading, isEditing, blockId, onBlockEmptyChange, hasContent]);
 
   if (isLoading) return <Skeleton className="h-16 w-full rounded-xl" />;
   if (!data) {

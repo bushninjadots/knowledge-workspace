@@ -80,6 +80,7 @@ registerBlock({
   description: "A section heading. Choose from H1–H4 for hierarchy.",
   icon: "Heading",
   defaults: { content: "", level: 2 },
+  contentSource: "config",
   fields: [
     { key: "content", label: "Heading text", type: "text", placeholder: "Enter heading..." },
     {

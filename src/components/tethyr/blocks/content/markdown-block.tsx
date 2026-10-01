@@ -65,6 +65,7 @@ registerBlock({
     "Rich text with markdown formatting. Supports headings, bold, italic, code, links, and lists.",
   icon: "FileText",
   defaults: { content: "" },
+  contentSource: "config",
   fields: [
     {
       key: "content",

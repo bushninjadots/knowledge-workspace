@@ -99,6 +99,16 @@ export interface BlockDefinition {
   defaults: BlockConfig;
   /** Whether the block expects to control its own container (e.g. full-width hero). */
   containerless?: boolean;
+  /**
+   * Where the block's public content comes from. "config" means every value it
+   * renders lives in the block instance's config, so emptiness can be
+   * classified statically (before the block mounts). "data" (default) means the
+   * block reads owner/DB content at runtime and reports emptiness itself via
+   * `context.onBlockEmptyChange` — static config-based classification would
+   * wrongly hide a data-driven block whose config is empty but whose DB content
+   * exists.
+   */
+  contentSource?: "config" | "data";
   /** Owner contexts this block can render in. Omit (or "both") to allow everywhere. */
   ownerContext?: BlockOwnerContext;
   /**

@@ -183,18 +183,21 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
   }, [sections]);
 
   // In view mode, drop sections whose visible blocks are all empty so the
-  // public Studio renders only real content. Editing always shows every section
-  // (empty blocks get their inline "add content" affordance).
+  // public Studio renders only real content. A block counts as empty when it
+  // was classified statically (config-driven, empty config) or when it reported
+  // no public content at runtime (`emptyBlockIds`). Editing always shows every
+  // section (empty blocks get their inline "add content" affordance).
   const sectionsToRender = context.isEditing
     ? sections
     : sections.filter((section) =>
         shouldRenderSectionInView(
           section,
-          new Set(
-            section.blocks
+          new Set([
+            ...emptyBlockIds,
+            ...section.blocks
               .filter((block) => isDefinitelyEmptyBlock(block))
               .map((block) => block.id),
-          ),
+          ]),
         ),
       );
 

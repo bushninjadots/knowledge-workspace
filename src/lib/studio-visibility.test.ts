@@ -1,14 +1,75 @@
-import { describe, expect, it } from "vitest";
-import { shouldRenderSectionInView } from "@/lib/studio-visibility";
-import type { LayoutSection } from "@/lib/page-blocks";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import {
+  isDefinitelyEmptyBlock,
+  shouldRenderSectionInView,
+} from "@/lib/studio-visibility";
+import { registerBlock, _resetRegistry } from "@/lib/block-registry";
+import type { LayoutBlockInstance, LayoutSection } from "@/lib/page-blocks";
 
 function section(blocks: LayoutSection["blocks"]): LayoutSection {
   return { id: "s1", position: 0, layout: "full", blocks };
 }
 
-function block(id: string, visible = true, type = "profile-gallery") {
-  return { id, type, position: 0, config: {} as Record<string, unknown>, visible };
+function block(
+  id: string,
+  visible = true,
+  type = "profile-gallery",
+  config: Record<string, unknown> = {},
+): LayoutBlockInstance {
+  return { id, type, position: 0, config, visible };
 }
+
+describe("isDefinitelyEmptyBlock", () => {
+  beforeEach(() => {
+    _resetRegistry();
+    // Minimal stand-ins for the two content-source families.
+    registerBlock({
+      type: "text",
+      category: "content",
+      label: "Text",
+      description: "",
+      icon: "Type",
+      defaults: { content: "" },
+      contentSource: "config",
+      component: () => null,
+    });
+    registerBlock({
+      type: "profile-bio",
+      category: "content",
+      label: "Bio",
+      description: "",
+      icon: "User",
+      defaults: {},
+      component: () => null,
+    });
+  });
+
+  afterEach(() => {
+    _resetRegistry();
+  });
+
+  it("classifies a config-driven block with empty config as empty", () => {
+    expect(isDefinitelyEmptyBlock(block("a", true, "text"))).toBe(true);
+  });
+
+  it("classifies a config-driven block with blank content as empty", () => {
+    expect(isDefinitelyEmptyBlock(block("a", true, "text", { content: "   " }))).toBe(true);
+  });
+
+  it("keeps a config-driven block with content", () => {
+    expect(isDefinitelyEmptyBlock(block("a", true, "text", { content: "Hello" }))).toBe(false);
+  });
+
+  it("never statically classifies a data-driven block, even with empty config", () => {
+    // profile-bio reads DB content and reports emptiness at runtime — an
+    // empty config says nothing about whether the block will render content.
+    expect(isDefinitelyEmptyBlock(block("a", true, "profile-bio"))).toBe(false);
+  });
+
+  it("fails open for unregistered block types", () => {
+    expect(isDefinitelyEmptyBlock(block("a", true, "mystery-block"))).toBe(false);
+  });
+});
 
 describe("shouldRenderSectionInView", () => {
   it("renders a section whose visible block has content", () => {

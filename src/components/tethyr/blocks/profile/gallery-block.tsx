@@ -98,11 +98,13 @@ function ProfileGalleryBlock({ config, context }: BlockProps) {
   }));
   const hasContent = items.length > 0;
 
-  // Report emptiness so the page renderer can collapse this section in view mode.
+  // Report emptiness so the page renderer can collapse this section in view
+  // mode. Never report while loading — a premature "empty" gets the block
+  // unmounted by the renderer before the query resolves.
   useEffect(() => {
-    if (isEditing || !blockId) return;
+    if (isLoading || isEditing || !blockId) return;
     onBlockEmptyChange?.(blockId, !hasContent);
-  }, [isEditing, blockId, onBlockEmptyChange, hasContent]);
+  }, [isLoading, isEditing, blockId, onBlockEmptyChange, hasContent]);
 
   const [lightboxIndex, setLightboxIndex] = useState(-1);
   // Lightbox list follows the grid's rendered order (url-bearing items only).
