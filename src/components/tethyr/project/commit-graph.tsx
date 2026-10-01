@@ -29,7 +29,7 @@ const DATE_FORMATTER = new Intl.DateTimeFormat(undefined, {
   year: "numeric",
 });
 
-function cellDate(week: number, day: number) {
+export function formatCommitCellDate(week: number, day: number) {
   return DATE_FORMATTER.format(new Date(week * 1000 + day * DAY_MS));
 }
 
@@ -58,7 +58,7 @@ export function CommitGraph({
               return (
                 <div key={week || i} className="flex flex-col gap-[3px]">
                   {column.map((cell, j) => {
-                    const label = `${cellDate(week, j)}: ${cell.count} commit${cell.count === 1 ? "" : "s"}`;
+                    const label = `${formatCommitCellDate(week, j)}: ${cell.count} commit${cell.count === 1 ? "" : "s"}`;
                     return (
                       <span
                         key={`${week}-${j}`}
