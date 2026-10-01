@@ -29,6 +29,7 @@ import { ProjectCoverFallback } from "@/components/tethyr/project-cover-fallback
 import { LANGUAGE_COLORS } from "@/lib/language-colors";
 import { canonicalProjectStatus, isLiveStatus, statusDotClass } from "@/lib/project-status";
 import type { Contributor } from "@/hooks/use-projects";
+import { AiIndicator } from "@/components/tethyr/project/ai-indicator";
 
 function Avatar({
   name,
@@ -86,6 +87,9 @@ export function ProjectHeader({
   onOpenDiscussions,
   onOpenNeeds,
   onOpenPeople,
+  aiTagCount,
+  aiUserTagged,
+  canAiTag,
 }: {
   project: ProjectDetail;
   coverSigned: string | null;
@@ -117,6 +121,12 @@ export function ProjectHeader({
   onOpenDiscussions?: () => void;
   onOpenNeeds?: () => void;
   onOpenPeople?: () => void;
+  /** Community AI-tag count for this project. */
+  aiTagCount?: number;
+  /** Whether the current user has already tagged this project as AI-assisted. */
+  aiUserTagged?: boolean;
+  /** Whether the signed-in viewer can community-tag (signed in, not owner). */
+  canAiTag?: boolean;
 }) {
   const others = contributors.filter((c) => c.role !== "creator");
   const canonicalWord = canonicalProjectStatus(project.status, project.stage);
@@ -207,6 +217,13 @@ export function ProjectHeader({
                   aria-label="Featured"
                 />
               )}
+              <AiIndicator
+                projectId={project.id}
+                ownerAssisted={!!project.ai_assisted}
+                aiTagCount={aiTagCount ?? 0}
+                aiUserTagged={!!aiUserTagged}
+                canTag={!!canAiTag}
+              />
             </div>
 
             {/* Fork lineage — a fork is always attributed to the project it

@@ -67,6 +67,8 @@ export type ProjectRow = {
   presentation_preset?: ProjectPresentationPreset | null;
   /** Owner opt-in: whether others may fork this project. */
   allow_forks?: boolean;
+  /** Owner self-report: whether this project was built with AI assistance. */
+  ai_assisted?: boolean;
   created_at: string;
   updated_at: string;
 };
