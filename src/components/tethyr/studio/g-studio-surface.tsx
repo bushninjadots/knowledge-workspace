@@ -47,9 +47,11 @@ import { BackgroundLayer } from "@/components/tethyr/background-layer";
 import {
   appearanceStyle,
   BORDER_SWATCHES,
+  CARD_BORDER_OPTIONS,
   withCardBorderPreference,
   type CardBorderPreference,
 } from "@/lib/background-themes";
+import { FONT_OPTIONS } from "@/lib/fonts";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useUserPalette } from "@/lib/dominant-color";
 import { useTheme, useThemePresets, presetSwatch, type ThemePreset } from "@/hooks/use-theme";
@@ -868,8 +870,8 @@ function GStudioTopBar({
         <div className="flex min-h-5 items-center gap-2 border-t border-border bg-[var(--surface)] px-3 py-0.5">
           <span className="t-label">Editing</span>
           <span className="truncate text-2xs text-muted-foreground-subtle">
-            Drag blocks to move · pull an edge or corner to resize · arrow keys nudge · Del removes
-            · Ctrl/⌘D duplicates · click a block for border and spacing options
+            Drag blocks between areas · pull an edge or corner to resize · arrow keys nudge · Del
+            removes · Ctrl/⌘D duplicates · click a block for border and spacing options
           </span>
         </div>
       )}
@@ -1230,6 +1232,54 @@ function pushDownOverlaps(grid: LayoutGridItem[]): LayoutGridItem[] {
   return items;
 }
 
+/** Pointer position from a drag event, covering both mouse and touch gestures. */
+function pointerPosition(event: Event | undefined): { x: number; y: number } | null {
+  if (!event) return null;
+  const mouse = event as MouseEvent;
+  if (Number.isFinite(mouse.clientX) && Number.isFinite(mouse.clientY)) {
+    return { x: mouse.clientX, y: mouse.clientY };
+  }
+  const touch = (event as TouchEvent).changedTouches?.[0];
+  return touch ? { x: touch.clientX, y: touch.clientY } : null;
+}
+
+/**
+ * The area canvas under the pointer, excluding the drag's own area. Dragging is
+ * per-grid, so without this a block released over another area snaps back home.
+ */
+function sectionUnderPointer(x: number, y: number, sourceSectionId: string): string | null {
+  let best: { id: string; area: number } | null = null;
+  for (const node of Array.from(document.querySelectorAll<HTMLElement>("[data-studio-grid]"))) {
+    const id = node.dataset.studioGrid;
+    if (!id || id === sourceSectionId) continue;
+    const rect = node.getBoundingClientRect();
+    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) continue;
+    const area = rect.width * rect.height;
+    if (!best || area < best.area) best = { id, area };
+  }
+  return best?.id ?? null;
+}
+
+/** Grid cell for a drop point, measured against the target area's own metrics. */
+function cellUnderPointer(
+  point: { x: number; y: number },
+  sectionId: string,
+  width: number,
+): { col: number; row: number } | undefined {
+  const node = document.querySelector<HTMLElement>(`[data-studio-grid="${sectionId}"]`);
+  if (!node) return undefined;
+  const rect = node.getBoundingClientRect();
+  if (rect.width <= 0) return undefined;
+  const rowHeight = Number(node.dataset.rowHeight) || 24;
+  const margin = Number(node.dataset.margin) || 14;
+  const col = Math.floor(((point.x - rect.left) / rect.width) * COLS);
+  const row = Math.round((point.y - rect.top) / (rowHeight + margin));
+  return {
+    col: Math.max(0, Math.min(COLS - width, col)),
+    row: Math.max(0, row),
+  };
+}
+
 function GSectionBand({
   section,
   index,
@@ -1439,6 +1489,9 @@ function GSectionBand({
         editing ? (
           <button
             type="button"
+            data-studio-grid={section.id}
+            data-row-height={rowHeight}
+            data-margin={margin}
             onClick={() => onRequestPalette(section.id)}
             className="flex w-full items-center justify-center gap-1.5 border border-dashed border-border py-8 text-xs text-muted-foreground outline-none hover:border-[var(--user-accent-border)] hover:text-[var(--user-accent)] focus-visible:border-[var(--user-accent-border)] focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1"
           >
@@ -1446,7 +1499,12 @@ function GSectionBand({
           </button>
         ) : null
       ) : editing ? (
-        <div data-studio-grid={section.id} className="relative">
+        <div
+          data-studio-grid={section.id}
+          data-row-height={rowHeight}
+          data-margin={margin}
+          className="relative"
+        >
           <EditorGrid
             className="layout"
             layout={grid}
@@ -1470,10 +1528,25 @@ function GSectionBand({
 
             onDragStart={() => props.onGridInteractionStart()}
             onResizeStart={() => props.onGridInteractionStart()}
-            onDragStop={(current, _oldItem, newItem) => {
+            onDragStop={(current, _oldItem, newItem, _placeholder, event) => {
               props.onGridInteractionEnd();
               if (!editing || !directManipulation || !newItem) return;
               const blockId = String(newItem.i);
+              // Each area owns its own grid, so a block released over a different
+              // area would be clamped back into its own. Hand it to the area under
+              // the pointer instead, at the cell it was dropped on.
+              const point = pointerPosition(event);
+              const targetSectionId = point
+                ? sectionUnderPointer(point.x, point.y, section.id)
+                : null;
+              if (point && targetSectionId) {
+                props.onMoveToSection(
+                  blockId,
+                  targetSectionId,
+                  cellUnderPointer(point, targetSectionId, newItem.w),
+                );
+                return;
+              }
               const committed = (current as unknown as LayoutGridItem[]).map((item) => ({
                 i: item.i,
                 x: item.x,
@@ -1798,17 +1871,20 @@ function BlockFrameSection({
   const inset = typeof block.frameInset === "number" ? block.frameInset : undefined;
   return (
     <div className="border-t border-border py-3">
-      <p className="t-label mb-2">Frame</p>
+      <p className="t-label mb-1">Card border</p>
+      <p className="mb-2 text-2xs leading-snug text-muted-foreground-subtle">
+        This block only — everything else follows the Studio's Card borders setting.
+      </p>
       <div
         role="radiogroup"
-        aria-label="Block frame"
+        aria-label="Card border for this block"
         className="grid grid-cols-3 gap-1 border border-border bg-[var(--surface-sunken)] p-0.5"
       >
         {(
           [
-            ["default", "Theme"],
-            ["frame", "Border"],
-            ["none", "None"],
+            ["default", "Follow"],
+            ["frame", "On"],
+            ["none", "Off"],
           ] as Array<[BlockFrameBorder, string]>
         ).map(([option, text]) => (
           <button
@@ -2707,8 +2783,36 @@ function GCustomizeAdvanced({
   selectedBlockId: string | null;
   onOpenAppearance?: () => void;
 }) {
+  // "Theme" keeps the face the personality above already sets; the rest are
+  // the shared font catalog.
+  const fontChoices: Array<[string, string]> = [
+    ["", "Theme"],
+    ...FONT_OPTIONS.map((option) => [option.id, option.label] as [string, string]),
+  ];
   return (
     <>
+      <div className="mb-4">
+        <p className="t-label mb-1.5">Typeface</p>
+        <p className="mb-1.5 text-2xs leading-snug text-muted-foreground-subtle">
+          The faces your Studio reads in — the published page renders the same ones.
+        </p>
+        <Choice
+          label="Headings"
+          value={config.headingFont ?? ""}
+          options={fontChoices}
+          onChange={(value) =>
+            onChange({ headingFont: value ? (value as GStudioConfig["headingFont"]) : null })
+          }
+        />
+        <Choice
+          label="Body"
+          value={config.bodyFont ?? ""}
+          options={fontChoices}
+          onChange={(value) =>
+            onChange({ bodyFont: value ? (value as GStudioConfig["bodyFont"]) : null })
+          }
+        />
+      </div>
       <Choice
         label="Density"
         hint="Spacing rhythm between blocks"
@@ -2776,15 +2880,16 @@ function GCustomizeAdvanced({
       )}
       <Choice
         label="Card borders"
-        hint="Outlines around cards and panels"
+        hint="Theme is the Tethyr rule · Accent follows the accent above (banner or picked) · Colour pins one · None removes the outline"
         value={cardBorders}
-        options={[
-          ["neutral", "Neutral"],
-          ["accent", "Dynamic"],
-          ["custom", "Custom"],
-          ["none", "None"],
-        ]}
-        onChange={(value) => onCardBordersChange(value as CardBorderPreference)}
+        options={CARD_BORDER_OPTIONS.map((option) => [option.id, option.label])}
+        onChange={(value) => {
+          const next = value as CardBorderPreference;
+          onCardBordersChange(next);
+          // Picking "Colour" must show a colour straight away — with none set
+          // the resolver falls back to the accent and the choice reads broken.
+          if (next === "custom" && !cardBorderColor) onCardBorderColorChange(BORDER_SWATCHES[0]);
+        }}
       />
       <Choice
         label="Border weight"
@@ -2800,21 +2905,24 @@ function GCustomizeAdvanced({
         }
       />
       {cardBorders === "custom" && (
-        <div className="mt-1.5 flex flex-wrap gap-1.5">
-          {BORDER_SWATCHES.map((swatch) => (
-            <button
-              key={swatch}
-              type="button"
-              aria-label={`Card border ${swatch}`}
-              aria-pressed={cardBorderColor.toLowerCase() === swatch}
-              onClick={() => onCardBorderColorChange(swatch)}
-              className={cn(
-                "h-6 w-6 rounded-sm border-2",
-                cardBorderColor.toLowerCase() === swatch ? "border-foreground" : "border-border",
-              )}
-              style={{ backgroundColor: swatch }}
-            />
-          ))}
+        <div className="mb-4" role="group" aria-label="Card border colour">
+          <p className="t-label mb-1.5">Border colour</p>
+          <div className="flex flex-wrap gap-1.5">
+            {BORDER_SWATCHES.map((swatch) => (
+              <button
+                key={swatch}
+                type="button"
+                aria-label={`Card border ${swatch}`}
+                aria-pressed={cardBorderColor.toLowerCase() === swatch}
+                onClick={() => onCardBorderColorChange(swatch)}
+                className={cn(
+                  "h-6 w-6 rounded-sm border-2",
+                  cardBorderColor.toLowerCase() === swatch ? "border-foreground" : "border-border",
+                )}
+                style={{ backgroundColor: swatch }}
+              />
+            ))}
+          </div>
         </div>
       )}
       <div className="mb-4">

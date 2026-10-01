@@ -47,29 +47,6 @@ import { cn } from "@/lib/utils";
 
 const EMPTY_BACKGROUND = emptyBackground();
 
-const CARD_BORDER_OPTIONS = [
-  {
-    id: "accent",
-    label: "Accent borders",
-    description: "Use your chosen accent",
-  },
-  {
-    id: "neutral",
-    label: "Neutral borders",
-    description: "Use the Tethyr rule",
-  },
-  {
-    id: "none",
-    label: "No card borders",
-    description: "Let surfaces define shape",
-  },
-  {
-    id: "custom",
-    label: "Custom colour",
-    description: "Pick a border colour",
-  },
-] as const;
-
 type BgTab = "app" | "public";
 
 /**
@@ -419,76 +396,10 @@ export function BackgroundPickerDialog({
 
           {(tab === "app" || (tab === "public" && publicSeparate)) && (
             <>
-              {/* APPEARANCE — stays beside the background controls so creators
-                  can decide how their surfaces and accent should behave. */}
-              <section className="space-y-3" aria-labelledby="appearance-heading">
-                <div>
-                  <h3
-                    id="appearance-heading"
-                    className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-                  >
-                    Surface style
-                  </h3>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Keep cards structured, quiet, or completely borderless.
-                  </p>
-                </div>
-                <div className="grid gap-2 sm:grid-cols-4" role="group" aria-label="Card borders">
-                  {CARD_BORDER_OPTIONS.map((option) => (
-                    <button
-                      key={option.id}
-                      type="button"
-                      aria-pressed={(activeDraft.cardBorders ?? "neutral") === option.id}
-                      onClick={() =>
-                        setActiveDraft((d) => ({
-                          ...d,
-                          cardBorders: option.id,
-                          // Seed a swatch when custom is first chosen so the
-                          // choice has an immediate, visible border colour.
-                          cardBorderColor:
-                            option.id === "custom" && !d.cardBorderColor
-                              ? BORDER_SWATCHES[0]
-                              : d.cardBorderColor,
-                        }))
-                      }
-                      className={cn(
-                        "min-w-0 rounded-lg border p-3 text-left transition-lift",
-                        (activeDraft.cardBorders ?? "neutral") === option.id
-                          ? "border-[var(--user-accent,var(--primary))] bg-[var(--user-accent-subtle,var(--surface-elevated))]"
-                          : "border-border/60 hover:border-[var(--user-accent-border,var(--border-strong))]",
-                      )}
-                    >
-                      <span className="block truncate text-xs font-medium">{option.label}</span>
-                      <span className="mt-1 block text-[11px] text-muted-foreground">
-                        {option.description}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-                {activeDraft.cardBorders === "custom" && (
-                  <div
-                    className="flex flex-wrap items-center gap-2"
-                    role="group"
-                    aria-label="Custom card border colour"
-                  >
-                    {BORDER_SWATCHES.map((swatch) => {
-                      const selected = (activeDraft.cardBorderColor ?? "").toLowerCase() === swatch;
-                      return (
-                        <SwatchButton
-                          key={swatch}
-                          title={swatch}
-                          selected={selected}
-                          style={{ backgroundColor: swatch }}
-                          onClick={() => setActiveDraft((d) => ({ ...d, cardBorderColor: swatch }))}
-                        >
-                          {selected && <Check className="h-3.5 w-3.5 text-foreground/70" />}
-                        </SwatchButton>
-                      );
-                    })}
-                  </div>
-                )}
-              </section>
-
+              {/* Card borders are not here: they are a Studio setting with one
+                  home, the Studio editor's Customize panel (see
+                  CARD_BORDER_OPTIONS in src/lib/background-themes.ts). This
+                  dialog owns backdrops, avatar and accent only. */}
               <section className="space-y-3" aria-labelledby="accent-heading">
                 <div>
                   <h3

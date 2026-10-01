@@ -14,6 +14,7 @@ import appCss from "../styles.css?url";
 import { MotionConfig } from "framer-motion";
 import { initSentry } from "@/lib/sentry";
 import { getConfiguredSiteUrl, SITE } from "@/lib/seo";
+import { googleFontsHref } from "@/lib/fonts";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider, themeInitScript, useTheme } from "@/lib/theme";
@@ -103,7 +104,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         rel: "preload",
         as: "style",
-        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap",
+        href: googleFontsHref(),
         // Must match the stylesheet link's (absent) crossOrigin exactly: a
         // preloaded resource is only reused by a request with the same
         // credentials mode, so a mismatched preload is fetched and wasted —
@@ -111,7 +112,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap",
+        href: googleFontsHref(),
       },
       { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
       { rel: "icon", href: "/favicon.ico", sizes: "any" },
