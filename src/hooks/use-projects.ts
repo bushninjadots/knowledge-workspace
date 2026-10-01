@@ -73,6 +73,8 @@ export type ProjectDetail = {
   forked_from_project_id?: string | null;
   /** How many times this project has been forked. */
   fork_count?: number;
+  /** Owner self-report: whether this project was built with AI assistance. */
+  ai_assisted?: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -1093,6 +1095,51 @@ export function useUpdateProjectReadme() {
 
       const { error } = await sb.from("projects").update(updates).eq("id", input.projectId);
       if (error) throw error;
+    },
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: PROJECT_KEY(variables.projectId) });
+    },
+  });
+}
+
+// ============================================================
+// Community AI tagging
+// ============================================================
+
+/** Threshold: how many community tags are needed before the "community-flagged"
+ * badge surfaces without the owner's self-report. */
+export const AI_COMMUNITY_THRESHOLD = 3;
+
+/**
+ * Toggle the current user's community AI-assisted tag on a project. Inserting
+ * tags the project; deleting removes the tag. The mutation optimistically
+ * flips the local state and rolls back on error.
+ */
+export function useToggleAiTag() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { projectId: string; tagged: boolean }) => {
+      if (input.tagged) {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) throw new Error("Not authenticated");
+        const { error } = await supabasePending
+          .from("project_ai_tags")
+          .insert({ project_id: input.projectId, tagger_id: user.id });
+        if (error) throw error;
+      } else {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) throw new Error("Not authenticated");
+        const { error } = await supabasePending
+          .from("project_ai_tags")
+          .delete()
+          .eq("project_id", input.projectId)
+          .eq("tagger_id", user.id);
+        if (error) throw error;
+      }
     },
     onSuccess: (_data, variables) => {
       qc.invalidateQueries({ queryKey: PROJECT_KEY(variables.projectId) });

@@ -81,6 +81,7 @@ export function ProjectDialog({
   const [collab, setCollab] = useState(project?.looking_for_collaborators ?? false);
   const [featured, setFeatured] = useState(project?.is_featured ?? false);
   const [allowForks, setAllowForks] = useState(project?.allow_forks ?? false);
+  const [aiAssisted, setAiAssisted] = useState(project?.ai_assisted ?? false);
   const [vision, setVision] = useState(project?.vision ?? "");
   const [galleryItems, setGalleryItems] = useState<
     { url: string; caption?: string; type: "image" | "video" }[]
@@ -370,7 +371,7 @@ export function ProjectDialog({
     if (projectId) {
       await supabasePending
         .from("projects")
-        .update({ allow_forks: allowForks })
+        .update({ allow_forks: allowForks, ai_assisted: aiAssisted })
         .eq("id", projectId);
     }
 
@@ -977,6 +978,12 @@ export function ProjectDialog({
                 description="Let others build their own version from this project"
                 checked={allowForks}
                 onChange={setAllowForks}
+              />
+              <Toggle
+                label="Built with AI assistance"
+                description="Mark this project as created with significant AI help"
+                checked={aiAssisted}
+                onChange={setAiAssisted}
               />
             </div>
           </div>

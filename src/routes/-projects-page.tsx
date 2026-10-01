@@ -3,6 +3,7 @@ import { notFound, useParams, Link, useNavigate, useSearch } from "@tanstack/rea
 import { CalendarPlus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { supabasePending } from "@/lib/supabase-pending-schema";
 
 const sb = supabase;
 import { useDominantColor, withAlpha } from "@/lib/dominant-color";
@@ -268,7 +269,7 @@ export function ProjectPage() {
     queryFn: async () => {
       // Try full column set first; fall back if extended columns are missing.
       const FULL_COLS =
-        "id, profile_id, title, description, goal, vision, status, visibility, stage, started_at, progress_percent, cover_url, gallery, resources, links, tags, uploaded_files, readme, tools, presentation_preset, github_display, season, collaboration_brief, lineage, looking_for_feedback, looking_for_collaborators, is_featured, allow_forks, forked_from_project_id, fork_count";
+        "id, profile_id, title, description, goal, vision, status, visibility, stage, started_at, progress_percent, cover_url, gallery, resources, links, tags, uploaded_files, readme, tools, presentation_preset, github_display, season, collaboration_brief, lineage, looking_for_feedback, looking_for_collaborators, is_featured, allow_forks, forked_from_project_id, fork_count, ai_assisted";
       // Fallback deliberately omits the newest columns (uploaded_files, readme,
       // tools, visibility) so a database that hasn't run the latest migrations
       // still loads.
@@ -394,6 +395,25 @@ export function ProjectPage() {
         }
       }
 
+      // Community AI tags — fetch the count and whether the current user has
+      // tagged this project, so the header can show the badge and the tag
+      // button can toggle. Best-effort: if the table/ RPC doesn't exist yet
+      // (migration hasn't run), defaults are used and the UI degrades silently.
+      let aiTagCount = 0;
+      let aiUserTagged = false;
+      {
+        const { data: countRes, error: countErr } = await supabasePending.rpc(
+          "project_ai_tag_count",
+          { p_project_id: id },
+        );
+        if (!countErr) aiTagCount = (countRes as number) ?? 0;
+        const { data: taggedRes, error: taggedErr } = await supabasePending.rpc(
+          "project_ai_user_tagged",
+          { p_project_id: id },
+        );
+        if (!taggedErr) aiUserTagged = (taggedRes as boolean) ?? false;
+      }
+
       return {
         project: project as unknown as ProjectDetail,
         contributors,
@@ -402,6 +422,8 @@ export function ProjectPage() {
         avatarSigned,
         contributorsDegraded,
         forkedFrom,
+        aiTagCount,
+        aiUserTagged,
       };
     },
   });
@@ -480,6 +502,8 @@ export function ProjectPage() {
     avatarSigned,
     contributorsDegraded,
     forkedFrom,
+    aiTagCount,
+    aiUserTagged,
   } = data;
   const presentation = getProjectPresentationOption(project.presentation_preset);
   const creator = contributors.find((c) => c.role === "creator");
@@ -579,6 +603,9 @@ export function ProjectPage() {
         onOpenDiscussions={() => scrollToSection("project-discussions")}
         onOpenNeeds={() => scrollToSection("project-needs")}
         onOpenPeople={() => scrollToSection("project-people")}
+        aiTagCount={aiTagCount}
+        aiUserTagged={aiUserTagged}
+        canAiTag={!!me?.userId && !isOwner}
       />
 
       <ProjectWorkbench
