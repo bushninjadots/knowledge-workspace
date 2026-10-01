@@ -196,7 +196,26 @@ export interface LayoutBlockInstance {
   /** Per-block inner spacing in px (0 = content flush to the frame edge).
    *  Omitted = the global frame inset. */
   frameInset?: number;
+  /** Per-block corner shape. "default" follows the global studio radius;
+   *  the other presets override it with a shape that can adapt to the
+   *  block's dimensions (percentage-based radii scale with content). */
+  frameShape?: BlockShape;
+  /** Per-block uniform corner radius in px (0–48). Only meaningful when
+   *  frameShape is "rounded" or "soft"; omitted = the shape's built-in default. */
+  frameRadius?: number;
 }
+
+/** Per-block corner shape presets. Percentage-based shapes ("organic", "blob",
+ *  "leaf") adapt to the block's aspect ratio so they look right at any size. */
+export type BlockShape =
+  | "default"
+  | "square"
+  | "rounded"
+  | "soft"
+  | "pill"
+  | "organic"
+  | "blob"
+  | "leaf";
 
 /** A 12-column grid item used by the Studio's direct manipulation canvas. */
 export interface LayoutGridItem {

@@ -517,8 +517,11 @@
     --studio-block-border,
     var(--card-border-width, 1px) solid var(--card-border-color, var(--border))
   );
-  border-radius: var(--studio-radius, var(--radius-lg));
+  /* Per-block shape (frameShape) wins; then the global studio radius; then
+     the design-system default. The transition makes shape changes fluid. */
+  border-radius: var(--studio-block-radius, var(--studio-radius, var(--radius-lg)));
   padding: var(--studio-block-inset, 1rem);
+  transition: border-radius 220ms ease;
 }
 
 /* Full-bleed variant for blocks that must reach the frame edge
