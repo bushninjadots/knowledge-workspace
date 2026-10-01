@@ -14,6 +14,7 @@ import {
   Github,
   Check,
 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { formatDistanceToNowStrict } from "date-fns";
 import { useState } from "react";
@@ -75,6 +76,10 @@ export function ProjectHeader({
   repoStats,
   communityPostCount,
   openNeedCount,
+  forkedFrom,
+  forkCount,
+  canFork,
+  onFork,
   onJoin,
   onSignIn,
   onPostUpdate,
@@ -99,6 +104,13 @@ export function ProjectHeader({
   };
   communityPostCount: number;
   openNeedCount: number;
+  /** The original project when this one is a fork, for lineage attribution. */
+  forkedFrom?: { id: string; title: string; handle: string | null } | null;
+  /** How many times this project has been forked. */
+  forkCount?: number;
+  /** Whether the signed-in viewer may fork this project. */
+  canFork?: boolean;
+  onFork?: () => void;
   onJoin?: () => void;
   onSignIn?: () => void;
   onPostUpdate?: () => void;
@@ -196,6 +208,23 @@ export function ProjectHeader({
                 />
               )}
             </div>
+
+            {/* Fork lineage — a fork is always attributed to the project it
+                came from, so no one mistakes it for original work. */}
+            {forkedFrom && (
+              <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                <GitBranch className="h-3.5 w-3.5" aria-hidden />
+                <span>Forked from</span>
+                <Link
+                  to="/projects/$id"
+                  params={{ id: forkedFrom.id }}
+                  className="font-medium text-foreground underline-offset-4 hover:underline"
+                >
+                  {forkedFrom.title}
+                </Link>
+                {forkedFrom.handle && <span>by @{forkedFrom.handle}</span>}
+              </div>
+            )}
 
             {/* Owner + collaborators */}
             <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
@@ -340,6 +369,14 @@ export function ProjectHeader({
                   <GitBranch className="h-3 w-3" /> {repoStats.forks.toLocaleString()}
                 </a>
               )}
+              {forkCount != null && forkCount > 0 && (
+                <span
+                  className={repoChipClass}
+                  title="Times this project has been forked on Tethyr"
+                >
+                  <GitBranch className="h-3 w-3" /> {forkCount.toLocaleString()}
+                </span>
+              )}
               {links.map(([key, url]) => {
                 const meta = PROJECT_LINK_KEYS.find((l) => l.key === key);
                 const Icon = meta?.icon ?? LinkIcon;
@@ -380,6 +417,16 @@ export function ProjectHeader({
               >
                 <MessageCircle className="h-3.5 w-3.5" />
                 {communityPostCount} post{communityPostCount !== 1 ? "s" : ""}
+              </button>
+            )}
+            {canFork && onFork && (
+              <button
+                onClick={onFork}
+                className="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-surface px-3 py-2 text-xs font-medium text-muted-foreground transition-lift hover:border-border-strong hover:text-foreground"
+                title="Create your own version of this project"
+              >
+                <GitBranch className="h-3.5 w-3.5" />
+                Fork
               </button>
             )}
             <button

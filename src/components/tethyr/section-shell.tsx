@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, type CSSProperties, type ReactNode } from "react";
+import { lazy, Suspense, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   ArrowLeft,
@@ -17,9 +17,12 @@ import { Logo } from "./logo";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
-import { useAuthUser } from "@/hooks/use-current-user";
+import { useAuthUser, useCurrentUser } from "@/hooks/use-current-user";
 import { useSidebarRail } from "@/hooks/use-sidebar-rail";
 import { useOnlineStatus } from "@/hooks/use-online-status";
+import { useUserPalette, paletteToStyle } from "@/lib/dominant-color";
+import { appearanceStyle, isBackgroundActive } from "@/lib/background-themes";
+import { BackgroundLayer } from "./background-layer";
 import { cn } from "@/lib/utils";
 import { NavigationProgress } from "./navigation-progress";
 
@@ -137,6 +140,13 @@ export function SectionShell({
 }) {
   const { data: sessionUser } = useAuthUser();
   const isAuthed = Boolean(sessionUser);
+  const { data: me } = useCurrentUser();
+  const palette = useUserPalette(me?.bannerSigned ?? null);
+  const themeStyle = useMemo(
+    () => ({ ...paletteToStyle(palette), ...appearanceStyle(me?.background) }),
+    [palette, me?.background],
+  );
+  const hasCustomBackground = isAuthed && isBackgroundActive(me?.background);
   const { collapsed: sidebarCollapsed, toggle: toggleSidebar } = useSidebarRail();
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -150,10 +160,22 @@ export function SectionShell({
 
   return (
     <div
-      className={cn("relative isolate flex min-h-screen bg-background", className)}
-      style={style}
+      className={cn(
+        "relative isolate flex min-h-screen",
+        hasCustomBackground ? "" : "bg-background",
+        me?.background?.density === "compact" ? "tethyr-density-compact" : "",
+        className,
+      )}
+      style={{ ...style, ...themeStyle }}
     >
       <NavigationProgress />
+      {hasCustomBackground && (
+        <BackgroundLayer
+          background={me?.background}
+          imageUrl={me?.backgroundImageUrl}
+          bannerColor={palette?.dominant ?? null}
+        />
+      )}
       <div className="sticky top-0 hidden h-screen shrink-0 md:block">
         {isAuthed ? (
           <DashboardSidebar collapsed={sidebarCollapsed} onToggleCollapse={toggleSidebar} />

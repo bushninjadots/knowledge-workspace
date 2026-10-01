@@ -15,9 +15,12 @@ import {
   useProjectNeeds,
   useUpdateProjectPresentation,
   useProjectCommunityPostCount,
+  useForkProject,
   type Contributor,
   type ProjectDetail,
 } from "@/hooks/use-projects";
+import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 import { getProjectPresentationOption, type ProjectSectionKey } from "@/lib/project-presentation";
 import { useProjectRepos } from "@/hooks/use-project-repos";
 import { useProjectSessions } from "@/hooks/use-sessions";
@@ -266,7 +269,7 @@ export function ProjectPage() {
     queryFn: async () => {
       // Try full column set first; fall back if extended columns are missing.
       const FULL_COLS =
-        "id, profile_id, title, description, goal, vision, status, visibility, stage, started_at, progress_percent, cover_url, gallery, resources, links, tags, uploaded_files, readme, tools, presentation_preset, github_display, season, collaboration_brief, lineage, looking_for_feedback, looking_for_collaborators, is_featured";
+        "id, profile_id, title, description, goal, vision, status, visibility, stage, started_at, progress_percent, cover_url, gallery, resources, links, tags, uploaded_files, readme, tools, presentation_preset, github_display, season, collaboration_brief, lineage, looking_for_feedback, looking_for_collaborators, is_featured, allow_forks, forked_from_project_id, fork_count";
       // Fallback deliberately omits the newest columns (uploaded_files, readme,
       // tools, visibility) so a database that hasn't run the latest migrations
       // still loads.
@@ -368,6 +371,30 @@ export function ProjectPage() {
         }
       }
 
+      // Fork lineage — resolve the original project's title and owner handle so
+      // the header can attribute the fork to it.
+      let forkedFrom: { id: string; title: string; handle: string | null } | null = null;
+      if (project.forked_from_project_id) {
+        const parentCols = "id, title, profiles(handle)";
+        const { data: parentRow } = await sb
+          .from("projects")
+          .select(parentCols)
+          .eq("id", project.forked_from_project_id)
+          .maybeSingle();
+        const parent = parentRow as unknown as {
+          id: string;
+          title: string;
+          profiles: { handle: string | null } | null;
+        } | null;
+        if (parent) {
+          forkedFrom = {
+            id: parent.id,
+            title: parent.title,
+            handle: parent.profiles?.handle ?? null,
+          };
+        }
+      }
+
       return {
         project: project as unknown as ProjectDetail,
         contributors,
@@ -375,6 +402,7 @@ export function ProjectPage() {
         coverSigned,
         avatarSigned,
         contributorsDegraded,
+        forkedFrom,
       };
     },
   });
@@ -413,6 +441,7 @@ export function ProjectPage() {
   const { data: communityPostCount = 0 } = useProjectCommunityPostCount(id);
   const updatePresentation = useUpdateProjectPresentation();
   const markProjectVisited = useMarkProjectVisited();
+  const forkProject = useForkProject();
 
   // A successful save flashes "Saved" briefly, then resets so the label doesn't
   // read "Saved" forever once isSuccess has been true.
@@ -444,11 +473,26 @@ export function ProjectPage() {
     );
   }
 
-  const { project, contributors, skills, coverSigned, avatarSigned, contributorsDegraded } = data;
+  const { project, contributors, skills, coverSigned, avatarSigned, contributorsDegraded, forkedFrom } =
+    data;
   const presentation = getProjectPresentationOption(project.presentation_preset);
   const creator = contributors.find((c) => c.role === "creator");
   const isContributor = isOwner || contributors.some((c) => c.profile_id === me?.userId);
   const canJoin = !!me?.userId && !isOwner && !isContributor;
+  // A project can be forked by any signed-in visitor other than its owner, and
+  // only when the owner has opted in.
+  const canFork = !!me?.userId && !isOwner && !!project.allow_forks;
+  const handleFork = () =>
+    forkProject.mutate(
+      { projectId: id },
+      {
+        onSuccess: (newId) => {
+          toast.success("Forked — your copy is a private draft until you publish it");
+          navigate({ to: "/projects/$id", params: { id: newId } });
+        },
+        onError: (err) => toast.error(friendlyError(err)),
+      },
+    );
   const hasOpenWork =
     needs.some((need) => !need.is_filled) || openRoles.some((role) => !role.is_filled);
   const roomIdentity = me?.userId
@@ -512,6 +556,10 @@ export function ProjectPage() {
         repoStats={repoStats}
         communityPostCount={communityPostCount}
         openNeedCount={needs.filter((need) => !need.is_filled).length}
+        forkedFrom={forkedFrom}
+        forkCount={project.fork_count ?? 0}
+        canFork={canFork}
+        onFork={handleFork}
         onJoin={canJoin ? () => setJoinModalOpen(true) : undefined}
         onSignIn={isSignedOut ? signInToJoin : undefined}
         onPostUpdate={

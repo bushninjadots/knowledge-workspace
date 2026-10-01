@@ -67,6 +67,12 @@ export type ProjectDetail = {
   readme?: string | null;
   tools?: string[];
   github_display?: GithubDisplay | null;
+  /** Owner opt-in: whether others may fork this project. */
+  allow_forks?: boolean;
+  /** The project this one was forked from, if any. */
+  forked_from_project_id?: string | null;
+  /** How many times this project has been forked. */
+  fork_count?: number;
   created_at: string;
   updated_at: string;
 };
@@ -1090,6 +1096,33 @@ export function useUpdateProjectReadme() {
     },
     onSuccess: (_data, variables) => {
       qc.invalidateQueries({ queryKey: PROJECT_KEY(variables.projectId) });
+    },
+  });
+}
+
+// ============================================================
+// Forking
+// ============================================================
+
+/**
+ * Fork a project into a private draft owned by the current user. The database
+ * copies the project's content and records the lineage; this just returns the
+ * new project id so the caller can navigate to it.
+ */
+export function useForkProject() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { projectId: string }) => {
+      const { data, error } = await supabasePending.rpc("fork_project", {
+        p_project_id: input.projectId,
+      });
+      if (error) throw error;
+      return data as string;
+    },
+    onSuccess: (_newId, variables) => {
+      qc.invalidateQueries({ queryKey: PROJECT_KEY(variables.projectId) });
+      qc.invalidateQueries({ queryKey: ["my-projects"] });
+      qc.invalidateQueries({ queryKey: ["current-user"] });
     },
   });
 }
