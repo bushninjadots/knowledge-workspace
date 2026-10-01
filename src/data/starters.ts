@@ -54,6 +54,9 @@ export interface Starter {
   sectionOrder: SectionMarker[];
   /** Sections by marker to hide (not delete). */
   collapsedSections: SectionMarker[];
+  /** Per-marker section layout — makes each starter visually distinct when
+   *  previewed and applied, instead of every section defaulting to "full". */
+  sectionLayouts: Partial<Record<SectionMarker, SectionLayoutType>>;
   /** Preview glyph: relative block weights, rendered as a tiny wireframe. */
   sketch: number[][];
 }
@@ -112,6 +115,13 @@ export const STARTERS: Starter[] = [
     presentation: "spotlight",
     sectionOrder: ["projects", "identity", "bio", "readme", "skills"],
     collapsedSections: [],
+    sectionLayouts: {
+      projects: "feature",
+      identity: "full",
+      bio: "full",
+      readme: "full",
+      skills: "compact_list",
+    },
     sketch: [[12], [12], [7, 5], [12]],
   },
   {
@@ -131,6 +141,14 @@ export const STARTERS: Starter[] = [
     presentation: "editorial-grid",
     sectionOrder: ["identity", "projects", "bio", "readme", "skills", "gallery"],
     collapsedSections: [],
+    sectionLayouts: {
+      identity: "full",
+      projects: "side_by_side",
+      bio: "full",
+      readme: "split",
+      skills: "two_column",
+      gallery: "side_by_side",
+    },
     sketch: [[12], [8, 4], [12], [6, 6]],
   },
   {
@@ -150,6 +168,13 @@ export const STARTERS: Starter[] = [
     presentation: "spotlight",
     sectionOrder: ["projects", "identity", "skills", "bio", "readme"],
     collapsedSections: [],
+    sectionLayouts: {
+      projects: "feature",
+      identity: "full",
+      skills: "three_column",
+      bio: "split",
+      readme: "compact_list",
+    },
     sketch: [[12], [6, 6], [4, 4, 4], [12]],
   },
   {
@@ -170,6 +195,13 @@ export const STARTERS: Starter[] = [
     presentation: "minimal-list",
     sectionOrder: ["identity", "projects", "bio", "readme", "links"],
     collapsedSections: ["tools", "gallery"],
+    sectionLayouts: {
+      identity: "full",
+      projects: "compact_list",
+      bio: "full",
+      readme: "full",
+      links: "full",
+    },
     sketch: [[12], [12], [12], [12]],
   },
   {
@@ -189,6 +221,13 @@ export const STARTERS: Starter[] = [
     presentation: "horizontal-scroll",
     sectionOrder: ["identity", "projects", "bio", "readme", "gallery"],
     collapsedSections: [],
+    sectionLayouts: {
+      identity: "full",
+      projects: "asymmetric",
+      bio: "image_lead",
+      readme: "split",
+      gallery: "side_by_side",
+    },
     sketch: [[12], [5, 7], [3, 5, 4], [7, 5]],
   },
 ];
@@ -242,6 +281,7 @@ export function applyStarter(
   const collapsed = new Set(starter.collapsedSections);
   const previouslyHidden = new Set(previouslyApplied?.collapsedSections ?? []);
 
+  const sectionLayouts = starter.sectionLayouts ?? {};
   return {
     sections: ordered.map((section, position) => {
       const marker = sectionMarker(section);
@@ -261,10 +301,14 @@ export function applyStarter(
           : hiddenByPreviousStarter
             ? !collapsed.has(marker)
             : (section.visible ?? true) && !collapsed.has(marker);
+      // Apply the starter's per-marker section layout so each direction
+      // produces a visually distinct arrangement, not just reordering.
+      const nextLayout = marker && sectionLayouts[marker] ? sectionLayouts[marker] : section.layout;
       return {
         ...section,
         position,
         visible,
+        layout: nextLayout,
         blocks: nextBlocks,
       };
     }),
@@ -297,6 +341,9 @@ const PREVIEW_LAYOUTS: Partial<Record<SectionMarker, SectionLayoutType>> = {
   tools: "two_column",
 };
 
+/** Fallback section layout when a starter doesn't specify one for a marker. */
+const DEFAULT_SECTION_LAYOUT: SectionLayoutType = "full";
+
 /**
  * Build a small representative layout for a starter, used to render a live
  * preview of what applying it would look like. Blocks are built from the
@@ -305,12 +352,13 @@ const PREVIEW_LAYOUTS: Partial<Record<SectionMarker, SectionLayoutType>> = {
  */
 export function starterPreviewLayout(starter: Starter): PageLayout {
   const collapsed = new Set(starter.collapsedSections);
+  const sectionLayouts = starter.sectionLayouts ?? {};
   return {
     sections: starter.sectionOrder.map((marker, index) => ({
       id: `preview:${marker}`,
       position: index,
       title: PREVIEW_TITLES[marker],
-      layout: PREVIEW_LAYOUTS[marker] ?? "full",
+      layout: sectionLayouts[marker] ?? PREVIEW_LAYOUTS[marker] ?? DEFAULT_SECTION_LAYOUT,
       visible: !collapsed.has(marker),
       blocks: MARKER_BLOCKS[marker].map((type, blockIndex) => ({
         id: `preview:${marker}:${type}`,

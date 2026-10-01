@@ -125,7 +125,7 @@ export function useUpdatePageLayout() {
     mutationFn: async ({ layoutId, layout }: UpdateLayoutParams) => {
       const { error } = await supabase
         .from("layouts")
-        .update({ sections: layout.sections as unknown as Json })
+        .update({ sections: layout.sections as unknown as NonNullable<Json> })
         .eq("id", layoutId);
 
       if (error) throw error;

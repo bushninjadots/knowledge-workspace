@@ -10,6 +10,7 @@ import {
   LayoutTemplate,
   Plus,
   Search,
+  Star,
   Trash2,
   Undo2,
 } from "lucide-react";
@@ -26,6 +27,7 @@ import {
   useDeleteTemplate,
   useMyTemplates,
   usePublicTemplates,
+  useToggleTemplateStar,
   type CommunityTemplate,
 } from "@/hooks/use-templates";
 import { PageLayoutRenderer } from "@/components/tethyr/page/page-layout";
@@ -118,7 +120,7 @@ export function StarterPicker({
   onTemplateAction,
 }: StarterPickerProps) {
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<"newest" | "popular">("newest");
+  const [sort, setSort] = useState<"newest" | "popular" | "starred">("newest");
   const signedIn = useIsSignedIn();
   const templates = usePublicTemplates({ search, sort });
   const mine = useMyTemplates(signedIn);
@@ -303,6 +305,11 @@ export function StarterPicker({
                     label="Most used"
                     active={sort === "popular"}
                     onClick={() => setSort("popular")}
+                  />
+                  <SortButton
+                    label="Most starred"
+                    active={sort === "starred"}
+                    onClick={() => setSort("starred")}
                   />
                 </div>
               </div>
@@ -595,6 +602,7 @@ function TemplateRow({
   const sketchRows = useMemo(() => templateSketchRows(sanitized), [sanitized]);
   const creator =
     template.creatorDisplayName ?? (template.creatorHandle ? `@${template.creatorHandle}` : null);
+  const toggleStar = useToggleTemplateStar();
 
   return (
     <li className="border-b border-border/60 last:border-b-0">
@@ -622,12 +630,33 @@ function TemplateRow({
             <span className="inline-flex items-center gap-0.5" title="Times forked">
               <Copy className="h-3 w-3" aria-hidden /> {template.forkCount}
             </span>
+            <span className="inline-flex items-center gap-0.5" title="Stars">
+              <Star
+                className={`h-3 w-3 ${template.starred ? "fill-foreground text-foreground" : ""}`}
+                aria-hidden
+              /> {template.starCount}
+            </span>
             <span className="hidden items-center gap-0.5 sm:inline-flex" title="Sections included">
               {sanitized.length} section{sanitized.length === 1 ? "" : "s"}
             </span>
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
+          <button
+            type="button"
+            aria-label={template.starred ? "Unstar this template" : "Star this template"}
+            aria-pressed={template.starred}
+            title={template.starred ? "Unstar" : "Star"}
+            disabled={toggleStar.isPending}
+            onClick={() => toggleStar.mutate({ templateId: template.id })}
+            className={`flex h-7 w-7 items-center justify-center rounded-md border transition-colors ${
+              template.starred
+                ? "border-[var(--user-accent-border)] bg-[var(--user-accent-subtle)] text-[var(--user-accent)]"
+                : "border-border text-muted-foreground hover:bg-[var(--surface-elevated)] hover:text-foreground"
+            }`}
+          >
+            <Star className={`h-3.5 w-3.5 ${template.starred ? "fill-current" : ""}`} aria-hidden />
+          </button>
           {onSave && !template.isMine && (
             <Button
               variant="outline"
@@ -660,13 +689,15 @@ function MyTemplateChip({
   const deleteTemplate = useDeleteTemplate();
   // Published templates can be unpublished; private forks and layouts whose
   // flag has since flipped (e.g. just unpublished in another surface) only
-  // offer apply.
-  const canUnpublish = template.forkedFromId === null && template.isTemplate;
+  // offer apply. Pending submissions show a "pending" badge instead of the
+  // unpublish button.
+  const isPending = template.submissionStatus === "pending";
+  const canUnpublish = template.forkedFromId === null && template.isTemplate && !isPending;
   return (
     <li className="shrink-0">
       <div
         className={`flex h-7 items-center rounded-full border border-border bg-[var(--surface-elevated)] transition-colors focus-within:ring-2 focus-within:ring-[var(--user-accent,var(--ring))] focus-within:ring-offset-1 ${
-          canUnpublish ? "pr-1" : ""
+          canUnpublish || isPending ? "pr-1" : ""
         }`}
       >
         <button
@@ -678,6 +709,14 @@ function MyTemplateChip({
           <Clock className="h-3 w-3 text-muted-foreground-subtle" aria-hidden />
           <span className="max-w-[160px] truncate">{template.name}</span>
         </button>
+        {isPending && (
+          <span
+            className="shrink-0 rounded-full bg-caution/10 px-1.5 py-px font-mono text-3xs uppercase tracking-widest text-caution"
+            title="Awaiting review"
+          >
+            Pending
+          </span>
+        )}
         {canUnpublish && (
           <button
             type="button"

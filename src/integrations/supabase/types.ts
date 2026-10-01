@@ -1,10 +1,25 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5";
+  graphql_public: {
+    Tables: {
+      [_ in never]: never;
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      graphql: {
+        Args: { extensions?: Json; operationName?: string; query?: string; variables?: Json };
+        Returns: Json;
+      };
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
   };
   public: {
     Tables: {
@@ -13,21 +28,21 @@ export type Database = {
           created_at: string;
           id: string;
           kind: string;
-          metadata: Json;
+          metadata: NonNullable<Json>;
           profile_id: string;
         };
         Insert: {
           created_at?: string;
           id?: string;
           kind: string;
-          metadata?: Json;
+          metadata?: NonNullable<Json>;
           profile_id: string;
         };
         Update: {
           created_at?: string;
           id?: string;
           kind?: string;
-          metadata?: Json;
+          metadata?: NonNullable<Json>;
           profile_id?: string;
         };
         Relationships: [
@@ -249,18 +264,21 @@ export type Database = {
       community_space_members: {
         Row: {
           joined_at: string;
+          last_read_at: string | null;
           role: Database["public"]["Enums"]["space_member_role"];
           space_id: string;
           user_id: string;
         };
         Insert: {
           joined_at?: string;
+          last_read_at?: string | null;
           role?: Database["public"]["Enums"]["space_member_role"];
           space_id: string;
           user_id: string;
         };
         Update: {
           joined_at?: string;
+          last_read_at?: string | null;
           role?: Database["public"]["Enums"]["space_member_role"];
           space_id?: string;
           user_id?: string;
@@ -422,7 +440,7 @@ export type Database = {
           category: string;
           created_at: string;
           id: string;
-          metadata: Json;
+          metadata: NonNullable<Json>;
           points: number;
           profile_id: string;
         };
@@ -431,7 +449,7 @@ export type Database = {
           category: string;
           created_at?: string;
           id?: string;
-          metadata?: Json;
+          metadata?: NonNullable<Json>;
           points?: number;
           profile_id: string;
         };
@@ -440,7 +458,7 @@ export type Database = {
           category?: string;
           created_at?: string;
           id?: string;
-          metadata?: Json;
+          metadata?: NonNullable<Json>;
           points?: number;
           profile_id?: string;
         };
@@ -575,7 +593,9 @@ export type Database = {
           id: string;
           is_template: boolean;
           name: string;
-          sections: Json;
+          sections: NonNullable<Json>;
+          star_count: number;
+          submission_status: string;
           theme_id: string | null;
           type: string;
           updated_at: string;
@@ -590,7 +610,9 @@ export type Database = {
           id?: string;
           is_template?: boolean;
           name: string;
-          sections?: Json;
+          sections?: NonNullable<Json>;
+          star_count?: number;
+          submission_status?: string;
           theme_id?: string | null;
           type?: string;
           updated_at?: string;
@@ -605,7 +627,9 @@ export type Database = {
           id?: string;
           is_template?: boolean;
           name?: string;
-          sections?: Json;
+          sections?: NonNullable<Json>;
+          star_count?: number;
+          submission_status?: string;
           theme_id?: string | null;
           type?: string;
           updated_at?: string;
@@ -628,7 +652,7 @@ export type Database = {
           board_id: string;
           column_id: string;
           created_at: string;
-          fields: Json;
+          fields: NonNullable<Json>;
           id: string;
           item_id: string | null;
           position: number;
@@ -642,7 +666,7 @@ export type Database = {
           board_id: string;
           column_id: string;
           created_at?: string;
-          fields?: Json;
+          fields?: NonNullable<Json>;
           id?: string;
           item_id?: string | null;
           position?: number;
@@ -656,7 +680,7 @@ export type Database = {
           board_id?: string;
           column_id?: string;
           created_at?: string;
-          fields?: Json;
+          fields?: NonNullable<Json>;
           id?: string;
           item_id?: string | null;
           position?: number;
@@ -1033,6 +1057,30 @@ export type Database = {
           },
         ];
       };
+      media_bucket_snapshots: {
+        Row: {
+          bucket: string;
+          byte_count: number;
+          id: number;
+          object_count: number;
+          taken_at: string;
+        };
+        Insert: {
+          bucket: string;
+          byte_count?: number;
+          id?: never;
+          object_count?: number;
+          taken_at?: string;
+        };
+        Update: {
+          bucket?: string;
+          byte_count?: number;
+          id?: never;
+          object_count?: number;
+          taken_at?: string;
+        };
+        Relationships: [];
+      };
       messages: {
         Row: {
           body: string;
@@ -1161,7 +1209,7 @@ export type Database = {
           entity_id: string | null;
           entity_type: string | null;
           id: string;
-          metadata: Json;
+          metadata: NonNullable<Json>;
           read_at: string | null;
           title: string;
           type: string;
@@ -1175,7 +1223,7 @@ export type Database = {
           entity_id?: string | null;
           entity_type?: string | null;
           id?: string;
-          metadata?: Json;
+          metadata?: NonNullable<Json>;
           read_at?: string | null;
           title: string;
           type: string;
@@ -1189,7 +1237,7 @@ export type Database = {
           entity_id?: string | null;
           entity_type?: string | null;
           id?: string;
-          metadata?: Json;
+          metadata?: NonNullable<Json>;
           read_at?: string | null;
           title?: string;
           type?: string;
@@ -1212,8 +1260,61 @@ export type Database = {
           },
         ];
       };
+      page_versions: {
+        Row: {
+          id: string;
+          layout: NonNullable<Json>;
+          note: string | null;
+          page_id: string;
+          published_at: string;
+          published_by: string | null;
+          theme_id: string | null;
+          theme_overrides: Json | null;
+          version: number;
+        };
+        Insert: {
+          id?: string;
+          layout?: NonNullable<Json>;
+          note?: string | null;
+          page_id: string;
+          published_at?: string;
+          published_by?: string | null;
+          theme_id?: string | null;
+          theme_overrides?: Json | null;
+          version: number;
+        };
+        Update: {
+          id?: string;
+          layout?: NonNullable<Json>;
+          note?: string | null;
+          page_id?: string;
+          published_at?: string;
+          published_by?: string | null;
+          theme_id?: string | null;
+          theme_overrides?: Json | null;
+          version?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "page_versions_page_id_fkey";
+            columns: ["page_id"];
+            isOneToOne: false;
+            referencedRelation: "pages";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "page_versions_theme_id_fkey";
+            columns: ["theme_id"];
+            isOneToOne: false;
+            referencedRelation: "themes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       pages: {
         Row: {
+          composition_id: string | null;
+          config: NonNullable<Json>;
           created_at: string;
           id: string;
           layout_id: string | null;
@@ -1224,8 +1325,11 @@ export type Database = {
           theme_id: string | null;
           theme_overrides: Json | null;
           updated_at: string;
+          vibe_id: string | null;
         };
         Insert: {
+          composition_id?: string | null;
+          config?: NonNullable<Json>;
           created_at?: string;
           id?: string;
           layout_id?: string | null;
@@ -1236,8 +1340,11 @@ export type Database = {
           theme_id?: string | null;
           theme_overrides?: Json | null;
           updated_at?: string;
+          vibe_id?: string | null;
         };
         Update: {
+          composition_id?: string | null;
+          config?: NonNullable<Json>;
           created_at?: string;
           id?: string;
           layout_id?: string | null;
@@ -1248,6 +1355,7 @@ export type Database = {
           theme_id?: string | null;
           theme_overrides?: Json | null;
           updated_at?: string;
+          vibe_id?: string | null;
         };
         Relationships: [
           {
@@ -1636,19 +1744,19 @@ export type Database = {
           created_at: string;
           creator_title: string | null;
           display_name: string | null;
-          evidence_shelf: Json;
+          evidence_shelf: NonNullable<Json>;
           favorite_achievement: string | null;
           favourite_tools: string[];
           handle: string | null;
           id: string;
           languages: string[];
           learning_goals: string | null;
-          notification_preferences: Json;
-          portfolio_links: Json;
+          notification_preferences: NonNullable<Json>;
+          portfolio_links: NonNullable<Json>;
           public_background: Json | null;
           readme: string | null;
           reputation_score: number;
-          social_links: Json;
+          social_links: NonNullable<Json>;
           software_stack: string[];
           teaching_style: string | null;
           timezone: string | null;
@@ -1669,19 +1777,19 @@ export type Database = {
           created_at?: string;
           creator_title?: string | null;
           display_name?: string | null;
-          evidence_shelf?: Json;
+          evidence_shelf?: NonNullable<Json>;
           favorite_achievement?: string | null;
           favourite_tools?: string[];
           handle?: string | null;
           id: string;
           languages?: string[];
           learning_goals?: string | null;
-          notification_preferences?: Json;
-          portfolio_links?: Json;
+          notification_preferences?: NonNullable<Json>;
+          portfolio_links?: NonNullable<Json>;
           public_background?: Json | null;
           readme?: string | null;
           reputation_score?: number;
-          social_links?: Json;
+          social_links?: NonNullable<Json>;
           software_stack?: string[];
           teaching_style?: string | null;
           timezone?: string | null;
@@ -1702,19 +1810,19 @@ export type Database = {
           created_at?: string;
           creator_title?: string | null;
           display_name?: string | null;
-          evidence_shelf?: Json;
+          evidence_shelf?: NonNullable<Json>;
           favorite_achievement?: string | null;
           favourite_tools?: string[];
           handle?: string | null;
           id?: string;
           languages?: string[];
           learning_goals?: string | null;
-          notification_preferences?: Json;
-          portfolio_links?: Json;
+          notification_preferences?: NonNullable<Json>;
+          portfolio_links?: NonNullable<Json>;
           public_background?: Json | null;
           readme?: string | null;
           reputation_score?: number;
-          social_links?: Json;
+          social_links?: NonNullable<Json>;
           software_stack?: string[];
           teaching_style?: string | null;
           timezone?: string | null;
@@ -2027,6 +2135,65 @@ export type Database = {
           },
         ];
       };
+      project_recognitions: {
+        Row: {
+          created_at: string;
+          giver_id: string;
+          id: string;
+          kind: string;
+          project_activity_id: string;
+          project_id: string;
+          recipient_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          giver_id: string;
+          id?: string;
+          kind: string;
+          project_activity_id: string;
+          project_id: string;
+          recipient_id: string;
+        };
+        Update: {
+          created_at?: string;
+          giver_id?: string;
+          id?: string;
+          kind?: string;
+          project_activity_id?: string;
+          project_id?: string;
+          recipient_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "project_recognitions_giver_id_fkey";
+            columns: ["giver_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "project_recognitions_project_activity_id_fkey";
+            columns: ["project_activity_id"];
+            isOneToOne: false;
+            referencedRelation: "project_activity";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "project_recognitions_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "project_recognitions_recipient_id_fkey";
+            columns: ["recipient_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       project_repositories: {
         Row: {
           created_at: string;
@@ -2188,6 +2355,39 @@ export type Database = {
           },
         ];
       };
+      project_visits: {
+        Row: {
+          last_seen_at: string;
+          project_id: string;
+          user_id: string;
+        };
+        Insert: {
+          last_seen_at?: string;
+          project_id: string;
+          user_id: string;
+        };
+        Update: {
+          last_seen_at?: string;
+          project_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "project_visits_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "project_visits_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       project_watchers: {
         Row: {
           created_at: string;
@@ -2223,24 +2423,25 @@ export type Database = {
       };
       projects: {
         Row: {
-          collaboration_brief: Json;
+          collaboration_brief: NonNullable<Json>;
           cover_url: string | null;
           created_at: string;
           description: string | null;
-          gallery: Json;
+          gallery: NonNullable<Json>;
+          github_display: Json | null;
           goal: string | null;
           id: string;
           is_featured: boolean;
-          lineage: Json;
-          links: Json;
+          lineage: NonNullable<Json>;
+          links: NonNullable<Json>;
           looking_for_collaborators: boolean;
           looking_for_feedback: boolean;
-          media: Json;
+          media: NonNullable<Json>;
           presentation_preset: string;
           profile_id: string;
           progress_percent: number;
           readme: string | null;
-          resources: Json;
+          resources: NonNullable<Json>;
           season: string;
           stage: Database["public"]["Enums"]["project_stage"];
           started_at: string;
@@ -2254,24 +2455,25 @@ export type Database = {
           vision: string | null;
         };
         Insert: {
-          collaboration_brief?: Json;
+          collaboration_brief?: NonNullable<Json>;
           cover_url?: string | null;
           created_at?: string;
           description?: string | null;
-          gallery?: Json;
+          gallery?: NonNullable<Json>;
+          github_display?: Json | null;
           goal?: string | null;
           id?: string;
           is_featured?: boolean;
-          lineage?: Json;
-          links?: Json;
+          lineage?: NonNullable<Json>;
+          links?: NonNullable<Json>;
           looking_for_collaborators?: boolean;
           looking_for_feedback?: boolean;
-          media?: Json;
+          media?: NonNullable<Json>;
           presentation_preset?: string;
           profile_id: string;
           progress_percent?: number;
           readme?: string | null;
-          resources?: Json;
+          resources?: NonNullable<Json>;
           season?: string;
           stage?: Database["public"]["Enums"]["project_stage"];
           started_at?: string;
@@ -2285,24 +2487,25 @@ export type Database = {
           vision?: string | null;
         };
         Update: {
-          collaboration_brief?: Json;
+          collaboration_brief?: NonNullable<Json>;
           cover_url?: string | null;
           created_at?: string;
           description?: string | null;
-          gallery?: Json;
+          gallery?: NonNullable<Json>;
+          github_display?: Json | null;
           goal?: string | null;
           id?: string;
           is_featured?: boolean;
-          lineage?: Json;
-          links?: Json;
+          lineage?: NonNullable<Json>;
+          links?: NonNullable<Json>;
           looking_for_collaborators?: boolean;
           looking_for_feedback?: boolean;
-          media?: Json;
+          media?: NonNullable<Json>;
           presentation_preset?: string;
           profile_id?: string;
           progress_percent?: number;
           readme?: string | null;
-          resources?: Json;
+          resources?: NonNullable<Json>;
           season?: string;
           stage?: Database["public"]["Enums"]["project_stage"];
           started_at?: string;
@@ -2917,7 +3120,7 @@ export type Database = {
           id: string;
           name: string;
           slug: string;
-          social_links: Json;
+          social_links: NonNullable<Json>;
           website_url: string | null;
         };
         Insert: {
@@ -2930,7 +3133,7 @@ export type Database = {
           id?: string;
           name: string;
           slug: string;
-          social_links?: Json;
+          social_links?: NonNullable<Json>;
           website_url?: string | null;
         };
         Update: {
@@ -2943,7 +3146,7 @@ export type Database = {
           id?: string;
           name?: string;
           slug?: string;
-          social_links?: Json;
+          social_links?: NonNullable<Json>;
           website_url?: string | null;
         };
         Relationships: [
@@ -2956,6 +3159,32 @@ export type Database = {
           },
         ];
       };
+      template_stars: {
+        Row: {
+          created_at: string;
+          layout_id: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          layout_id: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          layout_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "template_stars_layout_id_fkey";
+            columns: ["layout_id"];
+            isOneToOne: false;
+            referencedRelation: "layouts";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       themes: {
         Row: {
           created_at: string;
@@ -2963,7 +3192,7 @@ export type Database = {
           description: string | null;
           id: string;
           name: string;
-          tokens: Json;
+          tokens: NonNullable<Json>;
           updated_at: string;
         };
         Insert: {
@@ -2972,7 +3201,7 @@ export type Database = {
           description?: string | null;
           id?: string;
           name: string;
-          tokens?: Json;
+          tokens?: NonNullable<Json>;
           updated_at?: string;
         };
         Update: {
@@ -2981,7 +3210,7 @@ export type Database = {
           description?: string | null;
           id?: string;
           name?: string;
-          tokens?: Json;
+          tokens?: NonNullable<Json>;
           updated_at?: string;
         };
         Relationships: [];
@@ -3038,19 +3267,19 @@ export type Database = {
       };
       user_layout_preferences: {
         Row: {
-          layout: Json;
+          layout: NonNullable<Json>;
           page: string;
           updated_at: string;
           user_id: string;
         };
         Insert: {
-          layout?: Json;
+          layout?: NonNullable<Json>;
           page: string;
           updated_at?: string;
           user_id: string;
         };
         Update: {
-          layout?: Json;
+          layout?: NonNullable<Json>;
           page?: string;
           updated_at?: string;
           user_id?: string;
@@ -3067,7 +3296,90 @@ export type Database = {
       };
     };
     Views: {
-      [_ in never]: never;
+      media_bucket_growth: {
+        Row: {
+          bucket: string | null;
+          byte_count: number | null;
+          byte_growth_7d: number | null;
+          last_measured_at: string | null;
+          object_count: number | null;
+          object_growth_7d: number | null;
+        };
+        Relationships: [];
+      };
+      project_repositories_public: {
+        Row: {
+          created_at: string | null;
+          id: string | null;
+          project_id: string | null;
+          provider: string | null;
+          updated_at: string | null;
+          url: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          id?: string | null;
+          project_id?: string | null;
+          provider?: string | null;
+          updated_at?: string | null;
+          url?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          id?: string | null;
+          project_id?: string | null;
+          provider?: string | null;
+          updated_at?: string | null;
+          url?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "project_repositories_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      project_repositories_safe: {
+        Row: {
+          created_at: string | null;
+          id: string | null;
+          metadata: Json | null;
+          project_id: string | null;
+          provider: string | null;
+          updated_at: string | null;
+          url: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          id?: string | null;
+          metadata?: Json | null;
+          project_id?: string | null;
+          provider?: string | null;
+          updated_at?: string | null;
+          url?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          id?: string | null;
+          metadata?: Json | null;
+          project_id?: string | null;
+          provider?: string | null;
+          updated_at?: string | null;
+          url?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "project_repositories_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Functions: {
       _create_trigger_if_table_exists: {
@@ -3090,36 +3402,46 @@ export type Database = {
         };
         Returns: undefined;
       };
+      apply_studio_composition: {
+        Args: {
+          p_composition_id: string;
+          p_config: Json;
+          p_layout_id: string;
+          p_page_id: string;
+          p_sections: Json;
+        };
+        Returns: undefined;
+      };
       approve_space_join_request: {
         Args: { p_space_id: string; p_user_id: string };
         Returns: undefined;
       };
       award_earned_achievements: {
-        Args: never;
+        Args: { p_profile_id?: string };
         Returns: Database["public"]["Enums"]["achievement_type"][];
       };
       ban_space_member: {
         Args: { p_reason?: string; p_space_id: string; p_user_id: string };
         Returns: undefined;
       };
+      community_daily_activity: {
+        Args: { p_days: number; p_since: string };
+        Returns: {
+          day: string;
+          joins: number;
+          posts: number;
+        }[];
+      };
       community_space_member_counts: {
-        Args: never;
+        Args: Record<PropertyKey, never>;
         Returns: {
           member_count: number;
           space_id: string;
         }[];
       };
-      post_engagement_counts: {
-        Args: { p_post_ids: string[] };
-        Returns: {
-          post_id: string;
-          likes: number;
-          helpful: number;
-          saves: number;
-          offers: number;
-          comment_count: number;
-          user_actions: string[];
-        }[];
+      decline_project_role_application: {
+        Args: { p_application_id: string; p_project_id: string; p_role_id: string };
+        Returns: undefined;
       };
       discussion_reply_counts: {
         Args: { p_discussion_ids: string[] };
@@ -3128,66 +3450,18 @@ export type Database = {
           reply_count: number;
         }[];
       };
-      skill_directory_stats: {
-        Args: { p_skill_ids?: string[] };
+      explore_open_role_counts: {
+        Args: { p_project_ids: string[] };
         Returns: {
-          skill_id: string;
-          sharing_count: number;
-          growing_count: number;
-          project_count: number;
-          need_count: number;
+          open_roles: number;
+          project_id: string;
         }[];
       };
-      trending_skills: {
-        Args: { p_limit?: number };
+      explore_session_host_ids: {
+        Args: { p_now?: string; p_profile_ids: string[] };
         Returns: {
-          id: string;
-          slug: string;
-          name: string;
-          category: string;
-          description: string | null;
-          usage_count: number;
+          organizer_id: string;
         }[];
-      };
-      match_projects: {
-        Args: { p_limit?: number; p_user_id: string };
-        Returns: {
-          id: string;
-          title: string;
-          description: string | null;
-          stage: Database["public"]["Enums"]["project_stage"];
-          looking_for_collaborators: boolean;
-          looking_for_feedback: boolean;
-          profile_id: string;
-          skill_ids: string[];
-          score: number;
-          reasons: string[];
-        }[];
-      };
-      match_creators: {
-        Args: { p_limit?: number; p_user_id: string };
-        Returns: {
-          id: string;
-          handle: string | null;
-          display_name: string | null;
-          creator_title: string | null;
-          category: string | null;
-          avatar_url: string | null;
-          availability: Database["public"]["Enums"]["availability_status"] | null;
-          languages: string[];
-          teach_skills: Json;
-          learn_skills: Json;
-          match_score: number;
-          match_reasons: string[];
-        }[];
-      };
-      decline_project_role_application: {
-        Args: {
-          p_application_id: string;
-          p_project_id: string;
-          p_role_id: string;
-        };
-        Returns: undefined;
       };
       get_layout_lineage: {
         Args: { start_id: string };
@@ -3198,10 +3472,7 @@ export type Database = {
         }[];
       };
       increment_fork_count: { Args: { layout_id: string }; Returns: undefined };
-      increment_usage_count: {
-        Args: { template_id: string };
-        Returns: undefined;
-      };
+      increment_usage_count: { Args: { template_id: string }; Returns: undefined };
       insert_notification: {
         Args: {
           p_actor_id: string;
@@ -3220,10 +3491,7 @@ export type Database = {
         Returns: boolean;
       };
       is_project_visible: { Args: { project_id: string }; Returns: boolean };
-      is_session_member: {
-        Args: { _session_id: string; _user_id: string };
-        Returns: boolean;
-      };
+      is_session_member: { Args: { _session_id: string; _user_id: string }; Returns: boolean };
       is_session_organizer: {
         Args: { p_session_id: string; p_user_id?: string };
         Returns: boolean;
@@ -3232,18 +3500,9 @@ export type Database = {
         Args: { p_session_id: string; p_user_id?: string };
         Returns: boolean;
       };
-      is_space_banned: {
-        Args: { p_space_id: string; p_user_id: string };
-        Returns: boolean;
-      };
-      is_space_member: {
-        Args: { p_space_id: string; p_user_id?: string };
-        Returns: boolean;
-      };
-      is_space_owner: {
-        Args: { p_space_id: string; p_user_id?: string };
-        Returns: boolean;
-      };
+      is_space_banned: { Args: { p_space_id: string; p_user_id: string }; Returns: boolean };
+      is_space_member: { Args: { p_space_id: string; p_user_id?: string }; Returns: boolean };
+      is_space_owner: { Args: { p_space_id: string; p_user_id?: string }; Returns: boolean };
       is_space_owner_or_moderator: {
         Args: { p_space_id: string; p_user_id?: string };
         Returns: boolean;
@@ -3263,27 +3522,154 @@ export type Database = {
         Returns: undefined;
       };
       mark_space_read: { Args: { p_space_id: string }; Returns: undefined };
+      match_creators: {
+        Args: { p_limit?: number; p_user_id: string };
+        Returns: {
+          availability: Database["public"]["Enums"]["availability_status"];
+          avatar_url: string;
+          category: string;
+          creator_title: string;
+          display_name: string;
+          handle: string;
+          id: string;
+          languages: string[];
+          learn_skills: Json;
+          match_reasons: string[];
+          match_score: number;
+          teach_skills: Json;
+        }[];
+      };
+      match_projects: {
+        Args: { p_limit?: number; p_user_id: string };
+        Returns: {
+          description: string;
+          id: string;
+          looking_for_collaborators: boolean;
+          looking_for_feedback: boolean;
+          profile_id: string;
+          reasons: string[];
+          score: number;
+          skill_ids: string[];
+          stage: Database["public"]["Enums"]["project_stage"];
+          title: string;
+        }[];
+      };
+      media_object_is_referenced: { Args: { p_bucket: string; p_name: string }; Returns: boolean };
+      post_engagement_counts: {
+        Args: { p_post_ids: string[] };
+        Returns: {
+          comment_count: number;
+          helpful: number;
+          likes: number;
+          offers: number;
+          post_id: string;
+          saves: number;
+          user_actions: string[];
+        }[];
+      };
       posts_images_are_valid: { Args: { p_images: string[] }; Returns: boolean };
+      prune_orphaned_media: {
+        Args: { p_bucket?: string; p_dry_run?: boolean; p_min_age_hours?: number };
+        Returns: {
+          bucket_name: string;
+          candidates: number;
+          mode: string;
+          pruned: number;
+          retained: number;
+        }[];
+      };
+      publish_page_version:
+        | {
+            Args: { _page_id: string };
+            Returns: {
+              id: string;
+              layout: NonNullable<Json>;
+              note: string | null;
+              page_id: string;
+              published_at: string;
+              published_by: string | null;
+              theme_id: string | null;
+              theme_overrides: Json | null;
+              version: number;
+            };
+            SetofOptions: {
+              from: "*";
+              to: "page_versions";
+              isOneToOne: true;
+              isSetofReturn: false;
+            };
+          }
+        | {
+            Args: { _note: string; _page_id: string };
+            Returns: {
+              id: string;
+              layout: NonNullable<Json>;
+              note: string | null;
+              page_id: string;
+              published_at: string;
+              published_by: string | null;
+              theme_id: string | null;
+              theme_overrides: Json | null;
+              version: number;
+            };
+            SetofOptions: {
+              from: "*";
+              to: "page_versions";
+              isOneToOne: true;
+              isSetofReturn: false;
+            };
+          };
+      reconcile_user_achievements: {
+        Args: { p_profile_id?: string };
+        Returns: Database["public"]["Enums"]["achievement_type"][];
+      };
+      record_media_bucket_snapshot: { Args: Record<PropertyKey, never>; Returns: number };
       reject_space_join_request: {
         Args: { p_space_id: string; p_user_id: string };
         Returns: undefined;
       };
-      reseed_default_templates: { Args: never; Returns: number };
-      unban_space_member: {
-        Args: { p_space_id: string; p_user_id: string };
-        Returns: undefined;
+      reseed_default_templates: { Args: Record<PropertyKey, never>; Returns: number };
+      rollback_page_version: { Args: { _page_id: string; _version: number }; Returns: undefined };
+      show_limit: { Args: Record<PropertyKey, never>; Returns: number };
+      show_trgm: { Args: { "": string }; Returns: string[] };
+      skill_directory_stats: {
+        Args: { p_skill_ids?: string[] };
+        Returns: {
+          growing_count: number;
+          need_count: number;
+          project_count: number;
+          sharing_count: number;
+          skill_id: string;
+        }[];
       };
+      space_reported_post_counts: {
+        Args: { p_space_id: string };
+        Returns: {
+          post_id: string;
+          reports: number;
+        }[];
+      };
+      toggle_template_star: { Args: { target_layout_id: string }; Returns: boolean };
+      trending_skills: {
+        Args: { p_limit?: number };
+        Returns: {
+          category: string;
+          description: string;
+          id: string;
+          name: string;
+          slug: string;
+          usage_count: number;
+        }[];
+      };
+      unban_space_member: { Args: { p_space_id: string; p_user_id: string }; Returns: undefined };
       unread_message_counts: {
-        Args: never;
+        Args: Record<PropertyKey, never>;
         Returns: {
           connection_id: string;
           unread_count: number;
         }[];
       };
-      vote_on_poll: {
-        Args: { p_option_index: number; p_post_id: string };
-        Returns: undefined;
-      };
+      vote_on_poll: { Args: { p_option_index: number; p_post_id: string }; Returns: undefined };
     };
     Enums: {
       achievement_type:
@@ -3375,9 +3761,7 @@ export type Tables<
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never) = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
-}
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R;
@@ -3400,9 +3784,7 @@ export type TablesInsert<
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never) = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
-}
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I;
     }
@@ -3424,9 +3806,7 @@ export type TablesUpdate<
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never) = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
-}
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U;
     }
@@ -3448,9 +3828,7 @@ export type Enums<
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never) = never,
-> = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
-}
+> = DefaultSchemaEnumNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
@@ -3464,15 +3842,16 @@ export type CompositeTypes<
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never) = never,
-> = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
-}
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never;
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       achievement_type: [
