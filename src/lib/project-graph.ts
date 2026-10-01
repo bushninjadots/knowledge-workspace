@@ -76,7 +76,7 @@ export function buildProjectGraph(input: ProjectGraphInput): TethyrGraph {
     type: "project",
     label: input.project.title,
     description: input.project.description ?? undefined,
-    visibility: input.project.visibility,
+    visibility: input.project.visibility ?? undefined,
     metadata: { status: input.project.status, stage: input.project.stage },
   }));
 
@@ -87,7 +87,7 @@ export function buildProjectGraph(input: ProjectGraphInput): TethyrGraph {
       type: contributor.role === "creator" ? "produced" : "contributed_to",
       from: personId,
       to: projectId,
-      metadata: { role: contributor.role },
+      metadata: { role: contributor.role ?? undefined },
     }));
 
     for (const skillName of contributor.skills_used ?? []) {
