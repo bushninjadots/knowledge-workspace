@@ -45,6 +45,24 @@ type ProfileHeaderData = {
 
 type ActiveProject = { id: string; title: string } | null;
 
+/** Where the avatar + identity band sits relative to the banner. */
+const PLACEMENTS = ["left", "center", "right", "below"] as const;
+type HeaderPlacement = (typeof PLACEMENTS)[number];
+
+const PLACEMENT_OPTIONS: Array<{ label: string; value: HeaderPlacement }> = [
+  { label: "Left", value: "left" },
+  { label: "Center", value: "center" },
+  { label: "Right", value: "right" },
+  { label: "Below", value: "below" },
+];
+
+/** Falls back to the established left composition for legacy configs. */
+function normalizePlacement(value: unknown): HeaderPlacement {
+  return typeof value === "string" && (PLACEMENTS as readonly string[]).includes(value)
+    ? (value as HeaderPlacement)
+    : "left";
+}
+
 const AVAIL_META: Record<string, { label: string; dot: string }> = {
   available: { label: "Open to collaboration", dot: "bg-trust" },
   busy: { label: "Focused on current work", dot: "bg-teaching" },
@@ -134,6 +152,29 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
   // including on the owner's public-facing Studio route.
   const canEdit = context.isOwner === true && (context.isEditing || context.quickEdit === true);
   const showConnect = ownerType === "profile" && !canEdit;
+  // Placement of the avatar + identity band against the banner. "left" keeps the
+  // composition that predates this option, so stored layouts render unchanged.
+  const placement = normalizePlacement(config.placement);
+  const hasBannerBand = Boolean(bannerSrc && showBanner);
+  const isCentered = placement === "center";
+  const isBelow = placement === "below";
+  const infoClass = isCentered ? "flex w-full flex-col items-center" : "min-w-0 flex-1";
+  const rowClass = [
+    "flex",
+    isCentered
+      ? "flex-col items-center gap-3 text-center"
+      : "flex-col gap-4 sm:flex-row sm:items-end",
+    placement === "right" ? "sm:flex-row-reverse" : "",
+    hasBannerBand && !isBelow
+      ? isCentered
+        ? "-mt-14 sm:-mt-16"
+        : "-mt-12"
+      : hasBannerBand
+        ? ""
+        : "pt-6",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <div className="relative overflow-hidden rounded-xl border border-border/50 bg-surface">
@@ -178,9 +219,7 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
           );
         })()}
       <div className="relative px-5 pb-6 sm:px-8 sm:pb-8">
-        <div
-          className={`flex flex-col gap-4 sm:flex-row sm:items-end ${bannerSrc && showBanner ? "-mt-12" : "pt-6"}`}
-        >
+        <div className={rowClass}>
           {/* Avatar */}
           <div className="shrink-0">
             <Avatar
@@ -197,7 +236,7 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
           </div>
 
           {/* Identity */}
-          <div className="min-w-0 flex-1">
+          <div className={infoClass}>
             <h1 className="font-display text-2xl font-semibold text-foreground sm:text-4xl">
               {data.display_name || "Untitled"}
             </h1>
@@ -223,7 +262,9 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
             )}
 
             {/* Metadata chips */}
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <div
+              className={`mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground${isCentered ? " justify-center" : ""}`}
+            >
               {data.category && (
                 <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-primary">
                   {data.category}
@@ -292,7 +333,9 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
               })()}
 
             {showConnect && (
-              <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border/40 pt-3">
+              <div
+                className={`mt-4 flex flex-wrap items-center gap-2 border-t border-border/40 pt-3${isCentered ? " justify-center" : ""}`}
+              >
                 <ConnectButton targetId={data.id} targetName={data.display_name} />
                 {me?.userId != null && me.userId !== data.id && (
                   <RequestSessionDialog
@@ -326,6 +369,7 @@ registerBlock({
   description: "Avatar, name, title, what you're building, availability, and reputation progress.",
   icon: "User",
   defaults: {
+    placement: "left",
     showTitle: true,
     showHandle: true,
     showLocation: true,
@@ -336,6 +380,12 @@ registerBlock({
     bannerUrl: "",
   },
   fields: [
+    {
+      key: "placement",
+      label: "Photo & info position",
+      type: "select",
+      options: PLACEMENT_OPTIONS,
+    },
     { key: "showTitle", label: "Show title", type: "toggle" },
     { key: "showHandle", label: "Show handle", type: "toggle" },
     { key: "showBuilding", label: "Show active project", type: "toggle" },
