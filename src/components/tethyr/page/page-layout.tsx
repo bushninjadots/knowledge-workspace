@@ -6,7 +6,7 @@
 // In edit mode, blocks are wrapped in SortableBlock with move/remove controls
 // and drag-and-drop reordering.
 
-import { memo, useCallback, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import { ChevronDown, Copy, Eye, EyeOff, LayoutGrid, MoreVertical, Trash2 } from "lucide-react";
 import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
 import { SortableBlock } from "@/components/tethyr/page/sortable-block";
@@ -38,7 +38,10 @@ import type {
 } from "@/lib/page-blocks";
 import { getBlock } from "@/lib/block-registry";
 import { blockFrameStyle } from "@/lib/studio-config";
-import { shouldRenderSectionInView } from "@/lib/studio-visibility";
+import {
+  isDefinitelyEmptyBlock,
+  shouldRenderSectionInView,
+} from "@/lib/studio-visibility";
 
 interface PageLayoutRendererProps {
   layout: PageLayoutType;
@@ -155,12 +158,31 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
     });
   }, []);
 
+  // Remove reports for deleted blocks and reset them when returning to edit
+  // mode. This prevents stale empty ids from hiding a newly reused block id.
+  useEffect(() => {
+    const blockIds = new Set(sections.flatMap((section) => section.blocks).map((block) => block.id));
+    setEmptyBlockIds((previous) => {
+      const next = new Set([...previous].filter((id) => blockIds.has(id)));
+      return next.size === previous.size ? previous : next;
+    });
+  }, [sections]);
+
   // In view mode, drop sections whose visible blocks are all empty so the
   // public Studio renders only real content. Editing always shows every section
   // (empty blocks get their inline "add content" affordance).
   const sectionsToRender = context.isEditing
     ? sections
-    : sections.filter((section) => shouldRenderSectionInView(section, emptyBlockIds));
+    : sections.filter((section) =>
+        shouldRenderSectionInView(
+          section,
+          new Set(
+            section.blocks
+              .filter((block) => isDefinitelyEmptyBlock(block))
+              .map((block) => block.id),
+          ),
+        ),
+      );
 
   // ── Block actions ──────────────────────────────────────────────────────
   const handleMoveUp = useCallback(
@@ -375,7 +397,13 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
         const hasGrid = !context.isEditing && (section.grid?.length ?? 0) > 0;
         const gridByBlock = new Map((section.grid ?? []).map((item) => [item.i, item]));
         const blocks = section.blocks
-          .filter((b) => context.isEditing || (b.visible !== false && !emptyBlockIds.has(b.id)))
+          .filter(
+            (b) =>
+              context.isEditing ||
+              (b.visible !== false &&
+                !emptyBlockIds.has(b.id) &&
+                !isDefinitelyEmptyBlock(b)),
+          )
           .sort((a, b) => a.position - b.position);
         const persistedBlocks = layout.sections[layoutSectionIndex]?.blocks ?? [];
 
