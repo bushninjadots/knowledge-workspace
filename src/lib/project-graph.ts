@@ -40,6 +40,8 @@ export type ProjectGraphRole = {
 export type ProjectGraphRepository = { id: string; name: string; url?: string | null };
 export type ProjectGraphDiscussion = { id: string; title: string };
 export type ProjectGraphNeed = { id: string; title: string };
+/** The project this one was forked from, resolved to just its identity. */
+export type ProjectGraphLineage = { id: string; title: string };
 
 export type ProjectGraphInput = {
   project: ProjectGraphProject;
@@ -50,6 +52,7 @@ export type ProjectGraphInput = {
   repositories?: ProjectGraphRepository[];
   discussions?: ProjectGraphDiscussion[];
   needs?: ProjectGraphNeed[];
+  forkedFrom?: ProjectGraphLineage | null;
 };
 
 function personLabel(contributor: ProjectGraphContributor) {
@@ -139,6 +142,18 @@ export function buildProjectGraph(input: ProjectGraphInput): TethyrGraph {
     const needId = `need:${need.id}`;
     addNode(nodes, createGraphNode({ id: needId, type: "need", label: need.title }));
     addEdge(edges, createGraphEdge({ type: "needs", from: projectId, to: needId }));
+  }
+
+  // Fork lineage (spec §6) — a forked_from edge to a parent project node, so
+  // lineage is a real relationship in the model rather than a header-only note.
+  if (input.forkedFrom) {
+    const parentId = `project:${input.forkedFrom.id}`;
+    addNode(nodes, createGraphNode({
+      id: parentId,
+      type: "project",
+      label: input.forkedFrom.title,
+    }));
+    addEdge(edges, createGraphEdge({ type: "forked_from", from: projectId, to: parentId }));
   }
 
   return normalizeGraph({ nodes, edges });

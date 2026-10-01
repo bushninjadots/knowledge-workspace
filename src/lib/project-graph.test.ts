@@ -45,4 +45,15 @@ describe("buildProjectGraph", () => {
     expect(graph.nodes).toHaveLength(2);
     expect(graph.edges).toHaveLength(1);
   });
+
+  it("adds fork lineage as a forked_from edge to a parent project node", () => {
+    const graph = buildProjectGraph({
+      project: { id: "atlas-jr", title: "Atlas Jr" },
+      forkedFrom: { id: "atlas", title: "Atlas" },
+    });
+    expect(graph.nodes.map((node) => node.id)).toContain("project:atlas");
+    expect(graph.edges).toEqual([
+      expect.objectContaining({ type: "forked_from", from: "project:atlas-jr", to: "project:atlas" }),
+    ]);
+  });
 });

@@ -755,6 +755,10 @@ export function ProjectPage() {
                     description: milestone.description,
                     status: milestone.status,
                   })),
+                  skills: skills.map((skill) => ({ id: skill.id, name: skill.name })),
+                  forkedFrom: forkedFrom
+                    ? { id: forkedFrom.id, title: forkedFrom.title }
+                    : null,
                 }}
               />
             </div>
