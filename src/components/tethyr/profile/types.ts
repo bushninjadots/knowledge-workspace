@@ -65,6 +65,8 @@ export type ProjectRow = {
   looking_for_collaborators: boolean;
   is_featured: boolean;
   presentation_preset?: ProjectPresentationPreset | null;
+  /** Owner opt-in: whether others may fork this project. */
+  allow_forks?: boolean;
   created_at: string;
   updated_at: string;
 };

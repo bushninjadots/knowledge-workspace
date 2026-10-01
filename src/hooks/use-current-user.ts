@@ -7,6 +7,12 @@ import { backgroundImageSignedUrl, type ProfileBackground } from "@/lib/backgrou
 import { isColumnSchemaError } from "@/lib/supabase-errors";
 import type { ProjectRow, ActivityRow } from "@/components/tethyr/profile-sections";
 
+// Column list kept as a variable: `allow_forks` ships in 20261001120000 and
+// isn't in the generated types yet, and a literal select would be type-checked
+// against them.
+const PROFILE_PROJECT_COLS =
+  "id, title, description, status, stage, cover_url, is_featured, created_at, updated_at, profile_id, goal, vision, progress_percent, looking_for_feedback, looking_for_collaborators, gallery, resources, links, tags, visibility, presentation_preset, allow_forks";
+
 export type Profile = {
   id: string;
   handle: string | null;
@@ -188,9 +194,7 @@ async function fetchCurrentUser(): Promise<CurrentUserData | null> {
         () =>
           supabase
             .from("projects")
-            .select(
-              "id, title, description, status, stage, cover_url, is_featured, created_at, updated_at, profile_id, goal, vision, progress_percent, looking_for_feedback, looking_for_collaborators, gallery, resources, links, tags, visibility, presentation_preset",
-            )
+            .select(PROFILE_PROJECT_COLS)
             .eq("profile_id", userId)
             .order("is_featured", { ascending: false })
             .order("created_at", { ascending: false })
