@@ -75,6 +75,13 @@ export const SECTION_GRID: Record<SectionLayoutType, string> = {
 };
 
 /** Section layouts whose rhythm is length/whitespace-driven instead of boxy. */
+const WHITESPACE_LED_LAYOUTS = new Set<SectionLayoutType>([
+  "featured_work",
+  "asymmetric",
+  "split",
+  "image_lead",
+  "compact_list",
+]);
 const BLOCK_LABELS: Record<string, string> = {
   "profile-header": "Header",
   "profile-projects": "Your work",
@@ -92,13 +99,20 @@ function blockLabel(type: string): string {
   return BLOCK_LABELS[type] ?? type.replace(/^profile-/, "").replace(/-/g, " ");
 }
 
-const WHITESPACE_LED_LAYOUTS = new Set<SectionLayoutType>([
-  "featured_work",
-  "asymmetric",
-  "split",
-  "image_lead",
-  "compact_list",
-]);
+/**
+ * A template should not preserve an elaborate multi-column composition after
+ * empty blocks have been removed. Falling back to flow for one public block,
+ * and reducing three columns to two when only two blocks remain, keeps sparse
+ * sections intentional instead of leaving a lonely card in an oversized lane.
+ */
+function sparseSafeGridClass(layout: SectionLayoutType, blockCount: number): string {
+  if (blockCount <= 1) return "";
+  if (layout === "three_column" && blockCount === 2) {
+    return "grid grid-cols-1 gap-6 md:grid-cols-2";
+  }
+  return SECTION_GRID[layout] ?? "";
+}
+
 
 /**
  * Renders the full page composition: sections → blocks.
@@ -184,7 +198,7 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
         ),
       );
 
-  // ── Block actions ──────────────────────────────────────────────────────
+  // ── Block actions ───────────────────────────���──────────────────────────
   const handleMoveUp = useCallback(
     (sectionIdx: number, blockIdx: number) => {
       if (!onLayoutChange || blockIdx === 0) return;
@@ -391,7 +405,6 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
         const layoutSectionIndex = layout.sections.findIndex(
           (candidate) => candidate.id === section.id,
         );
-        const gridClass = SECTION_GRID[section.layout] ?? "";
         /** Grid-based (builder) sections render from their persisted 12-col
          *  grid; template sections fall back to SECTION_GRID + block.span. */
         const hasGrid = !context.isEditing && (section.grid?.length ?? 0) > 0;
@@ -405,6 +418,7 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
                 !isDefinitelyEmptyBlock(b)),
           )
           .sort((a, b) => a.position - b.position);
+        const gridClass = sparseSafeGridClass(section.layout, blocks.length);
         const persistedBlocks = layout.sections[layoutSectionIndex]?.blocks ?? [];
 
         const isWhitespaceLed = WHITESPACE_LED_LAYOUTS.has(section.layout);
