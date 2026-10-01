@@ -868,8 +868,8 @@ function GStudioTopBar({
         <div className="flex min-h-5 items-center gap-2 border-t border-border bg-[var(--surface)] px-3 py-0.5">
           <span className="t-label">Editing</span>
           <span className="truncate text-2xs text-muted-foreground-subtle">
-            Drag blocks to move · pull an edge or corner to resize · arrow keys nudge · Del removes
-            · Ctrl/⌘D duplicates · click a block for border and spacing options
+            Drag blocks between areas · pull an edge or corner to resize · arrow keys nudge · Del
+            removes · Ctrl/⌘D duplicates · click a block for border and spacing options
           </span>
         </div>
       )}
@@ -1230,6 +1230,54 @@ function pushDownOverlaps(grid: LayoutGridItem[]): LayoutGridItem[] {
   return items;
 }
 
+/** Pointer position from a drag event, covering both mouse and touch gestures. */
+function pointerPosition(event: Event | undefined): { x: number; y: number } | null {
+  if (!event) return null;
+  const mouse = event as MouseEvent;
+  if (Number.isFinite(mouse.clientX) && Number.isFinite(mouse.clientY)) {
+    return { x: mouse.clientX, y: mouse.clientY };
+  }
+  const touch = (event as TouchEvent).changedTouches?.[0];
+  return touch ? { x: touch.clientX, y: touch.clientY } : null;
+}
+
+/**
+ * The area canvas under the pointer, excluding the drag's own area. Dragging is
+ * per-grid, so without this a block released over another area snaps back home.
+ */
+function sectionUnderPointer(x: number, y: number, sourceSectionId: string): string | null {
+  let best: { id: string; area: number } | null = null;
+  for (const node of Array.from(document.querySelectorAll<HTMLElement>("[data-studio-grid]"))) {
+    const id = node.dataset.studioGrid;
+    if (!id || id === sourceSectionId) continue;
+    const rect = node.getBoundingClientRect();
+    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) continue;
+    const area = rect.width * rect.height;
+    if (!best || area < best.area) best = { id, area };
+  }
+  return best?.id ?? null;
+}
+
+/** Grid cell for a drop point, measured against the target area's own metrics. */
+function cellUnderPointer(
+  point: { x: number; y: number },
+  sectionId: string,
+  width: number,
+): { col: number; row: number } | undefined {
+  const node = document.querySelector<HTMLElement>(`[data-studio-grid="${sectionId}"]`);
+  if (!node) return undefined;
+  const rect = node.getBoundingClientRect();
+  if (rect.width <= 0) return undefined;
+  const rowHeight = Number(node.dataset.rowHeight) || 24;
+  const margin = Number(node.dataset.margin) || 14;
+  const col = Math.floor(((point.x - rect.left) / rect.width) * COLS);
+  const row = Math.round((point.y - rect.top) / (rowHeight + margin));
+  return {
+    col: Math.max(0, Math.min(COLS - width, col)),
+    row: Math.max(0, row),
+  };
+}
+
 function GSectionBand({
   section,
   index,
@@ -1439,6 +1487,9 @@ function GSectionBand({
         editing ? (
           <button
             type="button"
+            data-studio-grid={section.id}
+            data-row-height={rowHeight}
+            data-margin={margin}
             onClick={() => onRequestPalette(section.id)}
             className="flex w-full items-center justify-center gap-1.5 border border-dashed border-border py-8 text-xs text-muted-foreground outline-none hover:border-[var(--user-accent-border)] hover:text-[var(--user-accent)] focus-visible:border-[var(--user-accent-border)] focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1"
           >
@@ -1446,7 +1497,12 @@ function GSectionBand({
           </button>
         ) : null
       ) : editing ? (
-        <div data-studio-grid={section.id} className="relative">
+        <div
+          data-studio-grid={section.id}
+          data-row-height={rowHeight}
+          data-margin={margin}
+          className="relative"
+        >
           <EditorGrid
             className="layout"
             layout={grid}
@@ -1470,10 +1526,25 @@ function GSectionBand({
 
             onDragStart={() => props.onGridInteractionStart()}
             onResizeStart={() => props.onGridInteractionStart()}
-            onDragStop={(current, _oldItem, newItem) => {
+            onDragStop={(current, _oldItem, newItem, _placeholder, event) => {
               props.onGridInteractionEnd();
               if (!editing || !directManipulation || !newItem) return;
               const blockId = String(newItem.i);
+              // Each area owns its own grid, so a block released over a different
+              // area would be clamped back into its own. Hand it to the area under
+              // the pointer instead, at the cell it was dropped on.
+              const point = pointerPosition(event);
+              const targetSectionId = point
+                ? sectionUnderPointer(point.x, point.y, section.id)
+                : null;
+              if (point && targetSectionId) {
+                props.onMoveToSection(
+                  blockId,
+                  targetSectionId,
+                  cellUnderPointer(point, targetSectionId, newItem.w),
+                );
+                return;
+              }
               const committed = (current as unknown as LayoutGridItem[]).map((item) => ({
                 i: item.i,
                 x: item.x,
