@@ -79,6 +79,8 @@ import {
   BLOCK_INSET_DEFAULT_PX,
   BLOCK_INSET_MAX,
   BLOCK_INSET_MIN,
+  BLOCK_RADIUS_MAX,
+  BLOCK_RADIUS_MIN,
   blockFrameStyle,
   CARD_FILL_SWATCHES,
   CARD_SURFACE_STYLE,
@@ -91,6 +93,7 @@ import {
   studioSurfaceStyle,
   type StudioConfig,
 } from "@/lib/studio-config";
+import type { BlockShape } from "@/lib/page-blocks";
 /** GStudioConfig keeps the legacy component-local name so callers don't churn. */
 export type GStudioConfig = StudioConfig;
 
@@ -1847,7 +1850,7 @@ const GBlockFrame = forwardRef<
       <span
         aria-hidden
         className={cn(
-          "pointer-events-none absolute inset-0 z-10 rounded-[var(--studio-radius)] ring-1 ring-inset",
+          "pointer-events-none absolute inset-0 z-10 rounded-[var(--studio-block-radius,var(--studio-radius))] ring-1 ring-inset",
           selected
             ? "ring-[var(--user-accent)]"
             : "ring-transparent group-hover/frame:ring-border-strong",
@@ -1858,10 +1861,47 @@ const GBlockFrame = forwardRef<
   );
 });
 
-/** Per-block frame controls in the inspector: border on/off (plus "follow
- *  appearance") and inner spacing. Writes the block's `frameBorder`/
- *  `frameInset` fields; the shared `.studio-block` utility renders them on
- *  every surface (editor, owner view, public page). */
+/** Shape presets shown as mini wireframe previews in the inspector. Each
+ *  entry pairs a BlockShape value with a tiny SVG that renders the actual
+ *  border-radius so the creator sees the real silhouette, not an abstraction. */
+const SHAPE_PRESETS: Array<{ value: BlockShape; label: string; radius: string }> = [
+  { value: "default", label: "Theme", radius: "3px" },
+  { value: "square", label: "Sharp", radius: "0px" },
+  { value: "rounded", label: "Round", radius: "5px" },
+  { value: "soft", label: "Soft", radius: "9px" },
+  { value: "pill", label: "Pill", radius: "9999px" },
+  { value: "organic", label: "Organic", radius: "42% 58% 58% 42% / 42% 42% 58% 58%" },
+  { value: "blob", label: "Blob", radius: "63% 37% 30% 70% / 60% 30% 70% 40%" },
+  { value: "leaf", label: "Leaf", radius: "0 50% 50% 0" },
+];
+
+/** Shapes that support a per-block radius slider. */
+const RADIUS_SHAPES = new Set<BlockShape>(["rounded", "soft"]);
+
+/** Tiny SVG preview of a shape silhouette at 28×20. */
+function ShapeThumbnail({ radius, active }: { radius: string; active: boolean }) {
+  return (
+    <svg width={28} height={20} viewBox="0 0 28 20" className="shrink-0" aria-hidden>
+      <rect
+        x={2}
+        y={2}
+        width={24}
+        height={16}
+        rx={radius}
+        ry={radius}
+        fill={active ? "var(--user-accent-subtle)" : "var(--surface-sunken)"}
+        stroke={active ? "var(--user-accent)" : "var(--border-strong)"}
+        strokeWidth={0.8}
+      />
+    </svg>
+  );
+}
+
+/** Per-block frame controls in the inspector: shape, border on/off (plus
+ *  "follow appearance"), inner spacing, and corner radius. Writes the block's
+ *  `frameBorder`/`frameInset`/`frameShape`/`frameRadius` fields; the shared
+ *  `.studio-block` utility renders them on every surface (editor, owner view,
+ *  public page). */
 function BlockFrameSection({
   block,
   ...props
@@ -1869,9 +1909,98 @@ function BlockFrameSection({
   const def = getBlock(block.type);
   const flush = def?.containerless || block.type === "profile-header";
   const inset = typeof block.frameInset === "number" ? block.frameInset : undefined;
+  const shape = block.frameShape ?? "default";
+  const radius = typeof block.frameRadius === "number" ? block.frameRadius : undefined;
+  const showRadiusSlider = RADIUS_SHAPES.has(shape);
+
   return (
     <div className="border-t border-border py-3">
-      <p className="t-label mb-1">Card border</p>
+      <p className="t-label mb-2">Shape</p>
+      <div
+        role="radiogroup"
+        aria-label="Block shape"
+        className="grid grid-cols-4 gap-1"
+      >
+        {SHAPE_PRESETS.map((preset) => {
+          const active = shape === preset.value;
+          return (
+            <button
+              key={preset.value}
+              type="button"
+              role="radio"
+              aria-checked={active}
+              title={preset.label}
+              onClick={() =>
+                props.onBlockAction(block.id, {
+                  frameShape: preset.value === "default" ? undefined : preset.value,
+                  // Clear per-block radius when switching to a shape that
+                  // doesn't use it, so stale values don't linger.
+                  frameRadius:
+                    preset.value !== "default" && RADIUS_SHAPES.has(preset.value)
+                      ? (block.frameRadius ?? (preset.value === "soft" ? 20 : 8))
+                      : undefined,
+                })
+              }
+              className={cn(
+                "flex flex-col items-center gap-1 rounded-sm border p-1.5 transition-colors",
+                active
+                  ? "border-[var(--user-accent-border)] bg-[var(--user-accent-subtle)]"
+                  : "border-transparent hover:border-border hover:bg-[var(--surface-sunken)]",
+              )}
+            >
+              <ShapeThumbnail radius={preset.radius} active={active} />
+              <span
+                className={cn(
+                  "text-[9px] leading-none",
+                  active ? "text-foreground" : "text-muted-foreground",
+                )}
+              >
+                {preset.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      {showRadiusSlider && (
+        <label className="mt-2.5 block">
+          <span className="mb-1 flex items-center justify-between font-mono text-3xs uppercase tracking-widest text-muted-foreground-subtle">
+            Corner radius <span>{radius ?? "auto"}px</span>
+          </span>
+          <input
+            type="range"
+            min={BLOCK_RADIUS_MIN}
+            max={BLOCK_RADIUS_MAX}
+            step={2}
+            value={radius ?? (shape === "soft" ? 20 : 8)}
+            aria-label="Corner radius in pixels"
+            onChange={(event) =>
+              props.onBlockAction(block.id, { frameRadius: Number(event.target.value) })
+            }
+            className="studio-slider w-full"
+          />
+          <button
+            type="button"
+            onClick={() => props.onBlockAction(block.id, { frameRadius: undefined })}
+            disabled={radius === undefined}
+            className="mt-1 text-2xs text-muted-foreground-subtle underline-offset-2 hover:text-foreground hover:underline disabled:pointer-events-none disabled:opacity-50"
+          >
+            Reset radius
+          </button>
+        </label>
+      )}
+      {shape !== "default" && (
+        <button
+          type="button"
+          onClick={() =>
+            props.onBlockAction(block.id, { frameShape: undefined, frameRadius: undefined })
+          }
+          className="mt-2 text-2xs text-muted-foreground-subtle underline-offset-2 hover:text-foreground hover:underline"
+        >
+          Reset to theme shape
+        </button>
+      )}
+
+      <p className="t-label mb-1 mt-3">Card border</p>
       <p className="mb-2 text-2xs leading-snug text-muted-foreground-subtle">
         This block only — everything else follows the Studio's Card borders setting.
       </p>

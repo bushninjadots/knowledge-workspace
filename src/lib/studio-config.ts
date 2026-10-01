@@ -22,7 +22,7 @@
 // on read via normalizeStudioConfig and silently migrated. New writes never
 // produce them.
 
-import type { LayoutBlockInstance, ThemeTokens } from "@/lib/page-blocks";
+import type { BlockShape, LayoutBlockInstance, ThemeTokens } from "@/lib/page-blocks";
 import { fontStack, isFontId, type FontId } from "@/lib/fonts";
 
 // ── Dimension Types ───────────────────────────────────────────────────────────
@@ -55,6 +55,22 @@ export const BLOCK_INSET_MAX = 40;
  *  `.studio-block` (`--studio-block-inset`, 1rem) so "default" is a no-op. */
 export const BLOCK_INSET_DEFAULT_PX = 16;
 
+/** Per-block radius slider bounds, in px. */
+export const BLOCK_RADIUS_MIN = 0;
+export const BLOCK_RADIUS_MAX = 48;
+
+/** Shape preset → CSS border-radius value. Percentage-based shapes adapt to
+ *  the block's aspect ratio so they look right at any content size. */
+const SHAPE_RADIUS: Record<Exclude<BlockShape, "default">, string> = {
+  square: "0px",
+  rounded: "var(--studio-block-radius, 8px)",
+  soft: "var(--studio-block-radius, 20px)",
+  pill: "9999px",
+  organic: "42% 58% 58% 42% / 42% 42% 58% 58%",
+  blob: "63% 37% 30% 70% / 60% 30% 70% 40%",
+  leaf: "0 50% 50% 0",
+};
+
 /**
  * Per-block frame style from the block instance's optional `frame` fields:
  * `border` (default/frame/none) and `inset` (px). Returns CSS custom
@@ -64,7 +80,7 @@ export const BLOCK_INSET_DEFAULT_PX = 16;
  * exactly the global look.
  */
 export function blockFrameStyle(
-  block: Pick<LayoutBlockInstance, "frameBorder" | "frameInset">,
+  block: Pick<LayoutBlockInstance, "frameBorder" | "frameInset" | "frameShape" | "frameRadius">,
 ): React.CSSProperties {
   const style = {} as React.CSSProperties & Record<string, string>;
   if (block.frameBorder === "none") {
@@ -81,6 +97,18 @@ export function blockFrameStyle(
   const inset = block.frameInset;
   if (typeof inset === "number" && Number.isFinite(inset)) {
     style["--studio-block-inset"] = `${Math.round(inset)}px`;
+  }
+  // Per-block shape: emit the shape's border-radius so the `.studio-block`
+  // utility can consume it. Percentage-based shapes (organic, blob, leaf)
+  // adapt to the block's dimensions; uniform shapes use the per-block
+  // radius slider value when provided.
+  const shape = block.frameShape;
+  if (shape && shape !== "default" && SHAPE_RADIUS[shape]) {
+    style["--studio-block-radius"] = SHAPE_RADIUS[shape];
+  }
+  const radius = block.frameRadius;
+  if (typeof radius === "number" && Number.isFinite(radius)) {
+    style["--studio-block-radius"] = `${Math.round(radius)}px`;
   }
   return style;
 }

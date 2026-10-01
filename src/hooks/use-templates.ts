@@ -41,6 +41,11 @@ export interface CommunityTemplate {
   forkedFromId: string | null;
   usageCount: number;
   forkCount: number;
+  starCount: number;
+  /** Whether the current member has starred this template. */
+  starred: boolean;
+  /** Submission state: pending (awaiting review), approved (public), rejected. */
+  submissionStatus: string | null;
   updatedAt: string;
 }
 
@@ -52,7 +57,7 @@ interface CreatorJoin {
 }
 
 const TEMPLATE_SELECT =
-  "id, name, description, category, sections, theme_id, created_by, is_template, usage_count, fork_count, updated_at";
+  "id, name, description, category, sections, theme_id, created_by, is_template, usage_count, fork_count, star_count, submission_status, updated_at";
 
 function mapLayoutRow(
   row: Pick<
@@ -67,6 +72,8 @@ function mapLayoutRow(
     | "is_template"
     | "usage_count"
     | "fork_count"
+    | "star_count"
+    | "submission_status"
     | "updated_at"
   >,
   creator: CreatorJoin | null,
@@ -87,11 +94,14 @@ function mapLayoutRow(
     forkedFromId: null,
     usageCount: row.usage_count ?? 0,
     forkCount: row.fork_count ?? 0,
+    starCount: row.star_count ?? 0,
+    starred: false,
+    submissionStatus: row.submission_status ?? null,
     updatedAt: row.updated_at,
   };
 }
 
-/** Batch-join creator profiles onto layout rows (one query, not N). */
+/** Batch-join creator profiles and star status onto layout rows (one query each, not N). */
 async function joinCreators(
   rows: Array<Parameters<typeof mapLayoutRow>[0]>,
   currentUserId: string | null,
@@ -115,12 +125,25 @@ async function joinCreators(
       }
     }
   }
+  // Batch-join star status for the current member.
+  if (currentUserId && templates.length > 0) {
+    const layoutIds = templates.map((t) => t.id);
+    const { data: starRows } = await supabase
+      .from("template_stars")
+      .select("layout_id")
+      .eq("user_id", currentUserId)
+      .in("layout_id", layoutIds);
+    const starredIds = new Set((starRows ?? []).map((r) => r.layout_id as string));
+    for (const template of templates) {
+      template.starred = starredIds.has(template.id);
+    }
+  }
   return templates;
 }
 
 // ── Queries ──────────────────────────────────────────────────────────────────
 
-type TemplateSort = "newest" | "popular";
+type TemplateSort = "newest" | "popular" | "starred";
 
 interface BrowseParams {
   search?: string;
@@ -130,7 +153,7 @@ interface BrowseParams {
 /**
  * Browse every published community template. Public read (layouts SELECT is
  * open to anon), so this works signed-out too — the picker renders previews
- * and provenance; mutations require auth.
+ * and provenance; mutations require auth. Only approved submissions appear.
  */
 export function usePublicTemplates({ search, sort = "newest" }: BrowseParams = {}) {
   return useQuery({
@@ -139,13 +162,17 @@ export function usePublicTemplates({ search, sort = "newest" }: BrowseParams = {
       const { data: auth } = await supabase.auth.getUser();
       const currentUserId = auth.user?.id ?? null;
 
-      let query = supabase.from("layouts").select(TEMPLATE_SELECT).eq("is_template", true);
+      let query = supabase
+        .from("layouts")
+        .select(TEMPLATE_SELECT)
+        .eq("is_template", true)
+        .eq("submission_status", "approved");
       if (search && search.trim().length > 0) {
         query = query.ilike("name", `%${search.trim()}%`);
       }
-      query = query
-        .order(sort === "popular" ? "usage_count" : "updated_at", { ascending: false })
-        .limit(60);
+      const orderColumn =
+        sort === "popular" ? "usage_count" : sort === "starred" ? "star_count" : "updated_at";
+      query = query.order(orderColumn, { ascending: false }).limit(60);
 
       const { data, error } = await query;
       if (error) throw error;
@@ -240,7 +267,7 @@ export function useForkTemplate() {
           name: `${source.name === templateName ? source.name : templateName} (fork)`.slice(0, 80),
           description: source.description,
           category: source.category,
-          sections: source.sections as unknown as Json,
+          sections: source.sections as unknown as NonNullable<Json>,
           is_template: false,
           theme_id: source.theme_id,
           created_by: user.id,
@@ -286,9 +313,10 @@ interface PublishTemplateParams {
 }
 
 /**
- * Publish one of the member's layouts as a public community template. The
- * layout keeps its owner; only the is_template flag and catalog metadata
- * change. Structure only — the layout's sections never contain member content.
+ * Submit one of the member's layouts as a community template for review.
+ * The layout is NOT made public immediately — it goes to a pending state
+ * and only appears in the community directory once approved. This keeps
+ * the template catalog curated instead of auto-publishing everything.
  */
 export function usePublishTemplate() {
   const qc = useQueryClient();
@@ -298,7 +326,8 @@ export function usePublishTemplate() {
       const { error } = await supabase
         .from("layouts")
         .update({
-          is_template: true,
+          is_template: false,
+          submission_status: "pending",
           name: name.trim() || "Untitled template",
           ...(description !== undefined ? { description } : {}),
           ...(category !== undefined ? { category } : {}),
@@ -323,7 +352,7 @@ export function useDeleteTemplate() {
     mutationFn: async ({ layoutId }: { layoutId: string }) => {
       const { error } = await supabase
         .from("layouts")
-        .update({ is_template: false })
+        .update({ is_template: false, submission_status: "approved" })
         .eq("id", layoutId);
       if (error) throw error;
     },
@@ -332,6 +361,33 @@ export function useDeleteTemplate() {
     },
     onError: (err) => {
       console.error("[useDeleteTemplate]", err);
+    },
+  });
+}
+
+// ── Star toggle ──────────────────────────────────────────────────────────────
+
+/**
+ * Star or unstar a template. Uses the `toggle_template_star` RPC so the
+ * denormalized `star_count` stays in sync atomically. Returns true if the
+ * template is now starred, false if unstarred.
+ */
+export function useToggleTemplateStar() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ templateId }: { templateId: string }) => {
+      const { data, error } = await supabase.rpc("toggle_template_star", {
+        target_layout_id: templateId,
+      });
+      if (error) throw error;
+      return data as boolean;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["templates"] });
+    },
+    onError: (err) => {
+      console.error("[useToggleTemplateStar]", err);
     },
   });
 }

@@ -1032,7 +1032,7 @@ export function CreationStudio({
 
   const saveAsTemplate = useCallback(() => {
     if (!page?.layoutId) {
-      toast.error("Open your Studio once before publishing it as a template.");
+      toast.error("Open your Studio once before submitting it as a template.");
       return;
     }
     const name = profile?.display_name ? `${profile.display_name}'s Studio` : "My Studio";
@@ -1044,8 +1044,8 @@ export function CreationStudio({
       },
       {
         onSuccess: () =>
-          toast.success("Published to the community — find it under Community directions."),
-        onError: () => toast.error("Could not publish the template."),
+          toast.success("Template submitted for review — it'll appear in the community once approved."),
+        onError: () => toast.error("Could not submit the template."),
       },
     );
   }, [page?.layoutId, profile?.display_name, publishTemplate]);
