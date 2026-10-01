@@ -366,7 +366,9 @@ export const BACKGROUND_GRADIENTS: BackgroundGradient[] = [
   { id: "skyline", label: "Skyline", from: "#38bdf8", to: "#a78bfa" },
 ];
 
-/** Swatch palette for the custom card border colour picker. */
+/** Swatch palette for the "pick a colour" affordances — the custom card border
+ *  and the profile-picture ring. One palette, so both pickers speak the same
+ *  colour language. */
 export const BORDER_SWATCHES = [
   "#3f8f8a",
   "#2f6fd0",
@@ -375,7 +377,30 @@ export const BORDER_SWATCHES = [
   "#2f7d4a",
   "#1f2328",
   "#ffffff",
-  "#1f2328",
+  "#94a3b8",
+];
+
+/**
+ * The card-border choices, in the order the Studio's Customize panel shows
+ * them, so the option list and the resolver in appearanceStyle can't drift
+ * apart. This is the ONE place a creator decides how boxes and cards are
+ * outlined:
+ *   Theme  — the Tethyr rule (the theme's own subtle border)
+ *   Accent — the site-wide accent, so a banner-derived palette carries over
+ *   Colour — one pinned hex
+ *   None   — no outline at all
+ * A block's own Frame control only overrides on/off for that block; it never
+ * picks a different colour.
+ */
+export const CARD_BORDER_OPTIONS: ReadonlyArray<{
+  id: CardBorderPreference;
+  label: string;
+  description: string;
+}> = [
+  { id: "neutral", label: "Theme", description: "The Tethyr rule — a quiet outline" },
+  { id: "accent", label: "Accent", description: "Follows your accent colour, banner included" },
+  { id: "custom", label: "Colour", description: "Pick one border colour" },
+  { id: "none", label: "None", description: "No outline on cards and panels" },
 ];
 
 /**
@@ -467,14 +492,21 @@ export function appearanceStyle(background: ProfileBackground | null | undefined
   if (!background) return {};
   const style = {} as CSSProperties & Record<string, string>;
   const cardBorders = background.cardBorders ?? "neutral";
-  style["--card-border-color"] =
+  // The chosen outline colour, or null when the member asked for no outline.
+  const borderColor =
     cardBorders === "none"
-      ? "transparent"
+      ? null
       : cardBorders === "neutral"
         ? "var(--border)"
         : cardBorders === "custom" && background.cardBorderColor
           ? background.cardBorderColor
           : "var(--user-accent-border, var(--border))";
+  style["--card-border-color"] = borderColor ?? "transparent";
+  // A block's own "force the border on" override paints this instead of the
+  // colour above, so the override can never disagree with the card-border
+  // setting. With "none" there is no colour to inherit, so it falls back to the
+  // theme rule — a block that asked for an outline still gets one.
+  style["--card-border-force-color"] = borderColor ?? "var(--border)";
 
   if (background.accentMode === "custom" && background.accentColor) {
     Object.assign(style, accentVarsFromColor(background.accentColor));

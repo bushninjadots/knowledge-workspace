@@ -14,11 +14,16 @@
 //     Studio-owned --card-border-width). Card border *colour* is the member's
 //     appearance (ProfileBackground.cardBorders), not a Studio decision.
 //
+// Heading/body typefaces are optional ids from src/lib/fonts.ts: leaving them
+// unset keeps the personality's own stack, so a Studio that never touches them
+// renders exactly as before.
+//
 // Legacy fields (compositionId, vibeId, personalityId, typography) are accepted
 // on read via normalizeStudioConfig and silently migrated. New writes never
 // produce them.
 
 import type { LayoutBlockInstance, ThemeTokens } from "@/lib/page-blocks";
+import { fontStack, isFontId, type FontId } from "@/lib/fonts";
 
 // ── Dimension Types ───────────────────────────────────────────────────────────
 
@@ -65,10 +70,13 @@ export function blockFrameStyle(
   if (block.frameBorder === "none") {
     style["--studio-block-border"] = "none";
   } else if (block.frameBorder === "frame") {
-    // Force-on resolves the colour itself rather than inheriting
-    // --card-border-color, which is transparent when the member's appearance
-    // sets card borders to "none" — the per-block choice must still show.
-    style["--studio-block-border"] = "var(--card-border-width, 1px) solid var(--border)";
+    // Force-on paints the member's own card-border colour (the
+    // --card-border-force-color set by appearanceStyle) so this override can
+    // never disagree with the Card borders setting — including its weight.
+    // With the global choice set to "none" that variable falls back to the
+    // theme rule, because the block explicitly asked for an outline.
+    style["--studio-block-border"] =
+      "var(--card-border-width, 1px) solid var(--card-border-force-color, var(--border))";
   }
   const inset = block.frameInset;
   if (typeof inset === "number" && Number.isFinite(inset)) {
@@ -120,6 +128,10 @@ export interface StudioConfig {
   structure: StructureId;
   /** Typography + visual character. */
   personality: PersonalityId;
+  /** Heading typeface id from FONT_OPTIONS. Unset = the personality's stack. */
+  headingFont?: FontId | null;
+  /** Body typeface id from FONT_OPTIONS. Unset = the theme's own face. */
+  bodyFont?: FontId | null;
   /** Spacing rhythm. */
   density: DensityId;
   /** Corner roundness in px (0 = sharp, 24 = very soft). */
@@ -292,6 +304,8 @@ export function normalizeStudioConfig(raw: unknown): StudioConfig {
       (isOneOf(PERSONALITY_VALUES)(value.personality)
         ? value.personality
         : DEFAULT_STUDIO_CONFIG.personality),
+    headingFont: isFontId(value.headingFont) ? value.headingFont : undefined,
+    bodyFont: isFontId(value.bodyFont) ? value.bodyFont : undefined,
     density: isOneOf(DENSITY_VALUES)(value.density) ? value.density : DEFAULT_STUDIO_CONFIG.density,
     radius: normalizeRadius(value.radius),
     accentMode:
@@ -406,9 +420,28 @@ const DENSITY_SECTION: Record<DensityId, string> = {
 };
 
 /**
+ * The display face a config resolves to: an explicit typeface choice wins over
+ * the personality's own stack, and "modern" keeps whatever the theme sets.
+ * Shared by the theme tokens and the Studio surface style so a canvas and the
+ * published page can never render different faces.
+ */
+function resolvedHeadingFont(config: StudioConfig): string | null {
+  const chosen = fontStack(config.headingFont);
+  if (chosen) return chosen;
+  if (config.personality === "editorial") return EDITORIAL_HEADING_FONT;
+  if (config.personality === "technical") return TECHNICAL_HEADING_FONT;
+  return null;
+}
+
+/**
  * Translate the config's visual treatments into ThemeTokens that can be
  * deep-merged over the page theme. This keeps radius, typography, and section
  * rhythm in the same pipeline as every other theme token.
+ *
+ * The personality supplies the display face and the heading scale; an explicit
+ * typeface choice overrides the face (never the scale), and a chosen body face
+ * drives --font-sans. A modern Studio that chooses nothing leaves typography
+ * untouched, exactly as before.
  */
 export function studioConfigToThemeTokens(config: StudioConfig): ThemeTokens {
   const tokens: ThemeTokens = {
@@ -416,23 +449,32 @@ export function studioConfigToThemeTokens(config: StudioConfig): ThemeTokens {
     spacing: { section: DENSITY_SECTION[config.density] },
   };
 
-  if (config.personality === "editorial") {
+  const headingFont = resolvedHeadingFont(config);
+  const bodyFont = fontStack(config.bodyFont);
+  const scale =
+    config.personality === "editorial"
+      ? {
+          heading1: {
+            fontSize: "clamp(2.5rem, 5vw, 4.5rem)",
+            lineHeight: "1.05",
+            fontWeight: "600",
+          },
+        }
+      : config.personality === "technical"
+        ? {
+            heading1: {
+              fontSize: "clamp(1.875rem, 3.5vw, 2.5rem)",
+              lineHeight: "1.15",
+              fontWeight: "500",
+            },
+          }
+        : null;
+
+  if (headingFont || bodyFont || scale) {
     tokens.typography = {
-      headingFont: EDITORIAL_HEADING_FONT,
-      scale: {
-        heading1: { fontSize: "clamp(2.5rem, 5vw, 4.5rem)", lineHeight: "1.05", fontWeight: "600" },
-      },
-    };
-  } else if (config.personality === "technical") {
-    tokens.typography = {
-      headingFont: TECHNICAL_HEADING_FONT,
-      scale: {
-        heading1: {
-          fontSize: "clamp(1.875rem, 3.5vw, 2.5rem)",
-          lineHeight: "1.15",
-          fontWeight: "500",
-        },
-      },
+      ...(headingFont ? { headingFont } : {}),
+      ...(bodyFont ? { bodyFont } : {}),
+      ...(scale ? { scale } : {}),
     };
   }
 
@@ -533,17 +575,17 @@ export function studioSurfaceStyle(
   const style = studioConfigToStyle(config, secondaryColor) as React.CSSProperties &
     Record<string, string>;
   style["--studio-label-font"] = config.personality === "technical" ? "JetBrains Mono" : "Inter";
-  // Match the public page's font mapping (studioConfigToThemeTokens): an
-  // editorial page flips --font-display/title to Space Grotesk and a technical
-  // page to JetBrains Mono, so every canvas renders the face the published
-  // page will.
-  if (config.personality === "editorial") {
-    style["--font-display"] = EDITORIAL_HEADING_FONT;
-    style["--font-title"] = EDITORIAL_HEADING_FONT;
-  } else if (config.personality === "technical") {
-    style["--font-display"] = TECHNICAL_HEADING_FONT;
-    style["--font-title"] = TECHNICAL_HEADING_FONT;
+  // Match the public page's font mapping (studioConfigToThemeTokens) exactly:
+  // the personality flips --font-display/title, a chosen typeface overrides it,
+  // and a chosen body face drives --font-sans — so every canvas renders the
+  // face the published page will.
+  const headingFont = resolvedHeadingFont(config);
+  if (headingFont) {
+    style["--font-display"] = headingFont;
+    style["--font-title"] = headingFont;
   }
+  const bodyFont = fontStack(config.bodyFont);
+  if (bodyFont) style["--font-sans"] = bodyFont;
   return style;
 }
 

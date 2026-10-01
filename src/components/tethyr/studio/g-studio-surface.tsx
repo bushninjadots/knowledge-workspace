@@ -47,9 +47,11 @@ import { BackgroundLayer } from "@/components/tethyr/background-layer";
 import {
   appearanceStyle,
   BORDER_SWATCHES,
+  CARD_BORDER_OPTIONS,
   withCardBorderPreference,
   type CardBorderPreference,
 } from "@/lib/background-themes";
+import { FONT_OPTIONS } from "@/lib/fonts";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useUserPalette } from "@/lib/dominant-color";
 import { useTheme, useThemePresets, presetSwatch, type ThemePreset } from "@/hooks/use-theme";
@@ -1869,17 +1871,20 @@ function BlockFrameSection({
   const inset = typeof block.frameInset === "number" ? block.frameInset : undefined;
   return (
     <div className="border-t border-border py-3">
-      <p className="t-label mb-2">Frame</p>
+      <p className="t-label mb-1">Card border</p>
+      <p className="mb-2 text-2xs leading-snug text-muted-foreground-subtle">
+        This block only — everything else follows the Studio's Card borders setting.
+      </p>
       <div
         role="radiogroup"
-        aria-label="Block frame"
+        aria-label="Card border for this block"
         className="grid grid-cols-3 gap-1 border border-border bg-[var(--surface-sunken)] p-0.5"
       >
         {(
           [
-            ["default", "Theme"],
-            ["frame", "Border"],
-            ["none", "None"],
+            ["default", "Follow"],
+            ["frame", "On"],
+            ["none", "Off"],
           ] as Array<[BlockFrameBorder, string]>
         ).map(([option, text]) => (
           <button
@@ -2778,8 +2783,36 @@ function GCustomizeAdvanced({
   selectedBlockId: string | null;
   onOpenAppearance?: () => void;
 }) {
+  // "Theme" keeps the face the personality above already sets; the rest are
+  // the shared font catalog.
+  const fontChoices: Array<[string, string]> = [
+    ["", "Theme"],
+    ...FONT_OPTIONS.map((option) => [option.id, option.label] as [string, string]),
+  ];
   return (
     <>
+      <div className="mb-4">
+        <p className="t-label mb-1.5">Typeface</p>
+        <p className="mb-1.5 text-2xs leading-snug text-muted-foreground-subtle">
+          The faces your Studio reads in — the published page renders the same ones.
+        </p>
+        <Choice
+          label="Headings"
+          value={config.headingFont ?? ""}
+          options={fontChoices}
+          onChange={(value) =>
+            onChange({ headingFont: value ? (value as GStudioConfig["headingFont"]) : null })
+          }
+        />
+        <Choice
+          label="Body"
+          value={config.bodyFont ?? ""}
+          options={fontChoices}
+          onChange={(value) =>
+            onChange({ bodyFont: value ? (value as GStudioConfig["bodyFont"]) : null })
+          }
+        />
+      </div>
       <Choice
         label="Density"
         hint="Spacing rhythm between blocks"
@@ -2847,15 +2880,16 @@ function GCustomizeAdvanced({
       )}
       <Choice
         label="Card borders"
-        hint="Outlines around cards and panels"
+        hint="Theme is the Tethyr rule · Accent follows the accent above (banner or picked) · Colour pins one · None removes the outline"
         value={cardBorders}
-        options={[
-          ["neutral", "Neutral"],
-          ["accent", "Dynamic"],
-          ["custom", "Custom"],
-          ["none", "None"],
-        ]}
-        onChange={(value) => onCardBordersChange(value as CardBorderPreference)}
+        options={CARD_BORDER_OPTIONS.map((option) => [option.id, option.label])}
+        onChange={(value) => {
+          const next = value as CardBorderPreference;
+          onCardBordersChange(next);
+          // Picking "Colour" must show a colour straight away — with none set
+          // the resolver falls back to the accent and the choice reads broken.
+          if (next === "custom" && !cardBorderColor) onCardBorderColorChange(BORDER_SWATCHES[0]);
+        }}
       />
       <Choice
         label="Border weight"
@@ -2871,21 +2905,24 @@ function GCustomizeAdvanced({
         }
       />
       {cardBorders === "custom" && (
-        <div className="mt-1.5 flex flex-wrap gap-1.5">
-          {BORDER_SWATCHES.map((swatch) => (
-            <button
-              key={swatch}
-              type="button"
-              aria-label={`Card border ${swatch}`}
-              aria-pressed={cardBorderColor.toLowerCase() === swatch}
-              onClick={() => onCardBorderColorChange(swatch)}
-              className={cn(
-                "h-6 w-6 rounded-sm border-2",
-                cardBorderColor.toLowerCase() === swatch ? "border-foreground" : "border-border",
-              )}
-              style={{ backgroundColor: swatch }}
-            />
-          ))}
+        <div className="mb-4" role="group" aria-label="Card border colour">
+          <p className="t-label mb-1.5">Border colour</p>
+          <div className="flex flex-wrap gap-1.5">
+            {BORDER_SWATCHES.map((swatch) => (
+              <button
+                key={swatch}
+                type="button"
+                aria-label={`Card border ${swatch}`}
+                aria-pressed={cardBorderColor.toLowerCase() === swatch}
+                onClick={() => onCardBorderColorChange(swatch)}
+                className={cn(
+                  "h-6 w-6 rounded-sm border-2",
+                  cardBorderColor.toLowerCase() === swatch ? "border-foreground" : "border-border",
+                )}
+                style={{ backgroundColor: swatch }}
+              />
+            ))}
+          </div>
         </div>
       )}
       <div className="mb-4">

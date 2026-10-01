@@ -52,6 +52,13 @@ describe("normalizeStudioConfig", () => {
     });
   });
 
+  it("drops typefaces that are not in the font catalog", () => {
+    const config = normalizeStudioConfig({ headingFont: "comic-sans", bodyFont: 7 });
+    expect(config.headingFont).toBeUndefined();
+    expect(config.bodyFont).toBeUndefined();
+    expect(normalizeStudioConfig({ headingFont: "fraunces" }).headingFont).toBe("fraunces");
+  });
+
   it("migrates legacy compositionId → structure, vibeId/personalityId → personality", () => {
     const raw: Record<string, unknown> = {
       compositionId: "sidebar",
@@ -156,6 +163,28 @@ describe("studioConfigToThemeTokens", () => {
     expect(
       studioConfigToThemeTokens({ ...DEFAULT_STUDIO_CONFIG, personality: "modern" }).typography,
     ).toBeUndefined();
+  });
+
+  it("lets an explicit typeface override the personality's face", () => {
+    const tokens = studioConfigToThemeTokens({
+      ...DEFAULT_STUDIO_CONFIG,
+      personality: "editorial",
+      headingFont: "fraunces",
+      bodyFont: "manrope",
+    });
+    expect(tokens.typography?.headingFont).toContain("Fraunces");
+    expect(tokens.typography?.bodyFont).toContain("Manrope");
+    // The personality still owns the heading scale.
+    expect(tokens.typography?.scale?.heading1?.fontSize).toBe("clamp(2.5rem, 5vw, 4.5rem)");
+  });
+
+  it("keeps a modern Studio's chosen body face without inventing a display one", () => {
+    const tokens = studioConfigToThemeTokens({
+      ...DEFAULT_STUDIO_CONFIG,
+      bodyFont: "dm-sans",
+    });
+    expect(tokens.typography?.headingFont).toBeUndefined();
+    expect(tokens.typography?.bodyFont).toContain("DM Sans");
   });
 });
 
@@ -350,8 +379,10 @@ describe("blockFrameStyle", () => {
     expect(none["--studio-block-border"]).toBe("none");
 
     const forced = blockFrameStyle({ frameBorder: "frame" }) as Record<string, string>;
+    // Force-on paints the member's own card-border colour, so a forced block
+    // can never disagree with the Card borders setting.
     expect(forced["--studio-block-border"]).toBe(
-      "var(--card-border-width, 1px) solid var(--border)",
+      "var(--card-border-width, 1px) solid var(--card-border-force-color, var(--border))",
     );
   });
 
