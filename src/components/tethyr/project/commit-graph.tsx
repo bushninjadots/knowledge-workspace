@@ -42,13 +42,15 @@ export function buildCommitMonthLabels(weeks: CommitActivityWeek[]) {
   const labels: { index: number; label: string }[] = [];
   let lastLabel = "";
 
-  weeks.forEach((week, index) => {
-    const label = MONTH_FORMATTER.format(new Date(week.week * 1000));
-    if (label !== lastLabel) {
-      labels.push({ index, label });
-      lastLabel = label;
-    }
-  });
+  [...weeks]
+    .sort((a, b) => a.week - b.week)
+    .forEach((week, index) => {
+      const label = MONTH_FORMATTER.format(new Date(week.week * 1000));
+      if (label !== lastLabel) {
+        labels.push({ index, label });
+        lastLabel = label;
+      }
+    });
 
   return labels;
 }
@@ -97,7 +99,10 @@ export function CommitGraph({
                         key={`${week}-${j}`}
                         title={label}
                         aria-label={label}
-                        className={cn("h-[8px] w-[8px] rounded-[2px]", GRAPH_LEVEL_CLASS[cell.level])}
+                        className={cn(
+                          "h-[8px] w-[8px] rounded-[2px]",
+                          GRAPH_LEVEL_CLASS[cell.level],
+                        )}
                       />
                     );
                   })}
