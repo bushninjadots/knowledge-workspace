@@ -22,6 +22,39 @@ const GRAPH_LEVEL_CLASS = [
   "bg-[var(--user-accent,var(--primary))]",
 ] as const;
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+const DATE_FORMATTER = new Intl.DateTimeFormat(undefined, {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+});
+
+export function formatCommitCellDate(week: number, day: number) {
+  return DATE_FORMATTER.format(new Date(week * 1000 + day * DAY_MS));
+}
+
+const MONTH_FORMATTER = new Intl.DateTimeFormat(undefined, {
+  month: "short",
+  year: "numeric",
+});
+
+export function buildCommitMonthLabels(weeks: CommitActivityWeek[]) {
+  const labels: { index: number; label: string }[] = [];
+  let lastLabel = "";
+
+  [...weeks]
+    .sort((a, b) => a.week - b.week)
+    .forEach((week, index) => {
+      const label = MONTH_FORMATTER.format(new Date(week.week * 1000));
+      if (label !== lastLabel) {
+        labels.push({ index, label });
+        lastLabel = label;
+      }
+    });
+
+  return labels;
+}
+
 export function CommitGraph({
   weeks,
   ariaLabel,
@@ -33,6 +66,7 @@ export function CommitGraph({
   className?: string;
 }) {
   const calendar: ContributionCalendar = useMemo(() => buildContributionCalendar(weeks), [weeks]);
+  const monthLabels = useMemo(() => buildCommitMonthLabels(weeks), [weeks]);
   return (
     <div className={cn("space-y-1.5", className)}>
       <p className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
@@ -41,18 +75,41 @@ export function CommitGraph({
         year
       </p>
       <div className="overflow-x-auto pb-1">
-        <div role="img" aria-label={ariaLabel} className="flex w-max gap-[3px]">
-          {calendar.weeks.map((column, i) => (
-            <div key={i} className="flex flex-col gap-[3px]">
-              {column.map((cell, j) => (
-                <span
-                  key={j}
-                  title={`${cell.count} commit${cell.count === 1 ? "" : "s"}`}
-                  className={cn("h-[8px] w-[8px] rounded-[2px]", GRAPH_LEVEL_CLASS[cell.level])}
-                />
-              ))}
-            </div>
-          ))}
+        <div className="w-max">
+          <div className="relative mb-1 h-3 text-[10px] text-muted-foreground" aria-hidden="true">
+            {monthLabels.map(({ index, label }) => (
+              <span
+                key={`${index}-${label}`}
+                className="absolute whitespace-nowrap"
+                style={{ left: index * 11 }}
+              >
+                {label}
+              </span>
+            ))}
+          </div>
+          <div role="img" aria-label={ariaLabel} className="flex w-max gap-[3px]">
+            {calendar.weeks.map((column, i) => {
+              const week = weeks[i]?.week ?? 0;
+              return (
+                <div key={week || i} className="flex flex-col gap-[3px]">
+                  {column.map((cell, j) => {
+                    const label = `${formatCommitCellDate(week, j)}: ${cell.count} commit${cell.count === 1 ? "" : "s"}`;
+                    return (
+                      <span
+                        key={`${week}-${j}`}
+                        title={label}
+                        aria-label={label}
+                        className={cn(
+                          "h-[8px] w-[8px] rounded-[2px]",
+                          GRAPH_LEVEL_CLASS[cell.level],
+                        )}
+                      />
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
