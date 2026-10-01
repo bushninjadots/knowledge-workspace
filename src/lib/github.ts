@@ -127,7 +127,19 @@ export function mergeCommitActivity(weeksList: CommitActivityWeek[][]): CommitAc
  * quartiles of the busiest single day — pure so the panel stays testable.
  */
 export function buildContributionCalendar(weeks: CommitActivityWeek[]): ContributionCalendar {
-  const dayMax = Math.max(0, ...weeks.flatMap((w) => w.days));
+  // GitHub normally returns all 52 columns, but cached snapshots and the
+  // profile aggregate can be partial. Preserve empty weeks so a sparse repo
+  // does not look artificially active or claim a shorter time window.
+  const ordered = [...weeks].sort((a, b) => a.week - b.week);
+  const latestWeek = ordered.at(-1)?.week;
+  const byWeek = new Map(ordered.map((week) => [week.week, week]));
+  const normalized = latestWeek === undefined
+    ? []
+    : Array.from({ length: 52 }, (_, index) => {
+        const week = latestWeek - (51 - index) * 7 * 24 * 60 * 60;
+        return byWeek.get(week) ?? { week, total: 0, days: [] };
+      });
+  const dayMax = Math.max(0, ...normalized.flatMap((w) => w.days));
   const levelFor = (count: number): ContributionCalendarCell["level"] => {
     if (count <= 0 || dayMax <= 0) return 0;
     if (count <= dayMax * 0.25) return 1;
@@ -136,9 +148,12 @@ export function buildContributionCalendar(weeks: CommitActivityWeek[]): Contribu
     return 4;
   };
   let total = 0;
-  const columns = weeks.map((w) => {
+  const columns = normalized.map((w) => {
     total += w.total;
-    return w.days.map((count) => ({ level: levelFor(count), count }));
+    return Array.from({ length: 7 }, (_, index) => {
+      const count = w.days[index] ?? 0;
+      return { level: levelFor(count), count };
+    });
   });
   return { weeks: columns, total };
 }

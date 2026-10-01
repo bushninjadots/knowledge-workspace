@@ -255,18 +255,19 @@ describe("buildContributionCalendar", () => {
   it("builds one column of 7 cells per week and totals commits", () => {
     const weeks = [
       { week: 0, total: 4, days: [0, 0, 0, 0, 1, 1, 2] },
-      { week: 1, total: 6, days: [2, 2, 2, 0, 0, 0, 0] },
+      { week: 7 * 24 * 60 * 60, total: 6, days: [2, 2, 2, 0, 0, 0, 0] },
     ];
     const calendar = buildContributionCalendar(weeks);
-    expect(calendar.weeks).toHaveLength(2);
-    expect(calendar.weeks[0]).toHaveLength(7);
+    expect(calendar.weeks).toHaveLength(52);
+    expect(calendar.weeks.at(-2)).toHaveLength(7);
+    expect(calendar.weeks.at(-1)).toHaveLength(7);
     expect(calendar.total).toBe(10);
   });
 
   it("bands levels by quartiles of the busiest day", () => {
     const weeks = [{ week: 0, total: 10, days: [0, 2, 4, 6, 8, 0, 0] }];
     const calendar = buildContributionCalendar(weeks);
-    const levels = calendar.weeks[0].map((c) => c.level);
+    const levels = calendar.weeks.at(-1)?.map((c) => c.level);
     // dayMax = 8 → bands at 2/4/6; 0→0, 2→1, 4→2, 6→3, 8→4.
     expect(levels).toEqual([0, 1, 2, 3, 4, 0, 0]);
   });
@@ -276,7 +277,8 @@ describe("buildContributionCalendar", () => {
       { week: 0, total: 0, days: [0, 0, 0, 0, 0, 0, 0] },
     ]);
     expect(calendar.total).toBe(0);
-    expect(calendar.weeks[0].every((c) => c.level === 0)).toBe(true);
+    expect(calendar.weeks).toHaveLength(52);
+    expect(calendar.weeks.every((week) => week.every((c) => c.level === 0))).toBe(true);
   });
 });
 
@@ -304,6 +306,21 @@ describe("mergeCommitActivity", () => {
 
   it("returns an empty list for nothing cached", () => {
     expect(mergeCommitActivity([])).toEqual([]);
+  });
+});
+
+describe("buildContributionCalendar sparse histories", () => {
+  it("keeps a 52-week window and fills missing columns with empty days", () => {
+    const calendar = buildContributionCalendar([
+      { week: 100, total: 2, days: [2, 0, 0, 0, 0, 0, 0] },
+      { week: 100 + 51 * 7 * 24 * 60 * 60, total: 1, days: [0, 1] },
+    ]);
+
+    expect(calendar.weeks).toHaveLength(52);
+    expect(calendar.weeks[1].every((cell) => cell.count === 0)).toBe(true);
+    expect(calendar.weeks[0][0].count).toBe(2);
+    expect(calendar.weeks.at(-1)?.[1].count).toBe(1);
+    expect(calendar.total).toBe(3);
   });
 });
 
