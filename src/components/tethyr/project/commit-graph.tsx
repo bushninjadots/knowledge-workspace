@@ -22,6 +22,17 @@ const GRAPH_LEVEL_CLASS = [
   "bg-[var(--user-accent,var(--primary))]",
 ] as const;
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+const DATE_FORMATTER = new Intl.DateTimeFormat(undefined, {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+});
+
+function cellDate(week: number, day: number) {
+  return DATE_FORMATTER.format(new Date(week * 1000 + day * DAY_MS));
+}
+
 export function CommitGraph({
   weeks,
   ariaLabel,
@@ -41,19 +52,26 @@ export function CommitGraph({
         year
       </p>
       <div className="overflow-x-auto pb-1">
-        <div role="img" aria-label={ariaLabel} className="flex w-max gap-[3px]">
-          {calendar.weeks.map((column, i) => (
-            <div key={i} className="flex flex-col gap-[3px]">
-              {column.map((cell, j) => (
-                <span
-                  key={j}
-                  title={`${cell.count} commit${cell.count === 1 ? "" : "s"}`}
-                  className={cn("h-[8px] w-[8px] rounded-[2px]", GRAPH_LEVEL_CLASS[cell.level])}
-                />
-              ))}
-            </div>
-          ))}
-        </div>
+          <div role="img" aria-label={ariaLabel} className="flex w-max gap-[3px]">
+            {calendar.weeks.map((column, i) => {
+              const week = weeks[i]?.week ?? 0;
+              return (
+                <div key={week || i} className="flex flex-col gap-[3px]">
+                  {column.map((cell, j) => {
+                    const label = `${cellDate(week, j)}: ${cell.count} commit${cell.count === 1 ? "" : "s"}`;
+                    return (
+                      <span
+                        key={`${week}-${j}`}
+                        title={label}
+                        aria-label={label}
+                        className={cn("h-[8px] w-[8px] rounded-[2px]", GRAPH_LEVEL_CLASS[cell.level])}
+                      />
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
       </div>
     </div>
   );
