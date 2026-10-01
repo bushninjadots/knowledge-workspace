@@ -472,8 +472,15 @@ export function ProjectPage() {
     );
   }
 
-  const { project, contributors, skills, coverSigned, avatarSigned, contributorsDegraded, forkedFrom } =
-    data;
+  const {
+    project,
+    contributors,
+    skills,
+    coverSigned,
+    avatarSigned,
+    contributorsDegraded,
+    forkedFrom,
+  } = data;
   const presentation = getProjectPresentationOption(project.presentation_preset);
   const creator = contributors.find((c) => c.role === "creator");
   const isContributor = isOwner || contributors.some((c) => c.profile_id === me?.userId);
