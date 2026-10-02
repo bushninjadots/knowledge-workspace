@@ -349,7 +349,7 @@ export function useTrendingSkills() {
       const { data, error } = await supabasePending.rpc("trending_skills", { p_limit: 100 });
       if (error) throw error;
 
-      return (data ?? []).map((skill) => ({
+      return (data ?? []).map((skill: { id: string; slug: string; name: string; category: string; description: string | null; usage_count: number }) => ({
         id: skill.id,
         slug: skill.slug,
         name: skill.name,

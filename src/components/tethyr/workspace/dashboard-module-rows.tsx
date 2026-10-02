@@ -433,7 +433,7 @@ export function SuggestedProjectsModuleRow() {
 
   const preview = matches
     .slice(0, 3)
-    .map((project) => project.title)
+    .map((project: { title: string }) => project.title)
     .join(" · ");
 
   return (
@@ -472,7 +472,7 @@ export function SuggestedCreatorsModuleRow() {
 
   const preview = matches
     .slice(0, 3)
-    .map((candidate) => candidate.display_name ?? candidate.handle ?? "Member")
+    .map((candidate: { display_name?: string | null; handle?: string | null }) => candidate.display_name ?? candidate.handle ?? "Member")
     .join(" · ");
 
   return (
