@@ -671,9 +671,7 @@ function LibraryItemPage() {
                   handle: me.profile.handle,
                 }
               : null,
-            project: projectId
-              ? projects.find((p) => p.id === projectId) ?? null
-              : null,
+            project: projectId ? (projects.find((p) => p.id === projectId) ?? null) : null,
             tags: (item.tags ?? []).map((tag) => ({ id: tag.id, name: tag.name })),
           }}
         />

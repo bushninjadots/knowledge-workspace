@@ -7,7 +7,7 @@ import {
   type TethyrGraph,
 } from "./graph-model";
 
-export type ProjectGraphProject = {
+type ProjectGraphProject = {
   id: string;
   title: string;
   description?: string | null;
@@ -17,37 +17,37 @@ export type ProjectGraphProject = {
   stage?: string | null;
 };
 
-export type ProjectGraphContributor = {
+type ProjectGraphContributor = {
   profile_id: string;
   role?: string | null;
   profile?: { display_name?: string | null; handle?: string | null } | null;
   skills_used?: string[] | null;
 };
 
-export type ProjectGraphSkill = { id?: string; name: string };
-export type ProjectGraphMilestone = {
+type ProjectGraphSkill = { id?: string; name: string };
+type ProjectGraphMilestone = {
   id: string;
   title: string;
   description?: string | null;
   status?: string | null;
 };
-export type ProjectGraphRole = {
+type ProjectGraphRole = {
   id: string;
   title: string;
   is_filled?: boolean;
   filled_by?: string | null;
 };
-export type ProjectGraphRepository = {
+type ProjectGraphRepository = {
   id: string;
   name: string;
   url?: string | null;
   provider?: string | null;
   importedAt?: string | null;
 };
-export type ProjectGraphDiscussion = { id: string; title: string };
-export type ProjectGraphNeed = { id: string; title: string };
+type ProjectGraphDiscussion = { id: string; title: string };
+type ProjectGraphNeed = { id: string; title: string };
 /** The project this one was forked from, resolved to just its identity. */
-export type ProjectGraphLineage = { id: string; title: string };
+type ProjectGraphLineage = { id: string; title: string };
 
 export type ProjectGraphInput = {
   project: ProjectGraphProject;
@@ -80,24 +80,33 @@ export function buildProjectGraph(input: ProjectGraphInput): TethyrGraph {
   const edges: GraphEdge[] = [];
   const projectId = `project:${input.project.id}`;
 
-  addNode(nodes, createGraphNode({
-    id: projectId,
-    type: "project",
-    label: input.project.title,
-    description: input.project.description ?? undefined,
-    visibility: input.project.visibility ?? undefined,
-    metadata: { status: input.project.status, stage: input.project.stage },
-  }));
+  addNode(
+    nodes,
+    createGraphNode({
+      id: projectId,
+      type: "project",
+      label: input.project.title,
+      description: input.project.description ?? undefined,
+      visibility: input.project.visibility ?? undefined,
+      metadata: { status: input.project.status, stage: input.project.stage },
+    }),
+  );
 
   for (const contributor of input.contributors ?? []) {
     const personId = `person:${contributor.profile_id}`;
-    addNode(nodes, createGraphNode({ id: personId, type: "person", label: personLabel(contributor) }));
-    addEdge(edges, createGraphEdge({
-      type: contributor.role === "creator" ? "produced" : "contributed_to",
-      from: personId,
-      to: projectId,
-      metadata: { role: contributor.role ?? undefined },
-    }));
+    addNode(
+      nodes,
+      createGraphNode({ id: personId, type: "person", label: personLabel(contributor) }),
+    );
+    addEdge(
+      edges,
+      createGraphEdge({
+        type: contributor.role === "creator" ? "produced" : "contributed_to",
+        from: personId,
+        to: projectId,
+        metadata: { role: contributor.role ?? undefined },
+      }),
+    );
 
     for (const skillName of contributor.skills_used ?? []) {
       const skillId = `skill:${skillName.trim().toLowerCase()}`;
@@ -115,42 +124,74 @@ export function buildProjectGraph(input: ProjectGraphInput): TethyrGraph {
 
   for (const milestone of input.milestones ?? []) {
     const milestoneId = `milestone:${milestone.id}`;
-    addNode(nodes, createGraphNode({
-      id: milestoneId,
-      type: "milestone",
-      label: milestone.title,
-      description: milestone.description ?? undefined,
-      metadata: { status: milestone.status },
-    }));
+    addNode(
+      nodes,
+      createGraphNode({
+        id: milestoneId,
+        type: "milestone",
+        label: milestone.title,
+        description: milestone.description ?? undefined,
+        metadata: { status: milestone.status },
+      }),
+    );
     addEdge(edges, createGraphEdge({ type: "has_milestone", from: projectId, to: milestoneId }));
   }
 
   for (const role of input.roles ?? []) {
     const roleId = `role:${role.id}`;
-    addNode(nodes, createGraphNode({ id: roleId, type: "role", label: role.title, metadata: { isFilled: role.is_filled } }));
+    addNode(
+      nodes,
+      createGraphNode({
+        id: roleId,
+        type: "role",
+        label: role.title,
+        metadata: { isFilled: role.is_filled },
+      }),
+    );
     addEdge(edges, createGraphEdge({ type: "has_role", from: projectId, to: roleId }));
-    if (role.filled_by) addEdge(edges, createGraphEdge({ type: "filled_role", from: `person:${role.filled_by}`, to: roleId }));
+    if (role.filled_by)
+      addEdge(
+        edges,
+        createGraphEdge({ type: "filled_role", from: `person:${role.filled_by}`, to: roleId }),
+      );
   }
 
   for (const repository of input.repositories ?? []) {
     const repositoryId = `repository:${repository.id}`;
-    addNode(nodes, createGraphNode({
-      id: repositoryId,
-      type: "repository",
-      label: repository.name,
-      metadata: { url: repository.url, provider: repository.provider, importedAt: repository.importedAt },
-    }));
-    addEdge(edges, createGraphEdge({
-      type: "imported_from",
-      from: projectId,
-      to: repositoryId,
-      metadata: { repositoryId: repository.id, provider: repository.provider, date: repository.importedAt ?? undefined },
-    }));
+    addNode(
+      nodes,
+      createGraphNode({
+        id: repositoryId,
+        type: "repository",
+        label: repository.name,
+        metadata: {
+          url: repository.url,
+          provider: repository.provider,
+          importedAt: repository.importedAt,
+        },
+      }),
+    );
+    addEdge(
+      edges,
+      createGraphEdge({
+        type: "imported_from",
+        from: projectId,
+        to: repositoryId,
+        metadata: {
+          repositoryId: repository.id,
+          provider: repository.provider,
+          date: repository.importedAt ?? undefined,
+        },
+      }),
+    );
   }
 
   for (const discussion of input.discussions ?? []) {
     const discussionId = `discussion:${discussion.id}`;
-    addNode(nodes, createGraphNode({ id: discussionId, type: "discussion", label: discussion.title }));
+    addNode(
+      nodes,
+      createGraphNode({ id: discussionId, type: "discussion", label: discussion.title }),
+    );
     addEdge(edges, createGraphEdge({ type: "contains", from: projectId, to: discussionId }));
   }
 
@@ -164,11 +205,14 @@ export function buildProjectGraph(input: ProjectGraphInput): TethyrGraph {
   // lineage is a real relationship in the model rather than a header-only note.
   if (input.forkedFrom) {
     const parentId = `project:${input.forkedFrom.id}`;
-    addNode(nodes, createGraphNode({
-      id: parentId,
-      type: "project",
-      label: input.forkedFrom.title,
-    }));
+    addNode(
+      nodes,
+      createGraphNode({
+        id: parentId,
+        type: "project",
+        label: input.forkedFrom.title,
+      }),
+    );
     addEdge(edges, createGraphEdge({ type: "forked_from", from: projectId, to: parentId }));
   }
 

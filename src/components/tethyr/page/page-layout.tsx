@@ -38,10 +38,7 @@ import type {
 } from "@/lib/page-blocks";
 import { getBlock } from "@/lib/block-registry";
 import { blockFrameStyle } from "@/lib/studio-config";
-import {
-  isDefinitelyEmptyBlock,
-  shouldRenderSectionInView,
-} from "@/lib/studio-visibility";
+import { isDefinitelyEmptyBlock, shouldRenderSectionInView } from "@/lib/studio-visibility";
 
 interface PageLayoutRendererProps {
   layout: PageLayoutType;
@@ -113,7 +110,6 @@ function sparseSafeGridClass(layout: SectionLayoutType, blockCount: number): str
   return SECTION_GRID[layout] ?? "";
 }
 
-
 /**
  * Renders the full page composition: sections → blocks.
  * Memoised at the layout level so only changed sections re-render.
@@ -175,7 +171,9 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
   // Remove reports for deleted blocks and reset them when returning to edit
   // mode. This prevents stale empty ids from hiding a newly reused block id.
   useEffect(() => {
-    const blockIds = new Set(sections.flatMap((section) => section.blocks).map((block) => block.id));
+    const blockIds = new Set(
+      sections.flatMap((section) => section.blocks).map((block) => block.id),
+    );
     setEmptyBlockIds((previous) => {
       const next = new Set([...previous].filter((id) => blockIds.has(id)));
       return next.size === previous.size ? previous : next;
@@ -416,9 +414,7 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
           .filter(
             (b) =>
               context.isEditing ||
-              (b.visible !== false &&
-                !emptyBlockIds.has(b.id) &&
-                !isDefinitelyEmptyBlock(b)),
+              (b.visible !== false && !emptyBlockIds.has(b.id) && !isDefinitelyEmptyBlock(b)),
           )
           .sort((a, b) => a.position - b.position);
         const gridClass = sparseSafeGridClass(section.layout, blocks.length);

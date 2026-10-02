@@ -399,7 +399,6 @@ export function ProjectPage() {
         }
       }
 
-
       // Community AI tags — fetch the count and whether the current user has
       // tagged this project, so the header can show the badge and the tag
       // button can toggle. Best-effort: if the table/ RPC doesn't exist yet
@@ -780,9 +779,7 @@ export function ProjectPage() {
                     provider: repo.provider,
                     importedAt: repo.created_at,
                   })),
-                  forkedFrom: forkedFrom
-                    ? { id: forkedFrom.id, title: forkedFrom.title }
-                    : null,
+                  forkedFrom: forkedFrom ? { id: forkedFrom.id, title: forkedFrom.title } : null,
                 }}
               />
             </div>

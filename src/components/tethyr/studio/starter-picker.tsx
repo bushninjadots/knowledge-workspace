@@ -634,7 +634,8 @@ function TemplateRow({
               <Star
                 className={`h-3 w-3 ${template.starred ? "fill-foreground text-foreground" : ""}`}
                 aria-hidden
-              /> {template.starCount}
+              />{" "}
+              {template.starCount}
             </span>
             <span className="hidden items-center gap-0.5 sm:inline-flex" title="Sections included">
               {sanitized.length} section{sanitized.length === 1 ? "" : "s"}

@@ -16,10 +16,22 @@ export function SkillGraphSummary({
   const nodes = [
     createGraphNode({ id: skillId, type: "skill", label: skillName }),
     ...(peopleCount > 0
-      ? [createGraphNode({ id: `${skillId}:people`, type: "person", label: `${peopleCount} people` })]
+      ? [
+          createGraphNode({
+            id: `${skillId}:people`,
+            type: "person",
+            label: `${peopleCount} people`,
+          }),
+        ]
       : []),
     ...(projectCount > 0
-      ? [createGraphNode({ id: `${skillId}:projects`, type: "project", label: `${projectCount} projects` })]
+      ? [
+          createGraphNode({
+            id: `${skillId}:projects`,
+            type: "project",
+            label: `${projectCount} projects`,
+          }),
+        ]
       : []),
     ...relatedSkills.map((name) =>
       createGraphNode({ id: `skill:${name.trim().toLowerCase()}`, type: "skill", label: name }),
@@ -33,7 +45,11 @@ export function SkillGraphSummary({
       ? [createGraphEdge({ type: "used_in", from: skillId, to: `${skillId}:projects` })]
       : []),
     ...relatedSkills.map((name) =>
-      createGraphEdge({ type: "related_to", from: skillId, to: `skill:${name.trim().toLowerCase()}` }),
+      createGraphEdge({
+        type: "related_to",
+        from: skillId,
+        to: `skill:${name.trim().toLowerCase()}`,
+      }),
     ),
   ];
   const graph = normalizeGraph({ nodes, edges });

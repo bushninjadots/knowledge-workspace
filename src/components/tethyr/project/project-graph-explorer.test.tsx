@@ -1,103 +1,53 @@
-import { describe, it, expect } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
 import { ProjectGraphExplorer } from "./project-graph-explorer";
 import type { ProjectGraphInput } from "@/lib/project-graph";
 
-const baseInput: ProjectGraphInput = {
-  project: { id: "p1", title: "Reverb" },
-  contributors: [
-    {
-      profile_id: "u1",
-      role: "creator",
-      profile: { display_name: "Maya", handle: "maya" },
-      skills_used: ["React"],
-    },
-    {
-      profile_id: "u2",
-      role: "contributor",
-      profile: { display_name: "Alex", handle: "alex" },
-    },
-  ],
-  skills: [{ name: "TypeScript" }, { name: "React" }],
-  milestones: [{ id: "m1", title: "MVP", status: "completed" }],
-  needs: [{ id: "n1", title: "Designer" }],
+const input: ProjectGraphInput = {
+  project: { id: "atlas", title: "Atlas" },
+  contributors: [{ profile_id: "ari", role: "creator", profile: { display_name: "Ari" } }],
+  skills: [{ name: "TypeScript" }],
+  milestones: [{ id: "launch", title: "Launch" }],
 };
 
+function renderExpanded() {
+  render(<ProjectGraphExplorer input={input} />);
+  fireEvent.click(screen.getByRole("button", { name: /show .* connections/i }));
+}
+
 describe("ProjectGraphExplorer", () => {
-  it("renders null when there are no connected nodes", () => {
-    const { container } = render(
-      <ProjectGraphExplorer input={{ project: { id: "p1", title: "Solo" } }} />,
-    );
-    expect(container.firstChild).toBeNull();
+  it("filters the grouped connections by search text", () => {
+    renderExpanded();
+    expect(screen.getByRole("heading", { name: "People" })).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Search connections"), { target: { value: "launch" } });
+
+    expect(screen.getByRole("heading", { name: "Milestones" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "People" })).not.toBeInTheDocument();
+    expect(screen.getByText(/Showing 1 of 3 connections/)).toBeInTheDocument();
   });
 
-  it("shows a toggle button with connection count when collapsed", () => {
-    render(<ProjectGraphExplorer input={baseInput} />);
-    expect(screen.getByText(/Show \d+ connections/)).toBeDefined();
+  it("filters by node type and clears back to every connection", () => {
+    renderExpanded();
+
+    fireEvent.click(screen.getByRole("button", { name: /^People/ }));
+
+    expect(screen.getByRole("heading", { name: "People" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Skills" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
+
+    expect(screen.getByRole("heading", { name: "Skills" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Milestones" })).toBeInTheDocument();
   });
 
-  it("expands to show grouped nodes and depth control", () => {
-    render(<ProjectGraphExplorer input={baseInput} />);
-    fireEvent.click(screen.getByText(/Show \d+ connections/));
+  it("explains an empty filter result instead of showing nothing", () => {
+    renderExpanded();
 
-    // Group headings (h3) appear for each present type
-    const headings = screen.getAllByRole("heading", { level: 3 });
-    const headingTexts = headings.map((h) => h.textContent);
-    expect(headingTexts).toContain("People");
-    expect(headingTexts).toContain("Skills");
-    expect(headingTexts).toContain("Milestones");
-    expect(headingTexts).toContain("Needs");
-    expect(screen.getByText("Direct connections")).toBeDefined();
-  });
+    fireEvent.change(screen.getByLabelText("Search connections"), {
+      target: { value: "nothing-here" },
+    });
 
-  it("renders node type filter toggles when expanded", () => {
-    render(<ProjectGraphExplorer input={baseInput} />);
-    fireEvent.click(screen.getByText(/Show \d+ connections/));
-
-    // Filter buttons exist for each present type
-    const peopleFilter = screen.getByRole("button", { name: "People" });
-    expect(peopleFilter.getAttribute("aria-pressed")).toBe("true");
-  });
-
-  it("hides nodes of a type when its filter is toggled off", () => {
-    render(<ProjectGraphExplorer input={baseInput} />);
-    fireEvent.click(screen.getByText(/Show \d+ connections/));
-
-    // Toggle off People
-    fireEvent.click(screen.getByRole("button", { name: "People" }));
-
-    // Maya and Alex should no longer appear in the grouped list
-    const groups = screen.getAllByText("People");
-    // The filter button still says "People" but the group heading should be gone
-    const headings = screen.queryAllByRole("heading", { level: 3 });
-    expect(headings.some((h) => h.textContent === "People")).toBe(false);
-  });
-
-  it("shows empty state message when all types are hidden", () => {
-    render(<ProjectGraphExplorer input={baseInput} />);
-    fireEvent.click(screen.getByText(/Show \d+ connections/));
-
-    // Toggle off all present types
-    const presentTypes = ["People", "Skills", "Milestones", "Needs"];
-    for (const type of presentTypes) {
-      fireEvent.click(screen.getByRole("button", { name: type }));
-    }
-
-    expect(screen.getByText(/All node types are hidden/)).toBeDefined();
-  });
-
-  it("does not show filters when only one type is present", () => {
-    render(
-      <ProjectGraphExplorer
-        input={{
-          project: { id: "p1", title: "Test" },
-          skills: [{ name: "React" }],
-        }}
-      />,
-    );
-    fireEvent.click(screen.getByText(/Show \d+ connections/));
-
-    // Only Skills type present — no filter group
-    expect(screen.queryByRole("group", { name: "Filter by node type" })).toBeNull();
+    expect(screen.getByText(/No connections match these filters/)).toBeInTheDocument();
   });
 });

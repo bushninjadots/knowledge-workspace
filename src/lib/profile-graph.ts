@@ -7,27 +7,27 @@ import {
   type TethyrGraph,
 } from "./graph-model";
 
-export type ProfileGraphProject = {
+type ProfileGraphProject = {
   id: string;
   title: string;
   role?: string | null;
   description?: string | null;
   status?: string | null;
 };
-export type ProfileGraphSkill = { id?: string; name: string };
-export type ProfileGraphCollaborator = {
+type ProfileGraphSkill = { id?: string; name: string };
+type ProfileGraphCollaborator = {
   profile_id: string;
   display_name?: string | null;
   handle?: string | null;
   sharedProjectCount?: number;
 };
-export type ProfileGraphContribution = {
+type ProfileGraphContribution = {
   id: string;
   label: string;
   projectId?: string;
   description?: string | null;
 };
-export type ProfileGraphInput = {
+type ProfileGraphInput = {
   profile: { id: string; displayName?: string | null; handle?: string | null };
   projects?: ProfileGraphProject[];
   skills?: ProfileGraphSkill[];
@@ -124,7 +124,11 @@ export function buildProfileGraph(input: ProfileGraphInput): TethyrGraph {
     if (contribution.projectId) {
       addEdge(
         edges,
-        createGraphEdge({ type: "contributed_to", from: contributionId, to: `project:${contribution.projectId}` }),
+        createGraphEdge({
+          type: "contributed_to",
+          from: contributionId,
+          to: `project:${contribution.projectId}`,
+        }),
       );
     }
   }
@@ -139,10 +143,6 @@ export function getProfileGraphCounts(graph: TethyrGraph) {
   }, {});
 }
 
-export function getProfileProjectNodes(graph: TethyrGraph) {
-  return graph.nodes.filter((node) => node.type === "project");
-}
-
 export function getProfileCollaborators(graph: TethyrGraph) {
   return graph.edges
     .filter((edge) => edge.type === "collaborated_with")
@@ -150,7 +150,7 @@ export function getProfileCollaborators(graph: TethyrGraph) {
     .filter((node): node is GraphNode => Boolean(node));
 }
 
-export function profileGraphHasWork(graph: TethyrGraph) {
+function profileGraphHasWork(graph: TethyrGraph) {
   return graph.nodes.some((node) => node.type !== "person");
 }
 
@@ -158,6 +158,3 @@ export function profileGraphSummary(input: ProfileGraphInput) {
   const graph = buildProfileGraph(input);
   return { graph, counts: getProfileGraphCounts(graph), hasWork: profileGraphHasWork(graph) };
 }
-
-export type ProfileGraph = TethyrGraph;
-export type { TethyrGraph };

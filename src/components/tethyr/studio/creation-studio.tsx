@@ -1044,7 +1044,9 @@ export function CreationStudio({
       },
       {
         onSuccess: () =>
-          toast.success("Template submitted for review — it'll appear in the community once approved."),
+          toast.success(
+            "Template submitted for review — it'll appear in the community once approved.",
+          ),
         onError: () => toast.error("Could not submit the template."),
       },
     );

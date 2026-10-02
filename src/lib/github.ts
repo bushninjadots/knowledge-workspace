@@ -133,12 +133,13 @@ export function buildContributionCalendar(weeks: CommitActivityWeek[]): Contribu
   const ordered = [...weeks].sort((a, b) => a.week - b.week);
   const latestWeek = ordered.at(-1)?.week;
   const byWeek = new Map(ordered.map((week) => [week.week, week]));
-  const normalized = latestWeek === undefined
-    ? []
-    : Array.from({ length: 52 }, (_, index) => {
-        const week = latestWeek - (51 - index) * 7 * 24 * 60 * 60;
-        return byWeek.get(week) ?? { week, total: 0, days: [] };
-      });
+  const normalized =
+    latestWeek === undefined
+      ? []
+      : Array.from({ length: 52 }, (_, index) => {
+          const week = latestWeek - (51 - index) * 7 * 24 * 60 * 60;
+          return byWeek.get(week) ?? { week, total: 0, days: [] };
+        });
   const dayMax = Math.max(0, ...normalized.flatMap((w) => w.days));
   const levelFor = (count: number): ContributionCalendarCell["level"] => {
     if (count <= 0 || dayMax <= 0) return 0;

@@ -1916,11 +1916,7 @@ function BlockFrameSection({
   return (
     <div className="border-t border-border py-3">
       <p className="t-label mb-2">Shape</p>
-      <div
-        role="radiogroup"
-        aria-label="Block shape"
-        className="grid grid-cols-4 gap-1"
-      >
+      <div role="radiogroup" aria-label="Block shape" className="grid grid-cols-4 gap-1">
         {SHAPE_PRESETS.map((preset) => {
           const active = shape === preset.value;
           return (
