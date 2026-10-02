@@ -12,12 +12,22 @@ describe("buildProfileGraph", () => {
     });
 
     expect(graph.nodes.map((node) => node.id)).toEqual([
-      "person:ari", "project:atlas", "skill:react", "person:sam", "contribution:c1",
+      "person:ari",
+      "project:atlas",
+      "skill:react",
+      "person:sam",
+      "contribution:c1",
     ]);
     expect(graph.edges.map((edge) => edge.type)).toEqual([
-      "produced", "has_skill", "collaborated_with", "produced", "contributed_to",
+      "produced",
+      "has_skill",
+      "collaborated_with",
+      "produced",
+      "contributed_to",
     ]);
-    expect(graph.edges.find((edge) => edge.type === "collaborated_with")?.metadata?.sharedProjectCount).toBe(2);
+    expect(
+      graph.edges.find((edge) => edge.type === "collaborated_with")?.metadata?.sharedProjectCount,
+    ).toBe(2);
   });
 
   it("drops contribution links to projects that are not in the visible graph", () => {

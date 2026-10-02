@@ -57,13 +57,20 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
           onClick={() => setExpanded((value) => !value)}
         >
           {expanded ? "Hide connections" : `Show ${connected.length} connections`}
-          {expanded ? <ChevronUp className="h-4 w-4" aria-hidden="true" /> : <ChevronDown className="h-4 w-4" aria-hidden="true" />}
+          {expanded ? (
+            <ChevronUp className="h-4 w-4" aria-hidden="true" />
+          ) : (
+            <ChevronDown className="h-4 w-4" aria-hidden="true" />
+          )}
         </button>
       </div>
 
       {expanded ? (
         <div className="mt-4">
-          <label className="flex items-center gap-2 text-xs text-muted-foreground" htmlFor="project-graph-depth">
+          <label
+            className="flex items-center gap-2 text-xs text-muted-foreground"
+            htmlFor="project-graph-depth"
+          >
             Relationship depth
             <select
               id="project-graph-depth"
@@ -86,7 +93,11 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
                   {nodes.map((node) => (
                     <li key={node.id} className="text-sm">
                       <div className="font-medium">{node.label}</div>
-                      {node.description ? <div className="line-clamp-2 text-xs text-muted-foreground">{node.description}</div> : null}
+                      {node.description ? (
+                        <div className="line-clamp-2 text-xs text-muted-foreground">
+                          {node.description}
+                        </div>
+                      ) : null}
                     </li>
                   ))}
                 </ul>

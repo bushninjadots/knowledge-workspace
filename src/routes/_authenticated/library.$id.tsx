@@ -56,6 +56,7 @@ import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
+import { LibraryGraphSummary } from "@/components/tethyr/library/library-graph-summary";
 
 // Radix Select reserves the empty string, so "not linked" needs its own value.
 const NO_PROJECT = "none";
@@ -651,6 +652,31 @@ function LibraryItemPage() {
             In collection: {item.collection.name}
           </div>
         )}
+
+        {/* Graph summary — Phase 7 */}
+        <LibraryGraphSummary
+          input={{
+            item: {
+              id: item.id,
+              title: item.title,
+              type: item.type,
+              user_id: item.user_id,
+              project_id: item.project_id,
+              github_source: item.github_source,
+            },
+            owner: me?.profile
+              ? {
+                  id: me.userId,
+                  display_name: me.profile.display_name,
+                  handle: me.profile.handle,
+                }
+              : null,
+            project: projectId
+              ? projects.find((p) => p.id === projectId) ?? null
+              : null,
+            tags: (item.tags ?? []).map((tag) => ({ id: tag.id, name: tag.name })),
+          }}
+        />
       </div>
     </LibraryContentLayout>
   );

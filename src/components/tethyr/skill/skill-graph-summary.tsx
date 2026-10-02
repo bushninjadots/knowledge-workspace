@@ -41,7 +41,10 @@ export function SkillGraphSummary({
   if (connected.length === 0) return null;
 
   return (
-    <section aria-labelledby="skill-graph-heading" className="rounded-xl bg-surface-elevated/30 p-4 sm:p-5">
+    <section
+      aria-labelledby="skill-graph-heading"
+      className="rounded-xl bg-surface-elevated/30 p-4 sm:p-5"
+    >
       <div className="flex items-start gap-3">
         <Network className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
         <div>
@@ -53,12 +56,18 @@ export function SkillGraphSummary({
           </p>
         </div>
       </div>
-      <div className="mt-4 flex flex-wrap items-center gap-2" aria-label={`${skillName} graph connections`}>
+      <div
+        className="mt-4 flex flex-wrap items-center gap-2"
+        aria-label={`${skillName} graph connections`}
+      >
         <span className="rounded-full border border-primary/40 bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary">
           {skillName}
         </span>
         {connected.map((node) => (
-          <span key={node.id} className="rounded-full border border-border/60 bg-surface-elevated px-3 py-1.5 text-xs text-foreground">
+          <span
+            key={node.id}
+            className="rounded-full border border-border/60 bg-surface-elevated px-3 py-1.5 text-xs text-foreground"
+          >
             {node.label}
           </span>
         ))}

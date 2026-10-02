@@ -322,6 +322,10 @@ function BasicProfile({
         <ProfileGraphSummary profileId={profile.id} name={name} />
       </div>
 
+      <div className="mt-2">
+        <ProfileGraphSummary profileId={profile.id} name={name} />
+      </div>
+
       {/* 4 — metadata, demoted to a footnote below a rule */}
       {hasMetadata && (
         <div className="mt-14 border-t border-border pt-8 text-center">

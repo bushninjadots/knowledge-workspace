@@ -36,6 +36,16 @@ function addNoIndexHeader(response: Response) {
   });
 }
 
+function isTransientConnError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const code = (error as NodeJS.ErrnoException).code;
+  return (
+    code === "ECONNRESET" ||
+    error.message === "aborted" ||
+    (error.cause instanceof Error && isTransientConnError(error.cause))
+  );
+}
+
 async function normalizeCatastrophicSsrResponse(
   response: Response,
   path: string,
@@ -49,7 +59,13 @@ async function normalizeCatastrophicSsrResponse(
     return addSecurityHeaders(response);
   }
 
-  const reportedError = consumeLastCapturedError() ?? new Error(`h3 swallowed SSR error: ${body}`);
+  // ECONNRESET / "aborted" fires when Vite tears down the SSR module for an
+  // HMR reload while a request is in flight — a transient dev-mode event, not
+  // a real server error. Skip the noisy logging + telemetry so logs stay clean.
+  const captured = consumeLastCapturedError();
+  if (isTransientConnError(captured)) return securityErrorResponse(renderErrorPage());
+
+  const reportedError = captured ?? new Error(`h3 swallowed SSR error: ${body}`);
   console.error(reportedError);
   void reportServerError(reportedError, { path });
   return securityErrorResponse(renderErrorPage());

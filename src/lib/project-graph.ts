@@ -138,11 +138,7 @@ export function buildProjectGraph(input: ProjectGraphInput): TethyrGraph {
       id: repositoryId,
       type: "repository",
       label: repository.name,
-      metadata: {
-        url: repository.url,
-        provider: repository.provider,
-        importedAt: repository.importedAt,
-      },
+      metadata: { url: repository.url, provider: repository.provider, importedAt: repository.importedAt },
     }));
     addEdge(edges, createGraphEdge({
       type: "imported_from",
