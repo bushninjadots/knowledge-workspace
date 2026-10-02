@@ -31,7 +31,7 @@ import { fetchSkillBySlug, skillQueryKey } from "./-skills.$slug-data";
 
 // Code-split module: the interactive page for its route. See the route
 // file for the eager surface (loader/head) and the lazyRouteComponent wire-up.
-const sb = supabase;
+const sb = supabasePending;
 
 type TabId = "overview" | "people" | "projects";
 

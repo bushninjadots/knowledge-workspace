@@ -111,7 +111,7 @@ const sessionKeys = {
   stats: (userId: string) => [...sessionKeys.all, "stats", userId] as const,
 };
 
-const sb = supabase;
+const sb = supabasePending;
 
 /* ───────── Fetchers ───────── */
 

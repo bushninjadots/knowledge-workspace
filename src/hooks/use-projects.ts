@@ -5,7 +5,7 @@ import type { ProjectPresentationPreset } from "@/lib/project-presentation";
 import type { GithubDisplay } from "@/lib/github";
 import { supabasePending } from "@/lib/supabase-pending-schema";
 
-const sb = supabase;
+const sb = supabasePending;
 
 // ============================================================
 // Types

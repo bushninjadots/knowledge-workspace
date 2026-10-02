@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabasePending } from "@/lib/supabase-pending-schema";
 import { supabase } from "@/integrations/supabase/client";
 
-const sb = supabase;
+const sb = supabasePending;
 
 export type TeamRole = "lead" | "core" | "contributor";
 
