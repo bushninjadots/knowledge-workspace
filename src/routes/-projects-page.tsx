@@ -765,6 +765,13 @@ export function ProjectPage() {
                     is_filled: role.is_filled,
                     filled_by: role.filled_by,
                   })),
+                  repositories: repos.map((repo) => ({
+                    id: repo.id,
+                    name: repo.metadata.full_name ?? repo.url,
+                    url: repo.url,
+                    provider: repo.provider,
+                    importedAt: repo.created_at,
+                  })),
                   discussions: discussions.map((discussion) => ({
                     id: discussion.id,
                     title: discussion.title,
@@ -772,13 +779,6 @@ export function ProjectPage() {
                   needs: needs.map((need) => ({
                     id: need.id,
                     title: need.title,
-                  })),
-                  repositories: repos.map((repo) => ({
-                    id: repo.id,
-                    name: repo.metadata.full_name ?? repo.url,
-                    url: repo.url,
-                    provider: repo.provider,
-                    importedAt: repo.created_at,
                   })),
                   forkedFrom: forkedFrom
                     ? { id: forkedFrom.id, title: forkedFrom.title }
