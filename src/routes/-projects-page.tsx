@@ -759,6 +759,13 @@ export function ProjectPage() {
                     status: milestone.status,
                   })),
                   skills: skills.map((skill) => ({ id: skill.id, name: skill.name })),
+                  repositories: repos.map((repo) => ({
+                    id: repo.id,
+                    name: repo.metadata.full_name ?? repo.url,
+                    url: repo.url,
+                    provider: repo.provider,
+                    importedAt: repo.created_at,
+                  })),
                   forkedFrom: forkedFrom
                     ? { id: forkedFrom.id, title: forkedFrom.title }
                     : null,
