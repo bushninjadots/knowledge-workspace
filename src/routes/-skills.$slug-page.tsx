@@ -884,7 +884,7 @@ function SkillGrowingPeople({ skillId, skillName }: { skillId: string; skillName
   );
 }
 
-// ── Projects Tab ────────────────────────────��─────────────────
+// ── Projects Tab ──────────────────────────────────────────────
 
 function SkillProjects({ skillId, skillName }: { skillId: string; skillName: string }) {
   const projects = useSkillProjects(skillId);

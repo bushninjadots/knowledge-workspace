@@ -319,7 +319,6 @@ function BasicProfile({
           for the same eye-line. */}
       <div className="mt-12">
         <ProfileWorkEvidence profileId={profile.id} isOwner={isOwner} />
-        <ProfileGraphSummary profileId={profile.id} name={name} />
       </div>
 
       <div className="mt-2">
