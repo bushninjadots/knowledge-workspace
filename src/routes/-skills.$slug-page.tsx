@@ -25,6 +25,7 @@ import { SegmentedControl } from "@/components/tethyr/segmented-control";
 import { Card } from "@/components/ui/card";
 import { useCountUp } from "@/hooks/use-count-up";
 import { SectionShell } from "@/components/tethyr/section-shell";
+import { SkillGraphSummary } from "@/components/tethyr/skill/skill-graph-summary";
 import { fetchSkillBySlug, skillQueryKey } from "./-skills.$slug-data";
 
 // Code-split module: the interactive page for its route. See the route
@@ -464,6 +465,13 @@ function SkillOverview({
         />
       </div>
 
+      <SkillGraphSummary
+        skillName={skillName}
+        peopleCount={(stats?.sharing ?? 0) + (stats?.growing ?? 0)}
+        projectCount={stats?.projects ?? 0}
+        relatedSkills={(relatedSkills.data ?? []).map((row) => row.name).slice(0, 5)}
+      />
+
       {/* What is this skill? */}
       <section
         aria-labelledby="overview-whatis"
@@ -876,7 +884,7 @@ function SkillGrowingPeople({ skillId, skillName }: { skillId: string; skillName
   );
 }
 
-// ── Projects Tab ──────────────────────────────────────────────
+// ── Projects Tab ────────────────────────────��─────────────────
 
 function SkillProjects({ skillId, skillName }: { skillId: string; skillName: string }) {
   const projects = useSkillProjects(skillId);
