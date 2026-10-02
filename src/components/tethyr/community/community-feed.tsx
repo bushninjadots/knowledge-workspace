@@ -15,6 +15,7 @@ import { CommunityHeader, type SortMode } from "@/components/tethyr/community/co
 import { CommunityFeedList } from "@/components/tethyr/community/community-feed-list";
 import { CommunityFeedSplitView } from "@/components/tethyr/community/community-feed-split-view";
 import { SpaceHeader, type SpaceSortMode } from "@/components/tethyr/community/space-header";
+import { CommunityGraphSummary } from "@/components/tethyr/community/community-graph-summary";
 import { ChallengesSection } from "@/components/tethyr/community/challenges-section";
 import { CommunitiesSection } from "@/components/tethyr/community/communities-section";
 import type { CommunityNavId } from "@/components/tethyr/community/left-sidebar";
@@ -463,6 +464,18 @@ export function CommunityFeed({
                   : `Join ${activeSpace.name} to post and reply in this room.`}
               </p>
             </div>
+          )}
+
+          {activeSpace && (
+            <CommunityGraphSummary
+              space={activeSpace}
+              posts={spacePosts.map((p) => ({
+                id: p.id,
+                title: p.title,
+                content: p.body,
+                author_id: p.author_id,
+              }))}
+            />
           )}
 
           {composer && <div className="mb-6">{composer}</div>}

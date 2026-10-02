@@ -38,8 +38,9 @@ function addNoIndexHeader(response: Response) {
 
 function isTransientConnError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
+  const code = (error as NodeJS.ErrnoException).code;
   return (
-    error.code === "ECONNRESET" ||
+    code === "ECONNRESET" ||
     error.message === "aborted" ||
     (error.cause instanceof Error && isTransientConnError(error.cause))
   );
