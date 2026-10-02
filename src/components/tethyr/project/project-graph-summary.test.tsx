@@ -25,7 +25,9 @@ describe("ProjectGraphSummary", () => {
     expect(valueFor("Milestones")).toBe("1");
     expect(valueFor("Relationships")).toBe("3");
     expect(screen.getByRole("list", { name: "Connected nodes" })).toHaveTextContent("person Ari");
-    expect(screen.getByRole("list", { name: "Connected nodes" })).toHaveTextContent("skill TypeScript");
+    expect(screen.getByRole("list", { name: "Connected nodes" })).toHaveTextContent(
+      "skill TypeScript",
+    );
   });
 
   it("renders nothing for a project with no relationships", () => {

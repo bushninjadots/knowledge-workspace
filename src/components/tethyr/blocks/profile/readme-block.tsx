@@ -10,6 +10,7 @@
 // README (`<username>/<username>`) in one click.
 
 import { useCallback, useEffect, useState } from "react";
+import { supabasePending } from "@/lib/supabase-pending-schema";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil } from "lucide-react";
 import { toast } from "sonner";
@@ -38,7 +39,7 @@ function ProfileReadmeBlock({ config, context }: BlockProps) {
     queryKey: ["profile-readme", profileId],
     queryFn: async (): Promise<ProfileReadmeData | null> => {
       if (!profileId) return null;
-      const { data } = await supabase
+      const { data } = await supabasePending
         .from("profiles")
         .select("readme, social_links")
         .eq("id", profileId)
@@ -65,7 +66,7 @@ function ProfileReadmeBlock({ config, context }: BlockProps) {
   const save = useCallback(
     async (content: string): Promise<boolean> => {
       if (!profileId) return false;
-      const { error } = await supabase
+      const { error } = await supabasePending
         .from("profiles")
         .update({ readme: content.trim() || null })
         .eq("id", profileId);
