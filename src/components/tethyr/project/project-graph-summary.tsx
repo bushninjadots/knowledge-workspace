@@ -93,7 +93,12 @@ function ProjectGraphSummaryBody({ input }: { input: ProjectGraphInput }) {
           <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Project lineage</p>
           <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
             <span className="text-muted-foreground">Forked from</span>
-            <span className="font-medium">{parentNode.label}</span>
+            <a
+              className="font-medium underline decoration-border underline-offset-4 transition-colors hover:decoration-foreground"
+              href={`/projects/${encodeURIComponent(parentNode.id.replace("project:", ""))}`}
+            >
+              {parentNode.label}
+            </a>
             <span aria-hidden="true" className="text-muted-foreground">→</span>
             <span className="font-medium">{input.project.title}</span>
           </div>
