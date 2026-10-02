@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
-import { ChevronDown, ChevronUp, Network, Search } from "lucide-react";
+import { ChevronDown, ChevronUp, Network, Route, Search } from "lucide-react";
 import { getConnectedNodes, type GraphNode } from "@/lib/graph-model";
 import { filterGraphNodes, graphTypeFacets, type GraphNodeFilter } from "@/lib/graph-exploration";
+import { describeGraphStep, findGraphPath } from "@/lib/graph-path";
 import { buildProjectGraph, type ProjectGraphInput } from "@/lib/project-graph";
 import { Input } from "@/components/ui/input";
 import {
@@ -38,11 +39,18 @@ function titleForType(type: GraphNode["type"]) {
 
 export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
   const [expanded, setExpanded] = useState(false);
+  const [mode, setMode] = useState<"browse" | "path">("browse");
   const [depth, setDepth] = useState(1);
   const [query, setQuery] = useState("");
   const [activeTypes, setActiveTypes] = useState<GraphNode["type"][]>([]);
+  const [pathStart, setPathStart] = useState("");
+  const [pathEnd, setPathEnd] = useState("");
   const graph = useMemo(() => buildProjectGraph(input), [input]);
   const projectId = `project:${input.project.id}`;
+  const projectNode = useMemo(
+    () => graph.nodes.find((node) => node.id === projectId),
+    [graph, projectId],
+  );
   const connected = useMemo(
     () => getConnectedNodes(graph, projectId, { depth }),
     [graph, projectId, depth],
@@ -59,6 +67,17 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
   );
   const visible = useMemo(() => filterGraphNodes(connected, filter), [connected, filter]);
   const filtering = query.trim().length > 0 || selectedTypes.length > 0;
+
+  // Path mode works across the whole connected graph, not the filtered view, so
+  // the answer to "how are these connected?" never hides behind an active filter.
+  const pathOptions = useMemo(() => {
+    const options = projectNode ? [projectNode, ...connected] : connected;
+    return Array.from(new Map(options.map((node) => [node.id, node])).values());
+  }, [projectNode, connected]);
+  const path = useMemo(
+    () => (pathStart && pathEnd ? findGraphPath(graph, pathStart, pathEnd) : null),
+    [graph, pathStart, pathEnd],
+  );
 
   if (connected.length === 0) return null;
 
@@ -102,6 +121,95 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
 
       {expanded ? (
         <div className="mt-4">
+          <div role="group" aria-label="Graph mode" className="flex flex-wrap items-center gap-1.5">
+            {(["browse", "path"] as const).map((value) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={mode === value}
+                onClick={() => setMode(value)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs transition-colors",
+                  mode === value
+                    ? "border-user-accent-border bg-accent text-foreground"
+                    : "border-border/70 text-muted-foreground hover:border-border-strong hover:text-foreground",
+                )}
+              >
+                {value === "browse" ? (
+                  <Network className="h-3.5 w-3.5" aria-hidden="true" />
+                ) : (
+                  <Route className="h-3.5 w-3.5" aria-hidden="true" />
+                )}
+                {value === "browse" ? "Connections" : "How are these connected?"}
+              </button>
+            ))}
+          </div>
+
+          {mode === "path" ? (
+            <div className="mt-4">
+              <div className="flex flex-wrap items-end gap-3">
+                {(
+                  [
+                    { label: "From", value: pathStart, setValue: setPathStart },
+                    { label: "To", value: pathEnd, setValue: setPathEnd },
+                  ] as const
+                ).map((field) => (
+                  <div key={field.label} className="flex flex-col gap-1">
+                    <label
+                      className="text-xs text-muted-foreground"
+                      htmlFor={`graph-path-${field.label.toLowerCase()}`}
+                    >
+                      {field.label}
+                    </label>
+                    <Select value={field.value} onValueChange={field.setValue}>
+                      <SelectTrigger
+                        id={`graph-path-${field.label.toLowerCase()}`}
+                        className="h-8 w-[220px] text-xs"
+                        aria-label={`Path ${field.label.toLowerCase()} node`}
+                      >
+                        <SelectValue placeholder="Choose an object" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {pathOptions.map((node) => (
+                          <SelectItem key={node.id} value={node.id}>
+                            {node.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ))}
+              </div>
+
+              {pathStart && pathEnd ? (
+                pathStart === pathEnd ? (
+                  <p className="mt-4 text-sm text-muted-foreground">
+                    Choose two different objects to trace a connection.
+                  </p>
+                ) : path && path.steps.length > 0 ? (
+                  <ol className="mt-4 space-y-2">
+                    {path.steps.map((step, index) => (
+                      <li key={step.edge.id} className="flex items-baseline gap-2 text-sm">
+                        <span className="tabular-nums text-xs text-muted-foreground">
+                          {index + 1}
+                        </span>
+                        <span>{describeGraphStep(step)}</span>
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  <p className="mt-4 text-sm text-muted-foreground">
+                    No connection found between these yet.
+                  </p>
+                )
+              ) : (
+                <p className="mt-4 text-sm text-muted-foreground">
+                  Choose two objects to see how they are connected.
+                </p>
+              )}
+            </div>
+          ) : (
+            <>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="relative">
               <Search
@@ -205,6 +313,8 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
                 </div>
               ))}
             </div>
+          )}
+            </>
           )}
         </div>
       ) : null}

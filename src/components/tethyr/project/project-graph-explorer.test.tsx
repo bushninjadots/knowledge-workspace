@@ -41,6 +41,22 @@ describe("ProjectGraphExplorer", () => {
     expect(screen.getByRole("heading", { name: "Milestones" })).toBeInTheDocument();
   });
 
+  it("traces how two connected objects are related", () => {
+    renderExpanded();
+    fireEvent.click(screen.getByRole("button", { name: /how are these connected/i }));
+
+    expect(
+      screen.getByText(/Choose two objects to see how they are connected/),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText("Path from node"));
+    fireEvent.click(screen.getByRole("option", { name: "Ari" }));
+    fireEvent.click(screen.getByLabelText("Path to node"));
+    fireEvent.click(screen.getByRole("option", { name: "Atlas" }));
+
+    expect(screen.getByText("Ari produced Atlas")).toBeInTheDocument();
+  });
+
   it("explains an empty filter result instead of showing nothing", () => {
     renderExpanded();
 
