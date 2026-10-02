@@ -765,6 +765,15 @@ export function ProjectPage() {
                     is_filled: role.is_filled,
                     filled_by: role.filled_by,
                   })),
+                  repositories: repos.map((repository) => ({
+                    id: repository.id,
+                    name: repository.metadata?.full_name || repository.url,
+                    url: repository.url,
+                  })),
+                  discussions: discussions.map((discussion) => ({
+                    id: discussion.id,
+                    title: discussion.title,
+                  })),
                   needs: needs.map((need) => ({ id: need.id, title: need.title })),
                   forkedFrom: forkedFrom
                     ? { id: forkedFrom.id, title: forkedFrom.title }
