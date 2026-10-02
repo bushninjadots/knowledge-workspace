@@ -156,7 +156,7 @@ export function useLibraryItems(filters?: LibraryFilter) {
     enabled: !!userId,
     queryFn: async (): Promise<LibraryItem[]> => {
       if (!userId) return [];
-      let query = supabase
+      let query = supabasePending
         .from("library_items")
         .select("*")
         .eq("user_id", userId)
@@ -811,12 +811,12 @@ export function useLibraryBoard(boardId: string | null) {
 
       const [{ data: columns, error: colErr }, { data: cards, error: cardErr }] = await Promise.all(
         [
-          supabase
+          supabasePending
             .from("library_board_columns")
             .select("*")
             .eq("board_id", boardId)
             .order("position", { ascending: true }),
-          supabase
+          supabasePending
             .from("library_board_cards")
             .select("*")
             .eq("board_id", boardId)

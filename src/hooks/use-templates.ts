@@ -163,7 +163,7 @@ export function usePublicTemplates({ search, sort = "newest" }: BrowseParams = {
       const { data: auth } = await supabase.auth.getUser();
       const currentUserId = auth.user?.id ?? null;
 
-      let query = supabase
+      let query = supabasePending
         .from("layouts")
         .select(TEMPLATE_SELECT)
         .eq("is_template", true)
