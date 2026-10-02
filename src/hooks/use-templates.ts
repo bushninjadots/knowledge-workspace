@@ -13,6 +13,7 @@
 //   • useDeleteTemplate  — unpublish (is_template = false; the layout stays).
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabasePending } from "@/lib/supabase-pending-schema";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { sanitizeTemplateSections } from "@/lib/template-apply";
@@ -277,7 +278,7 @@ export function useForkTemplate() {
       if (insertError) throw insertError;
 
       // 2. Record the fork relationship.
-      const { error: forkError } = await supabase.from("forks").insert({
+      const { error: forkError } = await supabasePending.from("forks").insert({
         parent_layout_id: templateId,
         child_layout_id: fork.id,
         creator_id: user.id,
@@ -287,7 +288,7 @@ export function useForkTemplate() {
       // 3. Bump the parent's fork count. Non-critical — a missed count never
       // fails an otherwise-successful fork.
       try {
-        await supabase.rpc("increment_fork_count", { layout_id: templateId });
+        await supabasePending.rpc("increment_fork_count", { layout_id: templateId });
       } catch {
         /* counter is advisory */
       }
@@ -377,7 +378,7 @@ export function useToggleTemplateStar() {
 
   return useMutation({
     mutationFn: async ({ templateId }: { templateId: string }) => {
-      const { data, error } = await supabase.rpc("toggle_template_star", {
+      const { data, error } = await supabasePending.rpc("toggle_template_star", {
         target_layout_id: templateId,
       });
       if (error) throw error;

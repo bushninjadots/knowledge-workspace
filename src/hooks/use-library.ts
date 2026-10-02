@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabasePending } from "@/lib/supabase-pending-schema";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "./use-current-user";
 import { ilikeOrFilter, SEARCH_MIN_LENGTH } from "@/lib/search";
@@ -323,7 +324,7 @@ export function useDeleteItem() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("library_items").delete().eq("id", id);
+      const { error } = await supabasePending.from("library_items").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -337,7 +338,7 @@ export function useToggleFavorite() {
 
   return useMutation({
     mutationFn: async ({ id, is_favorite }: { id: string; is_favorite: boolean }) => {
-      const { error } = await supabase.from("library_items").update({ is_favorite }).eq("id", id);
+      const { error } = await supabasePending.from("library_items").update({ is_favorite }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -351,7 +352,7 @@ export function useTogglePin() {
 
   return useMutation({
     mutationFn: async ({ id, is_pinned }: { id: string; is_pinned: boolean }) => {
-      const { error } = await supabase.from("library_items").update({ is_pinned }).eq("id", id);
+      const { error } = await supabasePending.from("library_items").update({ is_pinned }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -371,7 +372,7 @@ export function useToggleCollectionShared() {
 
   return useMutation({
     mutationFn: async ({ id, shared }: { id: string; shared: boolean }) => {
-      const { error } = await supabase.from("library_collections").update({ shared }).eq("id", id);
+      const { error } = await supabasePending.from("library_collections").update({ shared }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -426,7 +427,7 @@ export function useToggleShared() {
 
   return useMutation({
     mutationFn: async ({ id, shared }: { id: string; shared: boolean }) => {
-      const { error } = await supabase.from("library_items").update({ shared }).eq("id", id);
+      const { error } = await supabasePending.from("library_items").update({ shared }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: (_data, variables) => {
@@ -533,9 +534,9 @@ export function useDeleteCollection() {
   return useMutation({
     mutationFn: async (id: string) => {
       // Unset collection_id on items in this collection
-      await supabase.from("library_items").update({ collection_id: null }).eq("collection_id", id);
+      await supabasePending.from("library_items").update({ collection_id: null }).eq("collection_id", id);
 
-      const { error } = await supabase.from("library_collections").delete().eq("id", id);
+      const { error } = await supabasePending.from("library_collections").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -597,7 +598,7 @@ export function useAddTagToItem() {
 
   return useMutation({
     mutationFn: async ({ item_id, tag_id }: { item_id: string; tag_id: string }) => {
-      const { error } = await supabase.from("library_item_tags").insert({ item_id, tag_id });
+      const { error } = await supabasePending.from("library_item_tags").insert({ item_id, tag_id });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -866,7 +867,7 @@ export function useCreateBoard() {
       if (error) throw error;
 
       // Seed the default column set so the board is usable immediately.
-      const { error: colError } = await supabase.from("library_board_columns").insert(
+      const { error: colError } = await supabasePending.from("library_board_columns").insert(
         DEFAULT_BOARD_COLUMNS.map((column, index) => ({
           board_id: board.id,
           user_id: me.userId,
@@ -890,7 +891,7 @@ export function useUpdateBoard() {
 
   return useMutation({
     mutationFn: async ({ id, ...patch }: { id: string } & Partial<LibraryBoard>) => {
-      const { error } = await supabase.from("library_boards").update(patch).eq("id", id);
+      const { error } = await supabasePending.from("library_boards").update(patch).eq("id", id);
       if (error) throw error;
     },
     onSuccess: (_data, variables) => {
@@ -905,7 +906,7 @@ export function useDeleteBoard() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("library_boards").delete().eq("id", id);
+      const { error } = await supabasePending.from("library_boards").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -964,7 +965,7 @@ export function useUpdateColumn() {
       board_id: _board_id,
       ...patch
     }: { id: string; board_id: string } & Partial<LibraryBoardColumn>) => {
-      const { error } = await supabase.from("library_board_columns").update(patch).eq("id", id);
+      const { error } = await supabasePending.from("library_board_columns").update(patch).eq("id", id);
       if (error) throw error;
     },
     onSuccess: (_data, variables) => {
@@ -978,7 +979,7 @@ export function useDeleteColumn() {
 
   return useMutation({
     mutationFn: async ({ id, board_id: _board_id }: { id: string; board_id: string }) => {
-      const { error } = await supabase.from("library_board_columns").delete().eq("id", id);
+      const { error } = await supabasePending.from("library_board_columns").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: (_data, variables) => {
@@ -1065,7 +1066,7 @@ export function useUpdateCard() {
       board_id: _board_id,
       ...patch
     }: { id: string; board_id: string } & Partial<LibraryBoardCard>) => {
-      const { error } = await supabase.from("library_board_cards").update(patch).eq("id", id);
+      const { error } = await supabasePending.from("library_board_cards").update(patch).eq("id", id);
       if (error) throw error;
     },
     onSuccess: (_data, variables) => {
@@ -1079,7 +1080,7 @@ export function useDeleteCard() {
 
   return useMutation({
     mutationFn: async ({ id, board_id: _board_id }: { id: string; board_id: string }) => {
-      const { error } = await supabase.from("library_board_cards").delete().eq("id", id);
+      const { error } = await supabasePending.from("library_board_cards").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: (_data, variables) => {

@@ -6,6 +6,7 @@
 // content lives in full. Rows fetch their own data, so a hidden module costs
 // nothing.
 import { useMemo } from "react";
+import { supabasePending } from "@/lib/supabase-pending-schema";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Clock, Folder, Kanban, Sparkles, Star, Swords, Ticket, Users } from "lucide-react";
@@ -417,7 +418,7 @@ export function SuggestedProjectsModuleRow() {
   const { data: matches = [], isLoading } = useQuery({
     queryKey: ["suggested-projects", me?.userId ?? "anon"],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("match_projects", {
+      const { data, error } = await supabasePending.rpc("match_projects", {
         p_user_id: me?.userId as string,
         p_limit: 3,
       });
@@ -456,7 +457,7 @@ export function SuggestedCreatorsModuleRow() {
   const { data: matches = [], isLoading } = useQuery({
     queryKey: ["suggested-creators", me?.userId ?? "anon"],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("match_creators", {
+      const { data, error } = await supabasePending.rpc("match_creators", {
         p_user_id: me?.userId as string,
         p_limit: 3,
       });
