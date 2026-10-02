@@ -8,7 +8,9 @@ import { readFileSync } from "node:fs";
 
 const RUNTIME = readFileSync(".env.supabase-runtime", "utf8");
 const env = Object.fromEntries(
-  RUNTIME.split("\n").filter((l) => l.includes("=")).map((l) => [l.slice(0, l.indexOf("=")), l.slice(l.indexOf("=") + 1).trim()]),
+  RUNTIME.split("\n")
+    .filter((l) => l.includes("="))
+    .map((l) => [l.slice(0, l.indexOf("=")), l.slice(l.indexOf("=") + 1).trim()]),
 );
 
 const URL = "http://127.0.0.1:54321";
@@ -25,8 +27,10 @@ const REPOS = [
     slugHint: "knowledge-workspace",
     repo: "bushninjadots/knowledge-workspace",
     url: "https://github.com/bushninjadots/knowledge-workspace",
-    description: "The collaboration network where builders create projects together in public and get known for what they make.",
-    vision: "Reputation should come from real contributions, not self-reported claims. Tethyr makes the work itself the proof.",
+    description:
+      "The collaboration network where builders create projects together in public and get known for what they make.",
+    vision:
+      "Reputation should come from real contributions, not self-reported claims. Tethyr makes the work itself the proof.",
     goal: "Ship the core loop: create projects, contribute, build reputation.",
     language: "TypeScript",
     tags: ["TypeScript", "Supabase", "React", "SSR"],
@@ -60,8 +64,10 @@ const REPOS = [
     slugHint: "tomebase",
     repo: "bushninjadots/tomebase",
     url: "https://github.com/bushninjadots/tomebase",
-    description: "Documentation that writes itself — generate, organize, and publish beautiful engineering docs from your codebase.",
-    vision: "Documentation is the most neglected part of every engineering project — not because developers don't care, but because the tools make it painful. TomeBase removes the trade-off.",
+    description:
+      "Documentation that writes itself — generate, organize, and publish beautiful engineering docs from your codebase.",
+    vision:
+      "Documentation is the most neglected part of every engineering project — not because developers don't care, but because the tools make it painful. TomeBase removes the trade-off.",
     goal: "Open the beta to the first 100 teams.",
     language: "TypeScript",
     tags: ["TypeScript", "Docs", "MIT"],
@@ -97,7 +103,8 @@ const REPOS = [
     slugHint: "onerule",
     repo: "bushninjadots/onerule",
     url: "https://github.com/bushninjadots/onerule",
-    description: "A shared, persistent digital civilization where the inhabitants create the laws, the government, the economy, and the history. No one designed it — the players did.",
+    description:
+      "A shared, persistent digital civilization where the inhabitants create the laws, the government, the economy, and the history. No one designed it — the players did.",
     vision: "A society as a living simulation: rules emerge from the players, not the designers.",
     goal: "First persistent world with 100 concurrent inhabitants.",
     language: "TypeScript",
@@ -133,9 +140,19 @@ const PROFILE = {
   years_experience: 4,
   languages: ["English"],
   favourite_tools: ["VS Code", "GitHub", "Vite", "Vitest", "Playwright"],
-  software_stack: ["TypeScript", "React", "Next.js", "Node.js", "Supabase", "PostgreSQL", "Tailwind CSS"],
-  teaching_style: "Learn-by-building. I like pairing on real features rather than abstract exercises — show the problem, build the fix, read the diff together.",
-  learning_goals: "Going deeper on 3D on the web (Three.js / WebGL) and systems design for multiplayer, persistent-world apps.",
+  software_stack: [
+    "TypeScript",
+    "React",
+    "Next.js",
+    "Node.js",
+    "Supabase",
+    "PostgreSQL",
+    "Tailwind CSS",
+  ],
+  teaching_style:
+    "Learn-by-building. I like pairing on real features rather than abstract exercises — show the problem, build the fix, read the diff together.",
+  learning_goals:
+    "Going deeper on 3D on the web (Three.js / WebGL) and systems design for multiplayer, persistent-world apps.",
   available_days: ["mon", "tue", "wed", "thu", "fri"],
   available_times: ["evenings"],
   country: "uk",
@@ -180,21 +197,24 @@ for (const p of junk) {
 console.log(`hid ${junk.length} test projects`);
 
 // 2. Upsert profile fields
-const { error: profErr } = await db.from("profiles").update({
-  display_name: PROFILE.display_name,
-  creator_title: PROFILE.creator_title,
-  bio: PROFILE.bio,
-  category: PROFILE.category,
-  years_experience: PROFILE.years_experience,
-  languages: PROFILE.languages,
-  favourite_tools: PROFILE.favourite_tools,
-  software_stack: PROFILE.software_stack,
-  teaching_style: PROFILE.teaching_style,
-  learning_goals: PROFILE.learning_goals,
-  available_days: PROFILE.available_days,
-  available_times: PROFILE.available_times,
-  readme: PROFILE.readme,
-}).eq("id", PID);
+const { error: profErr } = await db
+  .from("profiles")
+  .update({
+    display_name: PROFILE.display_name,
+    creator_title: PROFILE.creator_title,
+    bio: PROFILE.bio,
+    category: PROFILE.category,
+    years_experience: PROFILE.years_experience,
+    languages: PROFILE.languages,
+    favourite_tools: PROFILE.favourite_tools,
+    software_stack: PROFILE.software_stack,
+    teaching_style: PROFILE.teaching_style,
+    learning_goals: PROFILE.learning_goals,
+    available_days: PROFILE.available_days,
+    available_times: PROFILE.available_times,
+    readme: PROFILE.readme,
+  })
+  .eq("id", PID);
 if (profErr) throw profErr;
 console.log("profile fields updated");
 
@@ -203,14 +223,21 @@ for (const slug of TEACH) {
   const id = skillId(slug);
   if (!id) continue;
   await db.from("profile_skills_teach").upsert(
-    { profile_id: PID, skill_id: id, experience_level: "advanced", verification_level: "community_recognized" },
+    {
+      profile_id: PID,
+      skill_id: id,
+      experience_level: "advanced",
+      verification_level: "community_recognized",
+    },
     { onConflict: "profile_id,skill_id" },
   );
 }
 for (const slug of LEARN) {
   const id = skillId(slug);
   if (!id) continue;
-  await db.from("profile_skills_learn").upsert({ profile_id: PID, skill_id: id }, { onConflict: "profile_id,skill_id" });
+  await db
+    .from("profile_skills_learn")
+    .upsert({ profile_id: PID, skill_id: id }, { onConflict: "profile_id,skill_id" });
 }
 console.log("skills linked");
 
@@ -248,13 +275,21 @@ for (const r of REPOS) {
   // milestones
   await db.from("project_milestones").delete().eq("project_id", projectId);
   await db.from("project_milestones").insert(
-    r.milestone.map((m) => ({ project_id: projectId, title: m.title, status: m.status, position: m.position })),
+    r.milestone.map((m) => ({
+      project_id: projectId,
+      title: m.title,
+      status: m.status,
+      position: m.position,
+    })),
   );
 
   // skills on the project
   for (const slug of r.skills) {
     const id = skillId(slug);
-    if (id) await db.from("project_skills").upsert({ project_id: projectId, skill_id: id }, { onConflict: "project_id,skill_id" });
+    if (id)
+      await db
+        .from("project_skills")
+        .upsert({ project_id: projectId, skill_id: id }, { onConflict: "project_id,skill_id" });
   }
 
   // repo row (same shape the import flow writes)
@@ -272,7 +307,9 @@ for (const r of REPOS) {
 
 // 5. Achievements the seeded activity actually supports
 for (const a of ["first_project", "project_builder", "first_endorsement"]) {
-  await db.from("user_achievements").upsert({ profile_id: PID, achievement: a }, { onConflict: "profile_id,achievement" });
+  await db
+    .from("user_achievements")
+    .upsert({ profile_id: PID, achievement: a }, { onConflict: "profile_id,achievement" });
 }
 console.log("achievements added");
 console.log("DONE");

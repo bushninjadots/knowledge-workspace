@@ -218,14 +218,7 @@ export interface LayoutBlockInstance {
 /** Per-block corner shape presets. Percentage-based shapes ("organic", "blob",
  *  "leaf") adapt to the block's aspect ratio so they look right at any size. */
 export type BlockShape =
-  | "default"
-  | "square"
-  | "rounded"
-  | "soft"
-  | "pill"
-  | "organic"
-  | "blob"
-  | "leaf";
+  "default" | "square" | "rounded" | "soft" | "pill" | "organic" | "blob" | "leaf";
 
 /** A 12-column grid item used by the Studio's direct manipulation canvas. */
 export interface LayoutGridItem {

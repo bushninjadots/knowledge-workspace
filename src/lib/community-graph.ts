@@ -7,25 +7,25 @@ import {
   type TethyrGraph,
 } from "./graph-model";
 
-export type CommunityGraphSpace = {
+type CommunityGraphSpace = {
   id: string;
   name: string;
   description?: string | null;
 };
 
-export type CommunityGraphMember = {
+type CommunityGraphMember = {
   user_id: string;
   role?: string | null;
   profile?: { display_name?: string | null; handle?: string | null } | null;
 };
 
-export type CommunityGraphDiscussion = {
+type CommunityGraphDiscussion = {
   id: string;
   title: string;
   author_id?: string | null;
 };
 
-export type CommunityGraphProject = {
+type CommunityGraphProject = {
   id: string;
   title: string;
 };
@@ -108,10 +108,7 @@ export function buildCommunityGraph(input: CommunityGraphInput): TethyrGraph {
 
   for (const project of input.projects ?? []) {
     const projectId = `project:${project.id}`;
-    addNode(
-      nodes,
-      createGraphNode({ id: projectId, type: "project", label: project.title }),
-    );
+    addNode(nodes, createGraphNode({ id: projectId, type: "project", label: project.title }));
     addEdge(edges, createGraphEdge({ type: "contains", from: spaceId, to: projectId }));
   }
 

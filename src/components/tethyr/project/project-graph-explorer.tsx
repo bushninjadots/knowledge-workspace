@@ -2,6 +2,13 @@ import { useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, Network } from "lucide-react";
 import { getConnectedNodes, type GraphNode } from "@/lib/graph-model";
 import { buildProjectGraph, type ProjectGraphInput } from "@/lib/project-graph";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const TYPE_LABELS: Record<GraphNode["type"], string> = {
   person: "People",
@@ -67,22 +74,19 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
 
       {expanded ? (
         <div className="mt-4">
-          <label
-            className="flex items-center gap-2 text-xs text-muted-foreground"
-            htmlFor="project-graph-depth"
-          >
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
             Relationship depth
-            <select
-              id="project-graph-depth"
-              value={depth}
-              onChange={(event) => setDepth(Number(event.target.value))}
-              className="rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground"
-            >
-              <option value={1}>Direct connections</option>
-              <option value={2}>Connected ecosystem</option>
-              <option value={3}>Extended graph</option>
-            </select>
-          </label>
+            <Select value={String(depth)} onValueChange={(value) => setDepth(Number(value))}>
+              <SelectTrigger className="h-7 w-[180px] px-2 text-xs" aria-label="Relationship depth">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">Direct connections</SelectItem>
+                <SelectItem value="2">Connected ecosystem</SelectItem>
+                <SelectItem value="3">Extended graph</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {Object.entries(grouped).map(([type, nodes]) => (
               <div key={type} className="border border-border/60 p-3">

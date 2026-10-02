@@ -1,23 +1,20 @@
-export const GRAPH_NODE_TYPES = [
-  "person",
-  "project",
-  "skill",
-  "contribution",
-  "knowledge",
-  "milestone",
-  "repository",
-  "discussion",
-  "community",
-  "session",
-  "role",
-  "badge",
-  "library_item",
-  "challenge",
-  "credit",
-  "need",
-] as const;
-
-export type GraphNodeType = (typeof GRAPH_NODE_TYPES)[number];
+type GraphNodeType =
+  | "person"
+  | "project"
+  | "skill"
+  | "contribution"
+  | "knowledge"
+  | "milestone"
+  | "repository"
+  | "discussion"
+  | "community"
+  | "session"
+  | "role"
+  | "badge"
+  | "library_item"
+  | "challenge"
+  | "credit"
+  | "need";
 
 export interface GraphNode {
   id: string;
@@ -28,30 +25,27 @@ export interface GraphNode {
   visibility?: "public" | "private";
 }
 
-export const GRAPH_EDGE_TYPES = [
-  "contributed_to",
-  "has_skill",
-  "demonstrated_skill",
-  "used_in",
-  "has_milestone",
-  "has_role",
-  "filled_role",
-  "collaborated_with",
-  "related_to",
-  "forked_from",
-  "imported_from",
-  "produced",
-  "referenced_by",
-  "supports",
-  "earned",
-  "participated_in",
-  "uses",
-  "contains",
-  "needs",
-  "offers",
-] as const;
-
-export type GraphEdgeType = (typeof GRAPH_EDGE_TYPES)[number];
+type GraphEdgeType =
+  | "contributed_to"
+  | "has_skill"
+  | "demonstrated_skill"
+  | "used_in"
+  | "has_milestone"
+  | "has_role"
+  | "filled_role"
+  | "collaborated_with"
+  | "related_to"
+  | "forked_from"
+  | "imported_from"
+  | "produced"
+  | "referenced_by"
+  | "supports"
+  | "earned"
+  | "participated_in"
+  | "uses"
+  | "contains"
+  | "needs"
+  | "offers";
 
 export interface GraphEdge {
   id: string;
@@ -77,15 +71,11 @@ export interface TethyrGraph {
   edges: GraphEdge[];
 }
 
-export function createGraphNode(
-  node: Omit<GraphNode, "id"> & { id?: string },
-): GraphNode {
+export function createGraphNode(node: Omit<GraphNode, "id"> & { id?: string }): GraphNode {
   return { ...node, id: node.id ?? `${node.type}:${crypto.randomUUID()}` };
 }
 
-export function createGraphEdge(
-  edge: Omit<GraphEdge, "id"> & { id?: string },
-): GraphEdge {
+export function createGraphEdge(edge: Omit<GraphEdge, "id"> & { id?: string }): GraphEdge {
   return { ...edge, id: edge.id ?? `edge:${crypto.randomUUID()}` };
 }
 
@@ -131,7 +121,9 @@ export function getContributionTrail(graph: TethyrGraph, startNodeId: string): G
     if (current) trail.push(current);
 
     const nextEdge = graph.edges.find(
-      (edge) => edge.from === currentId && ["produced", "supports", "contributed_to", "has_milestone"].includes(edge.type),
+      (edge) =>
+        edge.from === currentId &&
+        ["produced", "supports", "contributed_to", "has_milestone"].includes(edge.type),
     );
     currentId = nextEdge?.to;
   }

@@ -31,7 +31,9 @@ describe("graph model", () => {
       label: "Ari",
       id: "person:1",
     });
-    expect(createGraphEdge({ type: "has_skill", from: "person:1", to: "skill:1", id: "edge:1" }).id).toBe("edge:1");
+    expect(
+      createGraphEdge({ type: "has_skill", from: "person:1", to: "skill:1", id: "edge:1" }).id,
+    ).toBe("edge:1");
   });
 
   it("finds connected nodes to a requested depth and edge type", () => {
@@ -40,14 +42,19 @@ describe("graph model", () => {
       "skill:1",
       "project:1",
     ]);
-    expect(getConnectedNodes(graph, "person:1", { edgeType: "has_skill" }).map((node) => node.id)).toEqual(["skill:1"]);
+    expect(
+      getConnectedNodes(graph, "person:1", { edgeType: "has_skill" }).map((node) => node.id),
+    ).toEqual(["skill:1"]);
   });
 
   it("follows a contribution-oriented trail without requiring a visual graph", () => {
     const graph = fixture();
-    graph.edges.unshift(
-      { id: "edge:contribution", type: "contributed_to", from: "person:1", to: "project:1" },
-    );
+    graph.edges.unshift({
+      id: "edge:contribution",
+      type: "contributed_to",
+      from: "person:1",
+      to: "project:1",
+    });
     expect(getContributionTrail(graph, "person:1").map((node) => node.id)).toEqual([
       "person:1",
       "project:1",

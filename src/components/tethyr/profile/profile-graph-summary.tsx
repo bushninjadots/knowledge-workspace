@@ -11,13 +11,7 @@ import { buildProfileGraph, getProfileGraphCounts } from "@/lib/profile-graph";
  * Hides entirely when there is no work (the spec's empty-state rule: the graph
  * earns its place, it does not report emptiness).
  */
-export function ProfileGraphSummary({
-  profileId,
-  name,
-}: {
-  profileId: string;
-  name: string;
-}) {
+export function ProfileGraphSummary({ profileId, name }: { profileId: string; name: string }) {
   const { data, isLoading } = useProfileWork(profileId);
   if (isLoading || !data?.hasWork) return null;
 
@@ -44,10 +38,7 @@ export function ProfileGraphSummary({
   const relationships = graph.edges.length;
 
   return (
-    <section
-      aria-labelledby="profile-graph-heading"
-      className="mt-12 border-t border-border pt-8"
-    >
+    <section aria-labelledby="profile-graph-heading" className="mt-12 border-t border-border pt-8">
       <div className="flex items-start gap-3">
         <Network className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
         <div>

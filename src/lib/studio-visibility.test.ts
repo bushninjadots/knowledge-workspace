@@ -1,8 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import {
-  isDefinitelyEmptyBlock,
-  shouldRenderSectionInView,
-} from "@/lib/studio-visibility";
+import { isDefinitelyEmptyBlock, shouldRenderSectionInView } from "@/lib/studio-visibility";
 import { registerBlock, _resetRegistry } from "@/lib/block-registry";
 import type { LayoutBlockInstance, LayoutSection } from "@/lib/page-blocks";
 

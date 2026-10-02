@@ -7,7 +7,7 @@ import {
   type TethyrGraph,
 } from "./graph-model";
 
-export type LibraryGraphItem = {
+type LibraryGraphItem = {
   id: string;
   title: string;
   type: string;
@@ -16,18 +16,18 @@ export type LibraryGraphItem = {
   github_source?: { repo?: string; path?: string; branch?: string | null } | null;
 };
 
-export type LibraryGraphOwner = {
+type LibraryGraphOwner = {
   id: string;
   display_name?: string | null;
   handle?: string | null;
 };
 
-export type LibraryGraphProject = {
+type LibraryGraphProject = {
   id: string;
   title: string;
 };
 
-export type LibraryGraphTag = { id: string; name: string };
+type LibraryGraphTag = { id: string; name: string };
 
 export type LibraryGraphInput = {
   item: LibraryGraphItem;
@@ -75,19 +75,13 @@ export function buildLibraryGraph(input: LibraryGraphInput): TethyrGraph {
 
   if (input.project) {
     const projectId = `project:${input.project.id}`;
-    addNode(
-      nodes,
-      createGraphNode({ id: projectId, type: "project", label: input.project.title }),
-    );
+    addNode(nodes, createGraphNode({ id: projectId, type: "project", label: input.project.title }));
     addEdge(edges, createGraphEdge({ type: "used_in", from: itemId, to: projectId }));
   }
 
   for (const tag of input.tags ?? []) {
     const tagId = `knowledge:${tag.id}`;
-    addNode(
-      nodes,
-      createGraphNode({ id: tagId, type: "knowledge", label: tag.name }),
-    );
+    addNode(nodes, createGraphNode({ id: tagId, type: "knowledge", label: tag.name }));
     addEdge(edges, createGraphEdge({ type: "referenced_by", from: itemId, to: tagId }));
   }
 

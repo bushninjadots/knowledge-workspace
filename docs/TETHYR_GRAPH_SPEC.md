@@ -1,4 +1,4 @@
-Absolutely. The key is that the **Tethyr Graph should not feel like a separate feature bolted onto Tethyr**. It should become the underlying connective layer of the whole product, while giving users several ways to *see* and interact with those connections.
+Absolutely. The key is that the **Tethyr Graph should not feel like a separate feature bolted onto Tethyr**. It should become the underlying connective layer of the whole product, while giving users several ways to _see_ and interact with those connections.
 
 Here is a detailed implementation prompt you can give to your coding/design AI:
 
@@ -24,30 +24,30 @@ It must NOT feel like a random “graph visualization feature.”
 
 It should connect:
 
-* People
-* Projects
-* Skills
-* Contributions
-* Knowledge
-* Discussions
-* Milestones
-* Roles
-* Sessions
-* Communities
-* Repositories
-* Imported projects
-* Project forks
-* Templates
-* Library resources
-* Badges
-* Reputation evidence
-* Collaborators
-* Project history
-* Project lineage
-* Credits
-* Needs
-* Challenges
-* Community activity
+- People
+- Projects
+- Skills
+- Contributions
+- Knowledge
+- Discussions
+- Milestones
+- Roles
+- Sessions
+- Communities
+- Repositories
+- Imported projects
+- Project forks
+- Templates
+- Library resources
+- Badges
+- Reputation evidence
+- Collaborators
+- Project history
+- Project lineage
+- Credits
+- Needs
+- Challenges
+- Community activity
 
 The graph is the connective tissue between these things.
 
@@ -227,23 +227,23 @@ Conceptually:
 
 Nodes can represent:
 
-* person
-* project
-* skill
-* contribution
-* knowledge
-* milestone
-* repository
-* discussion
-* community
-* session
-* role
-* badge
-* library item
-* challenge
-* credit
-* need
-* organization where applicable
+- person
+- project
+- skill
+- contribution
+- knowledge
+- milestone
+- repository
+- discussion
+- community
+- session
+- role
+- badge
+- library item
+- challenge
+- credit
+- need
+- organization where applicable
 
 ## Edges
 
@@ -251,29 +251,29 @@ Edges represent meaningful relationships.
 
 Examples:
 
-* PERSON → CONTRIBUTED_TO → PROJECT
-* PERSON → HAS_SKILL → SKILL
-* PERSON → DEMONSTRATED_SKILL → SKILL
-* SKILL → USED_IN → PROJECT
-* PROJECT → HAS_MILESTONE → MILESTONE
-* PROJECT → HAS_ROLE → ROLE
-* PERSON → FILLED_ROLE → ROLE
-* PERSON → COLLABORATED_WITH → PERSON
-* PROJECT → RELATED_TO → PROJECT
-* PROJECT → FORKED_FROM → PROJECT
-* PROJECT → IMPORTED_FROM → REPOSITORY
-* PERSON → CONTRIBUTED_TO → REPOSITORY
-* CONTRIBUTION → PRODUCED → KNOWLEDGE
-* KNOWLEDGE → REFERENCED_BY → DISCUSSION
-* CONTRIBUTION → SUPPORTS → REPUTATION_EVIDENCE
-* PROJECT → PRODUCED → BADGE
-* PERSON → EARNED → BADGE
-* PERSON → PARTICIPATED_IN → SESSION
-* SESSION → USES → SKILL
-* COMMUNITY → CONTAINS → PROJECT
-* COMMUNITY → CONTAINS → DISCUSSION
-* PROJECT → NEEDS → SKILL
-* PERSON → OFFERS → SKILL
+- PERSON → CONTRIBUTED_TO → PROJECT
+- PERSON → HAS_SKILL → SKILL
+- PERSON → DEMONSTRATED_SKILL → SKILL
+- SKILL → USED_IN → PROJECT
+- PROJECT → HAS_MILESTONE → MILESTONE
+- PROJECT → HAS_ROLE → ROLE
+- PERSON → FILLED_ROLE → ROLE
+- PERSON → COLLABORATED_WITH → PERSON
+- PROJECT → RELATED_TO → PROJECT
+- PROJECT → FORKED_FROM → PROJECT
+- PROJECT → IMPORTED_FROM → REPOSITORY
+- PERSON → CONTRIBUTED_TO → REPOSITORY
+- CONTRIBUTION → PRODUCED → KNOWLEDGE
+- KNOWLEDGE → REFERENCED_BY → DISCUSSION
+- CONTRIBUTION → SUPPORTS → REPUTATION_EVIDENCE
+- PROJECT → PRODUCED → BADGE
+- PERSON → EARNED → BADGE
+- PERSON → PARTICIPATED_IN → SESSION
+- SESSION → USES → SKILL
+- COMMUNITY → CONTAINS → PROJECT
+- COMMUNITY → CONTAINS → DISCUSSION
+- PROJECT → NEEDS → SKILL
+- PERSON → OFFERS → SKILL
 
 The model must support metadata on relationships.
 
@@ -285,15 +285,15 @@ PERSON A
 
 could contain:
 
-* role
-* date
-* contribution description
-* milestone
-* duration
-* evidence
-* repository
-* visibility
-* confirmation status
+- role
+- date
+- contribution description
+- milestone
+- duration
+- evidence
+- repository
+- visibility
+- confirmation status
 
 This makes the graph meaningful rather than merely visual.
 
@@ -420,16 +420,16 @@ Users should be able to understand the history of a project without digging thro
 
 Project lineage should support:
 
-* original project
-* forks
-* derivatives
-* templates
-* imported repositories
-* related projects
-* predecessor projects
-* successor projects
-* major milestones
-* major contributions
+- original project
+- forks
+- derivatives
+- templates
+- imported repositories
+- related projects
+- predecessor projects
+- successor projects
+- major milestones
+- major contributions
 
 This should connect directly with the existing project lifecycle:
 
@@ -511,11 +511,11 @@ Edges show relationships.
 
 Useful for discovering:
 
-* collaborators
-* related projects
-* related skills
-* communities
-* knowledge
+- collaborators
+- related projects
+- related skills
+- communities
+- knowledge
 
 This should be the most visually expressive view.
 
@@ -676,24 +676,24 @@ The graph should be interactive.
 
 Include:
 
-* zoom
-* pan
-* focus
-* reset
-* expand
-* collapse
-* isolate node
-* hide node type
-* show node type
-* search
-* filter
-* relationship filters
-* time filters where appropriate
-* depth control
-* density control
-* layout selection
-* fullscreen
-* fit to screen
+- zoom
+- pan
+- focus
+- reset
+- expand
+- collapse
+- isolate node
+- hide node type
+- show node type
+- search
+- filter
+- relationship filters
+- time filters where appropriate
+- depth control
+- density control
+- layout selection
+- fullscreen
+- fit to screen
 
 Do not overwhelm the interface.
 
@@ -802,15 +802,15 @@ Do NOT create a generic futuristic “AI graph.”
 
 Avoid:
 
-* glowing neon nodes
-* excessive gradients
-* glassmorphism
-* sci-fi interfaces
-* holographic effects
-* excessive animation
-* huge rounded cards
-* glowing connection lines
-* AI-looking dashboards
+- glowing neon nodes
+- excessive gradients
+- glassmorphism
+- sci-fi interfaces
+- holographic effects
+- excessive animation
+- huge rounded cards
+- glowing connection lines
+- AI-looking dashboards
 
 The visual language should feel:
 
@@ -842,17 +842,17 @@ Use Tethyr's existing design language.
 
 Prefer:
 
-* structured panels
-* thin borders
-* strong spacing
-* clear hierarchy
-* restrained radii
-* compact controls
-* editorial typography
-* modular sections
-* dense but readable information
-* subtle depth
-* strong alignment
+- structured panels
+- thin borders
+- strong spacing
+- clear hierarchy
+- restrained radii
+- compact controls
+- editorial typography
+- modular sections
+- dense but readable information
+- subtle depth
+- strong alignment
 
 Do not redesign Tethyr around the graph.
 
@@ -868,12 +868,12 @@ The graph must integrate with the existing Tethyr customization system.
 
 Tethyr already has customization concepts around:
 
-* Structure
-* Personality
-* Density
-* Accent
-* Background
-* Feel / starters
+- Structure
+- Personality
+- Density
+- Accent
+- Background
+- Feel / starters
 
 The graph should use these existing theme values.
 
@@ -887,14 +887,14 @@ If the user changes their Tethyr appearance, the graph should naturally change w
 
 The Structure setting should affect:
 
-* graph panel layout
-* node geometry
-* spacing
-* borders
-* grouping
-* information density
-* sidebar behavior
-* relationship presentation
+- graph panel layout
+- node geometry
+- spacing
+- borders
+- grouping
+- information density
+- sidebar behavior
+- relationship presentation
 
 For example:
 
@@ -951,22 +951,22 @@ Density should directly affect graph rendering.
 
 Low density:
 
-* fewer visible nodes
-* larger spacing
-* simplified labels
-* less metadata
+- fewer visible nodes
+- larger spacing
+- simplified labels
+- less metadata
 
 Medium:
 
-* normal graph
-* useful relationship labels
+- normal graph
+- useful relationship labels
 
 High:
 
-* more nodes
-* tighter spacing
-* more metadata
-* more relationship information
+- more nodes
+- tighter spacing
+- more metadata
+- more relationship information
 
 This should be responsive.
 
@@ -982,13 +982,13 @@ Use the user's existing Tethyr accent color.
 
 The accent should control:
 
-* selected nodes
-* active relationships
-* focus state
-* buttons
-* highlights
-* graph controls
-* relationship emphasis
+- selected nodes
+- active relationships
+- focus state
+- buttons
+- highlights
+- graph controls
+- relationship emphasis
 
 Do not hard-code graph colors.
 
@@ -1108,11 +1108,11 @@ But avoid a rainbow of connection colors.
 
 Use:
 
-* line weight
-* line style
-* subtle labels
-* directional indicators when appropriate
-* hover states
+- line weight
+- line style
+- subtle labels
+- directional indicators when appropriate
+- hover states
 
 Examples:
 
@@ -1168,11 +1168,11 @@ Hovering a node should provide a lightweight preview.
 
 Show:
 
-* name
-* type
-* short description
-* relevant relationship
-* one or two useful facts
+- name
+- type
+- short description
+- relevant relationship
+- one or two useful facts
 
 Avoid giant tooltips.
 
@@ -1182,12 +1182,12 @@ Avoid giant tooltips.
 
 When selected:
 
-* highlight node
-* highlight direct relationships
-* dim unrelated nodes
-* show relationship details
-* expose actions
-* optionally allow expansion
+- highlight node
+- highlight direct relationships
+- dim unrelated nodes
+- show relationship details
+- expose actions
+- optionally allow expansion
 
 Example:
 
@@ -1293,13 +1293,13 @@ Never expose private relationships.
 
 Respect:
 
-* private projects
-* private profiles
-* private contributions
-* hidden skills
-* private communities
-* private repositories
-* hidden activity
+- private projects
+- private profiles
+- private contributions
+- hidden skills
+- private communities
+- private repositories
+- hidden activity
 
 If a relationship cannot be seen by the viewer, it must not appear in the graph.
 
@@ -1367,38 +1367,38 @@ Useful filters include:
 
 Node type:
 
-* People
-* Projects
-* Skills
-* Knowledge
-* Communities
-* Repositories
-* Contributions
-* Milestones
+- People
+- Projects
+- Skills
+- Knowledge
+- Communities
+- Repositories
+- Contributions
+- Milestones
 
 Relationship:
 
-* Worked together
-* Contributed
-* Used skill
-* Forked
-* Related
-* Participated
-* Created
-* Discussed
+- Worked together
+- Contributed
+- Used skill
+- Forked
+- Related
+- Participated
+- Created
+- Discussed
 
 Time:
 
-* All time
-* Recent
-* This year
-* Custom range
+- All time
+- Recent
+- This year
+- Custom range
 
 Status:
 
-* Active
-* Completed
-* Archived
+- Active
+- Completed
+- Archived
 
 Visibility:
 
@@ -1551,13 +1551,13 @@ This feature must NOT introduce AI.
 
 Do not add:
 
-* AI recommendations
-* AI-generated graph summaries
-* AI relationship scoring
-* AI people matching
-* AI graph analysis
-* AI-generated reputation
-* AI-generated skills
+- AI recommendations
+- AI-generated graph summaries
+- AI relationship scoring
+- AI people matching
+- AI graph analysis
+- AI-generated reputation
+- AI-generated skills
 
 The intelligence comes from Tethyr's actual structured data and relationships.
 
@@ -1569,12 +1569,12 @@ This is important to the product philosophy.
 
 Do not turn the graph into:
 
-* XP
-* levels
-* points
-* leaderboard
-* social score
-* popularity score
+- XP
+- levels
+- points
+- leaderboard
+- social score
+- popularity score
 
 Reputation should remain evidence-based.
 
@@ -1716,19 +1716,19 @@ Use animation carefully.
 
 Good:
 
-* subtle node expansion
-* relationship highlighting
-* smooth camera movement
-* focus transitions
-* filtering transitions
+- subtle node expansion
+- relationship highlighting
+- smooth camera movement
+- focus transitions
+- filtering transitions
 
 Bad:
 
-* constantly moving nodes
-* floating particles
-* glowing connections
-* excessive physics
-* animated backgrounds
+- constantly moving nodes
+- floating particles
+- glowing connections
+- excessive physics
+- animated backgrounds
 
 The graph should feel stable and professional.
 
@@ -1744,15 +1744,15 @@ Do not render every possible relationship at once.
 
 Use:
 
-* lazy expansion
-* depth limits
-* viewport-aware rendering
-* clustering where appropriate
-* pagination for relationship lists
-* progressive expansion
-* memoized graph calculations
-* efficient graph rendering
-* server-side relationship queries where appropriate
+- lazy expansion
+- depth limits
+- viewport-aware rendering
+- clustering where appropriate
+- pagination for relationship lists
+- progressive expansion
+- memoized graph calculations
+- efficient graph rendering
+- server-side relationship queries where appropriate
 
 The UI must remain usable on ordinary laptops and phones.
 
@@ -2074,12 +2074,12 @@ Never create fake connections.
 
 Every relationship should have:
 
-* source
-* target
-* type
-* visibility
-* creation date where applicable
-* evidence/source where applicable
+- source
+- target
+- type
+- visibility
+- creation date where applicable
+- evidence/source where applicable
 
 Relationships should be traceable.
 
@@ -2137,23 +2137,23 @@ Inspect the existing codebase.
 
 Identify:
 
-* existing theme system
-* existing customization panel
-* existing layout primitives
-* existing cards/panels
-* existing typography
-* existing navigation
-* existing project schema
-* existing profile schema
-* existing skills schema
-* existing reputation system
-* existing project imports
-* existing GitHub integration
-* existing search
-* existing privacy/visibility
-* existing community system
-* existing milestones
-* existing contributions
+- existing theme system
+- existing customization panel
+- existing layout primitives
+- existing cards/panels
+- existing typography
+- existing navigation
+- existing project schema
+- existing profile schema
+- existing skills schema
+- existing reputation system
+- existing project imports
+- existing GitHub integration
+- existing search
+- existing privacy/visibility
+- existing community system
+- existing milestones
+- existing contributions
 
 Reuse them.
 
@@ -2165,17 +2165,17 @@ Do not create duplicates.
 
 The implementation must preserve:
 
-* existing profiles
-* existing projects
-* existing communities
-* existing customization
-* existing project pages
-* existing import workflows
-* existing GitHub integration
-* existing reputation
-* existing navigation
-* existing authentication
-* existing Supabase structure
+- existing profiles
+- existing projects
+- existing communities
+- existing customization
+- existing project pages
+- existing import workflows
+- existing GitHub integration
+- existing reputation
+- existing navigation
+- existing authentication
+- existing Supabase structure
 
 Do not replace working systems simply to implement the graph.
 
@@ -2438,18 +2438,18 @@ The graph should exist even when the visualization is not visible.
 
 The same relationships should power:
 
-* project pages
-* profiles
-* discovery
-* search
-* skills
-* reputation
-* imports
-* project lineage
-* communities
-* knowledge
-* collaboration
-* contribution history
+- project pages
+- profiles
+- discovery
+- search
+- skills
+- reputation
+- imports
+- project lineage
+- communities
+- knowledge
+- collaboration
+- contribution history
 
 The graph visualization is simply one way of exploring that underlying network.
 

@@ -40,7 +40,10 @@ function ProjectGraphSummaryBody({ input }: { input: ProjectGraphInput }) {
       <div className="flex items-start gap-3">
         <Network className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
         <div>
-          <h2 id="project-graph-heading" className="font-display text-lg font-semibold tracking-tight">
+          <h2
+            id="project-graph-heading"
+            className="font-display text-lg font-semibold tracking-tight"
+          >
             Connected work
           </h2>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
@@ -93,7 +96,9 @@ function ProjectGraphSummaryBody({ input }: { input: ProjectGraphInput }) {
             >
               {parentNode.label}
             </a>
-            <span aria-hidden="true" className="text-muted-foreground">→</span>
+            <span aria-hidden="true" className="text-muted-foreground">
+              →
+            </span>
             <span className="font-medium">{input.project.title}</span>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
