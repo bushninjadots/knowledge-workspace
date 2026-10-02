@@ -31,6 +31,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PersonPill } from "@/components/tethyr/person-pill";
 import { OpenWorkBadge } from "@/components/tethyr/open-work-badge";
 import { CommitGraph } from "@/components/tethyr/project/commit-graph";
+import { ProfileGraphSummary } from "@/components/tethyr/profile/profile-graph-summary";
 import type { ProjectOpenWork } from "@/hooks/use-profile-work";
 import type { RepoSnapshot } from "@/hooks/use-profile-repo-snapshot";
 
@@ -137,6 +138,24 @@ export function ProfileWorkEvidence({
           </ul>
         </div>
       )}
+
+      <ProfileGraphSummary
+        input={{
+          profile: { id: profileId },
+          projects: data.projects.map((project) => ({
+            id: project.id,
+            title: project.title,
+            role: project.role,
+            description: project.description,
+          })),
+          collaborators: data.collaborators.map((collaborator) => ({
+            profile_id: collaborator.profile_id,
+            display_name: collaborator.profile?.display_name,
+            handle: collaborator.profile?.handle,
+            sharedProjectCount: collaborator.sharedProjectCount,
+          })),
+        }}
+      />
     </section>
   );
 }
