@@ -7,10 +7,30 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -51,7 +71,7 @@ export type Database = {
           challenge_id: string
           id: string
           joined_at: string
-          progress: Json
+          progress: Json | null
           review_status: string
           reviewed_at: string | null
           reviewer_note: string | null
@@ -65,7 +85,7 @@ export type Database = {
           challenge_id: string
           id?: string
           joined_at?: string
-          progress?: Json
+          progress?: Json | null
           review_status?: string
           reviewed_at?: string | null
           reviewer_note?: string | null
@@ -79,7 +99,7 @@ export type Database = {
           challenge_id?: string
           id?: string
           joined_at?: string
-          progress?: Json
+          progress?: Json | null
           review_status?: string
           reviewed_at?: string | null
           reviewer_note?: string | null
@@ -97,13 +117,6 @@ export type Database = {
             referencedRelation: "challenges"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "challenge_participants_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       challenges: {
@@ -114,7 +127,9 @@ export type Database = {
           difficulty: string
           end_date: string | null
           id: string
+          is_starter: boolean
           max_participants: number | null
+          pass_criteria: string | null
           project_id: string | null
           skills: string[]
           start_date: string | null
@@ -130,7 +145,9 @@ export type Database = {
           difficulty?: string
           end_date?: string | null
           id?: string
+          is_starter?: boolean
           max_participants?: number | null
+          pass_criteria?: string | null
           project_id?: string | null
           skills?: string[]
           start_date?: string | null
@@ -146,7 +163,9 @@ export type Database = {
           difficulty?: string
           end_date?: string | null
           id?: string
+          is_starter?: boolean
           max_participants?: number | null
+          pass_criteria?: string | null
           project_id?: string | null
           skills?: string[]
           start_date?: string | null
@@ -156,13 +175,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "challenges_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "challenges_project_id_fkey"
             columns: ["project_id"]
@@ -179,6 +191,7 @@ export type Database = {
           created_at: string
           id: string
           is_best_answer: boolean
+          parent_id: string | null
           post_id: string
         }
         Insert: {
@@ -187,6 +200,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_best_answer?: boolean
+          parent_id?: string | null
           post_id: string
         }
         Update: {
@@ -195,6 +209,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_best_answer?: boolean
+          parent_id?: string | null
           post_id?: string
         }
         Relationships: [
@@ -203,6 +218,13 @@ export type Database = {
             columns: ["author_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
             referencedColumns: ["id"]
           },
           {
@@ -583,6 +605,8 @@ export type Database = {
           is_template: boolean
           name: string
           sections: Json
+          star_count: number
+          submission_status: string
           theme_id: string | null
           type: string
           updated_at: string
@@ -598,6 +622,8 @@ export type Database = {
           is_template?: boolean
           name: string
           sections?: Json
+          star_count?: number
+          submission_status?: string
           theme_id?: string | null
           type?: string
           updated_at?: string
@@ -613,6 +639,8 @@ export type Database = {
           is_template?: boolean
           name?: string
           sections?: Json
+          star_count?: number
+          submission_status?: string
           theme_id?: string | null
           type?: string
           updated_at?: string
@@ -628,6 +656,169 @@ export type Database = {
           },
         ]
       }
+      library_board_cards: {
+        Row: {
+          accent: string | null
+          archived: boolean
+          board_id: string
+          column_id: string
+          created_at: string
+          fields: Json
+          id: string
+          item_id: string | null
+          position: number
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          accent?: string | null
+          archived?: boolean
+          board_id: string
+          column_id: string
+          created_at?: string
+          fields?: Json
+          id?: string
+          item_id?: string | null
+          position?: number
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          accent?: string | null
+          archived?: boolean
+          board_id?: string
+          column_id?: string
+          created_at?: string
+          fields?: Json
+          id?: string
+          item_id?: string | null
+          position?: number
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "library_board_cards_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "library_boards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "library_board_cards_column_id_fkey"
+            columns: ["column_id"]
+            isOneToOne: false
+            referencedRelation: "library_board_columns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "library_board_cards_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "library_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "library_board_cards_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      library_board_columns: {
+        Row: {
+          board_id: string
+          created_at: string
+          id: string
+          is_done: boolean
+          name: string
+          position: number
+          user_id: string
+          wip_limit: number | null
+        }
+        Insert: {
+          board_id: string
+          created_at?: string
+          id?: string
+          is_done?: boolean
+          name: string
+          position?: number
+          user_id: string
+          wip_limit?: number | null
+        }
+        Update: {
+          board_id?: string
+          created_at?: string
+          id?: string
+          is_done?: boolean
+          name?: string
+          position?: number
+          user_id?: string
+          wip_limit?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "library_board_columns_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "library_boards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "library_board_columns_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      library_boards: {
+        Row: {
+          color: string
+          created_at: string
+          icon: string
+          id: string
+          name: string
+          position: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          icon?: string
+          id?: string
+          name: string
+          position?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          icon?: string
+          id?: string
+          name?: string
+          position?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "library_boards_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       library_collections: {
         Row: {
           color: string | null
@@ -637,6 +828,7 @@ export type Database = {
           name: string
           parent_id: string | null
           position: number
+          shared: boolean
           updated_at: string
           user_id: string
         }
@@ -648,6 +840,7 @@ export type Database = {
           name: string
           parent_id?: string | null
           position?: number
+          shared?: boolean
           updated_at?: string
           user_id: string
         }
@@ -659,6 +852,7 @@ export type Database = {
           name?: string
           parent_id?: string | null
           position?: number
+          shared?: boolean
           updated_at?: string
           user_id?: string
         }
@@ -724,6 +918,7 @@ export type Database = {
           is_pinned: boolean
           project_id: string | null
           reading_progress: number
+          shared: boolean
           thumbnail_url: string | null
           title: string
           type: Database["public"]["Enums"]["library_item_type"]
@@ -745,6 +940,7 @@ export type Database = {
           is_pinned?: boolean
           project_id?: string | null
           reading_progress?: number
+          shared?: boolean
           thumbnail_url?: string | null
           title?: string
           type?: Database["public"]["Enums"]["library_item_type"]
@@ -766,6 +962,7 @@ export type Database = {
           is_pinned?: boolean
           project_id?: string | null
           reading_progress?: number
+          shared?: boolean
           thumbnail_url?: string | null
           title?: string
           type?: Database["public"]["Enums"]["library_item_type"]
@@ -871,6 +1068,30 @@ export type Database = {
           },
         ]
       }
+      media_bucket_snapshots: {
+        Row: {
+          bucket: string
+          byte_count: number
+          id: number
+          object_count: number
+          taken_at: string
+        }
+        Insert: {
+          bucket: string
+          byte_count?: number
+          id?: never
+          object_count?: number
+          taken_at?: string
+        }
+        Update: {
+          bucket?: string
+          byte_count?: number
+          id?: never
+          object_count?: number
+          taken_at?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           body: string
@@ -912,6 +1133,35 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      migrated_pages: {
+        Row: {
+          migrated_at: string
+          owner_id: string
+          owner_type: string
+          page_id: string
+        }
+        Insert: {
+          migrated_at?: string
+          owner_id: string
+          owner_type: string
+          page_id: string
+        }
+        Update: {
+          migrated_at?: string
+          owner_id?: string
+          owner_type?: string
+          page_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "migrated_pages_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: true
+            referencedRelation: "pages"
             referencedColumns: ["id"]
           },
         ]
@@ -1017,6 +1267,57 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      page_versions: {
+        Row: {
+          id: string
+          layout: Json
+          note: string | null
+          page_id: string
+          published_at: string
+          published_by: string | null
+          theme_id: string | null
+          theme_overrides: Json | null
+          version: number
+        }
+        Insert: {
+          id?: string
+          layout?: Json
+          note?: string | null
+          page_id: string
+          published_at?: string
+          published_by?: string | null
+          theme_id?: string | null
+          theme_overrides?: Json | null
+          version: number
+        }
+        Update: {
+          id?: string
+          layout?: Json
+          note?: string | null
+          page_id?: string
+          published_at?: string
+          published_by?: string | null
+          theme_id?: string | null
+          theme_overrides?: Json | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_versions_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "page_versions_theme_id_fkey"
+            columns: ["theme_id"]
+            isOneToOne: false
+            referencedRelation: "themes"
             referencedColumns: ["id"]
           },
         ]
@@ -1208,13 +1509,6 @@ export type Database = {
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "posts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "post_space_shares_shared_by_fkey"
-            columns: ["shared_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -1473,6 +1767,7 @@ export type Database = {
           notification_preferences: Json
           portfolio_links: Json
           public_background: Json | null
+          readme: string | null
           reputation_score: number
           social_links: Json
           software_stack: string[]
@@ -1507,6 +1802,7 @@ export type Database = {
           notification_preferences?: Json
           portfolio_links?: Json
           public_background?: Json | null
+          readme?: string | null
           reputation_score?: number
           social_links?: Json
           software_stack?: string[]
@@ -1541,6 +1837,7 @@ export type Database = {
           notification_preferences?: Json
           portfolio_links?: Json
           public_background?: Json | null
+          readme?: string | null
           reputation_score?: number
           social_links?: Json
           software_stack?: string[]
@@ -1588,6 +1885,39 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_ai_tags: {
+        Row: {
+          created_at: string
+          project_id: string
+          tagger_id: string
+        }
+        Insert: {
+          created_at?: string
+          project_id: string
+          tagger_id: string
+        }
+        Update: {
+          created_at?: string
+          project_id?: string
+          tagger_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_ai_tags_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_ai_tags_tagger_id_fkey"
+            columns: ["tagger_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -2143,11 +2473,16 @@ export type Database = {
       }
       projects: {
         Row: {
+          ai_assisted: boolean
+          allow_forks: boolean
           collaboration_brief: Json
           cover_url: string | null
           created_at: string
           description: string | null
+          fork_count: number
+          forked_from_project_id: string | null
           gallery: Json
+          github_display: Json | null
           goal: string | null
           id: string
           is_featured: boolean
@@ -2174,11 +2509,16 @@ export type Database = {
           vision: string | null
         }
         Insert: {
+          ai_assisted?: boolean
+          allow_forks?: boolean
           collaboration_brief?: Json
           cover_url?: string | null
           created_at?: string
           description?: string | null
+          fork_count?: number
+          forked_from_project_id?: string | null
           gallery?: Json
+          github_display?: Json | null
           goal?: string | null
           id?: string
           is_featured?: boolean
@@ -2205,11 +2545,16 @@ export type Database = {
           vision?: string | null
         }
         Update: {
+          ai_assisted?: boolean
+          allow_forks?: boolean
           collaboration_brief?: Json
           cover_url?: string | null
           created_at?: string
           description?: string | null
+          fork_count?: number
+          forked_from_project_id?: string | null
           gallery?: Json
+          github_display?: Json | null
           goal?: string | null
           id?: string
           is_featured?: boolean
@@ -2236,6 +2581,13 @@ export type Database = {
           vision?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "projects_forked_from_project_id_fkey"
+            columns: ["forked_from_project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "projects_profile_id_fkey"
             columns: ["profile_id"]
@@ -2501,6 +2853,7 @@ export type Database = {
           skill_id: string | null
           starts_at: string | null
           status: Database["public"]["Enums"]["session_status"]
+          team_id: string | null
           timezone: string
           title: string
           updated_at: string
@@ -2523,6 +2876,7 @@ export type Database = {
           skill_id?: string | null
           starts_at?: string | null
           status?: Database["public"]["Enums"]["session_status"]
+          team_id?: string | null
           timezone?: string
           title: string
           updated_at?: string
@@ -2545,6 +2899,7 @@ export type Database = {
           skill_id?: string | null
           starts_at?: string | null
           status?: Database["public"]["Enums"]["session_status"]
+          team_id?: string | null
           timezone?: string
           title?: string
           updated_at?: string
@@ -2569,6 +2924,13 @@ export type Database = {
             columns: ["skill_id"]
             isOneToOne: false
             referencedRelation: "skills"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
             referencedColumns: ["id"]
           },
         ]
@@ -2819,6 +3181,7 @@ export type Database = {
       teams: {
         Row: {
           avatar_url: string | null
+          caption: string | null
           cover_url: string | null
           created_at: string
           created_by: string
@@ -2826,9 +3189,12 @@ export type Database = {
           id: string
           name: string
           slug: string
+          social_links: Json
+          website_url: string | null
         }
         Insert: {
           avatar_url?: string | null
+          caption?: string | null
           cover_url?: string | null
           created_at?: string
           created_by: string
@@ -2836,9 +3202,12 @@ export type Database = {
           id?: string
           name: string
           slug: string
+          social_links?: Json
+          website_url?: string | null
         }
         Update: {
           avatar_url?: string | null
+          caption?: string | null
           cover_url?: string | null
           created_at?: string
           created_by?: string
@@ -2846,6 +3215,8 @@ export type Database = {
           id?: string
           name?: string
           slug?: string
+          social_links?: Json
+          website_url?: string | null
         }
         Relationships: [
           {
@@ -2853,6 +3224,32 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      template_stars: {
+        Row: {
+          created_at: string
+          layout_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          layout_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          layout_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_stars_layout_id_fkey"
+            columns: ["layout_id"]
+            isOneToOne: false
+            referencedRelation: "layouts"
             referencedColumns: ["id"]
           },
         ]
@@ -2968,9 +3365,158 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      media_bucket_growth: {
+        Row: {
+          bucket: string | null
+          byte_count: number | null
+          byte_growth_7d: number | null
+          last_measured_at: string | null
+          object_count: number | null
+          object_growth_7d: number | null
+        }
+        Relationships: []
+      }
+      pg_all_foreign_keys: {
+        Row: {
+          fk_columns: unknown[] | null
+          fk_constraint_name: unknown
+          fk_schema_name: unknown
+          fk_table_name: unknown
+          fk_table_oid: unknown
+          is_deferrable: boolean | null
+          is_deferred: boolean | null
+          match_type: string | null
+          on_delete: string | null
+          on_update: string | null
+          pk_columns: unknown[] | null
+          pk_constraint_name: unknown
+          pk_index_name: unknown
+          pk_schema_name: unknown
+          pk_table_name: unknown
+          pk_table_oid: unknown
+        }
+        Relationships: []
+      }
+      project_repositories_public: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          project_id: string | null
+          provider: string | null
+          updated_at: string | null
+          url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          project_id?: string | null
+          provider?: string | null
+          updated_at?: string | null
+          url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          project_id?: string | null
+          provider?: string | null
+          updated_at?: string | null
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_repositories_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_repositories_safe: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          metadata: Json | null
+          project_id: string | null
+          provider: string | null
+          updated_at: string | null
+          url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          metadata?: Json | null
+          project_id?: string | null
+          provider?: string | null
+          updated_at?: string | null
+          url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          metadata?: Json | null
+          project_id?: string | null
+          provider?: string | null
+          updated_at?: string | null
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_repositories_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tap_funky: {
+        Row: {
+          args: string | null
+          is_definer: boolean | null
+          is_strict: boolean | null
+          is_visible: boolean | null
+          kind: unknown
+          langoid: unknown
+          name: unknown
+          oid: unknown
+          owner: unknown
+          returns: string | null
+          returns_set: boolean | null
+          schema: unknown
+          volatility: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      _cleanup: { Args: never; Returns: boolean }
+      _contract_on: { Args: { "": string }; Returns: unknown }
+      _create_trigger_if_table_exists: {
+        Args: {
+          p_event?: string
+          p_function_name: string
+          p_level?: string
+          p_table_name: string
+          p_timing?: string
+          p_trigger_name: string
+        }
+        Returns: undefined
+      }
+      _currtest: { Args: never; Returns: number }
+      _db_privs: { Args: never; Returns: unknown[] }
+      _extensions: { Args: never; Returns: unknown[] }
+      _get: { Args: { "": string }; Returns: number }
+      _get_latest: { Args: { "": string }; Returns: number[] }
+      _get_note: { Args: { "": string }; Returns: string }
+      _is_verbose: { Args: never; Returns: boolean }
+      _prokind: { Args: { p_oid: unknown }; Returns: unknown }
+      _query: { Args: { "": string }; Returns: string }
+      _refine_vol: { Args: { "": string }; Returns: string }
+      _retval: { Args: { "": string }; Returns: string }
+      _table_privs: { Args: never; Returns: unknown[] }
+      _temptypes: { Args: { "": string }; Returns: string }
+      _todo: { Args: never; Returns: string }
       accept_project_role_application: {
         Args: {
           p_application_id: string
@@ -2980,13 +3526,71 @@ export type Database = {
         }
         Returns: undefined
       }
+      apply_studio_composition: {
+        Args: {
+          p_composition_id: string
+          p_config: Json
+          p_layout_id: string
+          p_page_id: string
+          p_sections: Json
+        }
+        Returns: undefined
+      }
       approve_space_join_request: {
         Args: { p_space_id: string; p_user_id: string }
         Returns: undefined
       }
+      award_earned_achievements: {
+        Args: { p_profile_id?: string }
+        Returns: Database["public"]["Enums"]["achievement_type"][]
+      }
       ban_space_member: {
         Args: { p_reason?: string; p_space_id: string; p_user_id: string }
         Returns: undefined
+      }
+      col_is_null:
+        | {
+            Args: {
+              column_name: unknown
+              description?: string
+              schema_name: unknown
+              table_name: unknown
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              column_name: unknown
+              description?: string
+              table_name: unknown
+            }
+            Returns: string
+          }
+      col_not_null:
+        | {
+            Args: {
+              column_name: unknown
+              description?: string
+              schema_name: unknown
+              table_name: unknown
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              column_name: unknown
+              description?: string
+              table_name: unknown
+            }
+            Returns: string
+          }
+      community_daily_activity: {
+        Args: { p_days: number; p_since: string }
+        Returns: {
+          day: string
+          joins: number
+          posts: number
+        }[]
       }
       community_space_member_counts: {
         Args: never
@@ -3003,6 +3607,60 @@ export type Database = {
         }
         Returns: undefined
       }
+      diag:
+        | {
+            Args: { msg: unknown }
+            Returns: {
+              error: true
+            } & "Could not choose the best candidate function between: public.diag(msg => text), public.diag(msg => anyelement). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
+          }
+        | {
+            Args: { msg: string }
+            Returns: {
+              error: true
+            } & "Could not choose the best candidate function between: public.diag(msg => text), public.diag(msg => anyelement). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
+          }
+      diag_test_name: { Args: { "": string }; Returns: string }
+      discussion_reply_counts: {
+        Args: { p_discussion_ids: string[] }
+        Returns: {
+          discussion_id: string
+          reply_count: number
+        }[]
+      }
+      do_tap:
+        | { Args: never; Returns: string[] }
+        | { Args: { "": string }; Returns: string[] }
+      explore_open_role_counts: {
+        Args: { p_project_ids: string[] }
+        Returns: {
+          open_roles: number
+          project_id: string
+        }[]
+      }
+      explore_session_host_ids: {
+        Args: { p_now?: string; p_profile_ids: string[] }
+        Returns: {
+          organizer_id: string
+        }[]
+      }
+      fail:
+        | { Args: never; Returns: string }
+        | { Args: { "": string }; Returns: string }
+      findfuncs: { Args: { "": string }; Returns: string[] }
+      finish: { Args: { exception_on_failure?: boolean }; Returns: string[] }
+      fork_project: { Args: { p_project_id: string }; Returns: string }
+      format_type_string: { Args: { "": string }; Returns: string }
+      get_layout_lineage: {
+        Args: { start_id: string }
+        Returns: {
+          depth: number
+          layout_id: string
+          parent_id: string
+        }[]
+      }
+      has_unique: { Args: { "": string }; Returns: string }
+      in_todo: { Args: never; Returns: boolean }
       increment_fork_count: { Args: { layout_id: string }; Returns: undefined }
       increment_usage_count: {
         Args: { template_id: string }
@@ -3021,9 +3679,22 @@ export type Database = {
         }
         Returns: undefined
       }
-      is_project_visible: { Args: { _project_id: string }; Returns: boolean }
+      is_allowed_storage_upload: {
+        Args: { p_bucket: string; p_metadata: Json; p_name: string }
+        Returns: boolean
+      }
+      is_empty: { Args: { "": string }; Returns: string }
+      is_project_visible: { Args: { project_id: string }; Returns: boolean }
       is_session_member: {
         Args: { _session_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_session_organizer: {
+        Args: { p_session_id: string; p_user_id?: string }
+        Returns: boolean
+      }
+      is_session_participant: {
+        Args: { p_session_id: string; p_user_id?: string }
         Returns: boolean
       }
       is_space_banned: {
@@ -3034,10 +3705,16 @@ export type Database = {
         Args: { p_space_id: string; p_user_id?: string }
         Returns: boolean
       }
+      is_space_owner: {
+        Args: { p_space_id: string; p_user_id?: string }
+        Returns: boolean
+      }
       is_space_owner_or_moderator: {
         Args: { p_space_id: string; p_user_id?: string }
         Returns: boolean
       }
+      isnt_empty: { Args: { "": string }; Returns: string }
+      lives_ok: { Args: { "": string }; Returns: string }
       log_activity: {
         Args: { _kind: string; _metadata?: Json; _profile_id: string }
         Returns: undefined
@@ -3053,11 +3730,188 @@ export type Database = {
         Returns: undefined
       }
       mark_space_read: { Args: { p_space_id: string }; Returns: undefined }
+      match_creators: {
+        Args: { p_limit?: number; p_user_id: string }
+        Returns: {
+          availability: Database["public"]["Enums"]["availability_status"]
+          avatar_url: string
+          category: string
+          creator_title: string
+          display_name: string
+          handle: string
+          id: string
+          languages: string[]
+          learn_skills: Json
+          match_reasons: string[]
+          match_score: number
+          teach_skills: Json
+        }[]
+      }
+      match_projects: {
+        Args: { p_limit?: number; p_user_id: string }
+        Returns: {
+          description: string
+          id: string
+          looking_for_collaborators: boolean
+          looking_for_feedback: boolean
+          profile_id: string
+          reasons: string[]
+          score: number
+          skill_ids: string[]
+          stage: Database["public"]["Enums"]["project_stage"]
+          title: string
+        }[]
+      }
+      media_object_is_referenced: {
+        Args: { p_bucket: string; p_name: string }
+        Returns: boolean
+      }
+      no_plan: { Args: never; Returns: boolean[] }
+      num_failed: { Args: never; Returns: number }
+      os_name: { Args: never; Returns: string }
+      pass:
+        | { Args: never; Returns: string }
+        | { Args: { "": string }; Returns: string }
+      pg_version: { Args: never; Returns: string }
+      pg_version_num: { Args: never; Returns: number }
+      pgtap_version: { Args: never; Returns: number }
+      post_engagement_counts: {
+        Args: { p_post_ids: string[] }
+        Returns: {
+          comment_count: number
+          helpful: number
+          likes: number
+          offers: number
+          post_id: string
+          saves: number
+          user_actions: string[]
+        }[]
+      }
+      posts_images_are_valid: { Args: { p_images: string[] }; Returns: boolean }
+      project_ai_tag_count: { Args: { p_project_id: string }; Returns: number }
+      project_ai_user_tagged: {
+        Args: { p_project_id: string }
+        Returns: boolean
+      }
+      prune_orphaned_media: {
+        Args: {
+          p_bucket?: string
+          p_dry_run?: boolean
+          p_min_age_hours?: number
+        }
+        Returns: {
+          bucket_name: string
+          candidates: number
+          mode: string
+          pruned: number
+          retained: number
+        }[]
+      }
+      publish_page_version:
+        | {
+            Args: { _page_id: string }
+            Returns: {
+              id: string
+              layout: Json
+              note: string | null
+              page_id: string
+              published_at: string
+              published_by: string | null
+              theme_id: string | null
+              theme_overrides: Json | null
+              version: number
+            }
+            SetofOptions: {
+              from: "*"
+              to: "page_versions"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+        | {
+            Args: { _note: string; _page_id: string }
+            Returns: {
+              id: string
+              layout: Json
+              note: string | null
+              page_id: string
+              published_at: string
+              published_by: string | null
+              theme_id: string | null
+              theme_overrides: Json | null
+              version: number
+            }
+            SetofOptions: {
+              from: "*"
+              to: "page_versions"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+      reconcile_user_achievements: {
+        Args: { p_profile_id?: string }
+        Returns: Database["public"]["Enums"]["achievement_type"][]
+      }
+      record_media_bucket_snapshot: { Args: never; Returns: number }
       reject_space_join_request: {
         Args: { p_space_id: string; p_user_id: string }
         Returns: undefined
       }
       reseed_default_templates: { Args: never; Returns: number }
+      rollback_page_version: {
+        Args: { _page_id: string; _version: number }
+        Returns: undefined
+      }
+      runtests:
+        | { Args: never; Returns: string[] }
+        | { Args: { "": string }; Returns: string[] }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
+      skill_directory_stats: {
+        Args: { p_skill_ids?: string[] }
+        Returns: {
+          growing_count: number
+          need_count: number
+          project_count: number
+          sharing_count: number
+          skill_id: string
+        }[]
+      }
+      skip:
+        | { Args: { "": string }; Returns: string }
+        | { Args: { how_many: number; why: string }; Returns: string }
+      space_reported_post_counts: {
+        Args: { p_space_id: string }
+        Returns: {
+          post_id: string
+          reports: number
+        }[]
+      }
+      throws_ok: { Args: { "": string }; Returns: string }
+      todo:
+        | { Args: { how_many: number }; Returns: boolean[] }
+        | { Args: { how_many: number; why: string }; Returns: boolean[] }
+        | { Args: { why: string }; Returns: boolean[] }
+        | { Args: { how_many: number; why: string }; Returns: boolean[] }
+      todo_end: { Args: never; Returns: boolean[] }
+      todo_start:
+        | { Args: never; Returns: boolean[] }
+        | { Args: { "": string }; Returns: boolean[] }
+      toggle_template_star: {
+        Args: { target_layout_id: string }
+        Returns: boolean
+      }
+      trending_skills: {
+        Args: { p_limit?: number }
+        Returns: {
+          category: string
+          description: string
+          id: string
+          name: string
+          slug: string
+          usage_count: number
+        }[]
+      }
       unban_space_member: {
         Args: { p_space_id: string; p_user_id: string }
         Returns: undefined
@@ -3157,7 +4011,9 @@ export type Database = {
       space_member_role: "owner" | "moderator" | "member"
     }
     CompositeTypes: {
-      [_ in never]: never
+      _time_trial_type: {
+        a_time: number | null
+      }
     }
   }
 }
@@ -3170,12 +4026,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3199,11 +4055,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3224,11 +4080,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3249,11 +4105,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3266,11 +4122,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never) = never,
+    : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3280,6 +4136,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       achievement_type: [
@@ -3372,3 +4231,4 @@ export const Constants = {
     },
   },
 } as const
+

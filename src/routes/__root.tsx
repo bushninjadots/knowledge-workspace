@@ -7,6 +7,7 @@ import {
   useRouterState,
   HeadContent,
   Scripts,
+  type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 
@@ -43,17 +44,20 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorFallback({ error, reset }: { error: Error; reset: () => void }) {
+function ErrorFallback({ error: errorProp, reset }: ErrorComponentProps) {
+  // The router widened errorComponent's error to `unknown`; normalize before
+  // handing it to the shared boundary, which documents an `Error`.
+  const error = errorProp instanceof Error ? errorProp : new Error(String(errorProp));
   // The shared boundary is the single source of the error layout; the root
   // just supplies the default copy.
   return <RouteErrorBoundary error={error} reset={reset} />;
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponent(props: ErrorComponentProps) {
   return (
-    <Suspense fallback={<ErrorFallback error={error} reset={reset} />}>
-      <LazySentryErrorBoundary fallback={<ErrorFallback error={error} reset={reset} />}>
-        <ErrorFallback error={error} reset={reset} />
+    <Suspense fallback={<ErrorFallback {...props} />}>
+      <LazySentryErrorBoundary fallback={<ErrorFallback {...props} />}>
+        <ErrorFallback {...props} />
       </LazySentryErrorBoundary>
     </Suspense>
   );
