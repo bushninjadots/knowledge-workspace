@@ -20,6 +20,15 @@ function ProjectGraphSummaryBody({ input }: { input: ProjectGraphInput }) {
     return result;
   }, {});
   const relationships = graph.edges.length;
+  const nodeLabels = new Map(graph.nodes.map((node) => [node.id, node.label]));
+  const relationshipTrail = graph.edges
+    .map((edge) => ({
+      id: `${edge.from}-${edge.type}-${edge.to}`,
+      from: nodeLabels.get(edge.from) ?? edge.from,
+      to: nodeLabels.get(edge.to) ?? edge.to,
+      relation: formatRelationship(edge.type),
+    }))
+    .slice(0, 5);
 
   return (
     <section
@@ -70,6 +79,29 @@ function ProjectGraphSummaryBody({ input }: { input: ProjectGraphInput }) {
           <dd className="font-medium tabular-nums">{relationships}</dd>
         </div>
       </dl>
+      <div className="mt-6 border-l border-border/60 pl-4">
+        <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+          Connected through
+        </p>
+        <ul className="mt-3 space-y-2 text-sm">
+          {relationshipTrail.map((item) => (
+            <li key={item.id} className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+              <span className="font-medium">{item.from}</span>
+              <span className="text-muted-foreground">{item.relation}</span>
+              <span className="font-medium">{item.to}</span>
+            </li>
+          ))}
+        </ul>
+        {relationships > relationshipTrail.length ? (
+          <p className="mt-3 text-xs text-muted-foreground">
+            Showing {relationshipTrail.length} of {relationships} relationships.
+          </p>
+        ) : null}
+      </div>
     </section>
   );
+}
+
+function formatRelationship(type: string) {
+  return type.replaceAll("_", " ");
 }
