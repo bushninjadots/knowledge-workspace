@@ -173,7 +173,7 @@ export function ApplicationsModuleRow() {
     queryFn: async () => {
       const profileId = me?.userId;
       if (!profileId) return { items: [], degraded: false };
-      const { data, error } = await supabase
+      const { data, error } = await supabasePending
         .from("project_role_applications")
         .select("id, status, role_id, created_at, project_open_roles(title, projects(title, id))")
         .eq("profile_id", profileId)
@@ -277,7 +277,7 @@ export function RoadmapModuleRow() {
     queryKey: ["my-milestone-summary", projectIds],
     queryFn: async () => {
       if (projectIds.length === 0) return { items: [], degraded: false };
-      const { data, error } = await supabase
+      const { data, error } = await supabasePending
         .from("project_milestones")
         .select("project_id, status")
         .in("project_id", projectIds);

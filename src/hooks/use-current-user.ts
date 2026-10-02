@@ -105,7 +105,7 @@ async function fetchProfile(userId: string) {
   // Try full column set first; fall back to basic columns if a column is missing.
   let lastError: { message?: string | null; code?: string | null } | null = null;
   for (const cols of [`${PROFILE_COLS_BASIC}, ${PROFILE_COLS_EXTENDED}`, PROFILE_COLS_BASIC]) {
-    const { data, error } = await supabase
+    const { data, error } = await supabasePending
       .from("profiles")
       .select(cols)
       .eq("id", userId)
@@ -330,7 +330,7 @@ export function useSkillsCatalog() {
   return useQuery({
     queryKey: ["skills"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await supabasePending
         .from("skills")
         .select("*")
         .order("category")

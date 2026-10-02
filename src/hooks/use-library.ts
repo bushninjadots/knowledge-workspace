@@ -191,7 +191,7 @@ export function useProjectLibraryItems(projectId: string | null) {
     enabled: !!userId && !!projectId,
     queryFn: async (): Promise<LibraryItem[]> => {
       if (!userId || !projectId) return [];
-      const { data, error } = await supabase
+      const { data, error } = await supabasePending
         .from("library_items")
         .select("*")
         .eq("project_id", projectId)
@@ -213,7 +213,7 @@ export function useLibraryItem(id: string | null) {
     queryFn: async (): Promise<LibraryItemWithTags | null> => {
       if (!userId || !id) return null;
 
-      const { data: item, error } = await supabase
+      const { data: item, error } = await supabasePending
         .from("library_items")
         .select("*")
         .eq("id", id)
@@ -224,7 +224,7 @@ export function useLibraryItem(id: string | null) {
       if (!item) return null;
 
       // Fetch tags
-      const { data: tagLinks } = await supabase
+      const { data: tagLinks } = await supabasePending
         .from("library_item_tags")
         .select("tag_id, library_tags(*)")
         .eq("item_id", id);
@@ -236,7 +236,7 @@ export function useLibraryItem(id: string | null) {
       // Fetch collection
       let collection: LibraryCollection | null = null;
       if (item.collection_id) {
-        const { data: col } = await supabase
+        const { data: col } = await supabasePending
           .from("library_collections")
           .select("*")
           .eq("id", item.collection_id)
@@ -263,7 +263,7 @@ export function useCreateItem() {
       url?: string;
     }) => {
       if (!me?.userId) throw new Error("Not authenticated");
-      const { data, error } = await supabase
+      const { data, error } = await supabasePending
         .from("library_items")
         .insert({
           user_id: me.userId,
@@ -303,7 +303,7 @@ export function useUpdateItem() {
       github_source?: GithubSource | null;
     }) => {
       const { id, ...updates } = input;
-      const { data, error } = await supabase
+      const { data, error } = await supabasePending
         .from("library_items")
         .update(updates)
         .eq("id", id)
@@ -394,7 +394,7 @@ export function useSharedLibraryCollection(id: string | null) {
     staleTime: 30_000,
     queryFn: async (): Promise<{ name: string; items: LibraryItem[] } | null> => {
       if (!id) return null;
-      const { data: collection, error } = await supabase
+      const { data: collection, error } = await supabasePending
         .from("library_collections")
         .select("name")
         .eq("id", id)
@@ -402,7 +402,7 @@ export function useSharedLibraryCollection(id: string | null) {
         .maybeSingle();
       if (error) throw error;
       if (!collection) return null;
-      const { data: items, error: itemsError } = await supabase
+      const { data: items, error: itemsError } = await supabasePending
         .from("library_items")
         .select("*")
         .eq("collection_id", id)
@@ -450,7 +450,7 @@ export function useSharedLibraryItem(id: string | null) {
     staleTime: 30_000,
     queryFn: async (): Promise<LibraryItem | null> => {
       if (!id) return null;
-      const { data, error } = await supabase
+      const { data, error } = await supabasePending
         .from("library_items")
         .select("*")
         .eq("id", id)
@@ -473,7 +473,7 @@ export function useLibraryCollections() {
     enabled: !!userId,
     queryFn: async (): Promise<LibraryCollection[]> => {
       if (!userId) return [];
-      const { data, error } = await supabase
+      const { data, error } = await supabasePending
         .from("library_collections")
         .select("*")
         .eq("user_id", userId)
@@ -498,7 +498,7 @@ export function useCreateCollection() {
       if (!me?.userId) throw new Error("Not authenticated");
 
       // Get max position
-      const { data: existing } = await supabase
+      const { data: existing } = await supabasePending
         .from("library_collections")
         .select("position")
         .eq("user_id", me.userId)
@@ -507,7 +507,7 @@ export function useCreateCollection() {
 
       const nextPosition = existing && existing.length > 0 ? existing[0].position + 1 : 0;
 
-      const { data, error } = await supabase
+      const { data, error } = await supabasePending
         .from("library_collections")
         .insert({
           user_id: me.userId,
@@ -557,7 +557,7 @@ export function useLibraryTags() {
     enabled: !!userId,
     queryFn: async (): Promise<LibraryTag[]> => {
       if (!userId) return [];
-      const { data, error } = await supabase
+      const { data, error } = await supabasePending
         .from("library_tags")
         .select("*")
         .eq("user_id", userId)
@@ -575,7 +575,7 @@ export function useCreateTag() {
   return useMutation({
     mutationFn: async (input: { name: string; color?: string }) => {
       if (!me?.userId) throw new Error("Not authenticated");
-      const { data, error } = await supabase
+      const { data, error } = await supabasePending
         .from("library_tags")
         .insert({
           user_id: me.userId,
@@ -612,7 +612,7 @@ export function useRemoveTagFromItem() {
 
   return useMutation({
     mutationFn: async ({ item_id, tag_id }: { item_id: string; tag_id: string }) => {
-      const { error } = await supabase
+      const { error } = await supabasePending
         .from("library_item_tags")
         .delete()
         .eq("item_id", item_id)
@@ -735,7 +735,7 @@ export function useUploadLibraryFile() {
         content = input.description;
       }
 
-      const { data: item, error: itemError } = await supabase
+      const { data: item, error: itemError } = await supabasePending
         .from("library_items")
         .insert({
           user_id: me.userId,
@@ -779,7 +779,7 @@ export function useLibraryBoards() {
     enabled: !!userId,
     queryFn: async (): Promise<LibraryBoard[]> => {
       if (!userId) return [];
-      const { data, error } = await supabase
+      const { data, error } = await supabasePending
         .from("library_boards")
         .select("*")
         .eq("user_id", userId)
@@ -800,7 +800,7 @@ export function useLibraryBoard(boardId: string | null) {
     enabled: !!userId && !!boardId,
     queryFn: async (): Promise<LibraryBoardData | null> => {
       if (!userId || !boardId) return null;
-      const { data: board, error } = await supabase
+      const { data: board, error } = await supabasePending
         .from("library_boards")
         .select("*")
         .eq("id", boardId)
@@ -845,7 +845,7 @@ export function useCreateBoard() {
   return useMutation({
     mutationFn: async (input: { name: string; icon?: string; color?: string }) => {
       if (!me?.userId) throw new Error("Not authenticated");
-      const { data: existing } = await supabase
+      const { data: existing } = await supabasePending
         .from("library_boards")
         .select("position")
         .eq("user_id", me.userId)
@@ -853,7 +853,7 @@ export function useCreateBoard() {
         .limit(1);
       const nextPosition = existing && existing.length > 0 ? existing[0].position + 1 : 0;
 
-      const { data: board, error } = await supabase
+      const { data: board, error } = await supabasePending
         .from("library_boards")
         .insert({
           user_id: me.userId,
@@ -928,14 +928,14 @@ export function useCreateColumn() {
       wip_limit?: number | null;
     }) => {
       if (!me?.userId) throw new Error("Not authenticated");
-      const { data: existing } = await supabase
+      const { data: existing } = await supabasePending
         .from("library_board_columns")
         .select("position")
         .eq("board_id", input.board_id)
         .order("position", { ascending: false })
         .limit(1);
       const nextPosition = existing && existing.length > 0 ? existing[0].position + 1 : 0;
-      const { data, error } = await supabase
+      const { data, error } = await supabasePending
         .from("library_board_columns")
         .insert({
           board_id: input.board_id,
@@ -1002,14 +1002,14 @@ export function useCreateCard() {
       accent?: string | null;
     }) => {
       if (!me?.userId) throw new Error("Not authenticated");
-      const { data: existing } = await supabase
+      const { data: existing } = await supabasePending
         .from("library_board_cards")
         .select("position")
         .eq("column_id", input.column_id)
         .order("position", { ascending: false })
         .limit(1);
       const nextPosition = existing && existing.length > 0 ? existing[0].position + 1 : 0;
-      const { data, error } = await supabase
+      const { data, error } = await supabasePending
         .from("library_board_cards")
         .insert({
           board_id: input.board_id,
@@ -1045,7 +1045,7 @@ export function useMoveCard() {
       column_id: string;
       position: number;
     }) => {
-      const { error } = await supabase
+      const { error } = await supabasePending
         .from("library_board_cards")
         .update({ column_id: input.column_id, position: input.position })
         .eq("id", input.id);
@@ -1102,7 +1102,7 @@ export function useLibrarySearch(query: string) {
     staleTime: 30_000,
     queryFn: async (): Promise<LibraryItem[]> => {
       if (!userId || trimmed.length < SEARCH_MIN_LENGTH) return [];
-      const { data, error } = await supabase
+      const { data, error } = await supabasePending
         .from("library_items")
         .select("*")
         .eq("user_id", userId)

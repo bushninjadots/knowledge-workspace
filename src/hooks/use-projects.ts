@@ -817,7 +817,7 @@ export function useProjectActivity(projectId: string) {
       const actorIds = [...new Set(rows.map((r) => r.actor_id).filter((a): a is string => !!a))];
       const { data: profiles } =
         actorIds.length > 0
-          ? await supabase
+          ? await supabasePending
               .from("profiles")
               .select("id, display_name, handle, avatar_url")
               .in("id", actorIds)

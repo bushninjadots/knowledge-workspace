@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { supabasePending } from "@/lib/supabase-pending-schema";
 import { Link, useParams } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {

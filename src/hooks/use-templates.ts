@@ -112,7 +112,7 @@ async function joinCreators(
     ...new Set(templates.map((t) => t.createdBy).filter((id): id is string => !!id)),
   ];
   if (creatorIds.length > 0) {
-    const { data: profiles, error } = await supabase
+    const { data: profiles, error } = await supabasePending
       .from("profiles")
       .select("id, handle, display_name")
       .in("id", creatorIds);
@@ -129,7 +129,7 @@ async function joinCreators(
   // Batch-join star status for the current member.
   if (currentUserId && templates.length > 0) {
     const layoutIds = templates.map((t) => t.id);
-    const { data: starRows } = await supabase
+    const { data: starRows } = await supabasePending
       .from("template_stars")
       .select("layout_id")
       .eq("user_id", currentUserId)
@@ -199,7 +199,7 @@ export function useMyTemplates(enabled: boolean) {
       const currentUserId = auth.user?.id;
       if (!currentUserId) return [];
 
-      const { data, error } = await supabase
+      const { data, error } = await supabasePending
         .from("layouts")
         .select(TEMPLATE_SELECT)
         .eq("created_by", currentUserId)
@@ -212,7 +212,7 @@ export function useMyTemplates(enabled: boolean) {
 
       // Join fork parents for the rows that are forks.
       const childIds = templates.map((t) => t.id);
-      const { data: forkRows, error: forkError } = await supabase
+      const { data: forkRows, error: forkError } = await supabasePending
         .from("forks")
         .select("parent_layout_id, child_layout_id")
         .in("child_layout_id", childIds);
@@ -253,7 +253,7 @@ export function useForkTemplate() {
       if (!user) throw new Error("Sign in to save a template.");
 
       // 1. Copy the template's structure into a new owned layout.
-      const { data: source, error: sourceError } = await supabase
+      const { data: source, error: sourceError } = await supabasePending
         .from("layouts")
         .select("name, description, category, sections, theme_id")
         .eq("id", templateId)
@@ -262,7 +262,7 @@ export function useForkTemplate() {
       if (sourceError) throw sourceError;
       if (!source) throw new Error("That template no longer exists.");
 
-      const { data: fork, error: insertError } = await supabase
+      const { data: fork, error: insertError } = await supabasePending
         .from("layouts")
         .insert({
           name: `${source.name === templateName ? source.name : templateName} (fork)`.slice(0, 80),
@@ -324,7 +324,7 @@ export function usePublishTemplate() {
 
   return useMutation({
     mutationFn: async ({ layoutId, name, description, category }: PublishTemplateParams) => {
-      const { error } = await supabase
+      const { error } = await supabasePending
         .from("layouts")
         .update({
           is_template: false,
@@ -351,7 +351,7 @@ export function useDeleteTemplate() {
 
   return useMutation({
     mutationFn: async ({ layoutId }: { layoutId: string }) => {
-      const { error } = await supabase
+      const { error } = await supabasePending
         .from("layouts")
         .update({ is_template: false, submission_status: "approved" })
         .eq("id", layoutId);
@@ -403,7 +403,7 @@ export function useToggleTemplateStar() {
  * subscription to subscribe to.
  */
 export async function fetchTemplateSections(templateId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await supabasePending
     .from("layouts")
     .select("sections, theme_id, name")
     .eq("id", templateId)
