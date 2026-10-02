@@ -759,6 +759,13 @@ export function ProjectPage() {
                     status: milestone.status,
                   })),
                   skills: skills.map((skill) => ({ id: skill.id, name: skill.name })),
+                  roles: openRoles.map((role) => ({
+                    id: role.id,
+                    title: role.title,
+                    is_filled: role.is_filled,
+                    filled_by: role.filled_by,
+                  })),
+                  needs: needs.map((need) => ({ id: need.id, title: need.title })),
                   forkedFrom: forkedFrom
                     ? { id: forkedFrom.id, title: forkedFrom.title }
                     : null,

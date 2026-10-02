@@ -1,5 +1,6 @@
 import { Network } from "lucide-react";
 import { buildProjectGraph, type ProjectGraphInput } from "@/lib/project-graph";
+import { ProjectGraphExplorer } from "./project-graph-explorer";
 
 /** The project itself plus at least one other node — otherwise the summary is
  *  just a project counting itself, and the section hides (the graph spec's
@@ -70,6 +71,7 @@ function ProjectGraphSummaryBody({ input }: { input: ProjectGraphInput }) {
           <dd className="font-medium tabular-nums">{relationships}</dd>
         </div>
       </dl>
+      <ProjectGraphExplorer input={input} />
     </section>
   );
 }
