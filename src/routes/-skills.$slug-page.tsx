@@ -31,7 +31,7 @@ import { fetchSkillBySlug, skillQueryKey } from "./-skills.$slug-data";
 
 // Code-split module: the interactive page for its route. See the route
 // file for the eager surface (loader/head) and the lazyRouteComponent wire-up.
-const sb = supabasePending;
+const sb = supabase;
 
 type TabId = "overview" | "people" | "projects";
 
@@ -154,7 +154,7 @@ function useHubStats(skillId: string | undefined) {
     enabled: Boolean(skillId),
     queryFn: async (): Promise<HubStats> => {
       const [{ data: stats }, { count: endorseCount }] = await Promise.all([
-        sb.rpc("skill_directory_stats", { p_skill_ids: [skillId!] }),
+        supabasePending.rpc("skill_directory_stats", { p_skill_ids: [skillId!] }),
         sb
           .from("skill_endorsements")
           .select("id", { count: "exact", head: true })

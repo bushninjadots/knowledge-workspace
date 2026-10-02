@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabasePending } from "@/lib/supabase-pending-schema";
 import { supabase } from "@/integrations/supabase/client";
 
-const sb = supabasePending;
+const sb = supabase;
 
 export type TeamRole = "lead" | "core" | "contributor";
 
@@ -363,7 +363,7 @@ export function useUpdateTeam(teamId: string) {
       avatar_url?: string | null;
       cover_url?: string | null;
     }) => {
-      const { data, error } = await sb
+      const { data, error } = await supabasePending
         .from("teams")
         .update(input)
         .eq("id", teamId)

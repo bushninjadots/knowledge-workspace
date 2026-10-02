@@ -50,7 +50,10 @@ export interface CommunityTemplate {
   updatedAt: string;
 }
 
-type LayoutRow = Database["public"]["Tables"]["layouts"]["Row"] & { star_count: number | null; submission_status: string | null };
+type LayoutRow = Database["public"]["Tables"]["layouts"]["Row"] & {
+  star_count: number | null;
+  submission_status: string | null;
+};
 
 interface CreatorJoin {
   handle: string | null;

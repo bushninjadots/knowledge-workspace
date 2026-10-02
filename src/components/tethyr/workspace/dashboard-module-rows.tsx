@@ -472,7 +472,10 @@ export function SuggestedCreatorsModuleRow() {
 
   const preview = matches
     .slice(0, 3)
-    .map((candidate: { display_name?: string | null; handle?: string | null }) => candidate.display_name ?? candidate.handle ?? "Member")
+    .map(
+      (candidate: { display_name?: string | null; handle?: string | null }) =>
+        candidate.display_name ?? candidate.handle ?? "Member",
+    )
     .join(" · ");
 
   return (

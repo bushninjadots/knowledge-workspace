@@ -338,7 +338,10 @@ export function useToggleFavorite() {
 
   return useMutation({
     mutationFn: async ({ id, is_favorite }: { id: string; is_favorite: boolean }) => {
-      const { error } = await supabasePending.from("library_items").update({ is_favorite }).eq("id", id);
+      const { error } = await supabasePending
+        .from("library_items")
+        .update({ is_favorite })
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -352,7 +355,10 @@ export function useTogglePin() {
 
   return useMutation({
     mutationFn: async ({ id, is_pinned }: { id: string; is_pinned: boolean }) => {
-      const { error } = await supabasePending.from("library_items").update({ is_pinned }).eq("id", id);
+      const { error } = await supabasePending
+        .from("library_items")
+        .update({ is_pinned })
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -372,7 +378,10 @@ export function useToggleCollectionShared() {
 
   return useMutation({
     mutationFn: async ({ id, shared }: { id: string; shared: boolean }) => {
-      const { error } = await supabasePending.from("library_collections").update({ shared }).eq("id", id);
+      const { error } = await supabasePending
+        .from("library_collections")
+        .update({ shared })
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -534,7 +543,10 @@ export function useDeleteCollection() {
   return useMutation({
     mutationFn: async (id: string) => {
       // Unset collection_id on items in this collection
-      await supabasePending.from("library_items").update({ collection_id: null }).eq("collection_id", id);
+      await supabasePending
+        .from("library_items")
+        .update({ collection_id: null })
+        .eq("collection_id", id);
 
       const { error } = await supabasePending.from("library_collections").delete().eq("id", id);
       if (error) throw error;
@@ -965,7 +977,10 @@ export function useUpdateColumn() {
       board_id: _board_id,
       ...patch
     }: { id: string; board_id: string } & Partial<LibraryBoardColumn>) => {
-      const { error } = await supabasePending.from("library_board_columns").update(patch).eq("id", id);
+      const { error } = await supabasePending
+        .from("library_board_columns")
+        .update(patch)
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: (_data, variables) => {
@@ -1066,7 +1081,10 @@ export function useUpdateCard() {
       board_id: _board_id,
       ...patch
     }: { id: string; board_id: string } & Partial<LibraryBoardCard>) => {
-      const { error } = await supabasePending.from("library_board_cards").update(patch).eq("id", id);
+      const { error } = await supabasePending
+        .from("library_board_cards")
+        .update(patch)
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: (_data, variables) => {

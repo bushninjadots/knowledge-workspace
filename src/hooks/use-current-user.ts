@@ -182,12 +182,17 @@ async function fetchCurrentUser(): Promise<CurrentUserData | null> {
       ),
       safeQuery(
         "learn skills",
-        () => supabasePending.from("profile_skills_learn").select("skill_id").eq("profile_id", userId),
+        () =>
+          supabasePending.from("profile_skills_learn").select("skill_id").eq("profile_id", userId),
         { data: [], error: null },
       ),
       safeQuery(
         "wishlist skills",
-        () => supabasePending.from("profile_skills_wishlist").select("skill_id").eq("profile_id", userId),
+        () =>
+          supabasePending
+            .from("profile_skills_wishlist")
+            .select("skill_id")
+            .eq("profile_id", userId),
         { data: [], error: null },
       ),
       safeQuery(
@@ -349,14 +354,23 @@ export function useTrendingSkills() {
       const { data, error } = await supabasePending.rpc("trending_skills", { p_limit: 100 });
       if (error) throw error;
 
-      return (data ?? []).map((skill: { id: string; slug: string; name: string; category: string; description: string | null; usage_count: number }) => ({
-        id: skill.id,
-        slug: skill.slug,
-        name: skill.name,
-        category: skill.category,
-        description: skill.description,
-        usageCount: Number(skill.usage_count),
-      }));
+      return (data ?? []).map(
+        (skill: {
+          id: string;
+          slug: string;
+          name: string;
+          category: string;
+          description: string | null;
+          usage_count: number;
+        }) => ({
+          id: skill.id,
+          slug: skill.slug,
+          name: skill.name,
+          category: skill.category,
+          description: skill.description,
+          usageCount: Number(skill.usage_count),
+        }),
+      );
     },
     staleTime: 5 * 60 * 1000,
   });
