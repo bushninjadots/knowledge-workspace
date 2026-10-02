@@ -28,6 +28,14 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway" # so SSR can reach Supabase on the host
     command: sh -c "npm install --no-audit --no-fund --prefer-offline && npm run dev"
+    healthcheck:
+      # Probe the Vite dev server's own HTML response — a 200 means SSR
+      # compiled and the server is accepting connections on 8080.
+      test: ["CMD", "sh", "-c", "curl -sf http://localhost:8080/ -o /dev/null"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
     restart: unless-stopped
 
 volumes:
