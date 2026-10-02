@@ -29,6 +29,9 @@ function ProjectGraphSummaryBody({ input }: { input: ProjectGraphInput }) {
       relation: formatRelationship(edge.type),
     }))
     .slice(0, 5);
+  const connectedNodes = graph.nodes
+    .filter((node) => node.id !== `project:${input.project.id}`)
+    .slice(0, 12);
 
   return (
     <section
@@ -79,6 +82,14 @@ function ProjectGraphSummaryBody({ input }: { input: ProjectGraphInput }) {
           <dd className="font-medium tabular-nums">{relationships}</dd>
         </div>
       </dl>
+      <ul aria-label="Connected nodes" className="mt-5 flex flex-wrap gap-2">
+        {connectedNodes.map((node) => (
+          <li key={node.id} className="border border-border/70 px-2.5 py-1 text-xs">
+            <span className="text-muted-foreground">{node.type.replace("_", " ")}</span>{" "}
+            <span className="font-medium">{node.label}</span>
+          </li>
+        ))}
+      </ul>
       <div className="mt-6 border-l border-border/60 pl-4">
         <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
           Connected through
