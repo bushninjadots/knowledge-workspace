@@ -37,7 +37,13 @@ export type ProjectGraphRole = {
   is_filled?: boolean;
   filled_by?: string | null;
 };
-export type ProjectGraphRepository = { id: string; name: string; url?: string | null };
+export type ProjectGraphRepository = {
+  id: string;
+  name: string;
+  url?: string | null;
+  provider?: string | null;
+  importedAt?: string | null;
+};
 export type ProjectGraphDiscussion = { id: string; title: string };
 export type ProjectGraphNeed = { id: string; title: string };
 /** The project this one was forked from, resolved to just its identity. */
@@ -128,8 +134,18 @@ export function buildProjectGraph(input: ProjectGraphInput): TethyrGraph {
 
   for (const repository of input.repositories ?? []) {
     const repositoryId = `repository:${repository.id}`;
-    addNode(nodes, createGraphNode({ id: repositoryId, type: "repository", label: repository.name, metadata: { url: repository.url } }));
-    addEdge(edges, createGraphEdge({ type: "imported_from", from: projectId, to: repositoryId, metadata: { repositoryId: repository.id } }));
+    addNode(nodes, createGraphNode({
+      id: repositoryId,
+      type: "repository",
+      label: repository.name,
+      metadata: { url: repository.url, provider: repository.provider, importedAt: repository.importedAt },
+    }));
+    addEdge(edges, createGraphEdge({
+      type: "imported_from",
+      from: projectId,
+      to: repositoryId,
+      metadata: { repositoryId: repository.id, provider: repository.provider, date: repository.importedAt ?? undefined },
+    }));
   }
 
   for (const discussion of input.discussions ?? []) {

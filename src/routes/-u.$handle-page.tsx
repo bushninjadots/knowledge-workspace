@@ -18,6 +18,7 @@ import { EditModeProvider } from "@/components/tethyr/page/edit-mode-context";
 import { useProfilePage } from "@/hooks/use-profile-page";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { ProfileWorkEvidence } from "@/components/tethyr/profile/work-evidence";
+import { ProfileGraphSummary } from "@/components/tethyr/profile/profile-graph-summary";
 import { themeTokensToStyle } from "@/lib/theme-tokens";
 import { useTheme as useAppTheme } from "@/lib/theme";
 import { SectionShell } from "@/components/tethyr/section-shell";
@@ -318,6 +319,10 @@ function BasicProfile({
           for the same eye-line. */}
       <div className="mt-12">
         <ProfileWorkEvidence profileId={profile.id} isOwner={isOwner} />
+      </div>
+
+      <div className="mt-2">
+        <ProfileGraphSummary profileId={profile.id} name={name} />
       </div>
 
       {/* 4 — metadata, demoted to a footnote below a rule */}
