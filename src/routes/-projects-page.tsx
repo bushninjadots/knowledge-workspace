@@ -16,7 +16,9 @@ import {
   useProjectNeeds,
   useUpdateProjectPresentation,
   useProjectCommunityPostCount,
+  useProjectActivity,
   useForkProject,
+  useProjectForks,
   type Contributor,
   type ProjectDetail,
 } from "@/hooks/use-projects";
@@ -464,6 +466,30 @@ export function ProjectPage() {
   const { data: projectSessions = [] } = useProjectSessions(id);
   const { data: projectChallenges = [] } = useProjectChallenges(id);
   const { data: communityPostCount = 0 } = useProjectCommunityPostCount(id);
+  const { data: forks = [] } = useProjectForks(id);
+  const { data: activityRows = [] } = useProjectActivity(id);
+
+  // Spec §7 — the GitHub commits already imported onto the project become
+  // graph contributions, carrying the repository and author the import named.
+  const importedCommits = activityRows
+    .filter((row) => row.kind === "github_commit")
+    .map((row) => {
+      const meta = (row.metadata ?? {}) as {
+        repository?: string | null;
+        url?: string | null;
+        author_login?: string | null;
+        author_name?: string | null;
+      };
+      return {
+        id: row.id,
+        label: row.title,
+        authorLogin: meta.author_login ?? null,
+        authorName: meta.author_name ?? null,
+        date: row.created_at,
+        url: meta.url ?? null,
+        repository: meta.repository ?? null,
+      };
+    });
   const updatePresentation = useUpdateProjectPresentation();
   const markProjectVisited = useMarkProjectVisited();
   const forkProject = useForkProject();
@@ -778,8 +804,41 @@ export function ProjectPage() {
                     url: repo.url,
                     provider: repo.provider,
                     importedAt: repo.created_at,
+                    fullName: getRepoFullName(repo),
+                    language: repo.metadata.language ?? null,
+                    topics: repo.metadata.topics ?? null,
                   })),
+                  importedCommits,
+                  contributions: updates.map((update) => ({
+                    id: update.id,
+                    label: update.title,
+                    description: update.body,
+                    authorProfileId: update.author_id,
+                    date: update.created_at,
+                  })),
+                  history: [
+                    ...milestones.map((milestone) => ({
+                      id: milestone.id,
+                      label: milestone.title,
+                      description: milestone.description,
+                      date: milestone.due_date ?? milestone.created_at,
+                      kind: "milestone" as const,
+                    })),
+                    ...updates.map((update) => ({
+                      id: update.id,
+                      label: update.title,
+                      description: update.body,
+                      date: update.created_at,
+                      kind: "contribution" as const,
+                    })),
+                  ].sort((a, b) => (a.date ?? "").localeCompare(b.date ?? "")),
                   forkedFrom: forkedFrom ? { id: forkedFrom.id, title: forkedFrom.title } : null,
+                  relatedProjects: forks.map((fork) => ({
+                    id: fork.id,
+                    title: fork.title,
+                    description: fork.description,
+                    relationship: "derived_from" as const,
+                  })),
                 }}
               />
             </div>
