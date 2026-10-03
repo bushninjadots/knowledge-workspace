@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { Network } from "lucide-react";
+import { Network, Search } from "lucide-react";
+import { useMemo, useState } from "react";
 import { createGraphEdge, createGraphNode, normalizeGraph } from "@/lib/graph-model";
 
 export function SkillGraphSummary({
@@ -55,6 +56,16 @@ export function SkillGraphSummary({
   ];
   const graph = normalizeGraph({ nodes, edges });
   const connected = graph.nodes.filter((node) => node.id !== skillId);
+  const [query, setQuery] = useState("");
+  const normalizedQuery = query.trim().toLowerCase();
+  const filteredConnected = useMemo(
+    () =>
+      connected.filter(
+        (node) =>
+          normalizedQuery.length === 0 || node.label.toLowerCase().includes(normalizedQuery),
+      ),
+    [connected, normalizedQuery],
+  );
   if (connected.length === 0) return null;
 
   const hrefForNode = (node: (typeof connected)[number]) => {
@@ -75,7 +86,7 @@ export function SkillGraphSummary({
   ]
     .map((group) => ({
       ...group,
-      nodes: connected.filter(
+      nodes: filteredConnected.filter(
         (node) =>
           node.type === group.type &&
           graph.edges.some(
@@ -99,9 +110,30 @@ export function SkillGraphSummary({
           </p>
         </div>
       </div>
-      <div className="mt-5 grid gap-5 sm:grid-cols-3" aria-label={`${skillName} graph connections`}>
-        {groups.map((group) => (
-          <div key={group.label}>
+      <div className="mt-5 max-w-md">
+        <label htmlFor="skill-graph-search" className="sr-only">
+          Search {skillName} graph connections
+        </label>
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+          <input
+            id="skill-graph-search"
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search connections"
+            className="h-9 w-full rounded-md border border-border/70 bg-background pl-9 pr-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary"
+          />
+        </div>
+      </div>
+      {filteredConnected.length === 0 ? (
+        <p className="mt-5 text-sm text-muted-foreground" role="status">
+          No connections match “{query}”.
+        </p>
+      ) : (
+        <div className="mt-5 grid gap-5 sm:grid-cols-3" aria-label={`${skillName} graph connections`}>
+          {groups.map((group) => (
+            <div key={group.label}>
             <h4 className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
               {group.label}
             </h4>
@@ -126,8 +158,9 @@ export function SkillGraphSummary({
               })}
             </ul>
           </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
