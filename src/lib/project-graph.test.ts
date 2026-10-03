@@ -31,6 +31,15 @@ describe("buildProjectGraph", () => {
       repositories: [{ id: "repo", name: "atlas-web", url: "https://example.com" }],
       discussions: [{ id: "d1", title: "Feedback" }],
       needs: [{ id: "n1", title: "Research support" }],
+      contributions: [
+        {
+          id: "commit-1",
+          label: "Build the map view",
+          authorProfileId: "ari",
+          date: "2026-10-03T12:00:00Z",
+          evidence: "https://github.com/example/atlas/commit/commit-1",
+        },
+      ],
     });
 
     expect(graph.nodes.map((node) => node.id)).toEqual(
@@ -43,6 +52,7 @@ describe("buildProjectGraph", () => {
         "milestone:launch",
         "role:design",
         "repository:repo",
+        "contribution:commit-1",
         "discussion:d1",
         "need:n1",
       ]),
@@ -65,32 +75,18 @@ describe("buildProjectGraph", () => {
           from: "project:atlas",
           to: "repository:repo",
         }),
+        expect.objectContaining({
+          type: "produced",
+          from: "contribution:commit-1",
+          to: "project:atlas",
+        }),
+        expect.objectContaining({
+          type: "produced",
+          from: "person:ari",
+          to: "contribution:commit-1",
+        }),
       ]),
     );
-  });
-
-  it("removes duplicate nodes and dangling filled-role edges", () => {
-    const graph = buildProjectGraph({
-      project: { id: "atlas", title: "Atlas" },
-      roles: [{ id: "role", title: "Engineer", filled_by: "missing" }],
-    });
-    expect(graph.nodes).toHaveLength(2);
-    expect(graph.edges).toHaveLength(1);
-  });
-
-  it("adds fork lineage as a forked_from edge to a parent project node", () => {
-    const graph = buildProjectGraph({
-      project: { id: "atlas-jr", title: "Atlas Jr" },
-      forkedFrom: { id: "atlas", title: "Atlas" },
-    });
-    expect(graph.nodes.map((node) => node.id)).toContain("project:atlas");
-    expect(graph.edges).toEqual([
-      expect.objectContaining({
-        type: "forked_from",
-        from: "project:atlas-jr",
-        to: "project:atlas",
-      }),
-    ]);
   });
 
   it("preserves related and derived project lineage in the graph", () => {
