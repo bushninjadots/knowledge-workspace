@@ -155,6 +155,26 @@ export function getConnectedNodes(
   return connected;
 }
 
+export function getProjectLineage(graph: TethyrGraph, startNodeId: string): GraphNode[] {
+  const nodeMap = new Map(graph.nodes.map((node) => [node.id, node]));
+  const lineage: GraphNode[] = [];
+  const visited = new Set<string>();
+  let currentId: string | undefined = startNodeId;
+
+  while (currentId && !visited.has(currentId)) {
+    visited.add(currentId);
+    const current = nodeMap.get(currentId);
+    if (current) lineage.push(current);
+
+    const parentEdge = graph.edges.find(
+      (edge) => edge.from === currentId && edge.type === "forked_from",
+    );
+    currentId = parentEdge?.to;
+  }
+
+  return lineage.reverse();
+}
+
 export function getContributionTrail(graph: TethyrGraph, startNodeId: string): GraphNode[] {
   const nodeMap = new Map(graph.nodes.map((node) => [node.id, node]));
   const trail: GraphNode[] = [];

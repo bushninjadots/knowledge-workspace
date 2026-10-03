@@ -4,6 +4,7 @@ import {
   createGraphNode,
   getConnectedNodes,
   getContributionTrail,
+  getProjectLineage,
   normalizeGraph,
   validateGraph,
   type TethyrGraph,
@@ -69,6 +70,31 @@ describe("graph model", () => {
     expect(
       getConnectedNodes(graph, "person:1", { edgeType: "has_skill" }).map((node) => node.id),
     ).toEqual(["skill:1"]);
+  });
+
+  it("returns project lineage from oldest parent to current project", () => {
+    const graph: TethyrGraph = {
+      nodes: [
+        { id: "project:origin", type: "project", label: "Origin" },
+        { id: "project:atlas", type: "project", label: "Atlas" },
+        { id: "project:atlas-next", type: "project", label: "Atlas Next" },
+      ],
+      edges: [
+        { id: "edge:atlas", type: "forked_from", from: "project:atlas", to: "project:origin" },
+        {
+          id: "edge:next",
+          type: "forked_from",
+          from: "project:atlas-next",
+          to: "project:atlas",
+        },
+      ],
+    };
+
+    expect(getProjectLineage(graph, "project:atlas-next").map((node) => node.label)).toEqual([
+      "Origin",
+      "Atlas",
+      "Atlas Next",
+    ]);
   });
 
   it("follows a contribution-oriented trail without requiring a visual graph", () => {
