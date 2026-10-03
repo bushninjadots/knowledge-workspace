@@ -17,6 +17,7 @@ import {
   useUpdateProjectPresentation,
   useProjectCommunityPostCount,
   useForkProject,
+  useProjectForks,
   type Contributor,
   type ProjectDetail,
 } from "@/hooks/use-projects";
@@ -464,6 +465,7 @@ export function ProjectPage() {
   const { data: projectSessions = [] } = useProjectSessions(id);
   const { data: projectChallenges = [] } = useProjectChallenges(id);
   const { data: communityPostCount = 0 } = useProjectCommunityPostCount(id);
+  const { data: forks = [] } = useProjectForks(id);
   const updatePresentation = useUpdateProjectPresentation();
   const markProjectVisited = useMarkProjectVisited();
   const forkProject = useForkProject();
@@ -779,7 +781,36 @@ export function ProjectPage() {
                     provider: repo.provider,
                     importedAt: repo.created_at,
                   })),
+                  contributions: updates.map((update) => ({
+                    id: update.id,
+                    label: update.title,
+                    description: update.body,
+                    authorProfileId: update.author_id,
+                    date: update.created_at,
+                  })),
+                  history: [
+                    ...milestones.map((milestone) => ({
+                      id: milestone.id,
+                      label: milestone.title,
+                      description: milestone.description,
+                      date: milestone.due_date ?? milestone.created_at,
+                      kind: "milestone" as const,
+                    })),
+                    ...updates.map((update) => ({
+                      id: update.id,
+                      label: update.title,
+                      description: update.body,
+                      date: update.created_at,
+                      kind: "contribution" as const,
+                    })),
+                  ].sort((a, b) => (a.date ?? "").localeCompare(b.date ?? "")),
                   forkedFrom: forkedFrom ? { id: forkedFrom.id, title: forkedFrom.title } : null,
+                  relatedProjects: forks.map((fork) => ({
+                    id: fork.id,
+                    title: fork.title,
+                    description: fork.description,
+                    relationship: "derived_from" as const,
+                  })),
                 }}
               />
             </div>
