@@ -5,6 +5,7 @@ import {
   getConnectedNodes,
   getContributionTrail,
   normalizeGraph,
+  validateGraph,
   type TethyrGraph,
 } from "./graph-model";
 
@@ -59,6 +60,30 @@ describe("graph model", () => {
       "person:1",
       "project:1",
       "milestone:1",
+    ]);
+  });
+
+  it("reports duplicate and dangling relationships before normalization", () => {
+    const graph = fixture();
+    graph.nodes.push(graph.nodes[0]);
+    graph.edges.push({ id: "edge:milestone", type: "related_to", from: "project:1", to: "missing" });
+
+    expect(validateGraph(graph)).toEqual([
+      {
+        kind: "duplicate_node",
+        id: "person:1",
+        message: "Duplicate graph node: person:1",
+      },
+      {
+        kind: "duplicate_edge",
+        id: "edge:milestone",
+        message: "Duplicate graph edge: edge:milestone",
+      },
+      {
+        kind: "dangling_edge",
+        id: "edge:milestone",
+        message: "Graph edge edge:milestone references a missing node",
+      },
     ]);
   });
 
