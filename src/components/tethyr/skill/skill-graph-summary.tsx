@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { Network } from "lucide-react";
 import { createGraphEdge, createGraphNode, normalizeGraph } from "@/lib/graph-model";
 
@@ -56,6 +57,13 @@ export function SkillGraphSummary({
   const connected = graph.nodes.filter((node) => node.id !== skillId);
   if (connected.length === 0) return null;
 
+  const hrefForNode = (node: (typeof connected)[number]) => {
+    if (node.id.endsWith(":people")) return "/explore?tab=creators";
+    if (node.id.endsWith(":projects")) return "/projects";
+    if (node.type === "skill") return `/skills/${encodeURIComponent(node.label.toLowerCase().replace(/[^a-z0-9]+/g, "-"))}`;
+    return undefined;
+  };
+
   const groups = [
     {
       label: "Demonstrated by",
@@ -98,11 +106,24 @@ export function SkillGraphSummary({
               {group.label}
             </h4>
             <ul className="mt-2 flex flex-wrap gap-2">
-              {group.nodes.map((node) => (
-                <li key={node.id} className="border border-border/70 px-2.5 py-1 text-xs">
-                  {node.label}
-                </li>
-              ))}
+              {group.nodes.map((node) => {
+                const href = hrefForNode(node);
+                return (
+                  <li key={node.id} className="border border-border/70 px-2.5 py-1 text-xs">
+                    {href ? (
+                      <Link
+                        to={href}
+                        className="text-foreground underline-offset-4 hover:text-primary hover:underline"
+                        preload="intent"
+                      >
+                        {node.label}
+                      </Link>
+                    ) : (
+                      node.label
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </div>
         ))}
