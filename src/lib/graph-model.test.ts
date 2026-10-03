@@ -5,6 +5,7 @@ import {
   getConnectedNodes,
   getContributionTrail,
   normalizeGraph,
+  validateGraph,
   type TethyrGraph,
 } from "./graph-model";
 
@@ -25,6 +26,29 @@ function fixture(): TethyrGraph {
 }
 
 describe("graph model", () => {
+  it("supports organization nodes and traceable relationship metadata", () => {
+    const organization = createGraphNode({
+      id: "organization:1",
+      type: "organization",
+      label: "Tethyr Labs",
+      visibility: "public",
+    });
+    const relationship = createGraphEdge({
+      id: "edge:organization",
+      type: "related_to",
+      from: organization.id,
+      to: "project:1",
+      visibility: "public",
+      metadata: { createdAt: "2026-10-03", evidence: "project record" },
+    });
+
+    expect(organization.type).toBe("organization");
+    expect(relationship.metadata).toMatchObject({
+      createdAt: "2026-10-03",
+      evidence: "project record",
+    });
+  });
+
   it("creates stable typed node and edge records", () => {
     expect(createGraphNode({ type: "person", label: "Ari", id: "person:1" })).toEqual({
       type: "person",
@@ -59,6 +83,35 @@ describe("graph model", () => {
       "person:1",
       "project:1",
       "milestone:1",
+    ]);
+  });
+
+  it("reports duplicate and dangling relationships before normalization", () => {
+    const graph = fixture();
+    graph.nodes.push(graph.nodes[0]);
+    graph.edges.push({
+      id: "edge:milestone",
+      type: "related_to",
+      from: "project:1",
+      to: "missing",
+    });
+
+    expect(validateGraph(graph)).toEqual([
+      {
+        kind: "duplicate_node",
+        id: "person:1",
+        message: "Duplicate graph node: person:1",
+      },
+      {
+        kind: "duplicate_edge",
+        id: "edge:milestone",
+        message: "Duplicate graph edge: edge:milestone",
+      },
+      {
+        kind: "dangling_edge",
+        id: "edge:milestone",
+        message: "Graph edge edge:milestone references a missing node",
+      },
     ]);
   });
 

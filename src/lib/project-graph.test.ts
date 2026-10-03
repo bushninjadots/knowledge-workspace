@@ -31,6 +31,15 @@ describe("buildProjectGraph", () => {
       repositories: [{ id: "repo", name: "atlas-web", url: "https://example.com" }],
       discussions: [{ id: "d1", title: "Feedback" }],
       needs: [{ id: "n1", title: "Research support" }],
+      contributions: [
+        {
+          id: "commit-1",
+          label: "Build the map view",
+          authorProfileId: "ari",
+          date: "2026-10-03T12:00:00Z",
+          evidence: "https://github.com/example/atlas/commit/commit-1",
+        },
+      ],
     });
 
     expect(graph.nodes.map((node) => node.id)).toEqual(
@@ -43,6 +52,7 @@ describe("buildProjectGraph", () => {
         "milestone:launch",
         "role:design",
         "repository:repo",
+        "contribution:commit-1",
         "discussion:d1",
         "need:n1",
       ]),
@@ -65,31 +75,75 @@ describe("buildProjectGraph", () => {
           from: "project:atlas",
           to: "repository:repo",
         }),
+        expect.objectContaining({
+          type: "produced",
+          from: "contribution:commit-1",
+          to: "project:atlas",
+        }),
+        expect.objectContaining({
+          type: "produced",
+          from: "person:ari",
+          to: "contribution:commit-1",
+        }),
       ]),
     );
   });
 
-  it("removes duplicate nodes and dangling filled-role edges", () => {
+  it("preserves related and derived project lineage in the graph", () => {
     const graph = buildProjectGraph({
       project: { id: "atlas", title: "Atlas" },
-      roles: [{ id: "role", title: "Engineer", filled_by: "missing" }],
+      relatedProjects: [
+        { id: "atlas-labs", title: "Atlas Labs", relationship: "derived_from" },
+        { id: "atlas-notes", title: "Atlas Notes", relationship: "related_to" },
+      ],
     });
-    expect(graph.nodes).toHaveLength(2);
-    expect(graph.edges).toHaveLength(1);
+
+    expect(graph.edges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "derived_from",
+          from: "project:atlas",
+          to: "project:atlas-labs",
+        }),
+        expect.objectContaining({
+          type: "related_to",
+          from: "project:atlas",
+          to: "project:atlas-notes",
+        }),
+      ]),
+    );
   });
 
-  it("adds fork lineage as a forked_from edge to a parent project node", () => {
+  it("represents chronological project history as typed nodes with dated edges", () => {
     const graph = buildProjectGraph({
-      project: { id: "atlas-jr", title: "Atlas Jr" },
-      forkedFrom: { id: "atlas", title: "Atlas" },
+      project: { id: "atlas", title: "Atlas" },
+      history: [
+        { id: "idea", label: "Initial idea", date: "2026-09-01" },
+        { id: "prototype", label: "Prototype built", kind: "contribution", date: "2026-09-12" },
+      ],
     });
-    expect(graph.nodes.map((node) => node.id)).toContain("project:atlas");
-    expect(graph.edges).toEqual([
-      expect.objectContaining({
-        type: "forked_from",
-        from: "project:atlas-jr",
-        to: "project:atlas",
-      }),
-    ]);
+
+    expect(graph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "milestone:idea", type: "milestone" }),
+        expect.objectContaining({ id: "contribution:prototype", type: "contribution" }),
+      ]),
+    );
+    expect(graph.edges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "has_milestone",
+          from: "project:atlas",
+          to: "milestone:idea",
+          metadata: { date: "2026-09-01" },
+        }),
+        expect.objectContaining({
+          type: "produced",
+          from: "project:atlas",
+          to: "contribution:prototype",
+          metadata: { date: "2026-09-12" },
+        }),
+      ]),
+    );
   });
 });
