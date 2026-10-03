@@ -86,6 +86,76 @@ export type ProjectGraphInput = {
   history?: ProjectGraphHistoryEntry[];
 };
 
+/** Minimal shape of a `project_activity` row needed to shape graph inputs. */
+export type ProjectActivityLike = {
+  id: string;
+  kind: string;
+  title: string;
+  body?: string | null;
+  actor_id?: string | null;
+  created_at: string;
+  metadata?: Record<string, unknown> | null;
+};
+
+const CONTRIBUTION_ACTIVITY_KINDS = new Set(["contribution", "weekly_prompt"]);
+
+/** Minimal shape of a `contribution_log` row needed to shape graph inputs. */
+export type ProjectContributionLogEntry = {
+  id: string;
+  action: string;
+  profile_id?: string | null;
+  created_at: string;
+  metadata?: Record<string, unknown> | null;
+};
+
+/** Readable label for a credited contribution action. */
+function contributionLabel(action: string, metadata?: Record<string, unknown> | null): string {
+  switch (action) {
+    case "project_published":
+      return `Published ${typeof metadata?.title === "string" ? metadata.title : "the project"}`;
+    case "project_joined":
+      return "Joined the project";
+    case "project_update_posted":
+      return "Posted an update";
+    case "milestone_completed":
+      return typeof metadata?.milestone_title === "string"
+        ? `Completed milestone: ${metadata.milestone_title}`
+        : "Completed a milestone";
+    default:
+      return action.replace(/_/g, " ");
+  }
+}
+
+/** The contribution ledger (`contribution_log`) is the project's credited work
+ *  history — each entry becomes a contribution node attributed to its author. */
+export function projectContributionsFromLog(
+  entries: ProjectContributionLogEntry[],
+): ProjectGraphContribution[] {
+  return entries.map((entry) => ({
+    id: entry.id,
+    label: contributionLabel(entry.action, entry.metadata),
+    authorProfileId: entry.profile_id,
+    date: entry.created_at,
+  }));
+}
+
+/** Project activity becomes dated timeline events. The "show your work"
+ *  contribution entries are excluded — they are already credited contribution
+ *  nodes, so rendering them again as history would double-count the event. */
+export function projectHistoryFromActivity(
+  rows: ProjectActivityLike[],
+): ProjectGraphHistoryEntry[] {
+  return rows
+    .filter((row) => !CONTRIBUTION_ACTIVITY_KINDS.has(row.kind))
+    .map((row) => ({
+      id: row.id,
+      label: row.title,
+      description: row.body,
+      date: row.created_at,
+      kind: "milestone" as const,
+    }));
+}
+
 function personLabel(contributor: ProjectGraphContributor) {
   return contributor.profile?.display_name || contributor.profile?.handle || contributor.profile_id;
 }

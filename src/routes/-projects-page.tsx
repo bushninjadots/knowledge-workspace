@@ -16,6 +16,7 @@ import {
   useProjectNeeds,
   useUpdateProjectPresentation,
   useProjectCommunityPostCount,
+  useProjectActivity,
   useForkProject,
   type Contributor,
   type ProjectDetail,
@@ -24,6 +25,7 @@ import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import { getProjectPresentationOption, type ProjectSectionKey } from "@/lib/project-presentation";
 import { useProjectRepos } from "@/hooks/use-project-repos";
+import { useRelatedProjects } from "@/hooks/use-related-projects";
 import { useProjectSessions } from "@/hooks/use-sessions";
 import { useProjectChallenges } from "@/hooks/use-challenges";
 import { ProjectHeader } from "@/components/tethyr/project/project-header";
@@ -40,6 +42,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { ProjectFile } from "@/components/tethyr/project/project-files";
 import { SectionShell } from "@/components/tethyr/section-shell";
 import { ProjectGraphSummary } from "@/components/tethyr/project/project-graph-summary";
+import {
+  projectContributionsFromLog,
+  projectHistoryFromActivity,
+  type ProjectContributionLogEntry,
+} from "@/lib/project-graph";
 
 const ProjectNeeds = lazy(() =>
   import("@/components/tethyr/project/project-needs").then((m) => ({ default: m.ProjectNeeds })),
@@ -464,6 +471,32 @@ export function ProjectPage() {
   const { data: projectSessions = [] } = useProjectSessions(id);
   const { data: projectChallenges = [] } = useProjectChallenges(id);
   const { data: communityPostCount = 0 } = useProjectCommunityPostCount(id);
+  // Project graph connections. The activity feed is the project's real event
+  // history — contribution entries become contribution nodes, the rest become
+  // dated timeline events. The related-project engine (same one behind "More to
+  // explore") supplies lineage edges to sibling projects.
+  const { data: activityRows = [] } = useProjectActivity(id);
+  // The contribution ledger credits work to people; it is the same source the
+  // profile contribution graph reads.
+  const { data: contributionLog = [] } = useQuery({
+    queryKey: ["project-contributions", id],
+    queryFn: async (): Promise<ProjectContributionLogEntry[]> => {
+      const { data: rows, error } = await supabase
+        .from("contribution_log")
+        .select("id, action, profile_id, created_at, metadata")
+        .filter("metadata->>project_id", "eq", id)
+        .order("created_at", { ascending: true });
+      if (error) return [];
+      return (rows ?? []) as ProjectContributionLogEntry[];
+    },
+    enabled: !!id,
+  });
+  const { data: relatedProjects = [] } = useRelatedProjects({
+    projectId: id,
+    tags: data?.project?.tags ?? [],
+    skillIds: (data?.skills ?? []).map((skill) => skill.id),
+    contributorIds: (data?.contributors ?? []).map((contributor) => contributor.profile_id),
+  });
   const updatePresentation = useUpdateProjectPresentation();
   const markProjectVisited = useMarkProjectVisited();
   const forkProject = useForkProject();
@@ -780,6 +813,16 @@ export function ProjectPage() {
                     importedAt: repo.created_at,
                   })),
                   forkedFrom: forkedFrom ? { id: forkedFrom.id, title: forkedFrom.title } : null,
+                  contributions: projectContributionsFromLog(contributionLog),
+                  relatedProjects: relatedProjects.map((related) => ({
+                    id: related.id,
+                    title: related.title,
+                    description: related.description,
+                    relationship: "related_to" as const,
+                  })),
+                  // Contribution entries are already first-class contribution
+                  // nodes above, so history covers every other event.
+                  history: projectHistoryFromActivity(activityRows),
                 }}
               />
             </div>
