@@ -46,6 +46,14 @@ type ProjectGraphRepository = {
 };
 type ProjectGraphDiscussion = { id: string; title: string };
 type ProjectGraphNeed = { id: string; title: string };
+type ProjectGraphContribution = {
+  id: string;
+  label: string;
+  description?: string | null;
+  authorProfileId?: string | null;
+  date?: string | null;
+  evidence?: string | null;
+};
 /** The project this one was forked from, resolved to just its identity. */
 type ProjectGraphLineage = {
   id: string;
@@ -63,6 +71,7 @@ export type ProjectGraphInput = {
   repositories?: ProjectGraphRepository[];
   discussions?: ProjectGraphDiscussion[];
   needs?: ProjectGraphNeed[];
+  contributions?: ProjectGraphContribution[];
   forkedFrom?: ProjectGraphLineage | null;
   relatedProjects?: ProjectGraphLineage[];
 };
@@ -205,6 +214,27 @@ export function buildProjectGraph(input: ProjectGraphInput): TethyrGraph {
     const needId = `need:${need.id}`;
     addNode(nodes, createGraphNode({ id: needId, type: "need", label: need.title }));
     addEdge(edges, createGraphEdge({ type: "needs", from: projectId, to: needId }));
+  }
+
+  for (const contribution of input.contributions ?? []) {
+    const contributionId = `contribution:${contribution.id}`;
+    addNode(
+      nodes,
+      createGraphNode({
+        id: contributionId,
+        type: "contribution",
+        label: contribution.label,
+        description: contribution.description ?? undefined,
+        metadata: { date: contribution.date, evidence: contribution.evidence },
+      }),
+    );
+    addEdge(edges, createGraphEdge({ type: "produced", from: contributionId, to: projectId }));
+
+    if (contribution.authorProfileId) {
+      const authorId = `person:${contribution.authorProfileId}`;
+      addNode(nodes, createGraphNode({ id: authorId, type: "person", label: authorId.slice(7) }));
+      addEdge(edges, createGraphEdge({ type: "produced", from: authorId, to: contributionId }));
+    }
   }
 
   // Fork lineage (spec §6) — a forked_from edge to a parent project node, so
