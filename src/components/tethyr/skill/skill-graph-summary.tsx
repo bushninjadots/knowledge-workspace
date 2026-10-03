@@ -57,14 +57,21 @@ export function SkillGraphSummary({
   const graph = normalizeGraph({ nodes, edges });
   const connected = graph.nodes.filter((node) => node.id !== skillId);
   const [query, setQuery] = useState("");
+  const [relationshipFilter, setRelationshipFilter] = useState<"all" | "people" | "projects" | "skills">("all");
   const normalizedQuery = query.trim().toLowerCase();
   const filteredConnected = useMemo(
     () =>
-      connected.filter(
-        (node) =>
-          normalizedQuery.length === 0 || node.label.toLowerCase().includes(normalizedQuery),
-      ),
-    [connected, normalizedQuery],
+      connected.filter((node) => {
+        const matchesQuery =
+          normalizedQuery.length === 0 || node.label.toLowerCase().includes(normalizedQuery);
+        const matchesRelationship =
+          relationshipFilter === "all" ||
+          (relationshipFilter === "people" && node.type === "person") ||
+          (relationshipFilter === "projects" && node.type === "project") ||
+          (relationshipFilter === "skills" && node.type === "skill");
+        return matchesQuery && matchesRelationship;
+      }),
+    [connected, normalizedQuery, relationshipFilter],
   );
   if (connected.length === 0) return null;
 
@@ -110,20 +117,40 @@ export function SkillGraphSummary({
           </p>
         </div>
       </div>
-      <div className="mt-5 max-w-md">
-        <label htmlFor="skill-graph-search" className="sr-only">
-          Search {skillName} graph connections
-        </label>
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-          <input
-            id="skill-graph-search"
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search connections"
-            className="h-9 w-full rounded-md border border-border/70 bg-background pl-9 pr-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary"
-          />
+      <div className="mt-5 grid max-w-xl gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
+        <div>
+          <label htmlFor="skill-graph-search" className="sr-only">
+            Search {skillName} graph connections
+          </label>
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+            <input
+              id="skill-graph-search"
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search connections"
+              className="h-9 w-full rounded-md border border-border/70 bg-background pl-9 pr-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary"
+            />
+          </div>
+        </div>
+        <div>
+          <label htmlFor="skill-graph-relationship" className="sr-only">
+            Filter {skillName} graph connections
+          </label>
+          <select
+            id="skill-graph-relationship"
+            value={relationshipFilter}
+            onChange={(event) =>
+              setRelationshipFilter(event.target.value as typeof relationshipFilter)
+            }
+            className="h-9 w-full rounded-md border border-border/70 bg-background px-3 text-sm outline-none focus:border-primary sm:w-auto"
+          >
+            <option value="all">All connections</option>
+            <option value="people">People</option>
+            <option value="projects">Projects</option>
+            <option value="skills">Related skills</option>
+          </select>
         </div>
       </div>
       {filteredConnected.length === 0 ? (
