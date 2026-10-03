@@ -47,7 +47,12 @@ type ProjectGraphRepository = {
 type ProjectGraphDiscussion = { id: string; title: string };
 type ProjectGraphNeed = { id: string; title: string };
 /** The project this one was forked from, resolved to just its identity. */
-type ProjectGraphLineage = { id: string; title: string };
+type ProjectGraphLineage = {
+  id: string;
+  title: string;
+  description?: string | null;
+  relationship?: "forked_from" | "related_to" | "derived_from";
+};
 
 export type ProjectGraphInput = {
   project: ProjectGraphProject;
@@ -59,6 +64,7 @@ export type ProjectGraphInput = {
   discussions?: ProjectGraphDiscussion[];
   needs?: ProjectGraphNeed[];
   forkedFrom?: ProjectGraphLineage | null;
+  relatedProjects?: ProjectGraphLineage[];
 };
 
 function personLabel(contributor: ProjectGraphContributor) {
@@ -211,9 +217,31 @@ export function buildProjectGraph(input: ProjectGraphInput): TethyrGraph {
         id: parentId,
         type: "project",
         label: input.forkedFrom.title,
+        description: input.forkedFrom.description ?? undefined,
       }),
     );
     addEdge(edges, createGraphEdge({ type: "forked_from", from: projectId, to: parentId }));
+  }
+
+  for (const relatedProject of input.relatedProjects ?? []) {
+    const relatedId = `project:${relatedProject.id}`;
+    addNode(
+      nodes,
+      createGraphNode({
+        id: relatedId,
+        type: "project",
+        label: relatedProject.title,
+        description: relatedProject.description ?? undefined,
+      }),
+    );
+    addEdge(
+      edges,
+      createGraphEdge({
+        type: relatedProject.relationship === "derived_from" ? "derived_from" : "related_to",
+        from: projectId,
+        to: relatedId,
+      }),
+    );
   }
 
   return normalizeGraph({ nodes, edges });
