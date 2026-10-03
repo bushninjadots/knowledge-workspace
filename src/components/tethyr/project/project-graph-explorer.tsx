@@ -31,6 +31,7 @@ const TYPE_LABELS: Record<GraphNode["type"], string> = {
   challenge: "Challenges",
   credit: "Credits",
   need: "Needs",
+  organization: "Organizations",
 };
 
 function titleForType(type: GraphNode["type"]) {

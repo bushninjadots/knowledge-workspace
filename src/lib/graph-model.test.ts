@@ -26,6 +26,29 @@ function fixture(): TethyrGraph {
 }
 
 describe("graph model", () => {
+  it("supports organization nodes and traceable relationship metadata", () => {
+    const organization = createGraphNode({
+      id: "organization:1",
+      type: "organization",
+      label: "Tethyr Labs",
+      visibility: "public",
+    });
+    const relationship = createGraphEdge({
+      id: "edge:organization",
+      type: "related_to",
+      from: organization.id,
+      to: "project:1",
+      visibility: "public",
+      metadata: { createdAt: "2026-10-03", evidence: "project record" },
+    });
+
+    expect(organization.type).toBe("organization");
+    expect(relationship.metadata).toMatchObject({
+      createdAt: "2026-10-03",
+      evidence: "project record",
+    });
+  });
+
   it("creates stable typed node and edge records", () => {
     expect(createGraphNode({ type: "person", label: "Ari", id: "person:1" })).toEqual({
       type: "person",

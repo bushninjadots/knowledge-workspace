@@ -14,7 +14,8 @@ export type GraphNodeType =
   | "library_item"
   | "challenge"
   | "credit"
-  | "need";
+  | "need"
+  | "organization";
 
 export interface GraphNode {
   id: string;
@@ -55,6 +56,7 @@ export interface GraphEdge {
   metadata?: {
     role?: string;
     date?: string;
+    createdAt?: string;
     description?: string;
     milestoneId?: string;
     duration?: string;
