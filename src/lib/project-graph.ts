@@ -62,6 +62,14 @@ type ProjectGraphLineage = {
   relationship?: "forked_from" | "related_to" | "derived_from";
 };
 
+type ProjectGraphHistoryEntry = {
+  id: string;
+  label: string;
+  description?: string | null;
+  date?: string | null;
+  kind?: "milestone" | "contribution";
+};
+
 export type ProjectGraphInput = {
   project: ProjectGraphProject;
   contributors?: ProjectGraphContributor[];
@@ -74,6 +82,8 @@ export type ProjectGraphInput = {
   contributions?: ProjectGraphContribution[];
   forkedFrom?: ProjectGraphLineage | null;
   relatedProjects?: ProjectGraphLineage[];
+  /** Chronological project events rendered as first-class graph nodes. */
+  history?: ProjectGraphHistoryEntry[];
 };
 
 function personLabel(contributor: ProjectGraphContributor) {
@@ -270,6 +280,32 @@ export function buildProjectGraph(input: ProjectGraphInput): TethyrGraph {
         type: relatedProject.relationship === "derived_from" ? "derived_from" : "related_to",
         from: projectId,
         to: relatedId,
+      }),
+    );
+  }
+
+  // History entries remain first-class nodes so a timeline can be derived from
+  // the same graph without inventing a second, disconnected data model.
+  for (const entry of input.history ?? []) {
+    const nodeType = entry.kind ?? "milestone";
+    const entryId = `${nodeType}:${entry.id}`;
+    addNode(
+      nodes,
+      createGraphNode({
+        id: entryId,
+        type: nodeType,
+        label: entry.label,
+        description: entry.description ?? undefined,
+        metadata: { date: entry.date },
+      }),
+    );
+    addEdge(
+      edges,
+      createGraphEdge({
+        type: nodeType === "contribution" ? "produced" : "has_milestone",
+        from: projectId,
+        to: entryId,
+        metadata: { date: entry.date ?? undefined },
       }),
     );
   }

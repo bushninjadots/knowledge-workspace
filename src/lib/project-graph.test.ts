@@ -113,4 +113,37 @@ describe("buildProjectGraph", () => {
       ]),
     );
   });
+
+  it("represents chronological project history as typed nodes with dated edges", () => {
+    const graph = buildProjectGraph({
+      project: { id: "atlas", title: "Atlas" },
+      history: [
+        { id: "idea", label: "Initial idea", date: "2026-09-01" },
+        { id: "prototype", label: "Prototype built", kind: "contribution", date: "2026-09-12" },
+      ],
+    });
+
+    expect(graph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "milestone:idea", type: "milestone" }),
+        expect.objectContaining({ id: "contribution:prototype", type: "contribution" }),
+      ]),
+    );
+    expect(graph.edges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "has_milestone",
+          from: "project:atlas",
+          to: "milestone:idea",
+          metadata: { date: "2026-09-01" },
+        }),
+        expect.objectContaining({
+          type: "produced",
+          from: "project:atlas",
+          to: "contribution:prototype",
+          metadata: { date: "2026-09-12" },
+        }),
+      ]),
+    );
+  });
 });
