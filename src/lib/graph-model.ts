@@ -1,4 +1,4 @@
-type GraphNodeType =
+export type GraphNodeType =
   | "person"
   | "project"
   | "skill"
@@ -25,7 +25,7 @@ export interface GraphNode {
   visibility?: "public" | "private";
 }
 
-type GraphEdgeType =
+export type GraphEdgeType =
   | "contributed_to"
   | "has_skill"
   | "demonstrated_skill"
@@ -69,6 +69,49 @@ export interface GraphEdge {
 export interface TethyrGraph {
   nodes: GraphNode[];
   edges: GraphEdge[];
+}
+
+export interface GraphValidationIssue {
+  kind: "duplicate_node" | "duplicate_edge" | "dangling_edge";
+  id: string;
+  message: string;
+}
+
+export function validateGraph(graph: TethyrGraph): GraphValidationIssue[] {
+  const issues: GraphValidationIssue[] = [];
+  const nodeIds = new Set<string>();
+  const edgeIds = new Set<string>();
+
+  for (const node of graph.nodes) {
+    if (nodeIds.has(node.id)) {
+      issues.push({
+        kind: "duplicate_node",
+        id: node.id,
+        message: `Duplicate graph node: ${node.id}`,
+      });
+    }
+    nodeIds.add(node.id);
+  }
+
+  for (const edge of graph.edges) {
+    if (edgeIds.has(edge.id)) {
+      issues.push({
+        kind: "duplicate_edge",
+        id: edge.id,
+        message: `Duplicate graph edge: ${edge.id}`,
+      });
+    }
+    edgeIds.add(edge.id);
+    if (!nodeIds.has(edge.from) || !nodeIds.has(edge.to)) {
+      issues.push({
+        kind: "dangling_edge",
+        id: edge.id,
+        message: `Graph edge ${edge.id} references a missing node`,
+      });
+    }
+  }
+
+  return issues;
 }
 
 export function createGraphNode(node: Omit<GraphNode, "id"> & { id?: string }): GraphNode {
