@@ -92,4 +92,29 @@ describe("buildProjectGraph", () => {
       }),
     ]);
   });
+
+  it("preserves related and derived project lineage in the graph", () => {
+    const graph = buildProjectGraph({
+      project: { id: "atlas", title: "Atlas" },
+      relatedProjects: [
+        { id: "atlas-labs", title: "Atlas Labs", relationship: "derived_from" },
+        { id: "atlas-notes", title: "Atlas Notes", relationship: "related_to" },
+      ],
+    });
+
+    expect(graph.edges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "derived_from",
+          from: "project:atlas",
+          to: "project:atlas-labs",
+        }),
+        expect.objectContaining({
+          type: "related_to",
+          from: "project:atlas",
+          to: "project:atlas-notes",
+        }),
+      ]),
+    );
+  });
 });

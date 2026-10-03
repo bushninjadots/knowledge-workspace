@@ -37,6 +37,7 @@ export type GraphEdgeType =
   | "collaborated_with"
   | "related_to"
   | "forked_from"
+  | "derived_from"
   | "imported_from"
   | "produced"
   | "referenced_by"
