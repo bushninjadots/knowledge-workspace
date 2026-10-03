@@ -33,6 +33,7 @@ const EDGE_PHRASES: Record<GraphEdge["type"], { forward: string; reverse: string
   collaborated_with: { forward: "collaborated with", reverse: "collaborated with" },
   related_to: { forward: "is related to", reverse: "is related to" },
   forked_from: { forward: "was forked from", reverse: "was forked into" },
+  derived_from: { forward: "was derived from", reverse: "was derived into" },
   imported_from: { forward: "was imported from", reverse: "is the source of" },
   produced: { forward: "produced", reverse: "was produced by" },
   referenced_by: { forward: "is referenced by", reverse: "references" },
