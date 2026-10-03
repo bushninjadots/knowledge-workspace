@@ -1174,5 +1174,30 @@ export function useForkProject() {
   });
 }
 
+/**
+ * Fetch the public projects that forked from this one, so the project graph
+ * can show derivative lineage (spec §6). Only public projects are returned —
+ * private forks must not leak through the graph (spec §29).
+ */
+export function useProjectForks(projectId: string) {
+  return useQuery({
+    queryKey: ["project-forks", projectId],
+    queryFn: async () => {
+      const { data, error } = await sb
+        .from("projects")
+        .select("id, title, description")
+        .eq("forked_from_project_id", projectId)
+        .eq("visibility", "public")
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+      return (data ?? []) as { id: string; title: string; description: string | null }[];
+    },
+    enabled: !!projectId,
+    staleTime: 30_000,
+  });
+}
+
 // ============================================================
 // Project Stage

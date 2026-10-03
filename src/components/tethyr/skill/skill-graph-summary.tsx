@@ -1,4 +1,6 @@
-import { Network } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Network, Search } from "lucide-react";
+import { useMemo, useState } from "react";
 import { createGraphEdge, createGraphNode, normalizeGraph } from "@/lib/graph-model";
 
 export function SkillGraphSummary({
@@ -54,40 +56,138 @@ export function SkillGraphSummary({
   ];
   const graph = normalizeGraph({ nodes, edges });
   const connected = graph.nodes.filter((node) => node.id !== skillId);
+  const [query, setQuery] = useState("");
+  const [relationshipFilter, setRelationshipFilter] = useState<"all" | "people" | "projects" | "skills">("all");
+  const normalizedQuery = query.trim().toLowerCase();
+  const filteredConnected = useMemo(
+    () =>
+      connected.filter((node) => {
+        const matchesQuery =
+          normalizedQuery.length === 0 || node.label.toLowerCase().includes(normalizedQuery);
+        const matchesRelationship =
+          relationshipFilter === "all" ||
+          (relationshipFilter === "people" && node.type === "person") ||
+          (relationshipFilter === "projects" && node.type === "project") ||
+          (relationshipFilter === "skills" && node.type === "skill");
+        return matchesQuery && matchesRelationship;
+      }),
+    [connected, normalizedQuery, relationshipFilter],
+  );
   if (connected.length === 0) return null;
 
+  const hrefForNode = (node: (typeof connected)[number]) => {
+    if (node.id.endsWith(":people")) return "/explore?tab=creators";
+    if (node.id.endsWith(":projects")) return "/projects";
+    if (node.type === "skill") return `/skills/${encodeURIComponent(node.label.toLowerCase().replace(/[^a-z0-9]+/g, "-"))}`;
+    return undefined;
+  };
+
+  const groups = [
+    {
+      label: "Demonstrated by",
+      type: "person" as const,
+      edgeType: "demonstrated_skill" as const,
+    },
+    { label: "Used in", type: "project" as const, edgeType: "used_in" as const },
+    { label: "Related skills", type: "skill" as const, edgeType: "related_to" as const },
+  ]
+    .map((group) => ({
+      ...group,
+      nodes: filteredConnected.filter(
+        (node) =>
+          node.type === group.type &&
+          graph.edges.some(
+            (edge) => edge.type === group.edgeType && (edge.from === skillId || edge.to === skillId) &&
+              (edge.from === node.id || edge.to === node.id),
+          ),
+      ),
+    }))
+    .filter((group) => group.nodes.length > 0);
+
   return (
-    <section
-      aria-labelledby="skill-graph-heading"
-      className="rounded-xl bg-surface-elevated/30 p-4 sm:p-5"
-    >
+    <section aria-labelledby="skill-graph-heading" className="mt-8 border-t border-border pt-6">
       <div className="flex items-start gap-3">
-        <Network className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
+        <Network className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
         <div>
           <h3 id="skill-graph-heading" className="font-display text-lg font-semibold">
             {skillName} in the graph
           </h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Demonstrated through work, connected to people, projects, and related skills.
+            Follow the work and people connected through this skill.
           </p>
         </div>
       </div>
-      <div
-        className="mt-4 flex flex-wrap items-center gap-2"
-        aria-label={`${skillName} graph connections`}
-      >
-        <span className="rounded-full border border-primary/40 bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary">
-          {skillName}
-        </span>
-        {connected.map((node) => (
-          <span
-            key={node.id}
-            className="rounded-full border border-border/60 bg-surface-elevated px-3 py-1.5 text-xs text-foreground"
+      <div className="mt-5 grid max-w-xl gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
+        <div>
+          <label htmlFor="skill-graph-search" className="sr-only">
+            Search {skillName} graph connections
+          </label>
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+            <input
+              id="skill-graph-search"
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search connections"
+              className="h-9 w-full rounded-md border border-border/70 bg-background pl-9 pr-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary"
+            />
+          </div>
+        </div>
+        <div>
+          <label htmlFor="skill-graph-relationship" className="sr-only">
+            Filter {skillName} graph connections
+          </label>
+          <select
+            id="skill-graph-relationship"
+            value={relationshipFilter}
+            onChange={(event) =>
+              setRelationshipFilter(event.target.value as typeof relationshipFilter)
+            }
+            className="h-9 w-full rounded-md border border-border/70 bg-background px-3 text-sm outline-none focus:border-primary sm:w-auto"
           >
-            {node.label}
-          </span>
-        ))}
+            <option value="all">All connections</option>
+            <option value="people">People</option>
+            <option value="projects">Projects</option>
+            <option value="skills">Related skills</option>
+          </select>
+        </div>
       </div>
+      {filteredConnected.length === 0 ? (
+        <p className="mt-5 text-sm text-muted-foreground" role="status">
+          No connections match “{query}”.
+        </p>
+      ) : (
+        <div className="mt-5 grid gap-5 sm:grid-cols-3" aria-label={`${skillName} graph connections`}>
+          {groups.map((group) => (
+            <div key={group.label}>
+            <h4 className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+              {group.label}
+            </h4>
+            <ul className="mt-2 flex flex-wrap gap-2">
+              {group.nodes.map((node) => {
+                const href = hrefForNode(node);
+                return (
+                  <li key={node.id} className="border border-border/70 px-2.5 py-1 text-xs">
+                    {href ? (
+                      <Link
+                        to={href}
+                        className="text-foreground underline-offset-4 hover:text-primary hover:underline"
+                        preload="intent"
+                      >
+                        {node.label}
+                      </Link>
+                    ) : (
+                      node.label
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

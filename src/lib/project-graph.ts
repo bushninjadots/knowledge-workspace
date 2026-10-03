@@ -43,11 +43,48 @@ type ProjectGraphRepository = {
   url?: string | null;
   provider?: string | null;
   importedAt?: string | null;
+  /** "owner/repo" — how an imported commit names the repository it came from. */
+  fullName?: string | null;
+  /** The repository's primary language and topics — its technologies (spec §7). */
+  language?: string | null;
+  topics?: string[] | null;
+};
+/** A commit imported from a linked repository, with only GitHub-provided fields. */
+type ProjectGraphCommit = {
+  id: string;
+  label: string;
+  authorLogin?: string | null;
+  authorName?: string | null;
+  date?: string | null;
+  url?: string | null;
+  /** "owner/repo" the commit belongs to, when the import recorded it. */
+  repository?: string | null;
 };
 type ProjectGraphDiscussion = { id: string; title: string };
 type ProjectGraphNeed = { id: string; title: string };
+type ProjectGraphContribution = {
+  id: string;
+  label: string;
+  description?: string | null;
+  authorProfileId?: string | null;
+  date?: string | null;
+  evidence?: string | null;
+};
 /** The project this one was forked from, resolved to just its identity. */
-type ProjectGraphLineage = { id: string; title: string };
+type ProjectGraphLineage = {
+  id: string;
+  title: string;
+  description?: string | null;
+  relationship?: "forked_from" | "related_to" | "derived_from";
+};
+
+type ProjectGraphHistoryEntry = {
+  id: string;
+  label: string;
+  description?: string | null;
+  date?: string | null;
+  kind?: "milestone" | "contribution";
+};
 
 export type ProjectGraphInput = {
   project: ProjectGraphProject;
@@ -56,9 +93,15 @@ export type ProjectGraphInput = {
   milestones?: ProjectGraphMilestone[];
   roles?: ProjectGraphRole[];
   repositories?: ProjectGraphRepository[];
+  /** Spec §7 — work imported from GitHub, connected to the graph. */
+  importedCommits?: ProjectGraphCommit[];
   discussions?: ProjectGraphDiscussion[];
   needs?: ProjectGraphNeed[];
+  contributions?: ProjectGraphContribution[];
   forkedFrom?: ProjectGraphLineage | null;
+  relatedProjects?: ProjectGraphLineage[];
+  /** Chronological project events rendered as first-class graph nodes. */
+  history?: ProjectGraphHistoryEntry[];
 };
 
 function personLabel(contributor: ProjectGraphContributor) {
@@ -156,6 +199,11 @@ export function buildProjectGraph(input: ProjectGraphInput): TethyrGraph {
       );
   }
 
+  // Spec §7 — an import is not an isolated node: the repository's own
+  // technologies (its language and topics) become skills, so imported work
+  // connects to the same skills people and projects already use. Only what
+  // GitHub actually reported is used — nothing is inferred.
+  const repositoryByFullName = new Map<string, string>();
   for (const repository of input.repositories ?? []) {
     const repositoryId = `repository:${repository.id}`;
     addNode(
@@ -184,6 +232,80 @@ export function buildProjectGraph(input: ProjectGraphInput): TethyrGraph {
         },
       }),
     );
+    if (repository.fullName) {
+      repositoryByFullName.set(repository.fullName.trim().toLowerCase(), repositoryId);
+    }
+
+    const technologies = new Set<string>();
+    for (const technology of [repository.language ?? "", ...(repository.topics ?? [])]) {
+      const label = technology.trim();
+      if (!label) continue;
+      const skillId = `skill:${label.toLowerCase()}`;
+      if (technologies.has(skillId)) continue;
+      technologies.add(skillId);
+      addNode(
+        nodes,
+        createGraphNode({
+          id: skillId,
+          type: "skill",
+          label,
+          metadata: { source: "github", provider: repository.provider },
+        }),
+      );
+      addEdge(edges, createGraphEdge({ type: "uses", from: repositoryId, to: skillId }));
+    }
+  }
+
+  // Spec §7 — imported commits are the project's real work landing in the
+  // graph: each connects to the repository that holds it (or to the project
+  // when the import recorded no repository) and, where GitHub named an
+  // author, to that author as a person. An unlinked GitHub author is never
+  // credited to a Tethyr member.
+  for (const commit of input.importedCommits ?? []) {
+    const commitId = `contribution:${commit.id}`;
+    addNode(
+      nodes,
+      createGraphNode({
+        id: commitId,
+        type: "contribution",
+        label: commit.label,
+        metadata: {
+          date: commit.date,
+          url: commit.url,
+          provider: "github",
+          external: true,
+        },
+      }),
+    );
+    const repositoryId = commit.repository
+      ? repositoryByFullName.get(commit.repository.trim().toLowerCase())
+      : undefined;
+    addEdge(
+      edges,
+      createGraphEdge({
+        type: "contributed_to",
+        from: commitId,
+        to: repositoryId ?? projectId,
+        metadata: { date: commit.date ?? undefined, repository: commit.repository ?? undefined },
+      }),
+    );
+
+    const authorLabel = commit.authorLogin?.trim() || commit.authorName?.trim();
+    if (!authorLabel) continue;
+    const authorId = `person:github:${authorLabel.toLowerCase()}`;
+    addNode(
+      nodes,
+      createGraphNode({
+        id: authorId,
+        type: "person",
+        label: authorLabel,
+        metadata: { provider: "github", external: true },
+      }),
+    );
+    addEdge(edges, createGraphEdge({ type: "produced", from: authorId, to: commitId }));
+    if (repositoryId) {
+      addEdge(edges, createGraphEdge({ type: "contributed_to", from: authorId, to: repositoryId }));
+    }
   }
 
   for (const discussion of input.discussions ?? []) {
@@ -201,6 +323,27 @@ export function buildProjectGraph(input: ProjectGraphInput): TethyrGraph {
     addEdge(edges, createGraphEdge({ type: "needs", from: projectId, to: needId }));
   }
 
+  for (const contribution of input.contributions ?? []) {
+    const contributionId = `contribution:${contribution.id}`;
+    addNode(
+      nodes,
+      createGraphNode({
+        id: contributionId,
+        type: "contribution",
+        label: contribution.label,
+        description: contribution.description ?? undefined,
+        metadata: { date: contribution.date, evidence: contribution.evidence },
+      }),
+    );
+    addEdge(edges, createGraphEdge({ type: "produced", from: contributionId, to: projectId }));
+
+    if (contribution.authorProfileId) {
+      const authorId = `person:${contribution.authorProfileId}`;
+      addNode(nodes, createGraphNode({ id: authorId, type: "person", label: authorId.slice(7) }));
+      addEdge(edges, createGraphEdge({ type: "produced", from: authorId, to: contributionId }));
+    }
+  }
+
   // Fork lineage (spec §6) — a forked_from edge to a parent project node, so
   // lineage is a real relationship in the model rather than a header-only note.
   if (input.forkedFrom) {
@@ -211,9 +354,57 @@ export function buildProjectGraph(input: ProjectGraphInput): TethyrGraph {
         id: parentId,
         type: "project",
         label: input.forkedFrom.title,
+        description: input.forkedFrom.description ?? undefined,
       }),
     );
     addEdge(edges, createGraphEdge({ type: "forked_from", from: projectId, to: parentId }));
+  }
+
+  for (const relatedProject of input.relatedProjects ?? []) {
+    const relatedId = `project:${relatedProject.id}`;
+    addNode(
+      nodes,
+      createGraphNode({
+        id: relatedId,
+        type: "project",
+        label: relatedProject.title,
+        description: relatedProject.description ?? undefined,
+      }),
+    );
+    addEdge(
+      edges,
+      createGraphEdge({
+        type: relatedProject.relationship === "derived_from" ? "derived_from" : "related_to",
+        from: projectId,
+        to: relatedId,
+      }),
+    );
+  }
+
+  // History entries remain first-class nodes so a timeline can be derived from
+  // the same graph without inventing a second, disconnected data model.
+  for (const entry of input.history ?? []) {
+    const nodeType = entry.kind ?? "milestone";
+    const entryId = `${nodeType}:${entry.id}`;
+    addNode(
+      nodes,
+      createGraphNode({
+        id: entryId,
+        type: nodeType,
+        label: entry.label,
+        description: entry.description ?? undefined,
+        metadata: { date: entry.date },
+      }),
+    );
+    addEdge(
+      edges,
+      createGraphEdge({
+        type: nodeType === "contribution" ? "produced" : "has_milestone",
+        from: projectId,
+        to: entryId,
+        metadata: { date: entry.date ?? undefined },
+      }),
+    );
   }
 
   return normalizeGraph({ nodes, edges });

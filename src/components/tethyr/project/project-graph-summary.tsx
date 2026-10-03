@@ -72,6 +72,12 @@ function ProjectGraphSummaryBody({ input }: { input: ProjectGraphInput }) {
             <dd className="font-medium tabular-nums">{counts.repository}</dd>
           </div>
         ) : null}
+        {counts.contribution ? (
+          <div>
+            <dt className="text-muted-foreground">Contributions</dt>
+            <dd className="font-medium tabular-nums">{counts.contribution}</dd>
+          </div>
+        ) : null}
         {counts.project > 1 ? (
           <div>
             <dt className="text-muted-foreground">Lineage</dt>

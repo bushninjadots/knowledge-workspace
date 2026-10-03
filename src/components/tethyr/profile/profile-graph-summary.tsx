@@ -1,6 +1,10 @@
 import { Network } from "lucide-react";
 import { useProfileWork } from "@/hooks/use-profile-work";
-import { buildProfileGraph, getProfileGraphCounts } from "@/lib/profile-graph";
+import {
+  buildProfileGraph,
+  getProfileCollaborators,
+  getProfileGraphCounts,
+} from "@/lib/profile-graph";
 
 /**
  * Phase 3 of the Tethyr Graph spec — a compact "Work graph" summary on the
@@ -36,6 +40,7 @@ export function ProfileGraphSummary({ profileId, name }: { profileId: string; na
   const projectCount = counts.project ?? 0;
   const collaboratorCount = counts.person ? counts.person - 1 : 0; // subtract self
   const relationships = graph.edges.length;
+  const collaborators = getProfileCollaborators(graph);
 
   return (
     <section aria-labelledby="profile-graph-heading" className="mt-12 border-t border-border pt-8">
@@ -67,18 +72,45 @@ export function ProfileGraphSummary({ profileId, name }: { profileId: string; na
           <dd className="font-medium tabular-nums">{relationships}</dd>
         </div>
       </dl>
-      <ul aria-label="Connected projects" className="mt-5 flex flex-wrap gap-2">
-        {graph.nodes
-          .filter((node) => node.type === "project")
-          .map((node) => (
-            <li key={node.id} className="border border-border/70 px-2.5 py-1 text-xs">
-              <span className="text-muted-foreground">
-                {String(node.metadata?.role ?? "contributed")}
-              </span>{" "}
-              <span className="font-medium">{node.label}</span>
-            </li>
-          ))}
-      </ul>
+      <div className="mt-5 grid gap-5 sm:grid-cols-2">
+        <div>
+          <h3 className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+            Connected projects
+          </h3>
+          <ul className="mt-2 flex flex-wrap gap-2" aria-label="Connected projects">
+            {graph.nodes
+              .filter((node) => node.type === "project")
+              .map((node) => (
+                <li key={node.id} className="border border-border/70 px-2.5 py-1 text-xs">
+                  <span className="text-muted-foreground">
+                    {String(node.metadata?.role ?? "contributed")}
+                  </span>{" "}
+                  <span className="font-medium">{node.label}</span>
+                </li>
+              ))}
+          </ul>
+        </div>
+        {collaborators.length > 0 && (
+          <div>
+            <h3 className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+              Builds with
+            </h3>
+            <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-2" aria-label="Collaborators">
+              {collaborators.map((collaborator) => (
+                <li key={collaborator.id} className="text-sm">
+                  <span className="font-medium">{collaborator.label}</span>
+                  <span className="ml-1 text-xs text-muted-foreground">
+                    {String(collaborator.metadata?.sharedProjectCount ?? 1)} shared {" "}
+                    {Number(collaborator.metadata?.sharedProjectCount ?? 1) === 1
+                      ? "project"
+                      : "projects"}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
     </section>
   );
 }

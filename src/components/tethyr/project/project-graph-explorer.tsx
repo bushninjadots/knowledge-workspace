@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { ChevronDown, ChevronUp, Network, Route, Search } from "lucide-react";
-import { getConnectedNodes, type GraphNode } from "@/lib/graph-model";
+import { ChevronDown, ChevronUp, GitBranch, Network, Route, Search } from "lucide-react";
+import { getConnectedNodes, getProjectLineage, type GraphNode } from "@/lib/graph-model";
 import { filterGraphNodes, graphTypeFacets, type GraphNodeFilter } from "@/lib/graph-exploration";
 import { describeGraphStep, findGraphPath } from "@/lib/graph-path";
 import { buildProjectGraph, type ProjectGraphInput } from "@/lib/project-graph";
@@ -31,6 +31,7 @@ const TYPE_LABELS: Record<GraphNode["type"], string> = {
   challenge: "Challenges",
   credit: "Credits",
   need: "Needs",
+  organization: "Organizations",
 };
 
 function titleForType(type: GraphNode["type"]) {
@@ -39,7 +40,7 @@ function titleForType(type: GraphNode["type"]) {
 
 export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
   const [expanded, setExpanded] = useState(false);
-  const [mode, setMode] = useState<"browse" | "path">("browse");
+  const [mode, setMode] = useState<"browse" | "path" | "lineage">("browse");
   const [depth, setDepth] = useState(1);
   const [query, setQuery] = useState("");
   const [activeTypes, setActiveTypes] = useState<GraphNode["type"][]>([]);
@@ -78,6 +79,7 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
     () => (pathStart && pathEnd ? findGraphPath(graph, pathStart, pathEnd) : null),
     [graph, pathStart, pathEnd],
   );
+  const lineage = useMemo(() => getProjectLineage(graph, projectId), [graph, projectId]);
 
   if (connected.length === 0) return null;
 
@@ -122,7 +124,7 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
       {expanded ? (
         <div className="mt-4">
           <div role="group" aria-label="Graph mode" className="flex flex-wrap items-center gap-1.5">
-            {(["browse", "path"] as const).map((value) => (
+            {(["browse", "path", "lineage"] as const).map((value) => (
               <button
                 key={value}
                 type="button"
@@ -137,15 +139,51 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
               >
                 {value === "browse" ? (
                   <Network className="h-3.5 w-3.5" aria-hidden="true" />
+                ) : value === "lineage" ? (
+                  <GitBranch className="h-3.5 w-3.5" aria-hidden="true" />
                 ) : (
                   <Route className="h-3.5 w-3.5" aria-hidden="true" />
                 )}
-                {value === "browse" ? "Connections" : "How are these connected?"}
+                {value === "browse"
+                  ? "Connections"
+                  : value === "lineage"
+                    ? "Project lineage"
+                    : "How are these connected?"}
               </button>
             ))}
           </div>
 
-          {mode === "path" ? (
+          {mode === "lineage" ? (
+            <div className="mt-4" aria-live="polite">
+              <p className="text-sm text-muted-foreground">
+                The connected project history, from the earliest source to this workspace.
+              </p>
+              {lineage.length > 1 ? (
+                <ol className="mt-4 border-l border-border/70 pl-4">
+                  {lineage.map((node, index) => (
+                    <li key={node.id} className="relative pb-4 last:pb-0">
+                      <span
+                        className="absolute -left-[21px] top-1 h-2.5 w-2.5 rounded-full border-2 border-background bg-primary"
+                        aria-hidden="true"
+                      />
+                      <p className="text-sm font-medium">{node.label}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {index === 0
+                          ? "Original project"
+                          : index === lineage.length - 1
+                            ? "Current project"
+                            : "Derived project"}
+                      </p>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <p className="mt-4 text-sm text-muted-foreground">
+                  This project has no recorded fork lineage yet.
+                </p>
+              )}
+            </div>
+          ) : mode === "path" ? (
             <div className="mt-4">
               <div className="flex flex-wrap items-end gap-3">
                 {(
@@ -210,110 +248,110 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
             </div>
           ) : (
             <>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="relative">
-              <Search
-                className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
-                aria-hidden="true"
-              />
-              <Input
-                type="search"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search connections"
-                aria-label="Search connections"
-                className="h-7 w-[200px] pl-7 text-xs"
-              />
-            </div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              Relationship depth
-              <Select value={String(depth)} onValueChange={(value) => setDepth(Number(value))}>
-                <SelectTrigger
-                  className="h-7 w-[180px] px-2 text-xs"
-                  aria-label="Relationship depth"
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">Direct connections</SelectItem>
-                  <SelectItem value="2">Connected ecosystem</SelectItem>
-                  <SelectItem value="3">Extended graph</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {facets.length > 1 ? (
-            <div
-              role="group"
-              aria-label="Filter connections by type"
-              className="mt-3 flex flex-wrap gap-1.5"
-            >
-              {facets.map(({ type, count }) => {
-                const active = selectedTypes.includes(type);
-                return (
-                  <button
-                    key={type}
-                    type="button"
-                    aria-pressed={active}
-                    onClick={() => toggleType(type)}
-                    className={cn(
-                      "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs transition-colors",
-                      active
-                        ? "border-user-accent-border bg-accent text-foreground"
-                        : "border-border/70 text-muted-foreground hover:border-border-strong hover:text-foreground",
-                    )}
-                  >
-                    {titleForType(type)}
-                    <span className="tabular-nums opacity-70">{count}</span>
-                  </button>
-                );
-              })}
-            </div>
-          ) : null}
-
-          {filtering ? (
-            <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
-              <span>
-                Showing {visible.length} of {connected.length} connections
-              </span>
-              <button
-                type="button"
-                onClick={clearFilters}
-                className="underline underline-offset-4 transition-colors hover:text-foreground"
-              >
-                Clear filters
-              </button>
-            </div>
-          ) : null}
-
-          {visible.length === 0 ? (
-            <p className="mt-4 text-sm text-muted-foreground">
-              No connections match these filters.
-            </p>
-          ) : (
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {Object.entries(grouped).map(([type, nodes]) => (
-                <div key={type} className="border border-border/60 p-3">
-                  <h3 className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                    {titleForType(type as GraphNode["type"])}
-                  </h3>
-                  <ul className="mt-2 space-y-2">
-                    {nodes.map((node) => (
-                      <li key={node.id} className="text-sm">
-                        <div className="font-medium">{node.label}</div>
-                        {node.description ? (
-                          <div className="line-clamp-2 text-xs text-muted-foreground">
-                            {node.description}
-                          </div>
-                        ) : null}
-                      </li>
-                    ))}
-                  </ul>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="relative">
+                  <Search
+                    className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                  <Input
+                    type="search"
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder="Search connections"
+                    aria-label="Search connections"
+                    className="h-7 w-[200px] pl-7 text-xs"
+                  />
                 </div>
-              ))}
-            </div>
-          )}
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  Relationship depth
+                  <Select value={String(depth)} onValueChange={(value) => setDepth(Number(value))}>
+                    <SelectTrigger
+                      className="h-7 w-[180px] px-2 text-xs"
+                      aria-label="Relationship depth"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">Direct connections</SelectItem>
+                      <SelectItem value="2">Connected ecosystem</SelectItem>
+                      <SelectItem value="3">Extended graph</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {facets.length > 1 ? (
+                <div
+                  role="group"
+                  aria-label="Filter connections by type"
+                  className="mt-3 flex flex-wrap gap-1.5"
+                >
+                  {facets.map(({ type, count }) => {
+                    const active = selectedTypes.includes(type);
+                    return (
+                      <button
+                        key={type}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => toggleType(type)}
+                        className={cn(
+                          "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs transition-colors",
+                          active
+                            ? "border-user-accent-border bg-accent text-foreground"
+                            : "border-border/70 text-muted-foreground hover:border-border-strong hover:text-foreground",
+                        )}
+                      >
+                        {titleForType(type)}
+                        <span className="tabular-nums opacity-70">{count}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
+
+              {filtering ? (
+                <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
+                  <span>
+                    Showing {visible.length} of {connected.length} connections
+                  </span>
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="underline underline-offset-4 transition-colors hover:text-foreground"
+                  >
+                    Clear filters
+                  </button>
+                </div>
+              ) : null}
+
+              {visible.length === 0 ? (
+                <p className="mt-4 text-sm text-muted-foreground">
+                  No connections match these filters.
+                </p>
+              ) : (
+                <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {Object.entries(grouped).map(([type, nodes]) => (
+                    <div key={type} className="border border-border/60 p-3">
+                      <h3 className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                        {titleForType(type as GraphNode["type"])}
+                      </h3>
+                      <ul className="mt-2 space-y-2">
+                        {nodes.map((node) => (
+                          <li key={node.id} className="text-sm">
+                            <div className="font-medium">{node.label}</div>
+                            {node.description ? (
+                              <div className="line-clamp-2 text-xs text-muted-foreground">
+                                {node.description}
+                              </div>
+                            ) : null}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              )}
             </>
           )}
         </div>
