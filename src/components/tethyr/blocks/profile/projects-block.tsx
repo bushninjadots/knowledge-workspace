@@ -51,9 +51,10 @@ const CARD_CLS =
 function ProfileProjectsBlock({ context, config }: BlockProps) {
   const { blockId, isEditing, onBlockEmptyChange } = context;
   const profileId = context.ownerType === "profile" ? context.ownerId : null;
+  const projectLimit = Math.min(6, Math.max(1, Number(config.limit) || 6));
 
   const { data, isLoading } = useQuery({
-    queryKey: ["profile-projects-block", profileId],
+    queryKey: ["profile-projects-block", profileId, projectLimit],
     queryFn: async () => {
       if (!profileId) return { rows: [], collaborators: new Map<string, CollaboratorRow[]>() };
       const { data: memberships } = await supabase
@@ -62,7 +63,7 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
           "project_id, role, projects(id, title, description, status, progress_percent, cover_url)",
         )
         .eq("profile_id", profileId)
-        .limit(6);
+        .limit(projectLimit);
       const rows = (memberships ?? []) as unknown as ProjectRow[];
       const projectIds = rows.map((r) => r.project_id).filter(Boolean);
       const collaborators = new Map<string, CollaboratorRow[]>();
@@ -133,6 +134,7 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
   const collaborators = data.collaborators;
   const showStatus = config.showStatus !== false;
   const showProgress = config.showProgress !== false;
+  const showDescription = config.showDescription !== false;
   const presentation = getProfileProjectPresentation(config.presentation);
   const heading = <h3 className="mb-3 text-sm font-medium text-foreground">Projects</h3>;
 
@@ -170,9 +172,9 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
           {contributionRoleVerb(role)}
         </span>
       </div>
-      {project.description && (
-        <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{project.description}</p>
-      )}
+  {showDescription && project.description && (
+  <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{project.description}</p>
+  )}
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <OpenWorkBadge openWork={openWork} projectId={project.id} />
         {showStatus && (
@@ -312,9 +314,9 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
                 {featured.project.title}
               </span>
             </div>
-            {featured.project.description && (
-              <p className="mt-1 text-xs text-muted-foreground">{featured.project.description}</p>
-            )}
+  {showDescription && featured.project.description && (
+  <p className="mt-1 text-xs text-muted-foreground">{featured.project.description}</p>
+  )}
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <OpenWorkBadge openWork={openWork} projectId={featured.project.id} />
               {showStatus && (
@@ -509,7 +511,13 @@ registerBlock({
   label: "Featured Projects",
   description: "Projects the person has contributed to, with role and status.",
   icon: "Folder",
-  defaults: { presentation: "spotlight", showStatus: true, showProgress: true },
+  defaults: {
+    presentation: "spotlight",
+    showStatus: true,
+    showProgress: true,
+    showDescription: true,
+    limit: 6,
+  },
   fields: [
     {
       key: "presentation",
@@ -517,8 +525,15 @@ registerBlock({
       type: "select",
       options: PROFILE_PROJECT_PRESENTATIONS.map((p) => ({ value: p.id, label: p.label })),
     },
+    {
+      key: "limit",
+      label: "Projects to show",
+      type: "select",
+      options: [1, 2, 3, 4, 6].map((value) => ({ value: String(value), label: String(value) })),
+    },
     { key: "showStatus", label: "Show project status", type: "toggle" },
     { key: "showProgress", label: "Show progress bars", type: "toggle" },
+    { key: "showDescription", label: "Show descriptions", type: "toggle" },
   ],
   component: ProfileProjectsBlock,
 });
