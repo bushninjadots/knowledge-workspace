@@ -491,10 +491,11 @@ export function ProjectPage() {
     queryKey: ["project-contributions", id],
     queryFn: async (): Promise<ProjectContributionLogEntry[]> => {
       // The profile embed names contribution authors for the graph — the graph
-      // must show people, never raw profile ids.
+      // must show people, never raw profile ids. PostgREST resolves the embed
+      // through the row's profiles foreign key.
       const { data: rows, error } = await supabase
         .from("contribution_log")
-        .select("id, action, profile_id, profile(display_name, handle), created_at, metadata")
+        .select("id, action, profile_id, profile:profiles(display_name, handle), created_at, metadata")
         .filter("metadata->>project_id", "eq", id)
         .order("created_at", { ascending: true });
       if (error) return [];
