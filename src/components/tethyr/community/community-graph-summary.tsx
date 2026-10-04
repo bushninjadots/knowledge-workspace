@@ -6,6 +6,7 @@ import {
   communityGraphHasConnections,
   type CommunityGraphInput,
 } from "@/lib/community-graph";
+import { GraphTreeView } from "@/components/tethyr/graph/graph-tree-view";
 
 /**
  * Phase 7 of the Tethyr Graph spec — a compact graph summary for community
@@ -92,6 +93,12 @@ export function CommunityGraphSummary({
           </li>
         ))}
       </ul>
+      <div className="mt-4">
+        <h4 className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+          Connections outline
+        </h4>
+        <GraphTreeView graph={graph} rootId={`community:${space.id}`} />
+      </div>
     </section>
   );
 }

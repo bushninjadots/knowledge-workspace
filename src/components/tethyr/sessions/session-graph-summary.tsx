@@ -5,6 +5,7 @@ import {
   sessionGraphHasConnections,
   type SessionGraphInput,
 } from "@/lib/session-graph";
+import { GraphTreeView } from "@/components/tethyr/graph/graph-tree-view";
 
 /**
  * Phase 7 of the Tethyr Graph spec — a compact graph summary for sessions.
@@ -75,6 +76,12 @@ export function SessionGraphSummary({ input }: { input: SessionGraphInput }) {
           </li>
         ))}
       </ul>
+      <div className="mt-4">
+        <h4 className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+          Connections outline
+        </h4>
+        <GraphTreeView graph={graph} rootId={`session:${input.session.id}`} />
+      </div>
     </section>
   );
 }

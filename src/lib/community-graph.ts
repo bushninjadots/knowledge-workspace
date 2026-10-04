@@ -54,6 +54,12 @@ export function buildCommunityGraph(input: CommunityGraphInput): TethyrGraph {
   const nodes: GraphNode[] = [];
   const edges: GraphEdge[] = [];
   const spaceId = `community:${input.space.id}`;
+  /** Person nodes already in the graph, and the best label each has. A member
+   *  enters once, named; a discussion author who is not a member still gets a
+   *  person node so their "produced" edge survives normalization — honestly
+   *  labeled with the id we actually have, never an invented name. */
+  const personIds = new Set<string>();
+  const personLabelById = new Map<string, string>();
 
   addNode(
     nodes,
@@ -67,6 +73,8 @@ export function buildCommunityGraph(input: CommunityGraphInput): TethyrGraph {
 
   for (const member of input.members ?? []) {
     const personId = `person:${member.user_id}`;
+    personIds.add(personId);
+    personLabelById.set(personId, memberLabel(member));
     addNode(
       nodes,
       createGraphNode({
@@ -95,11 +103,23 @@ export function buildCommunityGraph(input: CommunityGraphInput): TethyrGraph {
     );
     addEdge(edges, createGraphEdge({ type: "contains", from: spaceId, to: discussionId }));
     if (discussion.author_id) {
+      const authorId = `person:${discussion.author_id}`;
+      if (!personIds.has(authorId)) {
+        personIds.add(authorId);
+        addNode(
+          nodes,
+          createGraphNode({
+            id: authorId,
+            type: "person",
+            label: personLabelById.get(authorId) ?? discussion.author_id,
+          }),
+        );
+      }
       addEdge(
         edges,
         createGraphEdge({
           type: "produced",
-          from: `person:${discussion.author_id}`,
+          from: authorId,
           to: discussionId,
         }),
       );

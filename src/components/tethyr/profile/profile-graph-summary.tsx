@@ -1,6 +1,7 @@
 import { Network } from "lucide-react";
 import { useProfileWork } from "@/hooks/use-profile-work";
 import { useGraphTheme } from "@/hooks/use-graph-theme";
+import { GraphTreeView } from "@/components/tethyr/graph/graph-tree-view";
 import {
   buildProfileGraph,
   getProfileCollaborators,
@@ -121,6 +122,16 @@ export function ProfileGraphSummary({ profileId, name }: { profileId: string; na
             </ul>
           </div>
         )}
+      </div>
+      <div className="mt-6">
+        <h3 className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+          Connections outline
+        </h3>
+        <GraphTreeView graph={graph} rootId={`person:${profileId}`} maxDepth={2} maxNodes={40} />
+        <p className="mt-2 text-xs text-muted-foreground">
+          Every connection above is also described in words — the work graph reads the same with
+          or without its visual layer.
+        </p>
       </div>
     </section>
   );
