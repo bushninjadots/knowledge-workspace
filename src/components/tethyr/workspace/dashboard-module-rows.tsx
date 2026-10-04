@@ -6,6 +6,7 @@
 // content lives in full. Rows fetch their own data, so a hidden module costs
 // nothing.
 import { useMemo } from "react";
+import { supabasePending } from "@/lib/supabase-pending-schema";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Clock, Folder, Kanban, Sparkles, Star, Swords, Ticket, Users } from "lucide-react";
@@ -172,7 +173,7 @@ export function ApplicationsModuleRow() {
     queryFn: async () => {
       const profileId = me?.userId;
       if (!profileId) return { items: [], degraded: false };
-      const { data, error } = await supabase
+      const { data, error } = await supabasePending
         .from("project_role_applications")
         .select("id, status, role_id, created_at, project_open_roles(title, projects(title, id))")
         .eq("profile_id", profileId)
@@ -276,7 +277,7 @@ export function RoadmapModuleRow() {
     queryKey: ["my-milestone-summary", projectIds],
     queryFn: async () => {
       if (projectIds.length === 0) return { items: [], degraded: false };
-      const { data, error } = await supabase
+      const { data, error } = await supabasePending
         .from("project_milestones")
         .select("project_id, status")
         .in("project_id", projectIds);
@@ -417,7 +418,7 @@ export function SuggestedProjectsModuleRow() {
   const { data: matches = [], isLoading } = useQuery({
     queryKey: ["suggested-projects", me?.userId ?? "anon"],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("match_projects", {
+      const { data, error } = await supabasePending.rpc("match_projects", {
         p_user_id: me?.userId as string,
         p_limit: 3,
       });
@@ -432,7 +433,7 @@ export function SuggestedProjectsModuleRow() {
 
   const preview = matches
     .slice(0, 3)
-    .map((project) => project.title)
+    .map((project: { title: string }) => project.title)
     .join(" · ");
 
   return (
@@ -456,7 +457,7 @@ export function SuggestedCreatorsModuleRow() {
   const { data: matches = [], isLoading } = useQuery({
     queryKey: ["suggested-creators", me?.userId ?? "anon"],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("match_creators", {
+      const { data, error } = await supabasePending.rpc("match_creators", {
         p_user_id: me?.userId as string,
         p_limit: 3,
       });
@@ -471,7 +472,10 @@ export function SuggestedCreatorsModuleRow() {
 
   const preview = matches
     .slice(0, 3)
-    .map((candidate) => candidate.display_name ?? candidate.handle ?? "Member")
+    .map(
+      (candidate: { display_name?: string | null; handle?: string | null }) =>
+        candidate.display_name ?? candidate.handle ?? "Member",
+    )
     .join(" · ");
 
   return (

@@ -13,6 +13,7 @@
 // and rejects javascript: URLs).
 
 import { useCallback, useEffect, useState } from "react";
+import { supabasePending } from "@/lib/supabase-pending-schema";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil } from "lucide-react";
 import { toast } from "sonner";
@@ -47,7 +48,7 @@ function ProjectAboutBlock({ config, context }: BlockProps) {
   const projectQuery = useQuery({
     queryKey: ["project-about", ownerId],
     queryFn: async (): Promise<ProjectAboutData | null> => {
-      const { data } = await supabase
+      const { data } = await supabasePending
         .from("projects")
         .select("description, vision, readme")
         .eq("id", ownerId)
@@ -60,7 +61,7 @@ function ProjectAboutBlock({ config, context }: BlockProps) {
   const profileQuery = useQuery({
     queryKey: ["project-about-profile", ownerId],
     queryFn: async (): Promise<ProfileAboutData | null> => {
-      const { data } = await supabase
+      const { data } = await supabasePending
         .from("profiles")
         .select("readme, social_links")
         .eq("id", ownerId)
@@ -87,7 +88,7 @@ function ProjectAboutBlock({ config, context }: BlockProps) {
 
   const save = useCallback(
     async (content: string): Promise<boolean> => {
-      const { error } = await supabase
+      const { error } = await supabasePending
         .from("profiles")
         .update({ readme: content.trim() || null })
         .eq("id", ownerId);

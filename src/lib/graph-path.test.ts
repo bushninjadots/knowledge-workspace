@@ -38,7 +38,11 @@ describe("findGraphPath", () => {
     const forward = findGraphPath(graph, "person:ari", "skill:react");
     const backward = findGraphPath(graph, "skill:react", "person:ari");
     expect(forward!.nodes.map((n) => n.id)).toEqual(["person:ari", "project:atlas", "skill:react"]);
-    expect(backward!.nodes.map((n) => n.id)).toEqual(["skill:react", "project:atlas", "person:ari"]);
+    expect(backward!.nodes.map((n) => n.id)).toEqual([
+      "skill:react",
+      "project:atlas",
+      "person:ari",
+    ]);
     expect(backward!.steps.map(describeGraphStep)).toEqual([
       "React was used in Atlas",
       "Atlas was produced by Ari",
