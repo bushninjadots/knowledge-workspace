@@ -9,8 +9,15 @@ const DEFAULT_STATS = [
 ];
 
 function ProfileContributionStatsBlock({ config }: BlockProps) {
-  const stats =
+  const configuredStats =
     Array.isArray(config.stats) && config.stats.length > 0 ? config.stats : DEFAULT_STATS;
+  const visibility = [
+    config.showProjects !== false,
+    config.showContributions !== false,
+    config.showCollaborators !== false,
+  ];
+  const stats = configuredStats.filter((_, index) => visibility[index]).slice(0, 3);
+
   return (
     <section className="flex min-w-0 flex-col gap-3" aria-label="Contribution stats">
       <div className="flex items-center gap-2 text-sm font-medium text-foreground">

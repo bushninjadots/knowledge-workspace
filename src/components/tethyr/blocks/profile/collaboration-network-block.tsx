@@ -4,8 +4,14 @@ import type { BlockProps } from "@/lib/page-blocks";
 
 function ProfileCollaborationNetworkBlock({ config }: BlockProps) {
   const people = Array.isArray(config.people)
-    ? config.people.filter((item): item is string => typeof item === "string")
+    ? config.people.filter(
+        (item): item is string => typeof item === "string" && item.trim().length > 0,
+      )
     : ["People you have built with", "Shared projects", "Shared sessions"];
+  const configuredLimit = Number(config.limit);
+  const limit = Number.isFinite(configuredLimit) ? Math.min(Math.max(configuredLimit, 3), 6) : 4;
+  const visiblePeople = people.slice(0, limit);
+
   return (
     <section className="flex min-w-0 flex-col gap-3" aria-label="Collaboration network">
       <div className="flex items-center gap-2 text-sm font-medium text-foreground">
@@ -13,7 +19,7 @@ function ProfileCollaborationNetworkBlock({ config }: BlockProps) {
         Collaboration network
       </div>
       <div className="flex flex-col gap-2">
-        {people.slice(0, 4).map((person, index) => (
+        {visiblePeople.map((person, index) => (
           <div
             key={`${person}-${index}`}
             className="flex items-center gap-3 border-b border-border/60 pb-2 text-sm text-muted-foreground last:border-0 last:pb-0"
