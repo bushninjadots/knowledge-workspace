@@ -120,6 +120,24 @@ export function createDefaultProfileLayout(): PageLayout {
           blk("profile-activity-heatmap", 2),
         ],
       },
+      {
+        id: nid(),
+        position: 8,
+        layout: "three_column",
+        title: "Ways to connect",
+        blocks: [
+          blk("profile-looking-for", 0),
+          blk("profile-availability", 1),
+          blk("profile-contribution-stats", 2),
+        ],
+      },
+      {
+        id: nid(),
+        position: 9,
+        layout: "two_column",
+        title: "Built with others",
+        blocks: [blk("profile-collaboration-network", 0), blk("profile-collaborators", 1)],
+      },
     ],
   };
 }

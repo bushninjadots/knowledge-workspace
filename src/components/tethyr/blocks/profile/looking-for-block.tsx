@@ -6,9 +6,14 @@ const DEFAULT_ITEMS = ["Collaborators", "Feedback", "Community"];
 
 function ProfileLookingForBlock({ config, onChange, context }: BlockProps) {
   const items = Array.isArray(config.items)
-    ? config.items.filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+    ? config.items.filter(
+        (item): item is string => typeof item === "string" && item.trim().length > 0,
+      )
     : DEFAULT_ITEMS;
-  const note = typeof config.note === "string" ? config.note : "Open to thoughtful collaborations and useful conversations.";
+  const note =
+    typeof config.note === "string"
+      ? config.note
+      : "Open to thoughtful collaborations and useful conversations.";
 
   if (context.isEditing) {
     return (
@@ -19,7 +24,10 @@ function ProfileLookingForBlock({ config, onChange, context }: BlockProps) {
         </div>
         <div className="flex flex-wrap gap-1.5">
           {items.map((item) => (
-            <span key={item} className="rounded-full border border-border px-2.5 py-1 text-xs text-foreground">
+            <span
+              key={item}
+              className="rounded-full border border-border px-2.5 py-1 text-xs text-foreground"
+            >
               {item}
             </span>
           ))}
@@ -44,7 +52,10 @@ function ProfileLookingForBlock({ config, onChange, context }: BlockProps) {
       </div>
       <div className="flex flex-wrap gap-1.5">
         {items.map((item) => (
-          <span key={item} className="rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground">
+          <span
+            key={item}
+            className="rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground"
+          >
             {item}
           </span>
         ))}

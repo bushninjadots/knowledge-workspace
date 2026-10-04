@@ -40,3 +40,7 @@ import "./profile/collaborators-block";
 import "./profile/activity-heatmap-block";
 import "./profile/currently-building-block";
 import "./profile/proof-of-work-block";
+import "./profile/looking-for-block";
+import "./profile/availability-block";
+import "./profile/contribution-stats-block";
+import "./profile/collaboration-network-block";
