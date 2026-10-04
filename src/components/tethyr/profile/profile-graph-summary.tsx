@@ -129,8 +129,8 @@ export function ProfileGraphSummary({ profileId, name }: { profileId: string; na
         </h3>
         <GraphTreeView graph={graph} rootId={`person:${profileId}`} maxDepth={2} maxNodes={40} />
         <p className="mt-2 text-xs text-muted-foreground">
-          Every connection above is also described in words — the work graph reads the same with
-          or without its visual layer.
+          Every connection above is also described in words — the work graph reads the same with or
+          without its visual layer.
         </p>
       </div>
     </section>

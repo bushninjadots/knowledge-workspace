@@ -19,7 +19,9 @@ describe("SessionGraphSummary", () => {
 
     expect(screen.getByRole("region", { name: "In the graph" })).toBeInTheDocument();
     // Scope to the counts list — labels also appear inside the outline below.
-    const counts = within(screen.getByRole("region", { name: "In the graph" }).querySelector("dl")!);
+    const counts = within(
+      screen.getByRole("region", { name: "In the graph" }).querySelector("dl")!,
+    );
     const valueFor = (label: string) => counts.getByText(label).nextElementSibling?.textContent;
     expect(valueFor("People")).toBe("3");
     expect(valueFor("Skills")).toBe("1");
