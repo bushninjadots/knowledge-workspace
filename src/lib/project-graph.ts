@@ -194,6 +194,19 @@ function addEdge(edges: GraphEdge[], edge: GraphEdge) {
   edges.push(edge);
 }
 
+/** §29 — who may see a project's title and its relationships. Public projects
+ *  are visible to everyone; a private project only to its owner. Rows from a
+ *  database without a visibility column predate private projects entirely, so
+ *  a missing value reads as public. */
+export function projectVisibleToViewer(
+  viewerId: string | null | undefined,
+  project: { visibility?: string | null; profile_id?: string | null } | null | undefined,
+): boolean {
+  if (!project) return false;
+  if (project.visibility == null) return true;
+  return project.visibility === "public" || (!!viewerId && project.profile_id === viewerId);
+}
+
 /** Builds the Phase 2 project graph from already-loaded project workspace data. */
 export function buildProjectGraph(input: ProjectGraphInput): TethyrGraph {
   const nodes: GraphNode[] = [];
@@ -278,15 +291,9 @@ export function buildProjectGraph(input: ProjectGraphInput): TethyrGraph {
       const fillerId = `person:${role.filled_by}`;
       if (!personIds.has(fillerId)) {
         personIds.add(fillerId);
-        addNode(
-          nodes,
-          createGraphNode({ id: fillerId, type: "person", label: role.filled_by }),
-        );
+        addNode(nodes, createGraphNode({ id: fillerId, type: "person", label: role.filled_by }));
       }
-      addEdge(
-        edges,
-        createGraphEdge({ type: "filled_role", from: fillerId, to: roleId }),
-      );
+      addEdge(edges, createGraphEdge({ type: "filled_role", from: fillerId, to: roleId }));
     }
   }
 

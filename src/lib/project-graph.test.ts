@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { buildProjectGraph, projectContributionsFromLog } from "./project-graph";
+import {
+  buildProjectGraph,
+  projectContributionsFromLog,
+  projectVisibleToViewer,
+} from "./project-graph";
 
 describe("buildProjectGraph", () => {
   it("projects workspace data into meaningful typed relationships", () => {
@@ -348,5 +352,30 @@ describe("buildProjectGraph", () => {
       ["person:u-1", "Bryce"],
       ["person:u-2", "u-2"],
     ]);
+  });
+});
+
+describe("projectVisibleToViewer", () => {
+  it("shows public projects to everyone, including signed-out visitors", () => {
+    const project = { visibility: "public", profile_id: "ari" };
+    expect(projectVisibleToViewer(null, project)).toBe(true);
+    expect(projectVisibleToViewer("ari", project)).toBe(true);
+    expect(projectVisibleToViewer("stranger", project)).toBe(true);
+  });
+
+  it("shows private projects only to their owner (spec §29)", () => {
+    const project = { visibility: "private", profile_id: "ari" };
+    expect(projectVisibleToViewer("ari", project)).toBe(true);
+    expect(projectVisibleToViewer("stranger", project)).toBe(false);
+    expect(projectVisibleToViewer(null, project)).toBe(false);
+  });
+
+  it("treats rows without a visibility value as public legacy data", () => {
+    expect(projectVisibleToViewer(null, { profile_id: "ari" })).toBe(true);
+    expect(projectVisibleToViewer(null, { visibility: null, profile_id: "ari" })).toBe(true);
+  });
+
+  it("rejects a missing project outright", () => {
+    expect(projectVisibleToViewer("ari", null)).toBe(false);
   });
 });

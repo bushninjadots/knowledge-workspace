@@ -46,8 +46,10 @@ import { ProjectGraphSummary } from "@/components/tethyr/project/project-graph-s
 import {
   projectContributionsFromLog,
   projectHistoryFromActivity,
+  projectVisibleToViewer,
   type ProjectContributionLogEntry,
 } from "@/lib/project-graph";
+import { isColumnSchemaError } from "@/lib/supabase-errors";
 
 const ProjectNeeds = lazy(() =>
   import("@/components/tethyr/project/project-needs").then((m) => ({ default: m.ProjectNeeds })),
@@ -274,7 +276,8 @@ export function ProjectPage() {
   }, [tab, setTab]);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["project-detail", id],
+    // §29 — the fork parent gate depends on the viewer, so the cache must too.
+    queryKey: ["project-detail", id, me?.userId ?? null],
     queryFn: async () => {
       // Try full column set first; fall back if extended columns are missing.
       const FULL_COLS =
@@ -387,22 +390,45 @@ export function ProjectPage() {
         // The FK hint is load-bearing: since project_ai_tags (20261001130000)
         // added a second projects→profiles path, a bare profiles() embed is
         // ambiguous to PostgREST and 400s with PGRST201.
-        const parentCols = "id, title, profiles!projects_profile_id_fkey(handle)";
-        const { data: parentRow } = await sb
-          .from("projects")
-          .select(parentCols)
-          .eq("id", project.forked_from_project_id)
-          .maybeSingle();
+        // §29 — projects are SELECT-able by everyone, so RLS alone does not
+        // guard a private parent's title: it may reach the header and the
+        // graph only when the parent is public or the viewer owns it.
+        const parentCols =
+          "id, title, visibility, profile_id, profiles!projects_profile_id_fkey(handle)";
+        const parentColsLegacy = "id, title, profiles!projects_profile_id_fkey(handle)";
+        let parentRow: unknown = null;
+        {
+          const res = await sb
+            .from("projects")
+            .select(parentCols)
+            .eq("id", project.forked_from_project_id)
+            .maybeSingle();
+          if (!res.error) {
+            parentRow = res.data;
+          } else if (isColumnSchemaError(res.error)) {
+            // A database without the visibility column predates private
+            // projects; fall back to the original select and let the helper
+            // treat the missing value as public.
+            const legacy = await sb
+              .from("projects")
+              .select(parentColsLegacy)
+              .eq("id", project.forked_from_project_id)
+              .maybeSingle();
+            parentRow = legacy.data;
+          }
+        }
         const parent = parentRow as unknown as {
           id: string;
           title: string;
+          visibility?: string | null;
+          profile_id?: string | null;
           profiles: { handle: string | null } | null;
         } | null;
-        if (parent) {
+        if (projectVisibleToViewer(me?.userId ?? null, parent)) {
           forkedFrom = {
-            id: parent.id,
-            title: parent.title,
-            handle: parent.profiles?.handle ?? null,
+            id: parent!.id,
+            title: parent!.title,
+            handle: parent!.profiles?.handle ?? null,
           };
         }
       }
@@ -495,7 +521,9 @@ export function ProjectPage() {
       // through the row's profiles foreign key.
       const { data: rows, error } = await supabase
         .from("contribution_log")
-        .select("id, action, profile_id, profile:profiles(display_name, handle), created_at, metadata")
+        .select(
+          "id, action, profile_id, profile:profiles(display_name, handle), created_at, metadata",
+        )
         .filter("metadata->>project_id", "eq", id)
         .order("created_at", { ascending: true });
       if (error) return [];
