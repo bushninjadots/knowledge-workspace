@@ -38,3 +38,5 @@ import "./profile/achievements-block";
 import "./profile/gallery-block";
 import "./profile/collaborators-block";
 import "./profile/activity-heatmap-block";
+import "./profile/currently-building-block";
+import "./profile/proof-of-work-block";

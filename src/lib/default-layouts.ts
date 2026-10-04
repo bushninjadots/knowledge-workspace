@@ -109,6 +109,17 @@ export function createDefaultProfileLayout(): PageLayout {
         title: "Tools & Achievements",
         blocks: [blk("profile-tools", 0), blk("profile-achievements", 1)],
       },
+      {
+        id: nid(),
+        position: 7,
+        layout: "full",
+        title: "Contributions",
+        blocks: [
+          blk("profile-currently-building", 0),
+          blk("profile-proof-of-work", 1),
+          blk("profile-activity-heatmap", 2),
+        ],
+      },
     ],
   };
 }
