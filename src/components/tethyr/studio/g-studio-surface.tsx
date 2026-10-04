@@ -1996,10 +1996,15 @@ function BlockFrameSection({
         </button>
       )}
 
-      <p className="t-label mb-1 mt-3">Card border</p>
-      <p className="mb-2 text-2xs leading-snug text-muted-foreground-subtle">
-        This block only — everything else follows the Studio's Card borders setting.
-      </p>
+      <div className="mt-4 flex items-start gap-2 border-t border-border pt-3">
+        <Frame className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--user-accent)]" aria-hidden />
+        <div>
+          <p className="text-xs font-medium text-foreground">This block&apos;s outline</p>
+          <p className="mt-0.5 text-2xs leading-snug text-muted-foreground-subtle">
+            Usually follows the global Card outline setting. Override it here only when this block needs to stand out.
+          </p>
+        </div>
+      </div>
       <div
         role="radiogroup"
         aria-label="Card border for this block"
@@ -3007,9 +3012,9 @@ function GCustomizeAdvanced({
         <div className="mb-2 flex items-start gap-2">
           <Frame className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--user-accent)]" aria-hidden />
           <div>
-            <p className="text-xs font-medium text-foreground">Card outline</p>
+            <p className="text-xs font-medium text-foreground">Global card outline</p>
             <p className="mt-0.5 text-2xs leading-snug text-muted-foreground">
-              One setting for every card and panel in your Studio. This is the global rule.
+              Sets the default for every card and panel. Individual blocks can override this from their inspector.
             </p>
           </div>
         </div>
@@ -3063,27 +3068,6 @@ function GCustomizeAdvanced({
           </div>
         )}
       </div>
-      {cardBorders === "custom" && (
-        <div className="mb-4" role="group" aria-label="Card border colour">
-          <p className="t-label mb-1.5">Border colour</p>
-          <div className="flex flex-wrap gap-1.5">
-            {BORDER_SWATCHES.map((swatch) => (
-              <button
-                key={swatch}
-                type="button"
-                aria-label={`Card border ${swatch}`}
-                aria-pressed={cardBorderColor.toLowerCase() === swatch}
-                onClick={() => onCardBorderColorChange(swatch)}
-                className={cn(
-                  "h-6 w-6 rounded-sm border-2",
-                  cardBorderColor.toLowerCase() === swatch ? "border-foreground" : "border-border",
-                )}
-                style={{ backgroundColor: swatch }}
-              />
-            ))}
-          </div>
-        </div>
-      )}
       <div className="mb-4">
         <p className="t-label mb-1.5">Card fill</p>
         <p className="mb-1.5 text-2xs leading-snug text-muted-foreground-subtle">
