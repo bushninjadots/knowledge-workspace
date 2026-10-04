@@ -4,6 +4,7 @@ import { getConnectedNodes, getProjectLineage, type GraphNode } from "@/lib/grap
 import { filterGraphNodes, graphTypeFacets, type GraphNodeFilter } from "@/lib/graph-exploration";
 import { describeGraphStep, findGraphPath } from "@/lib/graph-path";
 import { buildProjectGraph, type ProjectGraphInput } from "@/lib/project-graph";
+import { useGraphTheme } from "@/hooks/use-graph-theme";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -39,6 +40,7 @@ function titleForType(type: GraphNode["type"]) {
 }
 
 export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
+  const theme = useGraphTheme();
   const [expanded, setExpanded] = useState(false);
   const [mode, setMode] = useState<"browse" | "path" | "lineage">("browse");
   const [depth, setDepth] = useState(1);
@@ -330,9 +332,16 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
                   No connections match these filters.
                 </p>
               ) : (
-                <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div
+                  className="mt-4 grid sm:grid-cols-2 lg:grid-cols-3"
+                  style={{ gap: theme.gap }}
+                >
                   {Object.entries(grouped).map(([type, nodes]) => (
-                    <div key={type} className="border border-border/60 p-3">
+                    <div
+                      key={type}
+                      className="border border-border/60 p-3"
+                      style={{ borderRadius: theme.nodeRadius }}
+                    >
                       <h3 className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
                         {titleForType(type as GraphNode["type"])}
                       </h3>
@@ -340,7 +349,7 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
                         {nodes.map((node) => (
                           <li key={node.id} className="text-sm">
                             <div className="font-medium">{node.label}</div>
-                            {node.description ? (
+                            {theme.showMetadata && node.description ? (
                               <div className="line-clamp-2 text-xs text-muted-foreground">
                                 {node.description}
                               </div>

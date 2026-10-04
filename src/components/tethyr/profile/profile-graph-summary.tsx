@@ -1,5 +1,6 @@
 import { Network } from "lucide-react";
 import { useProfileWork } from "@/hooks/use-profile-work";
+import { useGraphTheme } from "@/hooks/use-graph-theme";
 import {
   buildProfileGraph,
   getProfileCollaborators,
@@ -16,6 +17,7 @@ import {
  * earns its place, it does not report emptiness).
  */
 export function ProfileGraphSummary({ profileId, name }: { profileId: string; name: string }) {
+  const theme = useGraphTheme();
   const { data, isLoading } = useProfileWork(profileId);
   if (isLoading || !data?.hasWork) return null;
 
@@ -72,16 +74,25 @@ export function ProfileGraphSummary({ profileId, name }: { profileId: string; na
           <dd className="font-medium tabular-nums">{relationships}</dd>
         </div>
       </dl>
-      <div className="mt-5 grid gap-5 sm:grid-cols-2">
+      <div className="mt-5 grid sm:grid-cols-2" style={{ gap: theme.gap }}>
         <div>
           <h3 className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
             Connected projects
           </h3>
-          <ul className="mt-2 flex flex-wrap gap-2" aria-label="Connected projects">
+          <ul
+            className="mt-2 flex flex-wrap"
+            style={{ gap: theme.gap }}
+            aria-label="Connected projects"
+          >
             {graph.nodes
               .filter((node) => node.type === "project")
+              .slice(0, theme.nodeLimit)
               .map((node) => (
-                <li key={node.id} className="border border-border/70 px-2.5 py-1 text-xs">
+                <li
+                  key={node.id}
+                  className="border border-border/70 px-2.5 py-1 text-xs"
+                  style={{ borderRadius: theme.nodeRadius }}
+                >
                   <span className="text-muted-foreground">
                     {String(node.metadata?.role ?? "contributed")}
                   </span>{" "}

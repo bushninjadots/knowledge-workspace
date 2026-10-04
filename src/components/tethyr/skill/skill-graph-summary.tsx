@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createGraphEdge, createGraphNode, normalizeGraph } from "@/lib/graph-model";
+import { useGraphTheme } from "@/hooks/use-graph-theme";
 
 export function SkillGraphSummary({
   skillName,
@@ -21,6 +22,7 @@ export function SkillGraphSummary({
   projectCount: number;
   relatedSkills: string[];
 }) {
+  const theme = useGraphTheme();
   const skillId = `skill:${skillName.trim().toLowerCase()}`;
   const nodes = [
     createGraphNode({ id: skillId, type: "skill", label: skillName }),

@@ -1,5 +1,6 @@
 import { Network } from "lucide-react";
 import { buildProjectGraph, type ProjectGraphInput } from "@/lib/project-graph";
+import { useGraphTheme } from "@/hooks/use-graph-theme";
 import { ProjectGraphExplorer } from "./project-graph-explorer";
 
 /** The project itself plus at least one other node — otherwise the summary is
@@ -15,6 +16,7 @@ export function ProjectGraphSummary({ input }: { input: ProjectGraphInput }) {
 }
 
 function ProjectGraphSummaryBody({ input }: { input: ProjectGraphInput }) {
+  const theme = useGraphTheme();
   const graph = buildProjectGraph(input);
   const counts = graph.nodes.reduce<Record<string, number>>((result, node) => {
     result[node.type] = (result[node.type] ?? 0) + 1;
@@ -23,7 +25,7 @@ function ProjectGraphSummaryBody({ input }: { input: ProjectGraphInput }) {
   const relationships = graph.edges.length;
   const connectedNodes = graph.nodes
     .filter((node) => node.id !== `project:${input.project.id}`)
-    .slice(0, 12);
+    .slice(0, theme.nodeLimit);
   const parentProject = graph.edges.find(
     (edge) => edge.from === `project:${input.project.id}` && edge.type === "forked_from",
   );
@@ -112,9 +114,17 @@ function ProjectGraphSummaryBody({ input }: { input: ProjectGraphInput }) {
           </p>
         </div>
       ) : null}
-      <ul aria-label="Connected nodes" className="mt-5 flex flex-wrap gap-2">
+      <ul
+        aria-label="Connected nodes"
+        className="mt-5 flex flex-wrap"
+        style={{ gap: theme.gap }}
+      >
         {connectedNodes.map((node) => (
-          <li key={node.id} className="border border-border/70 px-2.5 py-1 text-xs">
+          <li
+            key={node.id}
+            className="border border-border/70 px-2.5 py-1 text-xs"
+            style={{ borderRadius: theme.nodeRadius }}
+          >
             <span className="text-muted-foreground">{node.type.replace("_", " ")}</span>{" "}
             <span className="font-medium">{node.label}</span>
           </li>
