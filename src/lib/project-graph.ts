@@ -67,6 +67,8 @@ type ProjectGraphContribution = {
   label: string;
   description?: string | null;
   authorProfileId?: string | null;
+  /** The author's resolved member name, so the graph never shows a raw id. */
+  authorName?: string | null;
   date?: string | null;
   evidence?: string | null;
 };
@@ -117,11 +119,15 @@ type ProjectActivityLike = {
 
 const CONTRIBUTION_ACTIVITY_KINDS = new Set(["contribution", "weekly_prompt"]);
 
-/** Minimal shape of a `contribution_log` row needed to shape graph inputs. */
+/** Minimal shape of a `contribution_log` row needed to shape graph inputs.
+ *  `profile` arrives as a PostgREST embed through the row's profile foreign
+ *  key, so contribution authors can be named in the graph without a second
+ *  lookup. */
 export type ProjectContributionLogEntry = {
   id: string;
   action: string;
   profile_id?: string | null;
+  profile?: { display_name?: string | null; handle?: string | null } | null;
   created_at: string;
   metadata?: Record<string, unknown> | null;
 };
@@ -153,6 +159,7 @@ export function projectContributionsFromLog(
     id: entry.id,
     label: contributionLabel(entry.action, entry.metadata),
     authorProfileId: entry.profile_id,
+    authorName: entry.profile?.display_name || entry.profile?.handle || null,
     date: entry.created_at,
   }));
 }
@@ -192,6 +199,10 @@ export function buildProjectGraph(input: ProjectGraphInput): TethyrGraph {
   const nodes: GraphNode[] = [];
   const edges: GraphEdge[] = [];
   const projectId = `project:${input.project.id}`;
+  /** Person nodes already in the graph. A member enters once — the roster
+   *  entry, which carries their name — and later references (contribution
+   *  authors, filled roles) only add edges to the existing node. */
+  const personIds = new Set<string>();
 
   addNode(
     nodes,
@@ -207,6 +218,7 @@ export function buildProjectGraph(input: ProjectGraphInput): TethyrGraph {
 
   for (const contributor of input.contributors ?? []) {
     const personId = `person:${contributor.profile_id}`;
+    personIds.add(personId);
     addNode(
       nodes,
       createGraphNode({ id: personId, type: "person", label: personLabel(contributor) }),
@@ -262,11 +274,20 @@ export function buildProjectGraph(input: ProjectGraphInput): TethyrGraph {
       }),
     );
     addEdge(edges, createGraphEdge({ type: "has_role", from: projectId, to: roleId }));
-    if (role.filled_by)
+    if (role.filled_by) {
+      const fillerId = `person:${role.filled_by}`;
+      if (!personIds.has(fillerId)) {
+        personIds.add(fillerId);
+        addNode(
+          nodes,
+          createGraphNode({ id: fillerId, type: "person", label: role.filled_by }),
+        );
+      }
       addEdge(
         edges,
-        createGraphEdge({ type: "filled_role", from: `person:${role.filled_by}`, to: roleId }),
+        createGraphEdge({ type: "filled_role", from: fillerId, to: roleId }),
       );
+    }
   }
 
   // Spec §7 — an import is not an isolated node: the repository's own
@@ -409,7 +430,17 @@ export function buildProjectGraph(input: ProjectGraphInput): TethyrGraph {
 
     if (contribution.authorProfileId) {
       const authorId = `person:${contribution.authorProfileId}`;
-      addNode(nodes, createGraphNode({ id: authorId, type: "person", label: authorId.slice(7) }));
+      if (!personIds.has(authorId)) {
+        personIds.add(authorId);
+        addNode(
+          nodes,
+          createGraphNode({
+            id: authorId,
+            type: "person",
+            label: contribution.authorName?.trim() || contribution.authorProfileId,
+          }),
+        );
+      }
       addEdge(edges, createGraphEdge({ type: "produced", from: authorId, to: contributionId }));
     }
   }

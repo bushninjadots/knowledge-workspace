@@ -490,13 +490,15 @@ export function ProjectPage() {
   const { data: contributionLog = [] } = useQuery({
     queryKey: ["project-contributions", id],
     queryFn: async (): Promise<ProjectContributionLogEntry[]> => {
+      // The profile embed names contribution authors for the graph — the graph
+      // must show people, never raw profile ids.
       const { data: rows, error } = await supabase
         .from("contribution_log")
-        .select("id, action, profile_id, created_at, metadata")
+        .select("id, action, profile_id, profile(display_name, handle), created_at, metadata")
         .filter("metadata->>project_id", "eq", id)
         .order("created_at", { ascending: true });
       if (error) return [];
-      return (rows ?? []) as ProjectContributionLogEntry[];
+      return (rows ?? []) as unknown as ProjectContributionLogEntry[];
     },
     enabled: !!id,
   });

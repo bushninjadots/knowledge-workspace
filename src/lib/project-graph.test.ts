@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildProjectGraph } from "./project-graph";
+import { buildProjectGraph, projectContributionsFromLog } from "./project-graph";
 
 describe("buildProjectGraph", () => {
   it("projects workspace data into meaningful typed relationships", () => {
@@ -240,5 +240,113 @@ describe("buildProjectGraph", () => {
       ]),
     );
     expect(graph.nodes.filter((node) => node.type === "person")).toHaveLength(0);
+  });
+
+  it("labels a contribution author with their member name, never a raw id (spec §24–§25)", () => {
+    const graph = buildProjectGraph({
+      project: { id: "atlas", title: "Atlas" },
+      contributions: [
+        {
+          id: "c1",
+          label: "Completed milestone: Map view",
+          authorProfileId: "profile-9f2c",
+          authorName: "Ariqv Okafor",
+          date: "2026-09-30T12:00:00Z",
+        },
+        {
+          id: "c2",
+          label: "Posted an update",
+          authorProfileId: "profile-4a71",
+          authorName: null,
+          date: "2026-10-01T09:00:00Z",
+        },
+      ],
+    });
+
+    const people = graph.nodes.filter((node) => node.type === "person");
+    expect(people).toEqual([
+      expect.objectContaining({ id: "person:profile-9f2c", label: "Ariqv Okafor" }),
+      expect.objectContaining({ id: "person:profile-4a71", label: "profile-4a71" }),
+    ]);
+    expect(people.map((node) => node.label)).not.toContain("profile-9f2c");
+    expect(graph.edges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "produced",
+          from: "person:profile-9f2c",
+          to: "contribution:c1",
+        }),
+      ]),
+    );
+  });
+
+  it("keeps the named roster person and never duplicates them as an id-labelled node", () => {
+    const graph = buildProjectGraph({
+      project: { id: "atlas", title: "Atlas" },
+      contributors: [
+        {
+          profile_id: "ari",
+          role: "creator",
+          profile: { display_name: "Ari" },
+        },
+      ],
+      contributions: [
+        {
+          id: "c1",
+          label: "Joined the project",
+          authorProfileId: "ari",
+          authorName: "Ariqv Okafor",
+        },
+      ],
+      roles: [{ id: "design", title: "Designer", is_filled: true, filled_by: "ari" }],
+    });
+
+    const ariNodes = graph.nodes.filter((node) => node.id === "person:ari");
+    expect(ariNodes).toHaveLength(1);
+    expect(ariNodes[0].label).toBe("Ari");
+    expect(graph.edges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ type: "filled_role", from: "person:ari", to: "role:design" }),
+        expect.objectContaining({
+          type: "produced",
+          from: "person:ari",
+          to: "contribution:c1",
+        }),
+      ]),
+    );
+  });
+
+  it("names an unfilled-role filler node from the embedded log profile", () => {
+    const log = [
+      {
+        id: "log-1",
+        action: "project_joined",
+        profile_id: "u-1",
+        profile: { display_name: "Bryce", handle: "bryce" },
+        created_at: "2026-10-01T00:00:00Z",
+        metadata: null,
+      },
+      {
+        id: "log-2",
+        action: "project_update_posted",
+        profile_id: "u-2",
+        profile: null,
+        created_at: "2026-10-02T00:00:00Z",
+        metadata: null,
+      },
+    ];
+
+    const contributions = projectContributionsFromLog(log);
+    expect(contributions.map((entry) => entry.authorName)).toEqual(["Bryce", null]);
+
+    const graph = buildProjectGraph({
+      project: { id: "atlas", title: "Atlas" },
+      contributions,
+    });
+    const people = graph.nodes.filter((node) => node.type === "person");
+    expect(people.map((node) => [node.id, node.label])).toEqual([
+      ["person:u-1", "Bryce"],
+      ["person:u-2", "u-2"],
+    ]);
   });
 });
