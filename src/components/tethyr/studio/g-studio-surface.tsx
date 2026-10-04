@@ -3003,32 +3003,66 @@ function GCustomizeAdvanced({
           ))}
         </div>
       )}
-      <Choice
-        label="Card borders"
-        hint="Theme is the Tethyr rule · Accent follows the accent above (banner or picked) · Colour pins one · None removes the outline"
-        value={cardBorders}
-        options={CARD_BORDER_OPTIONS.map((option) => [option.id, option.label])}
-        onChange={(value) => {
-          const next = value as CardBorderPreference;
-          onCardBordersChange(next);
-          // Picking "Colour" must show a colour straight away — with none set
-          // the resolver falls back to the accent and the choice reads broken.
-          if (next === "custom" && !cardBorderColor) onCardBorderColorChange(BORDER_SWATCHES[0]);
-        }}
-      />
-      <Choice
-        label="Border weight"
-        hint="Control how much the card outline carries"
-        value={config.cardBorderWidth ?? "thin"}
-        options={[
-          ["thin", "Thin"],
-          ["medium", "Medium"],
-          ["thick", "Thick"],
-        ]}
-        onChange={(value) =>
-          onChange({ cardBorderWidth: value as GStudioConfig["cardBorderWidth"] })
-        }
-      />
+      <div className="mb-4 border border-[var(--user-accent-border)] bg-[var(--user-accent-subtle)] p-2.5">
+        <div className="mb-2 flex items-start gap-2">
+          <Frame className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--user-accent)]" aria-hidden />
+          <div>
+            <p className="text-xs font-medium text-foreground">Card outline</p>
+            <p className="mt-0.5 text-2xs leading-snug text-muted-foreground">
+              One setting for every card and panel in your Studio. This is the global rule.
+            </p>
+          </div>
+        </div>
+        <Choice
+          label="Outline style"
+          hint="Theme is quiet · Accent follows your Studio accent · Colour pins one · None hides outlines"
+          value={cardBorders}
+          options={CARD_BORDER_OPTIONS.map((option) => [option.id, option.label])}
+          onChange={(value) => {
+            const next = value as CardBorderPreference;
+            onCardBordersChange(next);
+            // Picking "Colour" must show a colour straight away — with none set
+            // the resolver falls back to the accent and the choice reads broken.
+            if (next === "custom" && !cardBorderColor) onCardBorderColorChange(BORDER_SWATCHES[0]);
+          }}
+        />
+        <Choice
+          label="Line weight"
+          hint="How strong the shared outline appears"
+          value={config.cardBorderWidth ?? "thin"}
+          options={[
+            ["thin", "Thin"],
+            ["medium", "Medium"],
+            ["thick", "Thick"],
+          ]}
+          onChange={(value) =>
+            onChange({ cardBorderWidth: value as GStudioConfig["cardBorderWidth"] })
+          }
+        />
+        {cardBorders === "custom" && (
+          <div className="mb-1" role="group" aria-label="Card outline colour">
+            <p className="t-label mb-1.5">Outline colour</p>
+            <div className="flex flex-wrap gap-1.5">
+              {BORDER_SWATCHES.map((swatch) => (
+                <button
+                  key={swatch}
+                  type="button"
+                  aria-label={`Card border ${swatch}`}
+                  aria-pressed={cardBorderColor.toLowerCase() === swatch}
+                  onClick={() => onCardBorderColorChange(swatch)}
+                  className={cn(
+                    "h-6 w-6 rounded-sm border-2",
+                    cardBorderColor.toLowerCase() === swatch
+                      ? "border-foreground"
+                      : "border-border",
+                  )}
+                  style={{ backgroundColor: swatch }}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
       {cardBorders === "custom" && (
         <div className="mb-4" role="group" aria-label="Card border colour">
           <p className="t-label mb-1.5">Border colour</p>
