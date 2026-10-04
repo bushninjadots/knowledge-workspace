@@ -139,6 +139,31 @@ describe("ProjectGraphExplorer", () => {
     expect(screen.getByRole("button", { name: /produced\s*Atlas/i })).toBeInTheDocument();
   });
 
+  it("renders project history as a timeline with origins, events, and forks (spec VIEW 5)", () => {
+    render(
+      <ProjectGraphExplorer
+        input={{
+          ...input,
+          forkedFrom: { id: "origin", title: "Atlas Origin" },
+          history: [
+            { id: "idea", label: "Initial idea", date: "2026-08-01" },
+            { id: "launch", label: "Launch", date: "2026-09-01" },
+          ],
+        }}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /show .* connections/i }));
+    fireEvent.click(screen.getByRole("button", { name: /project lineage/i }));
+
+    // The origin opens the story; dated events follow in order.
+    const timelineItems = screen.getAllByRole("listitem");
+    const titles = timelineItems.map((item) => item.textContent ?? "");
+    expect(titles.some((text) => text.includes("Atlas Origin"))).toBe(true);
+    expect(titles.findIndex((text) => text.includes("Initial idea"))).toBeLessThan(
+      titles.findIndex((text) => text.includes("Launch")),
+    );
+  });
+
   it("explains an empty filter result instead of showing nothing", () => {
     renderExpanded();
 

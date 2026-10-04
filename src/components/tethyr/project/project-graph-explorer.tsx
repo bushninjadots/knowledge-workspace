@@ -10,15 +10,15 @@ import {
   Route,
   Search,
 } from "lucide-react";
-import {
-  GRAPH_NODE_TYPE_LABELS,
-  getConnectedNodes,
-  getProjectLineage,
-  type GraphNode,
-} from "@/lib/graph-model";
+import { GRAPH_NODE_TYPE_LABELS, getConnectedNodes, type GraphNode } from "@/lib/graph-model";
 import { filterGraphNodes, graphTypeFacets, type GraphNodeFilter } from "@/lib/graph-exploration";
 import { describeGraphStep, findGraphPath } from "@/lib/graph-path";
 import { buildProjectGraph, type ProjectGraphInput } from "@/lib/project-graph";
+import {
+  buildProjectTimeline,
+  PROJECT_TIMELINE_LABELS,
+  PROJECT_TIMELINE_NODE_TYPE,
+} from "@/lib/project-timeline";
 import { GraphTreeView } from "@/components/tethyr/graph/graph-tree-view";
 import { GraphNodeSheet } from "@/components/tethyr/graph/graph-node-sheet";
 import { GraphNetworkView } from "@/components/tethyr/graph/graph-network-view";
@@ -114,7 +114,7 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
     () => (pathStart && pathEnd ? findGraphPath(graph, pathStart, pathEnd) : null),
     [graph, pathStart, pathEnd],
   );
-  const lineage = useMemo(() => getProjectLineage(graph, projectId), [graph, projectId]);
+  const timeline = useMemo(() => buildProjectTimeline(graph, projectId), [graph, projectId]);
 
   // Spec §45: never render every relationship at once. Connections grow
   // progressively, a density-aware page at a time, and any change to the
@@ -192,32 +192,45 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
           {mode === "lineage" ? (
             <div className="mt-4" aria-live="polite">
               <p className="text-sm text-muted-foreground">
-                The connected project history, from the earliest source to this workspace.
+                How this workspace came to be — its origin, milestones, contributions, imports, and
+                forks, in order (spec §8 VIEW 5).
               </p>
-              {lineage.length > 1 ? (
+              {timeline && timeline.entries.length > 0 ? (
                 <ol className="mt-4 border-l border-border/70 pl-4">
-                  {lineage.map((node, index) => (
-                    <li key={node.id} className="relative pb-4 last:pb-0">
+                  {timeline.entries.map((entry) => (
+                    <li key={entry.nodeId} className="relative pb-4 last:pb-0">
                       <span
-                        className="absolute -left-[21px] top-1 h-2.5 w-2.5 rounded-full border-2 border-background bg-primary"
+                        className="absolute -left-[27px] top-0 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-background"
                         aria-hidden="true"
-                      />
-                      <p className="text-sm font-medium">{node.label}</p>
+                      >
+                        <GraphNodeGlyph
+                          type={PROJECT_TIMELINE_NODE_TYPE[entry.kind]}
+                          className="h-3 w-3 text-muted-foreground"
+                        />
+                      </span>
                       <p className="text-xs text-muted-foreground">
-                        {index === 0
-                          ? "Original project"
-                          : index === lineage.length - 1
-                            ? "Current project"
-                            : "Derived project"}
+                        {PROJECT_TIMELINE_LABELS[entry.kind]}
+                        {entry.date ? ` · ${new Date(entry.date).toLocaleDateString()}` : ""}
                       </p>
+                      <p className="text-sm font-medium">{entry.title}</p>
+                      {entry.description ? (
+                        <p className="mt-0.5 text-xs text-muted-foreground">{entry.description}</p>
+                      ) : null}
                     </li>
                   ))}
                 </ol>
               ) : (
                 <p className="mt-4 text-sm text-muted-foreground">
-                  This project has no recorded fork lineage yet.
+                  No fork history or dated milestones yet — as work lands and projects fork, this
+                  timeline builds itself.
                 </p>
               )}
+              {timeline && timeline.omitted > 0 ? (
+                <p className="mt-3 text-xs text-muted-foreground" role="status">
+                  {timeline.omitted} earlier {timeline.omitted === 1 ? "event is" : "events are"} in
+                  the graph — narrow the depth or search to see the rest.
+                </p>
+              ) : null}
             </div>
           ) : mode === "path" ? (
             <div className="mt-4">
