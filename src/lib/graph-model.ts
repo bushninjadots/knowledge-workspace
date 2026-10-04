@@ -1,4 +1,4 @@
-export type GraphNodeType =
+type GraphNodeType =
   | "person"
   | "project"
   | "skill"
@@ -26,7 +26,7 @@ export interface GraphNode {
   visibility?: "public" | "private";
 }
 
-export type GraphEdgeType =
+type GraphEdgeType =
   | "contributed_to"
   | "has_skill"
   | "demonstrated_skill"
@@ -74,7 +74,7 @@ export interface TethyrGraph {
   edges: GraphEdge[];
 }
 
-export interface GraphValidationIssue {
+interface GraphValidationIssue {
   kind: "duplicate_node" | "duplicate_edge" | "dangling_edge";
   id: string;
   message: string;

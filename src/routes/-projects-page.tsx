@@ -499,9 +499,6 @@ export function ProjectPage() {
     contributorIds: (data?.contributors ?? []).map((contributor) => contributor.profile_id),
   });
   const { data: forks = [] } = useProjectForks(id);
-=======
-  const { data: forks = [] } = useProjectForks(id);
-  const { data: activityRows = [] } = useProjectActivity(id);
 
   // Spec §7 — the GitHub commits already imported onto the project become
   // graph contributions, carrying the repository and author the import named.
@@ -524,7 +521,6 @@ export function ProjectPage() {
         repository: meta.repository ?? null,
       };
     });
->>>>>>> origin/main
   const updatePresentation = useUpdateProjectPresentation();
   const markProjectVisited = useMarkProjectVisited();
   const forkProject = useForkProject();

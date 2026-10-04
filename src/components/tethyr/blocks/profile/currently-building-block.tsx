@@ -65,10 +65,7 @@ async function fetchBuilding(profileId: string, limit: number): Promise<Building
     updatedAt: p.updated_at,
     milestone: milestones.data?.find((m) => m.project_id === p.id)?.title ?? null,
     openRoles: (roles.data ?? []).filter((r) => r.project_id === p.id).map((r) => r.title),
-    collaborators: Math.max(
-      0,
-      (people.data ?? []).filter((r) => r.project_id === p.id).length - 1,
-    ),
+    collaborators: Math.max(0, (people.data ?? []).filter((r) => r.project_id === p.id).length - 1),
   }));
 }
 

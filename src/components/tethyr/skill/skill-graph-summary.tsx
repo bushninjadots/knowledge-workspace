@@ -1,6 +1,13 @@
 import { Link } from "@tanstack/react-router";
 import { Network, Search } from "lucide-react";
 import { useMemo, useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { createGraphEdge, createGraphNode, normalizeGraph } from "@/lib/graph-model";
 
 export function SkillGraphSummary({
@@ -57,7 +64,9 @@ export function SkillGraphSummary({
   const graph = normalizeGraph({ nodes, edges });
   const connected = graph.nodes.filter((node) => node.id !== skillId);
   const [query, setQuery] = useState("");
-  const [relationshipFilter, setRelationshipFilter] = useState<"all" | "people" | "projects" | "skills">("all");
+  const [relationshipFilter, setRelationshipFilter] = useState<
+    "all" | "people" | "projects" | "skills"
+  >("all");
   const normalizedQuery = query.trim().toLowerCase();
   const filteredConnected = useMemo(
     () =>
@@ -78,7 +87,8 @@ export function SkillGraphSummary({
   const hrefForNode = (node: (typeof connected)[number]) => {
     if (node.id.endsWith(":people")) return "/explore?tab=creators";
     if (node.id.endsWith(":projects")) return "/projects";
-    if (node.type === "skill") return `/skills/${encodeURIComponent(node.label.toLowerCase().replace(/[^a-z0-9]+/g, "-"))}`;
+    if (node.type === "skill")
+      return `/skills/${encodeURIComponent(node.label.toLowerCase().replace(/[^a-z0-9]+/g, "-"))}`;
     return undefined;
   };
 
@@ -97,7 +107,9 @@ export function SkillGraphSummary({
         (node) =>
           node.type === group.type &&
           graph.edges.some(
-            (edge) => edge.type === group.edgeType && (edge.from === skillId || edge.to === skillId) &&
+            (edge) =>
+              edge.type === group.edgeType &&
+              (edge.from === skillId || edge.to === skillId) &&
               (edge.from === node.id || edge.to === node.id),
           ),
       ),
@@ -123,7 +135,10 @@ export function SkillGraphSummary({
             Search {skillName} graph connections
           </label>
           <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden="true"
+            />
             <input
               id="skill-graph-search"
               type="search"
@@ -138,19 +153,20 @@ export function SkillGraphSummary({
           <label htmlFor="skill-graph-relationship" className="sr-only">
             Filter {skillName} graph connections
           </label>
-          <select
-            id="skill-graph-relationship"
+          <Select
             value={relationshipFilter}
-            onChange={(event) =>
-              setRelationshipFilter(event.target.value as typeof relationshipFilter)
-            }
-            className="h-9 w-full rounded-md border border-border/70 bg-background px-3 text-sm outline-none focus:border-primary sm:w-auto"
+            onValueChange={(value) => setRelationshipFilter(value as typeof relationshipFilter)}
           >
-            <option value="all">All connections</option>
-            <option value="people">People</option>
-            <option value="projects">Projects</option>
-            <option value="skills">Related skills</option>
-          </select>
+            <SelectTrigger id="skill-graph-relationship" className="sm:w-auto">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All connections</SelectItem>
+              <SelectItem value="people">People</SelectItem>
+              <SelectItem value="projects">Projects</SelectItem>
+              <SelectItem value="skills">Related skills</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
       {filteredConnected.length === 0 ? (
@@ -158,33 +174,36 @@ export function SkillGraphSummary({
           No connections match “{query}”.
         </p>
       ) : (
-        <div className="mt-5 grid gap-5 sm:grid-cols-3" aria-label={`${skillName} graph connections`}>
+        <div
+          className="mt-5 grid gap-5 sm:grid-cols-3"
+          aria-label={`${skillName} graph connections`}
+        >
           {groups.map((group) => (
             <div key={group.label}>
-            <h4 className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
-              {group.label}
-            </h4>
-            <ul className="mt-2 flex flex-wrap gap-2">
-              {group.nodes.map((node) => {
-                const href = hrefForNode(node);
-                return (
-                  <li key={node.id} className="border border-border/70 px-2.5 py-1 text-xs">
-                    {href ? (
-                      <Link
-                        to={href}
-                        className="text-foreground underline-offset-4 hover:text-primary hover:underline"
-                        preload="intent"
-                      >
-                        {node.label}
-                      </Link>
-                    ) : (
-                      node.label
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
+              <h4 className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                {group.label}
+              </h4>
+              <ul className="mt-2 flex flex-wrap gap-2">
+                {group.nodes.map((node) => {
+                  const href = hrefForNode(node);
+                  return (
+                    <li key={node.id} className="border border-border/70 px-2.5 py-1 text-xs">
+                      {href ? (
+                        <Link
+                          to={href}
+                          className="text-foreground underline-offset-4 hover:text-primary hover:underline"
+                          preload="intent"
+                        >
+                          {node.label}
+                        </Link>
+                      ) : (
+                        node.label
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
           ))}
         </div>
       )}

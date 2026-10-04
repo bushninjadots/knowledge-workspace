@@ -100,7 +100,7 @@ export function ProfileGraphSummary({ profileId, name }: { profileId: string; na
                 <li key={collaborator.id} className="text-sm">
                   <span className="font-medium">{collaborator.label}</span>
                   <span className="ml-1 text-xs text-muted-foreground">
-                    {String(collaborator.metadata?.sharedProjectCount ?? 1)} shared {" "}
+                    {String(collaborator.metadata?.sharedProjectCount ?? 1)} shared{" "}
                     {Number(collaborator.metadata?.sharedProjectCount ?? 1) === 1
                       ? "project"
                       : "projects"}

@@ -5,7 +5,7 @@ import type { GraphEdge, GraphNode, TethyrGraph } from "./graph-model";
  *  human language (spec §27, §43). Lives in the shared layer so the project,
  *  profile, skill, community, and library graphs can all ask "how are these
  *  connected?" without a second implementation. */
-export interface GraphPathStep {
+interface GraphPathStep {
   edge: GraphEdge;
   from: GraphNode;
   to: GraphNode;
@@ -15,7 +15,7 @@ export interface GraphPathStep {
   phrase: string;
 }
 
-export interface GraphPath {
+interface GraphPath {
   nodes: GraphNode[];
   steps: GraphPathStep[];
 }

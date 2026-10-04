@@ -105,7 +105,7 @@ export type ProjectGraphInput = {
 };
 
 /** Minimal shape of a `project_activity` row needed to shape graph inputs. */
-export type ProjectActivityLike = {
+type ProjectActivityLike = {
   id: string;
   kind: string;
   title: string;

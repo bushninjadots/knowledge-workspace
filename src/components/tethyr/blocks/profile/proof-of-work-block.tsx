@@ -197,7 +197,12 @@ function ProfileProofOfWorkBlock({ config, context }: BlockProps) {
             )}
             <ol className="divide-y divide-border border-l-2 border-[color:var(--user-accent-border,var(--border))]">
               {list.map((e) => (
-                <EvidenceRow key={e.key} e={e} showType={!grouped} showDate={config.showDates !== false} />
+                <EvidenceRow
+                  key={e.key}
+                  e={e}
+                  showType={!grouped}
+                  showDate={config.showDates !== false}
+                />
               ))}
             </ol>
           </section>
@@ -207,7 +212,15 @@ function ProfileProofOfWorkBlock({ config, context }: BlockProps) {
   );
 }
 
-function EvidenceRow({ e, showType, showDate }: { e: Evidence; showType: boolean; showDate: boolean }) {
+function EvidenceRow({
+  e,
+  showType,
+  showDate,
+}: {
+  e: Evidence;
+  showType: boolean;
+  showDate: boolean;
+}) {
   const title = e.url ? (
     <a href={e.url} target="_blank" rel="noreferrer" className="hover:underline">
       {e.title}
@@ -223,7 +236,11 @@ function EvidenceRow({ e, showType, showDate }: { e: Evidence; showType: boolean
     <li className="py-2.5 pl-3">
       <div className="flex items-baseline justify-between gap-3">
         <p className="min-w-0 truncate text-sm font-medium text-foreground">
-          {e.featured && <span className="mr-1.5 text-primary" aria-label="Featured">★</span>}
+          {e.featured && (
+            <span className="mr-1.5 text-primary" aria-label="Featured">
+              ★
+            </span>
+          )}
           {title}
         </p>
         {showDate && e.date && (

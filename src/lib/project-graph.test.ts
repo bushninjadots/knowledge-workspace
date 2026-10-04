@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  buildProjectGraph,
-  projectContributionsFromActivity,
-  projectHistoryFromActivity,
-} from "./project-graph";
+import { buildProjectGraph } from "./project-graph";
 
 describe("buildProjectGraph", () => {
   it("projects workspace data into meaningful typed relationships", () => {
@@ -149,7 +145,6 @@ describe("buildProjectGraph", () => {
         }),
       ]),
     );
-
   });
 
   it("connects an imported repository's technologies as skills (spec §7)", () => {
@@ -245,6 +240,5 @@ describe("buildProjectGraph", () => {
       ]),
     );
     expect(graph.nodes.filter((node) => node.type === "person")).toHaveLength(0);
->>>>>>> origin/main
   });
 });
