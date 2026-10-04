@@ -1922,7 +1922,19 @@ function BlockFrameSection({
 
   return (
     <div className="border-t border-border py-3">
-      <p className="t-label mb-2">Shape</p>
+      <div className="mb-3 flex items-start gap-2">
+        <Sliders className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--user-accent)]" aria-hidden />
+        <div>
+          <p className="text-xs font-medium text-foreground">Block appearance</p>
+          <p className="mt-0.5 text-2xs leading-snug text-muted-foreground-subtle">
+            Change this block only. Anything set to Theme follows your Studio appearance settings.
+          </p>
+        </div>
+      </div>
+      <p className="t-label mb-1">Shape</p>
+      <p className="mb-2 text-2xs leading-snug text-muted-foreground-subtle">
+        Choose the silhouette of this block&apos;s surface.
+      </p>
       <div role="radiogroup" aria-label="Block shape" className="grid grid-cols-4 gap-1">
         {SHAPE_PRESETS.map((preset) => {
           const active = shape === preset.value;
@@ -2003,10 +2015,16 @@ function BlockFrameSection({
         </button>
       )}
 
-      <p className="t-label mb-1 mt-3">Card border</p>
-      <p className="mb-2 text-2xs leading-snug text-muted-foreground-subtle">
-        This block only — everything else follows the Studio's Card borders setting.
-      </p>
+      <div className="mt-4 flex items-start gap-2 border-t border-border pt-3">
+        <Frame className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--user-accent)]" aria-hidden />
+        <div>
+          <p className="text-xs font-medium text-foreground">Outline for this block</p>
+          <p className="mt-0.5 text-2xs leading-snug text-muted-foreground-subtle">
+            Theme uses the single global Card outline setting. Choose On or Off only to make this
+            block different.
+          </p>
+        </div>
+      </div>
       <div
         role="radiogroup"
         aria-label="Card border for this block"
@@ -2044,7 +2062,10 @@ function BlockFrameSection({
       {!flush && (
         <label className="mt-2.5 block">
           <span className="mb-1 flex items-center justify-between font-mono text-3xs uppercase tracking-widest text-muted-foreground-subtle">
-            Inner spacing <span>{inset ?? "theme"}</span>
+            Inner spacing <span>{inset ?? `${BLOCK_INSET_DEFAULT_PX}px · theme`}</span>
+          </span>
+          <span className="mb-1 block text-2xs leading-snug text-muted-foreground-subtle">
+            Space between this block&apos;s content and its edge.
           </span>
           <input
             type="range"
@@ -3010,53 +3031,67 @@ function GCustomizeAdvanced({
           ))}
         </div>
       )}
-      <Choice
-        label="Card borders"
-        hint="Theme is the Tethyr rule · Accent follows the accent above (banner or picked) · Colour pins one · None removes the outline"
-        value={cardBorders}
-        options={CARD_BORDER_OPTIONS.map((option) => [option.id, option.label])}
-        onChange={(value) => {
-          const next = value as CardBorderPreference;
-          onCardBordersChange(next);
-          // Picking "Colour" must show a colour straight away — with none set
-          // the resolver falls back to the accent and the choice reads broken.
-          if (next === "custom" && !cardBorderColor) onCardBorderColorChange(BORDER_SWATCHES[0]);
-        }}
-      />
-      <Choice
-        label="Border weight"
-        hint="Control how much the card outline carries"
-        value={config.cardBorderWidth ?? "thin"}
-        options={[
-          ["thin", "Thin"],
-          ["medium", "Medium"],
-          ["thick", "Thick"],
-        ]}
-        onChange={(value) =>
-          onChange({ cardBorderWidth: value as GStudioConfig["cardBorderWidth"] })
-        }
-      />
-      {cardBorders === "custom" && (
-        <div className="mb-4" role="group" aria-label="Card border colour">
-          <p className="t-label mb-1.5">Border colour</p>
-          <div className="flex flex-wrap gap-1.5">
-            {BORDER_SWATCHES.map((swatch) => (
-              <button
-                key={swatch}
-                type="button"
-                aria-label={`Card border ${swatch}`}
-                aria-pressed={cardBorderColor.toLowerCase() === swatch}
-                onClick={() => onCardBorderColorChange(swatch)}
-                className={cn(
-                  "h-6 w-6 rounded-sm border-2",
-                  cardBorderColor.toLowerCase() === swatch ? "border-foreground" : "border-border",
-                )}
-                style={{ backgroundColor: swatch }}
-              />
-            ))}
+      <div className="mb-4 border border-[var(--user-accent-border)] bg-[var(--user-accent-subtle)] p-2.5">
+        <div className="mb-2 flex items-start gap-2">
+          <Frame className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--user-accent)]" aria-hidden />
+          <div>
+            <p className="text-xs font-medium text-foreground">Card outlines</p>
+            <p className="mt-0.5 text-2xs leading-snug text-muted-foreground">
+              One default for every card and panel. Per-block overrides live in the block inspector
+              and are optional.
+            </p>
           </div>
         </div>
-      )}
+        <Choice
+          label="Outline style"
+          hint="Theme is quiet · Accent follows your Studio accent · Colour pins one · None hides outlines"
+          value={cardBorders}
+          options={CARD_BORDER_OPTIONS.map((option) => [option.id, option.label])}
+          onChange={(value) => {
+            const next = value as CardBorderPreference;
+            onCardBordersChange(next);
+            // Picking "Colour" must show a colour straight away — with none set
+            // the resolver falls back to the accent and the choice reads broken.
+            if (next === "custom" && !cardBorderColor) onCardBorderColorChange(BORDER_SWATCHES[0]);
+          }}
+        />
+        <Choice
+          label="Line weight"
+          hint="How strong the shared outline appears"
+          value={config.cardBorderWidth ?? "thin"}
+          options={[
+            ["thin", "Thin"],
+            ["medium", "Medium"],
+            ["thick", "Thick"],
+          ]}
+          onChange={(value) =>
+            onChange({ cardBorderWidth: value as GStudioConfig["cardBorderWidth"] })
+          }
+        />
+        {cardBorders === "custom" && (
+          <div className="mb-1" role="group" aria-label="Card outline colour">
+            <p className="t-label mb-1.5">Outline colour</p>
+            <div className="flex flex-wrap gap-1.5">
+              {BORDER_SWATCHES.map((swatch) => (
+                <button
+                  key={swatch}
+                  type="button"
+                  aria-label={`Card border ${swatch}`}
+                  aria-pressed={cardBorderColor.toLowerCase() === swatch}
+                  onClick={() => onCardBorderColorChange(swatch)}
+                  className={cn(
+                    "h-6 w-6 rounded-sm border-2",
+                    cardBorderColor.toLowerCase() === swatch
+                      ? "border-foreground"
+                      : "border-border",
+                  )}
+                  style={{ backgroundColor: swatch }}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
       <div className="mb-4">
         <p className="t-label mb-1.5">Card fill</p>
         <p className="mb-1.5 text-2xs leading-snug text-muted-foreground-subtle">

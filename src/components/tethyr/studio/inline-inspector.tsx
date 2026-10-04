@@ -67,10 +67,15 @@ export function InlineInspector({
 
   useEffect(() => {
     const timers = debounceTimersRef.current;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKeyDown);
     return () => {
+      document.removeEventListener("keydown", onKeyDown);
       Object.values(timers).forEach(clearTimeout);
     };
-  }, []);
+  }, [onClose]);
 
   function set<Key extends string>(key: Key, value: unknown) {
     const pendingTimer = debounceTimersRef.current[key];
@@ -119,10 +124,9 @@ export function InlineInspector({
     >
       <div className="mb-3 flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            {definition.label}
-          </h3>
-          <p className="mt-0.5 text-[11px] text-muted-foreground">{definition.description}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Block settings</p>
+          <h3 className="mt-1 text-sm font-semibold text-foreground">{definition.label}</h3>
+          <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">{definition.description}</p>
         </div>
         <Button
           variant="ghost"
@@ -135,6 +139,10 @@ export function InlineInspector({
         </Button>
       </div>
 
+      <div className="mb-3 rounded-md bg-surface/60 px-2.5 py-2 text-[10px] text-muted-foreground">
+        <span className="font-medium text-foreground">Changes apply live.</span> Text and colors save after you pause; layout and toggles save immediately.
+      </div>
+
       {profileMedia && ownerId && onProfileMediaSaved && (
         <ProfileMediaControls
           ownerId={ownerId}
@@ -145,14 +153,18 @@ export function InlineInspector({
       )}
 
       {onBlockLayoutChange && (
-        <div className="mb-4 space-y-2 border-b border-border/30 pb-4">
-          <p className="text-xs font-semibold text-foreground">Arrange this block</p>
-          <p className="text-[10px] text-muted-foreground">
-            Choose where it starts and how wide it is in a multi-column section.
-          </p>
+        <div className="mb-4 flex flex-col gap-2 border-b border-border/30 pb-4">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Placement</p>
+            <p className="mt-1 text-xs font-medium text-foreground">Where this block sits</p>
+            <p className="mt-0.5 text-[10px] leading-relaxed text-muted-foreground">
+              Adjust its start position and width in this section&apos;s grid. Changes save automatically.
+            </p>
+          </div>
           <div className="grid grid-cols-2 gap-2">
-            <label className="text-[11px] text-muted-foreground">
-              Start column
+              <label className="text-[11px] text-muted-foreground">
+              Column start
+              <span className="ml-1 text-[10px] text-muted-foreground/70">1–12</span>
               <Input
                 type="number"
                 min={0}
@@ -166,8 +178,9 @@ export function InlineInspector({
                 }
               />
             </label>
-            <label className="text-[11px] text-muted-foreground">
-              Width (columns)
+              <label className="text-[11px] text-muted-foreground">
+              Block width
+              <span className="ml-1 text-[10px] text-muted-foreground/70">columns</span>
               <Input
                 type="number"
                 min={1}
@@ -183,7 +196,7 @@ export function InlineInspector({
             </label>
           </div>
           <p className="text-[10px] text-muted-foreground">
-            Changes save automatically. This only affects sections with columns.
+            A wider block spans more of the row. This only affects sections with columns.
           </p>
         </div>
       )}
@@ -202,8 +215,8 @@ export function InlineInspector({
               return (
                 <div key={key} className="flex flex-col gap-2">
                   {sectionLabel && <p className="border-t border-border/30 pt-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{sectionLabel}</p>}
-                  <div className="flex items-center justify-between gap-2">
-                    <Label htmlFor={`${block.id}-${key}`} className="text-[11px] font-medium">
+                  <div className="flex items-center justify-between gap-3 rounded-md bg-surface/40 px-2.5 py-2">
+                    <Label htmlFor={`${block.id}-${key}`} className="min-w-0 text-[11px] font-medium">
                       {label}
                     </Label>
                     <button
@@ -211,17 +224,21 @@ export function InlineInspector({
                       type="button"
                       role="switch"
                       aria-checked={on}
-                      aria-label={label}
+                      aria-label={`${label}: ${on ? "on" : "off"}`}
                       onClick={() => set(key, !on)}
                       className={[
-                        "h-5 w-9 shrink-0 rounded-full p-0.5 transition-colors",
-                        on ? "bg-[var(--user-accent,var(--trust))]" : "bg-border",
+                        "flex h-6 min-w-[3.5rem] shrink-0 items-center justify-between rounded-full border p-0.5 text-[9px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--trust))]",
+                        on
+                          ? "border-[var(--user-accent,var(--trust))] bg-[var(--user-accent,var(--trust))] text-background"
+                          : "border-border bg-border/60 text-muted-foreground",
                       ].join(" ")}
                     >
+                      <span className={on ? "pl-1" : "order-2 pr-1"}>{on ? "ON" : "OFF"}</span>
                       <span
+                        aria-hidden="true"
                         className={[
-                          "block h-4 w-4 rounded-full bg-background shadow transition-transform",
-                          on ? "translate-x-4" : "translate-x-0",
+                          "size-4 rounded-full bg-background shadow-sm transition-transform",
+                          on ? "translate-x-[1.75rem]" : "translate-x-0",
                         ].join(" ")}
                       />
                     </button>
@@ -243,8 +260,9 @@ export function InlineInspector({
                           key={option.value}
                           type="button"
                           onClick={() => set(key, option.value)}
+                          aria-pressed={active}
                           className={[
-                            "h-7 rounded-lg border px-2.5 text-xs transition-colors",
+                            "h-7 rounded-lg border px-2.5 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--trust))]",
                             active
                               ? "border-[var(--user-accent,var(--trust))] bg-[var(--user-accent,var(--trust))]/5 font-medium text-foreground"
                               : "border-transparent bg-surface/50 text-muted-foreground hover:border-card-border hover:bg-surface hover:text-foreground",
@@ -252,6 +270,7 @@ export function InlineInspector({
                             .filter(Boolean)
                             .join(" ")}
                         >
+                          {active && <span className="mr-1 text-[10px] text-[var(--user-accent,var(--trust))]">●</span>}
                           {option.label}
                         </button>
                       );
