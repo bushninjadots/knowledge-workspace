@@ -151,4 +151,100 @@ describe("buildProjectGraph", () => {
     );
 
   });
+
+  it("connects an imported repository's technologies as skills (spec §7)", () => {
+    const graph = buildProjectGraph({
+      project: { id: "atlas", title: "Atlas" },
+      repositories: [
+        {
+          id: "repo",
+          name: "ari/atlas",
+          provider: "github",
+          fullName: "ari/atlas",
+          language: "TypeScript",
+          topics: ["graph", "TypeScript"],
+        },
+      ],
+    });
+
+    expect(graph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "skill:typescript", type: "skill", label: "TypeScript" }),
+        expect.objectContaining({ id: "skill:graph", type: "skill", label: "graph" }),
+      ]),
+    );
+    expect(graph.edges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ type: "uses", from: "repository:repo", to: "skill:typescript" }),
+        expect.objectContaining({ type: "uses", from: "repository:repo", to: "skill:graph" }),
+      ]),
+    );
+    // A language repeated as a topic is one skill with one edge, not two.
+    expect(
+      graph.edges.filter((edge) => edge.type === "uses" && edge.to === "skill:typescript"),
+    ).toHaveLength(1);
+  });
+
+  it("connects imported commits to their repository and named author (spec §7)", () => {
+    const graph = buildProjectGraph({
+      project: { id: "atlas", title: "Atlas" },
+      repositories: [{ id: "repo", name: "ari/atlas", provider: "github", fullName: "ari/atlas" }],
+      importedCommits: [
+        {
+          id: "sha-1",
+          label: "Add the map view",
+          authorLogin: "octo-dev",
+          date: "2026-10-01T10:00:00Z",
+          url: "https://github.com/ari/atlas/commit/sha-1",
+          repository: "ari/atlas",
+        },
+      ],
+    });
+
+    expect(graph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "contribution:sha-1", type: "contribution" }),
+        expect.objectContaining({ id: "person:github:octo-dev", type: "person" }),
+      ]),
+    );
+    expect(graph.edges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "contributed_to",
+          from: "contribution:sha-1",
+          to: "repository:repo",
+        }),
+        expect.objectContaining({
+          type: "produced",
+          from: "person:github:octo-dev",
+          to: "contribution:sha-1",
+        }),
+        expect.objectContaining({
+          type: "contributed_to",
+          from: "person:github:octo-dev",
+          to: "repository:repo",
+        }),
+      ]),
+    );
+  });
+
+  it("falls back to the project when a commit names no repository, and invents no author", () => {
+    const graph = buildProjectGraph({
+      project: { id: "atlas", title: "Atlas" },
+      repositories: [{ id: "repo", name: "ari/atlas", provider: "github" }],
+      importedCommits: [{ id: "sha-2", label: "Tidy the README" }],
+    });
+
+    expect(graph.edges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "contributed_to",
+          from: "contribution:sha-2",
+          to: "project:atlas",
+        }),
+      ]),
+    );
+    expect(graph.nodes.filter((node) => node.type === "person")).toHaveLength(0);
+>>>>>>> origin/main
+  });
 });
