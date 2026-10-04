@@ -109,6 +109,35 @@ export function createDefaultProfileLayout(): PageLayout {
         title: "Tools & Achievements",
         blocks: [blk("profile-tools", 0), blk("profile-achievements", 1)],
       },
+      {
+        id: nid(),
+        position: 7,
+        layout: "full",
+        title: "Contributions",
+        blocks: [
+          blk("profile-currently-building", 0),
+          blk("profile-proof-of-work", 1),
+          blk("profile-activity-heatmap", 2),
+        ],
+      },
+      {
+        id: nid(),
+        position: 8,
+        layout: "three_column",
+        title: "Ways to connect",
+        blocks: [
+          blk("profile-looking-for", 0),
+          blk("profile-availability", 1),
+          blk("profile-contribution-stats", 2),
+        ],
+      },
+      {
+        id: nid(),
+        position: 9,
+        layout: "two_column",
+        title: "Built with others",
+        blocks: [blk("profile-collaboration-network", 0), blk("profile-collaborators", 1)],
+      },
     ],
   };
 }

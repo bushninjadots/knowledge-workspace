@@ -192,36 +192,40 @@ export function InlineInspector({
         <p className="text-[11px] text-muted-foreground">No editable settings for this block.</p>
       ) : (
         <div className="flex flex-col gap-3">
-          {fields.map((field) => {
+          {fields.map((field, index) => {
             const { key, label } = field;
             const value = fieldValue(key);
+            const sectionLabel = index === 0 ? "Content & display" : index === 1 ? "Presentation" : null;
 
             if (field.type === "toggle") {
               const on = value === true;
               return (
-                <div key={key} className="flex items-center justify-between gap-2">
-                  <Label htmlFor={`${block.id}-${key}`} className="text-[11px] font-medium">
-                    {label}
-                  </Label>
-                  <button
-                    id={`${block.id}-${key}`}
-                    type="button"
-                    role="switch"
-                    aria-checked={on}
-                    aria-label={label}
-                    onClick={() => set(key, !on)}
-                    className={[
-                      "h-5 w-9 shrink-0 rounded-full p-0.5 transition-colors",
-                      on ? "bg-[var(--user-accent,var(--trust))]" : "bg-border",
-                    ].join(" ")}
-                  >
-                    <span
+                <div key={key} className="flex flex-col gap-2">
+                  {sectionLabel && <p className="border-t border-border/30 pt-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{sectionLabel}</p>}
+                  <div className="flex items-center justify-between gap-2">
+                    <Label htmlFor={`${block.id}-${key}`} className="text-[11px] font-medium">
+                      {label}
+                    </Label>
+                    <button
+                      id={`${block.id}-${key}`}
+                      type="button"
+                      role="switch"
+                      aria-checked={on}
+                      aria-label={label}
+                      onClick={() => set(key, !on)}
                       className={[
-                        "block h-4 w-4 rounded-full bg-background shadow transition-transform",
-                        on ? "translate-x-4" : "translate-x-0",
+                        "h-5 w-9 shrink-0 rounded-full p-0.5 transition-colors",
+                        on ? "bg-[var(--user-accent,var(--trust))]" : "bg-border",
                       ].join(" ")}
-                    />
-                  </button>
+                    >
+                      <span
+                        className={[
+                          "block h-4 w-4 rounded-full bg-background shadow transition-transform",
+                          on ? "translate-x-4" : "translate-x-0",
+                        ].join(" ")}
+                      />
+                    </button>
+                  </div>
                 </div>
               );
             }
