@@ -10,6 +10,7 @@ import { filterGraphNodes, graphTypeFacets, type GraphNodeFilter } from "@/lib/g
 import { describeGraphStep, findGraphPath } from "@/lib/graph-path";
 import { buildProjectGraph, type ProjectGraphInput } from "@/lib/project-graph";
 import { GraphTreeView } from "@/components/tethyr/graph/graph-tree-view";
+import { GraphNodeSheet } from "@/components/tethyr/graph/graph-node-sheet";
 import { useGraphTheme } from "@/hooks/use-graph-theme";
 import { Input } from "@/components/ui/input";
 import {
@@ -61,11 +62,17 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
   const [activeTypes, setActiveTypes] = useState<GraphNode["type"][]>([]);
   const [pathStart, setPathStart] = useState("");
   const [pathEnd, setPathEnd] = useState("");
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const graph = useMemo(() => buildProjectGraph(input), [input]);
   const projectId = `project:${input.project.id}`;
   const projectNode = useMemo(
     () => graph.nodes.find((node) => node.id === projectId),
     [graph, projectId],
+  );
+  const selectedNode = useMemo(
+    () =>
+      selectedNodeId ? (graph.nodes.find((node) => node.id === selectedNodeId) ?? null) : null,
+    [graph, selectedNodeId],
   );
   const connected = useMemo(
     () => getConnectedNodes(graph, projectId, { depth }),
@@ -364,12 +371,18 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
                         <ul className="mt-2 space-y-2">
                           {nodes.map((node) => (
                             <li key={node.id} className="text-sm">
-                              <div className="font-medium">{node.label}</div>
-                              {theme.showMetadata && node.description ? (
-                                <div className="line-clamp-2 text-xs text-muted-foreground">
-                                  {node.description}
-                                </div>
-                              ) : null}
+                              <button
+                                type="button"
+                                onClick={() => setSelectedNodeId(node.id)}
+                                className="w-full rounded-md px-1 py-1 text-left transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                              >
+                                <span className="font-medium">{node.label}</span>
+                                {theme.showMetadata && node.description ? (
+                                  <span className="line-clamp-2 block text-xs text-muted-foreground">
+                                    {node.description}
+                                  </span>
+                                ) : null}
+                              </button>
                             </li>
                           ))}
                         </ul>
@@ -391,6 +404,21 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
           )}
         </div>
       ) : null}
+
+      <GraphNodeSheet
+        graph={graph}
+        node={selectedNode}
+        open={selectedNode !== null}
+        onOpenChange={(open) => {
+          if (!open) setSelectedNodeId(null);
+        }}
+        onSelectNode={setSelectedNodeId}
+        onTrace={(nodeId) => {
+          setMode("path");
+          setPathStart(nodeId);
+          setSelectedNodeId(null);
+        }}
+      />
     </div>
   );
 }

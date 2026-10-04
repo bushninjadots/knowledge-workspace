@@ -1,7 +1,24 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import userEvent from "@testing-library/user-event";
+import { beforeAll, describe, expect, it } from "vitest";
 import { ProjectGraphExplorer } from "./project-graph-explorer";
 import type { ProjectGraphInput } from "@/lib/project-graph";
+
+// jsdom lacks matchMedia — vaul uses it to detect the desktop breakpoint.
+beforeAll(() => {
+  window.matchMedia =
+    window.matchMedia ??
+    (((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: () => {},
+      removeListener: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => false,
+    })) as typeof window.matchMedia);
+});
 
 const input: ProjectGraphInput = {
   project: { id: "atlas", title: "Atlas" },
@@ -81,6 +98,17 @@ describe("ProjectGraphExplorer", () => {
     fireEvent.click(screen.getByRole("button", { name: /show 6 more connections/i }));
 
     expect(screen.getByText("Person 29")).toBeInTheDocument();
+  });
+
+  it("opens a node inspector with its relationships from a connection", async () => {
+    const user = userEvent.setup();
+    renderExpanded();
+
+    await user.click(screen.getByRole("button", { name: "Ari" }));
+
+    expect(await screen.findByRole("dialog", { name: "Ari" })).toBeInTheDocument();
+    // Ari's relationship to the project is spelled out, not just implied.
+    expect(screen.getByRole("button", { name: /produced\s*Atlas/i })).toBeInTheDocument();
   });
 
   it("explains an empty filter result instead of showing nothing", () => {
