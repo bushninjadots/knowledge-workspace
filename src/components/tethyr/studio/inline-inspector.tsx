@@ -124,10 +124,9 @@ export function InlineInspector({
     >
       <div className="mb-3 flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            {definition.label}
-          </h3>
-          <p className="mt-0.5 text-[11px] text-muted-foreground">{definition.description}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Block settings</p>
+          <h3 className="mt-1 text-sm font-semibold text-foreground">{definition.label}</h3>
+          <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">{definition.description}</p>
         </div>
         <Button
           variant="ghost"
@@ -156,9 +155,10 @@ export function InlineInspector({
       {onBlockLayoutChange && (
         <div className="mb-4 flex flex-col gap-2 border-b border-border/30 pb-4">
           <div>
-            <p className="text-xs font-semibold text-foreground">Layout</p>
-            <p className="mt-0.5 text-[10px] text-muted-foreground">
-              Place this block in the section grid. Changes save automatically.
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Placement</p>
+            <p className="mt-1 text-xs font-medium text-foreground">Where this block sits</p>
+            <p className="mt-0.5 text-[10px] leading-relaxed text-muted-foreground">
+              Adjust its start position and width in this section&apos;s grid. Changes save automatically.
             </p>
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -231,13 +231,13 @@ export function InlineInspector({
                     ].join(" ")}
                   >
                     <span className={on ? "pl-1" : "order-2 pr-1"}>{on ? "ON" : "OFF"}</span>
-                    <span
-                      aria-hidden="true"
-                      className={[
-                        "size-4 rounded-full bg-background shadow-sm transition-transform",
-                        on ? "translate-x-0" : "translate-x-0",
-                      ].join(" ")}
-                    />
+                      <span
+                        aria-hidden="true"
+                        className={[
+                          "size-4 rounded-full bg-background shadow-sm transition-transform",
+                          on ? "translate-x-[1.75rem]" : "translate-x-0",
+                        ].join(" ")}
+                      />
                   </button>
                 </div>
               );
@@ -256,8 +256,9 @@ export function InlineInspector({
                           key={option.value}
                           type="button"
                           onClick={() => set(key, option.value)}
+                          aria-pressed={active}
                           className={[
-                            "h-7 rounded-lg border px-2.5 text-xs transition-colors",
+                            "h-7 rounded-lg border px-2.5 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--trust))]",
                             active
                               ? "border-[var(--user-accent,var(--trust))] bg-[var(--user-accent,var(--trust))]/5 font-medium text-foreground"
                               : "border-transparent bg-surface/50 text-muted-foreground hover:border-card-border hover:bg-surface hover:text-foreground",
@@ -265,6 +266,7 @@ export function InlineInspector({
                             .filter(Boolean)
                             .join(" ")}
                         >
+                          {active && <span className="mr-1 text-[10px] text-[var(--user-accent,var(--trust))]">●</span>}
                           {option.label}
                         </button>
                       );
