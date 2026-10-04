@@ -67,10 +67,15 @@ export function InlineInspector({
 
   useEffect(() => {
     const timers = debounceTimersRef.current;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKeyDown);
     return () => {
+      document.removeEventListener("keydown", onKeyDown);
       Object.values(timers).forEach(clearTimeout);
     };
-  }, []);
+  }, [onClose]);
 
   function set<Key extends string>(key: Key, value: unknown) {
     const pendingTimer = debounceTimersRef.current[key];
@@ -135,6 +140,10 @@ export function InlineInspector({
         </Button>
       </div>
 
+      <div className="mb-3 rounded-md bg-surface/60 px-2.5 py-2 text-[10px] text-muted-foreground">
+        <span className="font-medium text-foreground">Changes apply live.</span> Text and colors save after you pause; layout and toggles save immediately.
+      </div>
+
       {profileMedia && ownerId && onProfileMediaSaved && (
         <ProfileMediaControls
           ownerId={ownerId}
@@ -145,14 +154,17 @@ export function InlineInspector({
       )}
 
       {onBlockLayoutChange && (
-        <div className="mb-4 space-y-2 border-b border-border/30 pb-4">
-          <p className="text-xs font-semibold text-foreground">Arrange this block</p>
-          <p className="text-[10px] text-muted-foreground">
-            Choose where it starts and how wide it is in a multi-column section.
-          </p>
+        <div className="mb-4 flex flex-col gap-2 border-b border-border/30 pb-4">
+          <div>
+            <p className="text-xs font-semibold text-foreground">Layout</p>
+            <p className="mt-0.5 text-[10px] text-muted-foreground">
+              Place this block in the section grid. Changes save automatically.
+            </p>
+          </div>
           <div className="grid grid-cols-2 gap-2">
-            <label className="text-[11px] text-muted-foreground">
-              Start column
+              <label className="text-[11px] text-muted-foreground">
+              Column start
+              <span className="ml-1 text-[10px] text-muted-foreground/70">1–12</span>
               <Input
                 type="number"
                 min={0}
@@ -166,8 +178,9 @@ export function InlineInspector({
                 }
               />
             </label>
-            <label className="text-[11px] text-muted-foreground">
-              Width (columns)
+              <label className="text-[11px] text-muted-foreground">
+              Block width
+              <span className="ml-1 text-[10px] text-muted-foreground/70">columns</span>
               <Input
                 type="number"
                 min={1}
@@ -183,7 +196,7 @@ export function InlineInspector({
             </label>
           </div>
           <p className="text-[10px] text-muted-foreground">
-            Changes save automatically. This only affects sections with columns.
+            A wider block spans more of the row. This only affects sections with columns.
           </p>
         </div>
       )}
