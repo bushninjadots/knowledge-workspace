@@ -7,6 +7,7 @@ import {
   type CommunityGraphInput,
 } from "@/lib/community-graph";
 import { GraphTreeView } from "@/components/tethyr/graph/graph-tree-view";
+import { GraphNodeGlyph } from "@/components/tethyr/graph/graph-node-glyph";
 
 /**
  * Phase 7 of the Tethyr Graph spec — a compact graph summary for community
@@ -88,6 +89,10 @@ export function CommunityGraphSummary({
       <ul aria-label="Connected nodes" className="mt-3 flex flex-wrap gap-1.5">
         {connectedNodes.map((node) => (
           <li key={node.id} className="border border-border/70 px-2 py-0.5 text-[11px]">
+            <GraphNodeGlyph
+              type={node.type}
+              className="mr-1 inline align-[-2px] text-muted-foreground"
+            />
             <span className="text-muted-foreground">{node.type.replace("_", " ")}</span>{" "}
             <span className="font-medium">{node.label}</span>
           </li>

@@ -2,6 +2,7 @@ import { Network } from "lucide-react";
 import { useProfileWork } from "@/hooks/use-profile-work";
 import { useGraphTheme } from "@/hooks/use-graph-theme";
 import { GraphTreeView } from "@/components/tethyr/graph/graph-tree-view";
+import { GraphNodeGlyph } from "@/components/tethyr/graph/graph-node-glyph";
 import {
   buildProfileGraph,
   getProfileCollaborators,
@@ -94,6 +95,10 @@ export function ProfileGraphSummary({ profileId, name }: { profileId: string; na
                   className="border border-border/70 px-2.5 py-1 text-xs"
                   style={{ borderRadius: theme.nodeRadius }}
                 >
+                  <GraphNodeGlyph
+                    type={node.type}
+                    className="mr-1 inline align-[-2px] text-muted-foreground"
+                  />
                   <span className="text-muted-foreground">
                     {String(node.metadata?.role ?? "contributed")}
                   </span>{" "}

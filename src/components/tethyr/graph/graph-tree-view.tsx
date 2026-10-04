@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { GRAPH_NODE_TYPE_LABELS, type TethyrGraph } from "@/lib/graph-model";
 import { buildGraphTree, type GraphTreeNode } from "@/lib/graph-tree";
+import { GraphNodeGlyph } from "./graph-node-glyph";
 
 /** Phase 9 graph accessibility — the list/tree alternative to the visual graph
  *  (spec §47–§48). Renders any Tethyr graph as a nested, keyboard-operable
@@ -44,6 +45,7 @@ function TreeItem({ node, depth }: { node: GraphTreeNode; depth: number }) {
   const heading = (
     <span className="flex flex-wrap items-baseline gap-x-2">
       {node.phrase ? <span className="text-xs text-muted-foreground">{node.phrase}</span> : null}
+      <GraphNodeGlyph type={node.node.type} className="shrink-0 self-center" />
       <span className="font-medium">{node.node.label}</span>
       <span className="text-xs text-muted-foreground">{typeLabel}</span>
     </span>

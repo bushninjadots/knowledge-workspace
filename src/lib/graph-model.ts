@@ -1,4 +1,4 @@
-type GraphNodeType =
+export type GraphNodeType =
   | "person"
   | "project"
   | "skill"

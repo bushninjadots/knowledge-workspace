@@ -1,5 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, ChevronUp, GitBranch, ListTree, Network, Route, Search } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  GitBranch,
+  List,
+  ListTree,
+  Map as MapIcon,
+  Network,
+  Route,
+  Search,
+} from "lucide-react";
 import {
   GRAPH_NODE_TYPE_LABELS,
   getConnectedNodes,
@@ -11,6 +21,8 @@ import { describeGraphStep, findGraphPath } from "@/lib/graph-path";
 import { buildProjectGraph, type ProjectGraphInput } from "@/lib/project-graph";
 import { GraphTreeView } from "@/components/tethyr/graph/graph-tree-view";
 import { GraphNodeSheet } from "@/components/tethyr/graph/graph-node-sheet";
+import { GraphNetworkView } from "@/components/tethyr/graph/graph-network-view";
+import { GraphNodeGlyph } from "@/components/tethyr/graph/graph-node-glyph";
 import { useGraphTheme } from "@/hooks/use-graph-theme";
 import { Input } from "@/components/ui/input";
 import {
@@ -57,6 +69,7 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
   const theme = useGraphTheme();
   const [expanded, setExpanded] = useState(false);
   const [mode, setMode] = useState<GraphMode>("browse");
+  const [browseView, setBrowseView] = useState<"map" | "list">("map");
   const [depth, setDepth] = useState(1);
   const [query, setQuery] = useState("");
   const [activeTypes, setActiveTypes] = useState<GraphNode["type"][]>([]);
@@ -288,6 +301,30 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
           ) : (
             <>
               <div className="flex flex-wrap items-center justify-between gap-3">
+                <div role="group" aria-label="Browse view" className="flex items-center gap-1">
+                  {(
+                    [
+                      { value: "map", label: "Map", icon: MapIcon },
+                      { value: "list", label: "List", icon: List },
+                    ] as const
+                  ).map(({ value, label, icon: Icon }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      aria-pressed={browseView === value}
+                      onClick={() => setBrowseView(value)}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs transition-colors",
+                        browseView === value
+                          ? "border-user-accent-border bg-accent text-foreground"
+                          : "border-border/70 text-muted-foreground hover:border-border-strong hover:text-foreground",
+                      )}
+                    >
+                      <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+                      {label}
+                    </button>
+                  ))}
+                </div>
                 <div className="relative">
                   <Search
                     className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
@@ -353,6 +390,15 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
                 <p className="mt-4 text-sm text-muted-foreground">
                   No connections match these filters.
                 </p>
+              ) : browseView === "map" ? (
+                <GraphNetworkView
+                  graph={graph}
+                  rootId={projectId}
+                  maxNodes={theme.nodeLimit * 3}
+                  isMatch={(node) => filterGraphNodes([node], filter).length > 0}
+                  selectedId={selectedNodeId}
+                  onSelect={setSelectedNodeId}
+                />
               ) : (
                 <>
                   <div
@@ -376,7 +422,13 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
                                 onClick={() => setSelectedNodeId(node.id)}
                                 className="w-full rounded-md px-1 py-1 text-left transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                               >
-                                <span className="font-medium">{node.label}</span>
+                                <span className="flex items-center gap-1.5">
+                                  <GraphNodeGlyph
+                                    type={node.type}
+                                    className="shrink-0 text-muted-foreground"
+                                  />
+                                  <span className="font-medium">{node.label}</span>
+                                </span>
                                 {theme.showMetadata && node.description ? (
                                   <span className="line-clamp-2 block text-xs text-muted-foreground">
                                     {node.description}

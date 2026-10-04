@@ -32,9 +32,36 @@ function renderExpanded() {
   fireEvent.click(screen.getByRole("button", { name: /show .* connections/i }));
 }
 
+/** The list tests describe the grouped list; the map is the default view. */
+function renderExpandedList() {
+  renderExpanded();
+  fireEvent.click(screen.getByRole("button", { name: "List" }));
+}
+
 describe("ProjectGraphExplorer", () => {
-  it("filters the grouped connections by search text", () => {
+  it("opens on the network map, the spec's most expressive view (§8 VIEW 1)", () => {
     renderExpanded();
+
+    expect(screen.getByRole("group", { name: "Network map" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Ari — People/ })).toBeInTheDocument();
+  });
+
+  it("dims map non-matches while filters narrow the list", () => {
+    renderExpanded();
+
+    fireEvent.change(screen.getByLabelText("Search connections"), { target: { value: "launch" } });
+
+    // The map keeps its spatial context: matches stay full, the rest dim.
+    const launch = screen.getByRole("button", { name: /Launch — Milestones/ });
+    const ari = screen.getByRole("button", { name: /Ari — People/ });
+    expect(launch.className).not.toContain("opacity-25");
+    expect(ari.className).toContain("opacity-25");
+    // Dimmed nodes remain clickable (spec §26: dim, don't remove).
+    expect(ari).toBeEnabled();
+  });
+
+  it("filters the grouped connections by search text", () => {
+    renderExpandedList();
     expect(screen.getByRole("heading", { name: "People" })).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("Search connections"), { target: { value: "launch" } });
@@ -45,7 +72,7 @@ describe("ProjectGraphExplorer", () => {
   });
 
   it("filters by node type and clears back to every connection", () => {
-    renderExpanded();
+    renderExpandedList();
 
     fireEvent.click(screen.getByRole("button", { name: /^People/ }));
 
@@ -91,6 +118,7 @@ describe("ProjectGraphExplorer", () => {
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: "Show 30 connections" }));
+    fireEvent.click(screen.getByRole("button", { name: "List" }));
 
     // The page is capped (density-aware), so the furthest connection is not yet rendered.
     expect(screen.queryByText("Person 29")).not.toBeInTheDocument();
@@ -102,7 +130,7 @@ describe("ProjectGraphExplorer", () => {
 
   it("opens a node inspector with its relationships from a connection", async () => {
     const user = userEvent.setup();
-    renderExpanded();
+    renderExpandedList();
 
     await user.click(screen.getByRole("button", { name: "Ari" }));
 
