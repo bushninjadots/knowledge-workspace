@@ -212,8 +212,8 @@ export function InlineInspector({
             if (field.type === "toggle") {
               const on = value === true;
               return (
-                <div key={key} className="flex items-center justify-between gap-2">
-                  <Label htmlFor={`${block.id}-${key}`} className="text-[11px] font-medium">
+                <div key={key} className="flex items-center justify-between gap-3 rounded-md bg-surface/40 px-2.5 py-2">
+                  <Label htmlFor={`${block.id}-${key}`} className="min-w-0 text-[11px] font-medium">
                     {label}
                   </Label>
                   <button
@@ -221,17 +221,21 @@ export function InlineInspector({
                     type="button"
                     role="switch"
                     aria-checked={on}
-                    aria-label={label}
+                    aria-label={`${label}: ${on ? "on" : "off"}`}
                     onClick={() => set(key, !on)}
                     className={[
-                      "h-5 w-9 shrink-0 rounded-full p-0.5 transition-colors",
-                      on ? "bg-[var(--user-accent,var(--trust))]" : "bg-border",
+                      "flex h-6 min-w-[3.5rem] shrink-0 items-center justify-between rounded-full border p-0.5 text-[9px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--trust))]",
+                      on
+                        ? "border-[var(--user-accent,var(--trust))] bg-[var(--user-accent,var(--trust))] text-background"
+                        : "border-border bg-border/60 text-muted-foreground",
                     ].join(" ")}
                   >
+                    <span className={on ? "pl-1" : "order-2 pr-1"}>{on ? "ON" : "OFF"}</span>
                     <span
+                      aria-hidden="true"
                       className={[
-                        "block h-4 w-4 rounded-full bg-background shadow transition-transform",
-                        on ? "translate-x-4" : "translate-x-0",
+                        "size-4 rounded-full bg-background shadow-sm transition-transform",
+                        on ? "translate-x-0" : "translate-x-0",
                       ].join(" ")}
                     />
                   </button>
