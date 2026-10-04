@@ -124,7 +124,7 @@ export function GraphNetworkView({
               aria-pressed={selected || undefined}
               aria-label={`${node.label} — ${GRAPH_NODE_TYPE_LABELS[node.type]}`}
               className={cn(
-                "absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 transition-opacity duration-200 focus-visible:outline-none",
+                "absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 rounded-lg transition-opacity duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 dimmed && !selected && "opacity-25",
                 dimmed && selected && "opacity-60",
               )}
