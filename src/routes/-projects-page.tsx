@@ -18,6 +18,7 @@ import {
   useProjectCommunityPostCount,
   useProjectActivity,
   useForkProject,
+  useProjectForks,
   type Contributor,
   type ProjectDetail,
 } from "@/hooks/use-projects";
@@ -497,6 +498,7 @@ export function ProjectPage() {
     skillIds: (data?.skills ?? []).map((skill) => skill.id),
     contributorIds: (data?.contributors ?? []).map((contributor) => contributor.profile_id),
   });
+  const { data: forks = [] } = useProjectForks(id);
   const updatePresentation = useUpdateProjectPresentation();
   const markProjectVisited = useMarkProjectVisited();
   const forkProject = useForkProject();
@@ -812,14 +814,45 @@ export function ProjectPage() {
                     provider: repo.provider,
                     importedAt: repo.created_at,
                   })),
+                  contributions: updates.map((update) => ({
+                    id: update.id,
+                    label: update.title,
+                    description: update.body,
+                    authorProfileId: update.author_id,
+                    date: update.created_at,
+                  })),
+                  history: [
+                    ...milestones.map((milestone) => ({
+                      id: milestone.id,
+                      label: milestone.title,
+                      description: milestone.description,
+                      date: milestone.due_date ?? milestone.created_at,
+                      kind: "milestone" as const,
+                    })),
+                    ...updates.map((update) => ({
+                      id: update.id,
+                      label: update.title,
+                      description: update.body,
+                      date: update.created_at,
+                      kind: "contribution" as const,
+                    })),
+                  ].sort((a, b) => (a.date ?? "").localeCompare(b.date ?? "")),
                   forkedFrom: forkedFrom ? { id: forkedFrom.id, title: forkedFrom.title } : null,
                   contributions: projectContributionsFromLog(contributionLog),
-                  relatedProjects: relatedProjects.map((related) => ({
-                    id: related.id,
-                    title: related.title,
-                    description: related.description,
-                    relationship: "related_to" as const,
-                  })),
+                  relatedProjects: [
+                    ...relatedProjects.map((related) => ({
+                      id: related.id,
+                      title: related.title,
+                      description: related.description,
+                      relationship: "related_to" as const,
+                    })),
+                    ...forks.map((fork) => ({
+                      id: fork.id,
+                      title: fork.title,
+                      description: fork.description,
+                      relationship: "derived_from" as const,
+                    })),
+                  ],
                   // Contribution entries are already first-class contribution
                   // nodes above, so history covers every other event.
                   history: projectHistoryFromActivity(activityRows),

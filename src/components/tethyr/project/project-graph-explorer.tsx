@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { ChevronDown, ChevronUp, Network, Route, Search } from "lucide-react";
-import { getConnectedNodes, type GraphNode } from "@/lib/graph-model";
+import { ChevronDown, ChevronUp, GitBranch, Network, Route, Search } from "lucide-react";
+import { getConnectedNodes, getProjectLineage, type GraphNode } from "@/lib/graph-model";
 import { filterGraphNodes, graphTypeFacets, type GraphNodeFilter } from "@/lib/graph-exploration";
 import { describeGraphStep, findGraphPath } from "@/lib/graph-path";
 import { buildProjectGraph, type ProjectGraphInput } from "@/lib/project-graph";
@@ -40,7 +40,7 @@ function titleForType(type: GraphNode["type"]) {
 
 export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
   const [expanded, setExpanded] = useState(false);
-  const [mode, setMode] = useState<"browse" | "path">("browse");
+  const [mode, setMode] = useState<"browse" | "path" | "lineage">("browse");
   const [depth, setDepth] = useState(1);
   const [query, setQuery] = useState("");
   const [activeTypes, setActiveTypes] = useState<GraphNode["type"][]>([]);
@@ -79,6 +79,7 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
     () => (pathStart && pathEnd ? findGraphPath(graph, pathStart, pathEnd) : null),
     [graph, pathStart, pathEnd],
   );
+  const lineage = useMemo(() => getProjectLineage(graph, projectId), [graph, projectId]);
 
   if (connected.length === 0) return null;
 
@@ -123,7 +124,7 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
       {expanded ? (
         <div className="mt-4">
           <div role="group" aria-label="Graph mode" className="flex flex-wrap items-center gap-1.5">
-            {(["browse", "path"] as const).map((value) => (
+            {(["browse", "path", "lineage"] as const).map((value) => (
               <button
                 key={value}
                 type="button"
@@ -138,15 +139,51 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
               >
                 {value === "browse" ? (
                   <Network className="h-3.5 w-3.5" aria-hidden="true" />
+                ) : value === "lineage" ? (
+                  <GitBranch className="h-3.5 w-3.5" aria-hidden="true" />
                 ) : (
                   <Route className="h-3.5 w-3.5" aria-hidden="true" />
                 )}
-                {value === "browse" ? "Connections" : "How are these connected?"}
+                {value === "browse"
+                  ? "Connections"
+                  : value === "lineage"
+                    ? "Project lineage"
+                    : "How are these connected?"}
               </button>
             ))}
           </div>
 
-          {mode === "path" ? (
+          {mode === "lineage" ? (
+            <div className="mt-4" aria-live="polite">
+              <p className="text-sm text-muted-foreground">
+                The connected project history, from the earliest source to this workspace.
+              </p>
+              {lineage.length > 1 ? (
+                <ol className="mt-4 border-l border-border/70 pl-4">
+                  {lineage.map((node, index) => (
+                    <li key={node.id} className="relative pb-4 last:pb-0">
+                      <span
+                        className="absolute -left-[21px] top-1 h-2.5 w-2.5 rounded-full border-2 border-background bg-primary"
+                        aria-hidden="true"
+                      />
+                      <p className="text-sm font-medium">{node.label}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {index === 0
+                          ? "Original project"
+                          : index === lineage.length - 1
+                            ? "Current project"
+                            : "Derived project"}
+                      </p>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <p className="mt-4 text-sm text-muted-foreground">
+                  This project has no recorded fork lineage yet.
+                </p>
+              )}
+            </div>
+          ) : mode === "path" ? (
             <div className="mt-4">
               <div className="flex flex-wrap items-end gap-3">
                 {(
