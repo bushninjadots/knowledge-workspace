@@ -121,7 +121,6 @@ describe("graph model", () => {
       from: "project:1",
       to: "missing",
     });
-
     expect(validateGraph(graph)).toEqual([
       {
         kind: "duplicate_node",
