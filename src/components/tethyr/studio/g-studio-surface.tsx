@@ -1915,7 +1915,19 @@ function BlockFrameSection({
 
   return (
     <div className="border-t border-border py-3">
-      <p className="t-label mb-2">Shape</p>
+      <div className="mb-3 flex items-start gap-2">
+        <Sliders className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--user-accent)]" aria-hidden />
+        <div>
+          <p className="text-xs font-medium text-foreground">Block appearance</p>
+          <p className="mt-0.5 text-2xs leading-snug text-muted-foreground-subtle">
+            Change this block only. Anything set to Theme follows your Studio appearance settings.
+          </p>
+        </div>
+      </div>
+      <p className="t-label mb-1">Shape</p>
+      <p className="mb-2 text-2xs leading-snug text-muted-foreground-subtle">
+        Choose the silhouette of this block&apos;s surface.
+      </p>
       <div role="radiogroup" aria-label="Block shape" className="grid grid-cols-4 gap-1">
         {SHAPE_PRESETS.map((preset) => {
           const active = shape === preset.value;
@@ -1999,9 +2011,10 @@ function BlockFrameSection({
       <div className="mt-4 flex items-start gap-2 border-t border-border pt-3">
         <Frame className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--user-accent)]" aria-hidden />
         <div>
-          <p className="text-xs font-medium text-foreground">This block&apos;s outline</p>
+          <p className="text-xs font-medium text-foreground">Outline for this block</p>
           <p className="mt-0.5 text-2xs leading-snug text-muted-foreground-subtle">
-            Usually follows the global Card outline setting. Override it here only when this block needs to stand out.
+            Theme uses the single global Card outline setting. Choose On or Off only to make this
+            block different.
           </p>
         </div>
       </div>
@@ -2042,7 +2055,10 @@ function BlockFrameSection({
       {!flush && (
         <label className="mt-2.5 block">
           <span className="mb-1 flex items-center justify-between font-mono text-3xs uppercase tracking-widest text-muted-foreground-subtle">
-            Inner spacing <span>{inset ?? "theme"}</span>
+            Inner spacing <span>{inset ?? `${BLOCK_INSET_DEFAULT_PX}px · theme`}</span>
+          </span>
+          <span className="mb-1 block text-2xs leading-snug text-muted-foreground-subtle">
+            Space between this block&apos;s content and its edge.
           </span>
           <input
             type="range"
@@ -3012,9 +3028,10 @@ function GCustomizeAdvanced({
         <div className="mb-2 flex items-start gap-2">
           <Frame className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--user-accent)]" aria-hidden />
           <div>
-            <p className="text-xs font-medium text-foreground">Global card outline</p>
+            <p className="text-xs font-medium text-foreground">Card outlines</p>
             <p className="mt-0.5 text-2xs leading-snug text-muted-foreground">
-              Sets the default for every card and panel. Individual blocks can override this from their inspector.
+              One default for every card and panel. Per-block overrides live in the block inspector
+              and are optional.
             </p>
           </div>
         </div>
