@@ -26,6 +26,28 @@ export interface GraphNode {
   visibility?: "public" | "private";
 }
 
+/** Human-readable labels for graph node types, shared by every graph view so
+ *  the accessible tree/list alternatives name types the same way (spec §48). */
+export const GRAPH_NODE_TYPE_LABELS: Record<GraphNodeType, string> = {
+  person: "People",
+  project: "Projects",
+  skill: "Skills",
+  contribution: "Contributions",
+  knowledge: "Knowledge",
+  milestone: "Milestones",
+  repository: "Repositories",
+  discussion: "Discussions",
+  community: "Communities",
+  session: "Sessions",
+  role: "Roles",
+  badge: "Badges",
+  library_item: "Library",
+  challenge: "Challenges",
+  credit: "Credits",
+  need: "Needs",
+  organization: "Organizations",
+};
+
 type GraphEdgeType =
   | "contributed_to"
   | "has_skill"

@@ -114,11 +114,7 @@ function ProjectGraphSummaryBody({ input }: { input: ProjectGraphInput }) {
           </p>
         </div>
       ) : null}
-      <ul
-        aria-label="Connected nodes"
-        className="mt-5 flex flex-wrap"
-        style={{ gap: theme.gap }}
-      >
+      <ul aria-label="Connected nodes" className="mt-5 flex flex-wrap" style={{ gap: theme.gap }}>
         {connectedNodes.map((node) => (
           <li
             key={node.id}

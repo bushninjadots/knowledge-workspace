@@ -177,7 +177,8 @@ export function SkillGraphSummary({
         </p>
       ) : (
         <div
-          className="mt-5 grid gap-5 sm:grid-cols-3"
+          className="mt-5 grid sm:grid-cols-3"
+          style={{ gap: theme.gap }}
           aria-label={`${skillName} graph connections`}
         >
           {groups.map((group) => (

@@ -51,6 +51,13 @@ function edgePhrase(type: GraphEdge["type"], forward: boolean): string {
   return forward ? phrase.forward : phrase.reverse;
 }
 
+/** The human-readable phrase for one relationship, keyed by traversal direction.
+ *  Exposed so the accessible tree/list alternative (spec §47–§48) describes every
+ *  relationship in the same language the path finder already uses. */
+export function describeRelationship(type: GraphEdge["type"], forward: boolean): string {
+  return edgePhrase(type, forward);
+}
+
 /** A single readable sentence for a path step, e.g. "Ari contributed to Atlas". */
 export function describeGraphStep(step: GraphPathStep): string {
   return `${step.from.label} ${step.phrase} ${step.to.label}`;

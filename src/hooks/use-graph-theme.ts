@@ -15,9 +15,9 @@ import { useEffect, useState } from "react";
  * Accent (spec §18) is already wired through --user-accent-* tokens.
  */
 
-export type GraphDensity = "compact" | "comfortable" | "spacious";
+type GraphDensity = "compact" | "comfortable" | "spacious";
 
-export interface GraphThemeConfig {
+interface GraphThemeConfig {
   /** The resolved density from --content-density-gap. */
   density: GraphDensity;
   /** How many connected nodes to show in a compact summary. */

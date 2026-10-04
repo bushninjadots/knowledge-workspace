@@ -1,9 +1,15 @@
-import { useMemo, useState } from "react";
-import { ChevronDown, ChevronUp, GitBranch, Network, Route, Search } from "lucide-react";
-import { getConnectedNodes, getProjectLineage, type GraphNode } from "@/lib/graph-model";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronDown, ChevronUp, GitBranch, ListTree, Network, Route, Search } from "lucide-react";
+import {
+  GRAPH_NODE_TYPE_LABELS,
+  getConnectedNodes,
+  getProjectLineage,
+  type GraphNode,
+} from "@/lib/graph-model";
 import { filterGraphNodes, graphTypeFacets, type GraphNodeFilter } from "@/lib/graph-exploration";
 import { describeGraphStep, findGraphPath } from "@/lib/graph-path";
 import { buildProjectGraph, type ProjectGraphInput } from "@/lib/project-graph";
+import { GraphTreeView } from "@/components/tethyr/graph/graph-tree-view";
 import { useGraphTheme } from "@/hooks/use-graph-theme";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,34 +21,41 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-const TYPE_LABELS: Record<GraphNode["type"], string> = {
-  person: "People",
-  project: "Projects",
-  skill: "Skills",
-  contribution: "Contributions",
-  knowledge: "Knowledge",
-  milestone: "Milestones",
-  repository: "Repositories",
-  discussion: "Discussions",
-  community: "Communities",
-  session: "Sessions",
-  role: "Roles",
-  badge: "Badges",
-  library_item: "Library",
-  challenge: "Challenges",
-  credit: "Credits",
-  need: "Needs",
-  organization: "Organizations",
-};
+const MODES = [
+  { value: "browse", label: "Connections", icon: Network },
+  { value: "tree", label: "Relationship tree", icon: ListTree },
+  { value: "lineage", label: "Project lineage", icon: GitBranch },
+  { value: "path", label: "How are these connected?", icon: Route },
+] as const;
+
+type GraphMode = (typeof MODES)[number]["value"];
 
 function titleForType(type: GraphNode["type"]) {
-  return TYPE_LABELS[type] ?? type;
+  return GRAPH_NODE_TYPE_LABELS[type] ?? type;
+}
+
+function DepthSelect({ depth, onChange }: { depth: number; onChange: (value: number) => void }) {
+  return (
+    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+      Relationship depth
+      <Select value={String(depth)} onValueChange={(value) => onChange(Number(value))}>
+        <SelectTrigger className="h-7 w-[180px] px-2 text-xs" aria-label="Relationship depth">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="1">Direct connections</SelectItem>
+          <SelectItem value="2">Connected ecosystem</SelectItem>
+          <SelectItem value="3">Extended graph</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+  );
 }
 
 export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
   const theme = useGraphTheme();
   const [expanded, setExpanded] = useState(false);
-  const [mode, setMode] = useState<"browse" | "path" | "lineage">("browse");
+  const [mode, setMode] = useState<GraphMode>("browse");
   const [depth, setDepth] = useState(1);
   const [query, setQuery] = useState("");
   const [activeTypes, setActiveTypes] = useState<GraphNode["type"][]>([]);
@@ -83,9 +96,20 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
   );
   const lineage = useMemo(() => getProjectLineage(graph, projectId), [graph, projectId]);
 
+  // Spec §45: never render every relationship at once. Connections grow
+  // progressively, a density-aware page at a time, and any change to the
+  // filters or depth starts the page over.
+  const pageSize = Math.max(1, theme.nodeLimit * 2);
+  const [visibleLimit, setVisibleLimit] = useState(pageSize);
+  useEffect(() => {
+    setVisibleLimit(pageSize);
+  }, [pageSize, depth, query, selectedTypes]);
+
   if (connected.length === 0) return null;
 
-  const grouped = visible.reduce<Record<string, GraphNode[]>>((groups, node) => {
+  const shown = visible.slice(0, visibleLimit);
+  const remaining = visible.length - shown.length;
+  const grouped = shown.reduce<Record<string, GraphNode[]>>((groups, node) => {
     (groups[node.type] ??= []).push(node);
     return groups;
   }, {});
@@ -126,7 +150,7 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
       {expanded ? (
         <div className="mt-4">
           <div role="group" aria-label="Graph mode" className="flex flex-wrap items-center gap-1.5">
-            {(["browse", "path", "lineage"] as const).map((value) => (
+            {MODES.map(({ value, label, icon: Icon }) => (
               <button
                 key={value}
                 type="button"
@@ -139,18 +163,8 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
                     : "border-border/70 text-muted-foreground hover:border-border-strong hover:text-foreground",
                 )}
               >
-                {value === "browse" ? (
-                  <Network className="h-3.5 w-3.5" aria-hidden="true" />
-                ) : value === "lineage" ? (
-                  <GitBranch className="h-3.5 w-3.5" aria-hidden="true" />
-                ) : (
-                  <Route className="h-3.5 w-3.5" aria-hidden="true" />
-                )}
-                {value === "browse"
-                  ? "Connections"
-                  : value === "lineage"
-                    ? "Project lineage"
-                    : "How are these connected?"}
+                <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+                {label}
               </button>
             ))}
           </div>
@@ -248,6 +262,22 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
                 </p>
               )}
             </div>
+          ) : mode === "tree" ? (
+            <div className="mt-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="text-sm text-muted-foreground">
+                  An accessible outline of this project's connections, with every relationship
+                  spelled out.
+                </p>
+                <DepthSelect depth={depth} onChange={setDepth} />
+              </div>
+              <GraphTreeView
+                graph={graph}
+                rootId={projectId}
+                maxDepth={depth}
+                maxNodes={theme.nodeLimit * 4}
+              />
+            </div>
           ) : (
             <>
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -265,22 +295,7 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
                     className="h-7 w-[200px] pl-7 text-xs"
                   />
                 </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  Relationship depth
-                  <Select value={String(depth)} onValueChange={(value) => setDepth(Number(value))}>
-                    <SelectTrigger
-                      className="h-7 w-[180px] px-2 text-xs"
-                      aria-label="Relationship depth"
-                    >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1">Direct connections</SelectItem>
-                      <SelectItem value="2">Connected ecosystem</SelectItem>
-                      <SelectItem value="3">Extended graph</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <DepthSelect depth={depth} onChange={setDepth} />
               </div>
 
               {facets.length > 1 ? (
@@ -332,34 +347,45 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
                   No connections match these filters.
                 </p>
               ) : (
-                <div
-                  className="mt-4 grid sm:grid-cols-2 lg:grid-cols-3"
-                  style={{ gap: theme.gap }}
-                >
-                  {Object.entries(grouped).map(([type, nodes]) => (
-                    <div
-                      key={type}
-                      className="border border-border/60 p-3"
-                      style={{ borderRadius: theme.nodeRadius }}
+                <>
+                  <div
+                    className="mt-4 grid sm:grid-cols-2 lg:grid-cols-3"
+                    style={{ gap: theme.gap }}
+                  >
+                    {Object.entries(grouped).map(([type, nodes]) => (
+                      <div
+                        key={type}
+                        className="border border-border/60 p-3"
+                        style={{ borderRadius: theme.nodeRadius }}
+                      >
+                        <h3 className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                          {titleForType(type as GraphNode["type"])}
+                        </h3>
+                        <ul className="mt-2 space-y-2">
+                          {nodes.map((node) => (
+                            <li key={node.id} className="text-sm">
+                              <div className="font-medium">{node.label}</div>
+                              {theme.showMetadata && node.description ? (
+                                <div className="line-clamp-2 text-xs text-muted-foreground">
+                                  {node.description}
+                                </div>
+                              ) : null}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                  {remaining > 0 ? (
+                    <button
+                      type="button"
+                      onClick={() => setVisibleLimit((limit) => limit + pageSize)}
+                      className="mt-4 text-sm text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground"
                     >
-                      <h3 className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                        {titleForType(type as GraphNode["type"])}
-                      </h3>
-                      <ul className="mt-2 space-y-2">
-                        {nodes.map((node) => (
-                          <li key={node.id} className="text-sm">
-                            <div className="font-medium">{node.label}</div>
-                            {theme.showMetadata && node.description ? (
-                              <div className="line-clamp-2 text-xs text-muted-foreground">
-                                {node.description}
-                              </div>
-                            ) : null}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
+                      Show {remaining} more {remaining === 1 ? "connection" : "connections"}
+                    </button>
+                  ) : null}
+                </>
               )}
             </>
           )}

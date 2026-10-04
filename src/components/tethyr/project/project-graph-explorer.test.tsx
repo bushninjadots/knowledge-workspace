@@ -57,6 +57,32 @@ describe("ProjectGraphExplorer", () => {
     expect(screen.getByText("Ari produced Atlas")).toBeInTheDocument();
   });
 
+  it("expands large connection lists progressively", () => {
+    const contributors = Array.from({ length: 30 }, (_, index) => ({
+      profile_id: `person-${index}`,
+      role: "contributor",
+      profile: { display_name: `Person ${index}` },
+    }));
+    render(
+      <ProjectGraphExplorer
+        input={{
+          project: { id: "atlas", title: "Atlas" },
+          contributors,
+          skills: [],
+          milestones: [],
+        }}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Show 30 connections" }));
+
+    // The page is capped (density-aware), so the furthest connection is not yet rendered.
+    expect(screen.queryByText("Person 29")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /show 6 more connections/i }));
+
+    expect(screen.getByText("Person 29")).toBeInTheDocument();
+  });
+
   it("explains an empty filter result instead of showing nothing", () => {
     renderExpanded();
 
