@@ -419,11 +419,19 @@ export function ProjectPage() {
           { p_project_id: id },
         );
         if (!countErr) aiTagCount = (countRes as number) ?? 0;
-        const { data: taggedRes, error: taggedErr } = await supabasePending.rpc(
-          "project_ai_user_tagged",
-          { p_project_id: id },
-        );
-        if (!taggedErr) aiUserTagged = (taggedRes as boolean) ?? false;
+        // `project_ai_user_tagged` is granted to `authenticated` only (anon is
+        // explicitly revoked in 20261001130000), so calling it while signed out
+        // is a guaranteed 401. Only ask when there is a session.
+        const {
+          data: { session },
+        } = await supabasePending.auth.getSession();
+        if (session) {
+          const { data: taggedRes, error: taggedErr } = await supabasePending.rpc(
+            "project_ai_user_tagged",
+            { p_project_id: id },
+          );
+          if (!taggedErr) aiUserTagged = (taggedRes as boolean) ?? false;
+        }
       }
 
       return {
