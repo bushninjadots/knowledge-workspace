@@ -39,6 +39,7 @@ import {
 } from "@/hooks/use-sessions";
 import { STATUS_CONFIG } from "@/components/tethyr/sessions/sessions-sidebar";
 import { SessionResources } from "@/components/tethyr/sessions/session-resources";
+import { SessionGraphSummary } from "@/components/tethyr/sessions/session-graph-summary";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -204,6 +205,37 @@ function SessionDetailPage() {
         </div>
 
         <SessionResources sessionId={id} resources={resources} isOrganizer={isOrganizer} />
+
+        <SessionGraphSummary
+          input={{
+            session: {
+              id: session.id,
+              title: session.title,
+              description: session.description,
+              session_type: session.session_type,
+              status: session.status,
+            },
+            organizer: session.organizer
+              ? {
+                  profile_id: session.organizer_id,
+                  display_name: session.organizer.display_name,
+                  handle: session.organizer.handle,
+                }
+              : null,
+            participants: (session.participants ?? []).map((p) => ({
+              profile_id: p.profile_id,
+              role: p.role,
+              status: p.status,
+              profile: p.profiles
+                ? { display_name: p.profiles.display_name, handle: p.profiles.handle }
+                : null,
+            })),
+            skill: session.skills ? { name: session.skills.name } : null,
+            project: session.projects
+              ? { id: session.projects.id, title: session.projects.title }
+              : null,
+          }}
+        />
 
         <FollowUpActions
           session={session}
