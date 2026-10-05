@@ -63,6 +63,7 @@ type GraphEdgeType =
   | "imported_from"
   | "produced"
   | "referenced_by"
+  | "references"
   | "supports"
   | "earned"
   | "participated_in"

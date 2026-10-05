@@ -37,6 +37,7 @@ const EDGE_PHRASES: Record<GraphEdge["type"], { forward: string; reverse: string
   imported_from: { forward: "was imported from", reverse: "is the source of" },
   produced: { forward: "produced", reverse: "was produced by" },
   referenced_by: { forward: "is referenced by", reverse: "references" },
+  references: { forward: "references", reverse: "is referenced by" },
   supports: { forward: "supports", reverse: "is supported by" },
   earned: { forward: "earned", reverse: "was earned by" },
   participated_in: { forward: "participated in", reverse: "had participant" },
