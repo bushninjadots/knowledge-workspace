@@ -1,20 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { ProjectDialog } from "@/components/tethyr/profile";
 import { BackgroundPickerDialog } from "@/components/tethyr/profile/background-picker-dialog";
 import { CURRENT_USER_KEY, useSkillsCatalog } from "@/hooks/use-current-user";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { sizeFor } from "@/lib/studio-grid";
+import { overlapsGridItems } from "@/lib/studio-grid";
 import {
   GStudioSurface,
   type GStudioConfig,
@@ -50,10 +40,28 @@ import type {
   LayoutSection,
   PageLayout,
 } from "@/lib/page-blocks";
-import type { StudioConfig } from "@/lib/studio-config";
 import { DEFAULT_STUDIO_CONFIG } from "@/lib/studio-config";
 import { createDefaultProfileLayout } from "@/lib/default-layouts";
 import "@/components/tethyr/blocks/register-all";
+import {
+  createHistoryEntry,
+  makeId,
+  blockSize,
+  firstFreePosition,
+  nextGridItem,
+  placeDuplicateGridItem,
+  normalizeGridItem,
+  normalizeLayout,
+  cloneLayout,
+  cloneConfig,
+  sameGrid,
+  fromTethyrConfig,
+  toTethyrConfig,
+  preferredGridWidth,
+  seedGridFromLayout,
+  type HistoryEntry,
+} from "@/lib/studio-layout";
+import { StudioPublishDialog, StudioResetDialog } from "./studio-confirm-dialogs";
 
 interface CreationStudioProps {
   userId: string;
@@ -67,8 +75,6 @@ interface CreationStudioProps {
 }
 
 const STUDIO_STARTER_INTRO_KEY = "studio-starter-intro-dismissed";
-
-type HistoryEntry = { layout: PageLayout; config: GStudioConfig };
 
 export function CreationStudio({
   userId,
@@ -495,7 +501,7 @@ export function CreationStudio({
               minH,
             )
           : nextGridItem(block.id, existing, w, h, minW, minH);
-      if (existing.some((item) => overlaps(dropped, item))) {
+      if (existing.some((item) => overlapsGridItems(dropped, item))) {
         const { x: freeX, y: freeY } = firstFreePosition(block.id, existing, dropped.w, dropped.h);
         dropped.x = freeX;
         dropped.y = freeY;
@@ -713,7 +719,7 @@ export function CreationStudio({
         if (x === item.x && y === item.y) return;
         const candidate = { ...item, x, y };
         const others = (section.grid ?? []).filter((gridItem) => gridItem.i !== item.i);
-        if (others.some((other) => overlaps(candidate, other))) return;
+        if (others.some((other) => overlapsGridItems(candidate, other))) return;
         const next = cloneLayout(layout);
         const targetSection = next.sections.find((s) => s.id === section.id);
         if (!targetSection) return;
@@ -1142,82 +1148,19 @@ export function CreationStudio({
         onRenameFocusHandled={() => setRenameFocusId(null)}
         onReset={() => setResetConfirmOpen(true)}
       />
-      <Dialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
-        <DialogContent className="studio-editor-chrome sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Reset Studio to default?</DialogTitle>
-            <DialogDescription>
-              Your current arrangement, blocks, and appearance are replaced by the default layout.
-              This is one undo away, but any draft you haven't saved as a template is gone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2 sm:justify-start">
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => {
-                setResetConfirmOpen(false);
-                resetStudio();
-              }}
-            >
-              Reset Studio
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setResetConfirmOpen(false)}>
-              Cancel
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={publishConfirmOpen} onOpenChange={setPublishConfirmOpen}>
-        <DialogContent className="studio-editor-chrome sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Publish your Studio?</DialogTitle>
-            <DialogDescription>
-              Your current draft becomes live — visitors on your public page will see the latest
-              arrangement, blocks, and appearance.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="rounded-lg border border-border/60 bg-surface/50 px-3 py-2.5">
-            <p className="t-label mb-1.5">What changes</p>
-            <ul className="space-y-1">
-              {publishChanges.map((line) => (
-                <li key={line} className="flex items-start gap-1.5 text-xs text-muted-foreground">
-                  <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-[var(--user-accent,var(--primary))]" />
-                  {line}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <label className="block">
-            <span className="t-label mb-1.5 block">Note for this publish (optional)</span>
-            <Textarea
-              rows={2}
-              value={publishNote}
-              onChange={(event) => setPublishNote(event.target.value)}
-              placeholder="e.g. Reworked the projects area and added a gallery"
-              className="text-xs"
-            />
-            <span className="mt-1 block text-2xs text-muted-foreground-subtle">
-              Saved with the version — visible in your publish history.
-            </span>
-          </label>
-          <DialogFooter className="gap-2 sm:justify-start">
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => {
-                setPublishConfirmOpen(false);
-                void doPublish(publishNote);
-              }}
-            >
-              Publish
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setPublishConfirmOpen(false)}>
-              Cancel
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <StudioResetDialog
+        open={resetConfirmOpen}
+        onOpenChange={setResetConfirmOpen}
+        onConfirm={resetStudio}
+      />
+      <StudioPublishDialog
+        open={publishConfirmOpen}
+        onOpenChange={setPublishConfirmOpen}
+        changes={publishChanges}
+        note={publishNote}
+        onNoteChange={setPublishNote}
+        onConfirm={() => void doPublish(publishNote)}
+      />
       <ProjectDialog
         project={null}
         userId={userId}
@@ -1275,258 +1218,3 @@ export function CreationStudio({
     </>
   );
 }
-
-function createHistoryEntry(layout: PageLayout, config: GStudioConfig): HistoryEntry {
-  return { layout: cloneLayout(layout), config: cloneConfig(config) };
-}
-
-export function makeHistoryEntry(layout: PageLayout, config: GStudioConfig): HistoryEntry {
-  return createHistoryEntry(layout, config);
-}
-
-function makeId(prefix: string) {
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-}
-
-/** Default canvas size for a block type — single source of truth lives in
- * studio-grid's sizeFor() so click-to-add, drag-in placeholders, and the
- * canvas agree on the compact default heights. */
-function blockSize(type: string): [number, number, number, number] {
-  return sizeFor(type);
-}
-
-function overlaps(a: LayoutGridItem, b: LayoutGridItem) {
-  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
-}
-
-function firstFreePosition(
-  id: string,
-  existing: LayoutGridItem[],
-  width: number,
-  height: number,
-): { x: number; y: number } {
-  const others = existing.filter((item) => item.i !== id);
-  const maxY = others.reduce((value, item) => Math.max(value, item.y + item.h), 0);
-  for (let y = 0; y <= maxY + height; y++) {
-    for (let x = 0; x <= 12 - width; x++) {
-      const candidate: LayoutGridItem = { i: id, x, y, w: width, h: height };
-      if (!others.some((item) => overlaps(candidate, item))) return { x, y };
-    }
-  }
-  return { x: 0, y: maxY + height };
-}
-
-function nextGridItem(
-  id: string,
-  existing: LayoutGridItem[],
-  width: number,
-  height: number,
-  minW: number,
-  minH: number,
-): LayoutGridItem {
-  const w = Math.max(minW, Math.min(12, width));
-  const h = Math.max(minH, height);
-  const { x, y } = firstFreePosition(id, existing, w, h);
-  return normalizeGridItem({ i: id, x, y, w, h }, id, w, h, minW, minH);
-}
-
-function placeDuplicateGridItem(
-  grid: LayoutGridItem[],
-  source: LayoutGridItem | undefined,
-  duplicateId: string,
-  size: [number, number, number, number],
-): LayoutGridItem[] {
-  const [defaultW, defaultH, minW, minH] = size;
-  if (!source) return [...grid, nextGridItem(duplicateId, grid, defaultW, defaultH, minW, minH)];
-  const w = Math.max(minW, Math.min(12, source.w));
-  const h = Math.max(minH, source.h);
-  const x = source.x + source.w + w <= 12 ? source.x + source.w : 0;
-  const y = x === 0 ? Math.max(...grid.map((item) => item.y + item.h), 0) : source.y;
-  const candidate = normalizeGridItem(
-    { i: duplicateId, x, y, w, h },
-    duplicateId,
-    defaultW,
-    defaultH,
-    minW,
-    minH,
-  );
-  if (grid.some((item) => overlaps(candidate, item))) {
-    const { x: freeX, y: freeY } = firstFreePosition(duplicateId, grid, candidate.w, candidate.h);
-    candidate.x = freeX;
-    candidate.y = freeY;
-  }
-  return [...grid, candidate];
-}
-
-function normalizeGridItem(
-  item: LayoutGridItem,
-  id: string,
-  fallbackW: number,
-  fallbackH: number,
-  minW = 2,
-  minH = 2,
-): LayoutGridItem {
-  const w = Math.max(minW, Math.min(12, Math.round(item.w || fallbackW)));
-  return {
-    i: id,
-    x: Math.max(0, Math.min(12 - w, Math.round(item.x || 0))),
-    y: Math.max(0, Math.round(item.y || 0)),
-    w,
-    h: Math.max(minH, Math.round(item.h || fallbackH)),
-    minW,
-    minH,
-    maxW: item.maxW,
-    maxH: item.maxH,
-  };
-}
-
-function normalizeLayout(layout: PageLayout): PageLayout {
-  return {
-    sections: layout.sections.map((section, sectionIndex) => {
-      const blocks = [...section.blocks].sort((a, b) => a.position - b.position);
-      const seeded = new Map((section.grid ?? []).map((item) => [item.i, item]));
-      const grid: LayoutGridItem[] = [];
-      blocks.forEach((block, index) => {
-        const [w, h, minW, minH] = blockSize(block.type);
-        const existing = seeded.get(block.id);
-        if (existing) {
-          grid.push(normalizeGridItem(existing, block.id, w, h, minW, minH));
-        } else {
-          const preferredWidth = preferredGridWidth(section.layout, index, minW);
-          grid.push(nextGridItem(block.id, grid, preferredWidth, h, minW, minH));
-        }
-      });
-      return {
-        ...section,
-        position: sectionIndex,
-        blocks: blocks.map((block, blockIndex) => ({ ...block, position: blockIndex })),
-        grid,
-      };
-    }),
-  };
-}
-
-function cloneLayout(layout: PageLayout): PageLayout {
-  return JSON.parse(JSON.stringify(layout)) as PageLayout;
-}
-
-function cloneConfig(config: GStudioConfig): GStudioConfig {
-  return JSON.parse(JSON.stringify(config)) as GStudioConfig;
-}
-
-function sameGrid(a: LayoutGridItem[], b: LayoutGridItem[]) {
-  if (a.length !== b.length) return false;
-  const left = [...a].sort((x, y) => x.i.localeCompare(y.i));
-  const right = [...b].sort((x, y) => x.i.localeCompare(y.i));
-  return left.every((item, index) => {
-    const other = right[index];
-    return (
-      item.i === other.i &&
-      item.x === other.x &&
-      item.y === other.y &&
-      item.w === other.w &&
-      item.h === other.h
-    );
-  });
-}
-
-// GStudioConfig is now identical to StudioConfig — no conversion needed.
-function fromTethyrConfig(value: StudioConfig): GStudioConfig {
-  return { ...value };
-}
-
-function toTethyrConfig(value: GStudioConfig, _current: StudioConfig): StudioConfig {
-  return { ...value };
-}
-
-function preferredGridWidth(layout: LayoutSection["layout"], index: number, minW: number): number {
-  const widths = TRACK_WIDTHS[layout] ?? [12];
-  return Math.max(minW, Math.min(12, widths[index % widths.length]));
-}
-
-export function sectionGrid(
-  section: LayoutSection,
-  blocks: LayoutBlockInstance[],
-): LayoutGridItem[] {
-  const seeded = new Map((section.grid ?? []).map((item) => [item.i, item]));
-  const grid: LayoutGridItem[] = [];
-  blocks.forEach((block, index) => {
-    const existing = seeded.get(block.id);
-    const [width, height, minW, minH] = blockSize(block.type);
-    if (existing) {
-      grid.push(
-        normalizeGridItem(
-          existing,
-          block.id,
-          width,
-          height,
-          existing.minW ?? 2,
-          existing.minH ?? 2,
-        ),
-      );
-    } else {
-      const preferredWidth = preferredGridWidth(section.layout, index, minW);
-      grid.push(nextGridItem(block.id, grid, preferredWidth, height, minW, minH));
-    }
-  });
-  return grid;
-}
-
-export function insertDuplicateGridItem(
-  grid: LayoutGridItem[],
-  sourceId: string,
-  duplicateId: string,
-  source?: LayoutGridItem,
-): LayoutGridItem[] {
-  const sourceItem = source ?? grid.find((item) => item.i === sourceId);
-  const [width, height, minW, minH] = sourceItem
-    ? [sourceItem.w, sourceItem.h, sourceItem.minW ?? 2, sourceItem.minH ?? 2]
-    : blockSize("text");
-  const duplicate = nextGridItem(duplicateId, grid, width, height, minW, minH);
-  if (!sourceItem) return [...grid, duplicate];
-  const x = Math.min(12 - duplicate.w, sourceItem.x + sourceItem.w);
-  const y = sourceItem.y;
-  if (!grid.some((item) => overlaps({ ...duplicate, x, y }, item))) {
-    duplicate.x = x;
-    duplicate.y = y;
-  }
-  return [...grid, duplicate];
-}
-
-/** Typical column widths per section layout, matched to the public page's
- *  SECTION_GRID proportions so a chosen layout seeds a faithful grid. */
-const TRACK_WIDTHS: Record<LayoutSection["layout"], number[]> = {
-  full: [12],
-  two_column: [6],
-  three_column: [4],
-  sidebar_left: [3, 9],
-  sidebar_right: [9, 3],
-  feature: [8, 4],
-  side_by_side: [6],
-  featured_work: [8, 4],
-  asymmetric: [8, 4],
-  split: [6],
-  image_lead: [5, 7],
-  compact_list: [12],
-};
-
-/** Build a non-overlapping grid that snapshots a section layout into concrete
- *  column widths (the pattern repeats for blocks beyond the first row). */
-export function seedGridFromLayout(
-  section: Pick<LayoutSection, "id" | "blocks">,
-  layout: LayoutSection["layout"],
-): LayoutGridItem[] {
-  const widths = TRACK_WIDTHS[layout] ?? [12];
-  const ordered = [...section.blocks].sort((a, b) => a.position - b.position);
-  const grid: LayoutGridItem[] = [];
-  ordered.forEach((block, index) => {
-    const [, defaultHeight, minW, minH] = blockSize(block.type);
-    const w = Math.max(minW, Math.min(12, widths[index % widths.length]));
-    const h = Math.max(minH, defaultHeight);
-    const { x, y } = firstFreePosition(block.id, grid, w, h);
-    grid.push(normalizeGridItem({ i: block.id, x, y, w, h }, block.id, w, h, minW, minH));
-  });
-  return grid;
-}
-
-export { cloneLayout, normalizeLayout, normalizeGridItem };

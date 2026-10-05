@@ -41,7 +41,7 @@ const BLOCK_SIZES: Record<string, [number, number, number, number]> = {
   "content-divider": [12, 1, 2, 1],
 };
 
-function overlapsGridItems(a: LayoutGridItem, b: LayoutGridItem): boolean {
+export function overlapsGridItems(a: LayoutGridItem, b: LayoutGridItem): boolean {
   return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 }
 

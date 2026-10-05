@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  createHistoryEntry,
   insertDuplicateGridItem,
-  makeHistoryEntry,
+  normalizedSectionGrid,
   normalizeGridItem,
-  sectionGrid,
   seedGridFromLayout,
-} from "@/components/tethyr/studio/creation-studio";
+} from "@/lib/studio-layout";
 import { snapGridPlacement } from "@/lib/studio-grid";
 import type { StudioConfig } from "@/lib/studio-config";
 import type { LayoutSection } from "@/lib/page-blocks";
@@ -41,7 +41,7 @@ describe("Creation Studio history snapshots", () => {
   it("captures appearance before the next config is applied", () => {
     const previous = { ...studioConfig, radius: 6 };
     const next = { ...studioConfig, radius: 12 };
-    const entry = makeHistoryEntry({ sections: [] }, previous);
+    const entry = createHistoryEntry({ sections: [] }, previous);
 
     expect(entry.config).toEqual(previous);
     expect(entry.config).not.toEqual(next);
@@ -51,8 +51,8 @@ describe("Creation Studio history snapshots", () => {
 describe("Creation Studio grid adapter", () => {
   it("creates stable positions for legacy sections", () => {
     const section = makeSection();
-    const first = sectionGrid(section, section.blocks);
-    const second = sectionGrid(section, section.blocks);
+    const first = normalizedSectionGrid(section, section.blocks);
+    const second = normalizedSectionGrid(section, section.blocks);
 
     expect(first).toEqual(second);
     expect(first.map(({ i, x, y, w, h }) => ({ i, x, y, w, h }))).toEqual([
@@ -70,7 +70,7 @@ describe("Creation Studio grid adapter", () => {
       ],
     });
 
-    expect(sectionGrid(section, section.blocks)).toEqual([
+    expect(normalizedSectionGrid(section, section.blocks)).toEqual([
       { ...section.grid![0], minW: 2, minH: 2 },
       { ...section.grid![1], minW: 2, minH: 2 },
     ]);
