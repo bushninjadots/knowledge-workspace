@@ -95,7 +95,7 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
   );
   const connected = useMemo(
     () => getConnectedNodes(graph, projectId, { depth, edgeTypes: activeEdgeTypes }),
-    [graph, projectId, depth],
+    [graph, projectId, depth, activeEdgeTypes],
   );
   const facets = useMemo(() => graphTypeFacets(connected), [connected]);
   // A depth change can retire a type; drop it so the view never filters to nothing.
@@ -129,7 +129,7 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
   const [visibleLimit, setVisibleLimit] = useState(pageSize);
   useEffect(() => {
     setVisibleLimit(pageSize);
-  }, [pageSize, depth, query, selectedTypes]);
+  }, [pageSize, depth, query, selectedTypes, activeEdgeTypes]);
 
   if (connected.length === 0) return null;
 
