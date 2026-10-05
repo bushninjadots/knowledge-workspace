@@ -25,7 +25,7 @@ import { safeHref } from "@/lib/validators";
 import { ProfileLink } from "@/components/tethyr/profile-link";
 import { PersonPill } from "@/components/tethyr/person-pill";
 import { contributionRoleNoun } from "@/lib/contribution-role";
-import { ProjectCoverFallback } from "@/components/tethyr/project-cover-fallback";
+import { Button } from "@/components/ui/button";
 import { LANGUAGE_COLORS } from "@/lib/language-colors";
 import { canonicalProjectStatus, isLiveStatus, statusDotClass } from "@/lib/project-status";
 import type { Contributor } from "@/hooks/use-projects";
@@ -152,13 +152,10 @@ export function ProjectHeader({
 
   return (
     <section className="border-b border-border/60">
-      {/* Slim cover band — a quiet theme surface when the project has no
-          cover image, matching the fallback used on every project card. */}
-      <div className="relative h-56 overflow-hidden bg-surface-sunken sm:h-72 lg:h-80">
-        {/* The fallback mark is sized to the band, which scales up at sm/lg — a
-            glyph tuned for the shorter band reads as a broken-image placeholder
-            at this height. */}
-        {coverSigned ? (
+      {/* Cover band only when there's a cover: a placeholder here spent about
+          320px above the fold on a folder icon before the title and stage. */}
+      {coverSigned && (
+        <div className="relative h-56 overflow-hidden bg-surface-sunken sm:h-72 lg:h-80">
           <img
             src={coverSigned}
             alt={`${project.title} cover`}
@@ -167,11 +164,9 @@ export function ProjectHeader({
             className="h-full w-full object-cover"
             decoding="async"
           />
-        ) : (
-          <ProjectCoverFallback iconClassName="h-10 w-10 sm:h-14 sm:w-14" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-transparent" />
-      </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-transparent" />
+        </div>
+      )}
 
       <div className="mx-auto max-w-7xl px-4 pb-7 sm:px-8">
         <div className="flex flex-wrap items-start justify-between gap-4 pt-6 sm:pt-7">
@@ -455,29 +450,20 @@ export function ProjectHeader({
               {copied ? <Check className="h-4 w-4 text-trust" /> : <Share2 className="h-4 w-4" />}
             </button>
             {onJoin ? (
-              <button
-                onClick={onJoin}
-                className="inline-flex items-center gap-2 rounded-md bg-[var(--user-accent,var(--trust))] px-4 py-2 text-sm font-semibold text-[var(--user-accent-foreground,var(--background))] transition-fade hover:opacity-90"
-              >
+              <Button onClick={onJoin}>
                 <UserPlus className="h-4 w-4" />
-                Join Project
-              </button>
+                Join project
+              </Button>
             ) : onPostUpdate ? (
-              <button
-                onClick={onPostUpdate}
-                className="inline-flex items-center gap-2 rounded-md bg-[var(--user-accent,var(--trust))] px-4 py-2 text-sm font-semibold text-[var(--user-accent-foreground,var(--background))] transition-fade hover:opacity-90"
-              >
+              <Button onClick={onPostUpdate}>
                 <PenSquare className="h-4 w-4" />
                 Post update
-              </button>
+              </Button>
             ) : onSignIn ? (
-              <button
-                onClick={onSignIn}
-                className="inline-flex items-center gap-2 rounded-md bg-[var(--user-accent,var(--trust))] px-4 py-2 text-sm font-semibold text-[var(--user-accent-foreground,var(--background))] transition-fade hover:opacity-90"
-              >
+              <Button onClick={onSignIn}>
                 <UserPlus className="h-4 w-4" />
                 Sign in to join
-              </button>
+              </Button>
             ) : null}
           </div>
         </div>
@@ -509,8 +495,8 @@ export function ProjectHeader({
           </span>
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-          {project.looking_for_collaborators && <span>· Seeking collaborators</span>}
-          {project.looking_for_feedback && <span>· Open to feedback</span>}
+          {project.looking_for_collaborators && <span>Seeking collaborators</span>}
+          {project.looking_for_feedback && <span>Open to feedback</span>}
         </div>
       </div>
     </section>

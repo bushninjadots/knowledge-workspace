@@ -158,6 +158,32 @@ export function useNotificationsByCategory() {
   });
 }
 
+/**
+ * Notification types the member has received at all (read or not, recent
+ * 500), so the page only offers category tabs that can show something.
+ * Keyed under NOTIFICATIONS_KEY so every notifications invalidation refreshes it.
+ */
+export function useNotificationTypesPresent() {
+  const { data: me } = useCurrentUser();
+  const meId = me?.userId ?? null;
+
+  return useQuery<Set<string>>({
+    queryKey: [...NOTIFICATIONS_KEY, "types-present", meId ?? "anon"],
+    enabled: !!meId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("notifications")
+        .select("type")
+        .eq("user_id", meId as string)
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (error) throw error;
+      return new Set((data ?? []).map((row) => row.type));
+    },
+    staleTime: 60_000,
+  });
+}
+
 // ---------- Mark as read ----------
 
 export function useMarkAsRead() {

@@ -723,7 +723,7 @@ export function ProjectDialog({
 
             <Field label="Goal">
               <Input
-                placeholder="What does'done'look like? e.g. Launch to first 10 users"
+                placeholder="What does ‘done’ look like? e.g. Launch to first 10 users"
                 value={goal}
                 onChange={(e) => setGoal(e.target.value)}
               />

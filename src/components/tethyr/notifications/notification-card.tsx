@@ -138,19 +138,13 @@ export function NotificationCard({ notification, onNavigate }: NotificationCardP
     onNavigate?.(notification);
   }
 
-  function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "Enter" || e.key === "") {
-      e.preventDefault();
-      handleClick();
-    }
-  }
+  const openable = hasEntity || isConnectionRequest;
 
+  // The row is an article; its title is the one button that opens it,
+  // stretched over the card so the whole row stays clickable. The row's own
+  // actions sit above that overlay instead of nesting inside a button.
   return (
-    <div
-      role={isConnectionRequest ? "article" : "button"}
-      tabIndex={isConnectionRequest ? -1 : 0}
-      onClick={handleClick}
-      onKeyDown={handleKeyDown}
+    <article
       className={`group relative flex items-start gap-3 rounded-xl border p-4 transition-spatial duration-150 ${
         isUnread
           ? "border-l-2 border-l-primary border-border/40 bg-surface-elevated/50"
@@ -165,7 +159,17 @@ export function NotificationCard({ notification, onNavigate }: NotificationCardP
 
       <div className="min-w-0 flex-1">
         <p className="text-sm leading-snug">
-          <span className="font-medium text-foreground">{notification.title}</span>
+          {openable ? (
+            <button
+              type="button"
+              onClick={handleClick}
+              className="text-left font-medium text-foreground outline-none after:absolute after:inset-0 after:rounded-xl focus-visible:after:ring-2 focus-visible:after:ring-ring"
+            >
+              {notification.title}
+            </button>
+          ) : (
+            <span className="font-medium text-foreground">{notification.title}</span>
+          )}
         </p>
         {notification.body && (
           <p className="mt-1 line-clamp-2 text-xs text-muted-foreground" title={notification.body}>
@@ -180,7 +184,7 @@ export function NotificationCard({ notification, onNavigate }: NotificationCardP
             <span className="text-[11px] text-muted-foreground/40 italic">No longer available</span>
           )}
           {isConnectionRequest && notification.entity_id && (
-            <div className="ml-auto flex gap-1">
+            <div className="relative z-10 ml-auto flex gap-1">
               <Button
                 variant="ghost"
                 size="sm"
@@ -220,7 +224,7 @@ export function NotificationCard({ notification, onNavigate }: NotificationCardP
             variant="ghost"
             size="icon"
             aria-label="More actions"
-            className="h-7 w-7 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+            className="relative z-10 h-7 w-7 shrink-0 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100"
           >
             <MoreHorizontal className="h-3.5 w-3.5" />
           </Button>
@@ -242,6 +246,6 @@ export function NotificationCard({ notification, onNavigate }: NotificationCardP
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-    </div>
+    </article>
   );
 }

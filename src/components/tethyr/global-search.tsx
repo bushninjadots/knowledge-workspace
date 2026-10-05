@@ -925,7 +925,8 @@ export function GlobalSearch({
             {enabled ? renderResults() : renderZeroState()}
           </div>
         )}
-        <span ref={hiddenCreateRef} aria-hidden="true" className="sr-only">
+        {/* display:none keeps it out of the tab order; click() still opens its (portalled) dialog. */}
+        <span ref={hiddenCreateRef} hidden>
           <CreateProjectButton label="Create project" onCreated={() => setOpen(false)} />
         </span>
       </div>
@@ -974,7 +975,8 @@ export function GlobalSearch({
         >
           {enabled ? renderResults() : renderZeroState()}
         </div>
-        <span ref={hiddenCreateRef} aria-hidden="true" className="sr-only">
+        {/* display:none keeps it out of the tab order; click() still opens its (portalled) dialog. */}
+        <span ref={hiddenCreateRef} hidden>
           <CreateProjectButton label="Create project" onCreated={() => setOpen(false)} />
         </span>
       </DialogContent>

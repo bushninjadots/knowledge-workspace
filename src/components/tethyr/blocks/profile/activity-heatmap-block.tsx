@@ -102,7 +102,8 @@ function ProfileActivityHeatmapBlock({ config, context }: BlockProps) {
         <h4 className="text-sm font-medium text-foreground">Activity</h4>
         {showSummary && (
           <p className="text-xs text-muted-foreground">
-            {total} contributions · {activeDays} active days
+            {total} {total === 1 ? "contribution" : "contributions"} · {activeDays}{" "}
+            {activeDays === 1 ? "active day" : "active days"}
           </p>
         )}
       </div>

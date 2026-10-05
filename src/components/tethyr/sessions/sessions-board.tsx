@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { useNavigate } from "@tanstack/react-router";
 import {
   DndContext,
@@ -21,6 +22,7 @@ import {
   PlayCircle,
   Send,
   Users,
+  Plus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -212,13 +214,10 @@ export function SessionsBoard({ onSchedule }: { onSchedule: () => void }) {
           <p className="mt-1 text-xs text-muted-foreground">
             Schedule your first session and it will land here.
           </p>
-          <button
-            type="button"
-            onClick={onSchedule}
-            className="mt-4 rounded-xl bg-[var(--user-accent,var(--trust))] px-4 py-2 text-sm font-semibold text-[var(--user-accent-foreground,var(--background))] transition-spatial hover:opacity-90 active:scale-[0.98]"
-          >
-            + Schedule Session
-          </button>
+          <Button className="mt-4" onClick={onSchedule}>
+            <Plus className="h-4 w-4" aria-hidden />
+            Schedule session
+          </Button>
         </div>
       ) : (
         <DndContext

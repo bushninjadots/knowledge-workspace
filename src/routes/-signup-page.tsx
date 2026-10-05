@@ -70,7 +70,7 @@ export function SignupPage() {
         toast.success("Check your email to confirm your account");
         return;
       }
-      toast.success("Welcome to Tethyr ✨");
+      toast.success("Welcome to Tethyr");
       navigate({ to: redirectTarget });
     } catch (err) {
       toast.error(getAuthErrorMessage(err));

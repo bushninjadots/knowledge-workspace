@@ -20,13 +20,18 @@ export function ProjectShelfThumbnails({
 }: ProjectShelfThumbnailsProps) {
   const scrollerRef = useRef<HTMLDivElement>(null);
 
-  // Keep the active thumbnail in view when the selection moves.
+  // Keep the active thumbnail centred when the selection moves. Scroll only
+  // the strip: scrollIntoView also scrolls the page, which on mount jumped
+  // Explore past its own header to bring this below-the-fold strip into view.
   useEffect(() => {
-    const el = scrollerRef.current?.querySelector<HTMLElement>('[data-active="true"]');
-    el?.scrollIntoView({
+    const scroller = scrollerRef.current;
+    const el = scroller?.querySelector<HTMLElement>('[data-active="true"]');
+    if (!scroller || !el) return;
+    const box = scroller.getBoundingClientRect();
+    const item = el.getBoundingClientRect();
+    scroller.scrollTo({
+      left: scroller.scrollLeft + item.left - box.left - (box.width - item.width) / 2,
       behavior: prefersReducedMotion ? "auto" : "smooth",
-      inline: "center",
-      block: "nearest",
     });
   }, [activeIndex, prefersReducedMotion]);
 

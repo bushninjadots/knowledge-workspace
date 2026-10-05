@@ -4,6 +4,7 @@ import {
   useNotifications,
   useNotificationRealtime,
   useNotificationsByCategory,
+  useNotificationTypesPresent,
 } from "@/hooks/use-notifications";
 import { useNotificationPreferences } from "@/hooks/use-notification-preferences";
 import { NotificationHeader } from "@/components/tethyr/notifications/notification-header";
@@ -51,7 +52,19 @@ export function NotificationsPage() {
   const { data: unreadByType = {} } = useNotificationsByCategory();
   const muted = new Set(mutedCategories);
 
+  const { data: typesPresent } = useNotificationTypesPresent();
+
   const viewCounts = notificationViewUnreadCounts(unreadByType, mutedCategories);
+  // All and Needs action always show; a category tab shows once the member
+  // has something in it (a new member doesn't need a Moderation tab), and
+  // the open tab never disappears from under them.
+  const visibleViews = NOTIFICATION_CATEGORY_VIEWS.filter(
+    (view) =>
+      view.key === "all" ||
+      view.key === "action" ||
+      view.key === activeCategory ||
+      typesForNotificationView(view.key)?.some((type) => typesPresent?.has(type)),
+  );
 
   const types = typesForNotificationView(activeCategory);
   const filterType = types && types.length === 1 ? types[0] : undefined;
@@ -82,7 +95,7 @@ export function NotificationsPage() {
             }}
             ariaLabel="Notification views"
             className="mb-6"
-            options={NOTIFICATION_CATEGORY_VIEWS.map((tab) => ({
+            options={visibleViews.map((tab) => ({
               value: tab.key,
               label: <NotificationTabLabel name={tab.label} count={viewCounts[tab.key]} />,
             }))}

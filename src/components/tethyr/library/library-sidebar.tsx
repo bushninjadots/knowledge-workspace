@@ -100,15 +100,17 @@ export function LibrarySidebar({
             onClick={onNewNote}
           >
             <FileText className="h-3.5 w-3.5" />
-            New Note
+            New note
           </Button>
           <Button
             variant="outline"
             size="sm"
             className="gap-2 border-border/60 bg-surface/60 text-xs"
             onClick={() => setShowCollectionDialog(true)}
+            aria-label="New collection"
+            title="New collection"
           >
-            <FolderPlus className="h-3.5 w-3.5" />
+            <FolderPlus className="h-3.5 w-3.5" aria-hidden />
           </Button>
         </div>
 

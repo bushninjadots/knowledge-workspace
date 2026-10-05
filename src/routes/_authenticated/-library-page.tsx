@@ -202,15 +202,6 @@ function LibraryContent({ view, onNewNote }: { view: LibraryView; onNewNote: () 
               onClick={onNewNote}
             >
               <Plus className="h-3.5 w-3.5" />
-              Start a doc
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-2 border-[var(--user-accent-border,var(--border-strong))] bg-surface/60 text-foreground hover:bg-surface-elevated"
-              onClick={onNewNote}
-            >
-              <Plus className="h-3.5 w-3.5" />
               New note
             </Button>
           </div>
@@ -267,7 +258,7 @@ function LibraryContent({ view, onNewNote }: { view: LibraryView; onNewNote: () 
                   onClick={onNewNote}
                 >
                   <Plus className="h-3.5 w-3.5" />
-                  Create note
+                  New note
                 </Button>
                 <Button
                   size="sm"
@@ -275,7 +266,7 @@ function LibraryContent({ view, onNewNote }: { view: LibraryView; onNewNote: () 
                   className="mt-3 gap-2 border-[var(--user-accent-border,var(--border-strong))] bg-surface/60 text-foreground hover:bg-surface-elevated"
                   onClick={() => setShowUpload(true)}
                 >
-                  Upload file
+                  Upload
                 </Button>
               </div>
             )}

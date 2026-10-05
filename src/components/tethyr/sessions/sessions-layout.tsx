@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SessionsSidebar, type SessionsTab } from "./sessions-sidebar";
@@ -110,12 +112,10 @@ export function SessionsLayout() {
                 Manage your collaborations, mentoring, and meetings.
               </p>
             </div>
-            <button
-              onClick={() => setWizardOpen(true)}
-              className="rounded-xl bg-[var(--user-accent,var(--trust))] px-4 py-2.5 text-sm font-semibold text-[var(--user-accent-foreground,var(--background))] transition-spatial hover:opacity-90 active:scale-[0.98]"
-            >
-              + Schedule Session
-            </button>
+            <Button onClick={() => setWizardOpen(true)}>
+              <Plus className="h-4 w-4" aria-hidden />
+              Schedule session
+            </Button>
           </div>
 
           {/* Tab content */}
