@@ -134,6 +134,18 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
     setVisibleLimit(pageSize);
   }, [pageSize, depth, query, selectedTypes, activeEdgeTypes]);
 
+  const edgeFacets = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          graph.edges
+            .filter((edge) => edge.from === projectId || edge.to === projectId)
+            .map((edge) => edge.type),
+        ),
+      ).sort(),
+    [graph, projectId],
+  );
+
   if (connected.length === 0) return null;
 
   const shown = visible.slice(0, visibleLimit);
@@ -148,18 +160,6 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
       current.includes(type) ? current.filter((value) => value !== type) : [...current, type],
     );
   }
-
-  const edgeFacets = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          graph.edges
-            .filter((edge) => edge.from === projectId || edge.to === projectId)
-            .map((edge) => edge.type),
-        ),
-      ).sort(),
-    [],
-  );
 
   function clearFilters() {
     setQuery("");
@@ -248,7 +248,9 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
                         </p>
                         <p className="text-sm font-medium">{entry.title}</p>
                         {entry.description ? (
-                          <p className="mt-0.5 text-xs text-muted-foreground">{entry.description}</p>
+                          <p className="mt-0.5 text-xs text-muted-foreground">
+                            {entry.description}
+                          </p>
                         ) : null}
                       </button>
                     </li>
@@ -295,7 +297,9 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
                         >
                           <p className="text-sm font-medium">{contribution.label}</p>
                           {contribution.description ? (
-                            <p className="mt-0.5 text-xs text-muted-foreground">{contribution.description}</p>
+                            <p className="mt-0.5 text-xs text-muted-foreground">
+                              {contribution.description}
+                            </p>
                           ) : null}
                         </button>
                       </li>
@@ -478,7 +482,11 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
               ) : null}
 
               {edgeFacets.length > 1 ? (
-                <div role="group" aria-label="Filter relationships" className="mt-3 flex flex-wrap gap-1.5">
+                <div
+                  role="group"
+                  aria-label="Filter relationships"
+                  className="mt-3 flex flex-wrap gap-1.5"
+                >
                   {edgeFacets.map((type) => {
                     const active = activeEdgeTypes.includes(type);
                     return (

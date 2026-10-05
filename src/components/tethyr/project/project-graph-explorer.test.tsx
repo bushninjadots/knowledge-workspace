@@ -39,6 +39,16 @@ function renderExpandedList() {
 }
 
 describe("ProjectGraphExplorer", () => {
+  it("keeps a stable hook order when a project gains its first connection", () => {
+    const empty: ProjectGraphInput = { project: { id: "atlas", title: "Atlas" } };
+    const { rerender } = render(<ProjectGraphExplorer input={empty} />);
+    expect(screen.queryByRole("button", { name: /show .* connections/i })).toBeNull();
+
+    rerender(<ProjectGraphExplorer input={input} />);
+
+    expect(screen.getByRole("button", { name: /show .* connections/i })).toBeInTheDocument();
+  });
+
   it("opens on the network map, the spec's most expressive view (§8 VIEW 1)", () => {
     renderExpanded();
 
@@ -149,7 +159,11 @@ describe("ProjectGraphExplorer", () => {
         input={{
           ...input,
           contributions: [
-            { id: "contribution-1", label: "Built the navigation", description: "Shipped the first working route." },
+            {
+              id: "contribution-1",
+              label: "Built the navigation",
+              description: "Shipped the first working route.",
+            },
           ],
         }}
       />,
