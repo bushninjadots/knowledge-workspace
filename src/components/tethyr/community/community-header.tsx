@@ -28,7 +28,7 @@ const POST_TYPE_FILTERS: { label: string; value: CommunityNavId }[] = [
 
 function FilterBadge({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full border border-[var(--user-accent-border,var(--border-strong))]/60 bg-[var(--user-accent-subtle,var(--surface-elevated))] px-2 py-0.5 text-[11px] text-[var(--user-accent,var(--primary))]">
+    <span className="inline-flex items-center gap-1 rounded-full border border-[var(--user-accent-border,var(--border-strong))]/60 bg-[var(--user-accent-subtle,var(--surface-elevated))] px-2 py-0.5 text-[11px] text-[var(--user-accent-text,var(--primary))]">
       {label}
       <button
         type="button"
@@ -241,7 +241,7 @@ export const CommunityHeader = memo(function CommunityHeader({
               onClick={() => onMySkillsOnlyChange(!mySkillsOnly)}
               className={`shrink-0 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors duration-150 ${
                 mySkillsOnly
-                  ? "bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
+                  ? "bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent-text,var(--primary))]"
                   : "text-muted-foreground hover:bg-surface-elevated/40 hover:text-foreground"
               }`}
             >
@@ -257,7 +257,7 @@ export const CommunityHeader = memo(function CommunityHeader({
                 onClick={() => onSortModeChange(opt.value)}
                 className={`shrink-0 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors duration-150 ${
                   sortMode === opt.value
-                    ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] text-[var(--user-accent,var(--primary))]"
+                    ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] text-[var(--user-accent-text,var(--primary))]"
                     : "text-muted-foreground hover:bg-surface-elevated/40 hover:text-foreground"
                 }`}
               >
@@ -274,7 +274,7 @@ export const CommunityHeader = memo(function CommunityHeader({
               onClick={() => onFocusFilterChange("all")}
               className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] transition-colors duration-150 ${
                 focusFilter === "all"
-                  ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] text-[var(--user-accent,var(--primary))] font-medium"
+                  ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] text-[var(--user-accent-text,var(--primary))] font-medium"
                   : "text-muted-foreground hover:bg-surface-elevated/30 hover:text-foreground"
               }`}
             >
@@ -288,7 +288,7 @@ export const CommunityHeader = memo(function CommunityHeader({
                 onClick={() => onFocusFilterChange(focusFilter === f ? "all" : f)}
                 className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] transition-colors duration-150 ${
                   focusFilter === f
-                    ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] text-[var(--user-accent,var(--primary))] font-medium"
+                    ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] text-[var(--user-accent-text,var(--primary))] font-medium"
                     : "text-muted-foreground hover:bg-surface-elevated/30 hover:text-foreground"
                 }`}
               >
@@ -307,7 +307,7 @@ export const CommunityHeader = memo(function CommunityHeader({
                 onClick={() => onNavChange(filter.value)}
                 className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] transition-colors duration-150 ${
                   nav === filter.value
-                    ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] text-[var(--user-accent,var(--primary))] font-medium"
+                    ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] text-[var(--user-accent-text,var(--primary))] font-medium"
                     : "text-muted-foreground hover:bg-surface-elevated/30 hover:text-foreground"
                 }`}
               >

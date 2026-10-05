@@ -44,7 +44,7 @@ export function MobileBottomNav({
                 onClick={() => onSelect(item.id)}
                 className={`relative flex flex-1 flex-col items-center gap-1 py-3 text-xs transition-colors ${
                   isActive
-                    ? "text-[var(--user-accent,var(--trust))] font-semibold"
+                    ? "text-[var(--user-accent-text,var(--trust))] font-semibold"
                     : "text-muted-foreground active:text-foreground"
                 }`}
               >

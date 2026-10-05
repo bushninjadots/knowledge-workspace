@@ -88,7 +88,7 @@ function RelatedRow({ item }: { item: RelatedProject }) {
           {(item.title ?? "?").charAt(0).toUpperCase()}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[13px] font-medium text-foreground transition-lift group-hover:text-[var(--user-accent,var(--foreground))]">
+          <p className="truncate text-[13px] font-medium text-foreground transition-lift group-hover:text-[var(--user-accent-text,var(--foreground))]">
             {item.title}
           </p>
           {item.description && (

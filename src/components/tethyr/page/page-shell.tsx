@@ -28,6 +28,7 @@ import { PageLayoutRenderer } from "@/components/tethyr/page/page-layout";
 import { useEditMode, type PreviewDevice } from "@/components/tethyr/page/edit-mode-context";
 import { friendlyError } from "@/lib/error-message";
 import { useDominantColor } from "@/lib/dominant-color";
+import { useCardInk } from "@/hooks/use-card-ink";
 import type { BlockContext, PageOwnerType, PageLayout } from "@/lib/page-blocks";
 import type { StudioSnapshot } from "@/lib/studio-history";
 
@@ -89,6 +90,7 @@ export function PageShell({
     includeDraft: renderState === "draft" || previewDraft === true || isOwner,
   });
   const { data: themeVars = {} } = useTheme(page?.themeId);
+  const cardInk = useCardInk(ownerType === "profile" ? (page?.config ?? null) : null);
   const { resolvedTheme } = useAppTheme();
   const { isEditing, isPreviewing, previewDevice, recordSnapshot, registerRestoreHandler } =
     useEditMode();
@@ -335,12 +337,15 @@ export function PageShell({
 
   return (
     <div
+      ref={cardInk.ref}
       data-page-shell={`${ownerType}:${ownerId}`}
+      data-card-ink={cardInk.active ? "" : undefined}
       style={
         page && ownerType === "profile"
           ? {
               ...cardFillStyle(page.config),
               ...studioBackgroundVars(page.config, "public"),
+              ...cardInk.style,
             }
           : undefined
       }

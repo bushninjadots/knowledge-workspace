@@ -114,7 +114,7 @@ export function ProjectPeopleTab({
           <div className="flex items-center gap-3">
             <span
               aria-hidden="true"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--user-accent,var(--trust))]/10 text-[var(--user-accent,var(--trust))]"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--user-accent,var(--trust))]/10 text-[var(--user-accent-text,var(--trust))]"
             >
               <HandHeart className="h-4.5 w-4.5" />
             </span>
@@ -126,7 +126,7 @@ export function ProjectPeopleTab({
                     <button
                       type="button"
                       onClick={onOpenNeeds}
-                      className="inline-flex items-center gap-1 font-medium text-[var(--user-accent,var(--trust))] underline-offset-2 hover:underline"
+                      className="inline-flex items-center gap-1 font-medium text-[var(--user-accent-text,var(--trust))] underline-offset-2 hover:underline"
                     >
                       <Zap className="h-3 w-3" />
                       {openNeedCount} open need{openNeedCount !== 1 ? "s" : ""}

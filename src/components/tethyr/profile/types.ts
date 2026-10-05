@@ -14,7 +14,7 @@ export const PROJECT_STATUS_LABEL: Record<ProjectStatus, string> = {
 export const PROJECT_STATUS_STYLE: Record<ProjectStatus, string> = {
   planning: "border-border bg-background/60 text-muted-foreground",
   active:
-    "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]",
+    "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent-text,var(--primary))]",
   paused: "border-teaching/40 bg-teaching text-teaching",
   completed: "border-[var(--ai)]/40 bg-[var(--ai)]/10 text-[var(--ai)]",
 };
@@ -28,7 +28,7 @@ export const VERIFICATION_LABEL: Record<SkillVerificationLevel, string> = {
 export const VERIFICATION_STYLE: Record<SkillVerificationLevel, string> = {
   self_declared: "border-border/60 bg-background/40 text-muted-foreground",
   proof_certified:
-    "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]",
+    "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent-text,var(--primary))]",
   community_recognized: "border-[var(--ai)]/40 bg-[var(--ai)]/10 text-[var(--ai)]",
 };
 

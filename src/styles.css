@@ -209,6 +209,8 @@
 
   /* User-theme dynamic overrides (set via style prop from banner) */
   --user-accent: var(--learning);
+  /* Accent as text: pulled toward the foreground so it reads at AA. */
+  --user-accent-text: color-mix(in oklab, var(--user-accent) 60%, var(--foreground));
   --user-accent-foreground: var(--background);
   --user-accent-subtle: color-mix(in oklab, var(--learning) 10%, transparent);
   --user-accent-border: color-mix(in oklab, var(--learning) 30%, transparent);
@@ -294,6 +296,8 @@
 
   /* User-theme dynamic overrides (set via style prop from banner; fallbacks use color-mix for correct opacity from learning token) */
   --user-accent: var(--learning);
+  /* Accent as text: pulled toward the foreground so it reads at AA. */
+  --user-accent-text: color-mix(in oklab, var(--user-accent) 60%, var(--foreground));
   --user-accent-foreground: var(--background);
   --user-accent-subtle: color-mix(in oklab, var(--learning) 10%, transparent);
   --user-accent-border: color-mix(in oklab, var(--learning) 30%, transparent);
@@ -428,6 +432,8 @@
   --destructive: oklch(0.53 0.19 27);
   --destructive-foreground: oklch(1 0 0);
   --user-accent: oklch(0.52 0.17 253);
+  /* Accent as text: pulled toward the foreground so it reads at AA. */
+  --user-accent-text: color-mix(in oklab, var(--user-accent) 60%, var(--foreground));
   --user-accent-foreground: oklch(1 0 0);
   --user-accent-subtle: color-mix(in oklab, oklch(0.52 0.17 253) 10%, transparent);
   --user-accent-border: color-mix(in oklab, oklch(0.52 0.17 253) 30%, transparent);
@@ -476,6 +482,8 @@
   --destructive: oklch(0.7 0.22 25);
   --destructive-foreground: oklch(0.14 0.04 26);
   --user-accent: oklch(0.73 0.18 250);
+  /* Accent as text: pulled toward the foreground so it reads at AA. */
+  --user-accent-text: color-mix(in oklab, var(--user-accent) 60%, var(--foreground));
   --user-accent-foreground: oklch(0.14 0.04 253);
   --user-accent-subtle: color-mix(in oklab, oklch(0.73 0.18 250) 16%, transparent);
   --user-accent-border: color-mix(in oklab, oklch(0.73 0.18 250) 36%, transparent);
@@ -522,6 +530,29 @@
   border-radius: var(--studio-block-radius, var(--studio-radius, var(--radius-lg)));
   padding: var(--studio-block-inset, 1rem);
   transition: border-radius 220ms ease;
+}
+
+/* Member-picked card fill (Ink, Midnight, Teal…): text inside block frames
+   switches to the ink useCardInk measured against the real backdrop, so a
+   dark fill on a light theme (or the reverse) never leaves unreadable text.
+   Only block frames change; labels on the page background keep the theme. */
+[data-card-ink] .studio-block {
+  --foreground: var(--studio-card-ink);
+  --card-foreground: var(--studio-card-ink);
+  --muted-foreground: var(--studio-card-ink-muted);
+  --muted-foreground-subtle: var(--studio-card-ink-muted);
+  --background: var(--studio-card-surface);
+  --muted: color-mix(in oklab, var(--studio-card-ink) 12%, var(--studio-card-surface));
+  --border: var(--studio-card-border);
+  color: var(--studio-card-ink);
+}
+/* Surfaces nested in the frame (header card, outline buttons) paint the
+   card's opaque composite instead of re-applying the translucent fill, so
+   text never sits on a doubled, different-toned layer. */
+[data-card-ink] .studio-block > * {
+  --surface: var(--studio-card-surface);
+  --surface-elevated: var(--studio-card-surface);
+  --card: var(--studio-card-surface);
 }
 
 /* Full-bleed variant for blocks that must reach the frame edge

@@ -27,7 +27,7 @@ import {
 const CATEGORY_STYLE: Record<DiscussionRow["category"], string> = {
   general: "border-border/60 bg-background/60 text-muted-foreground",
   question:
-    "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]",
+    "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent-text,var(--primary))]",
   idea: "border-trust/40 bg-trust/10 text-trust",
   feedback: "border-ai/40 bg-ai/10 text-ai",
   announcement: "border-teaching/40 bg-teaching-subtle text-foreground",

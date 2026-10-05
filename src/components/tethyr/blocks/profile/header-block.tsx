@@ -253,7 +253,7 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
                 params={{ id: activeProject.id }}
                 className="group mt-2 inline-flex min-h-6 max-w-full items-center gap-1.5 text-sm"
               >
-                <Hammer className="h-3.5 w-3.5 shrink-0 text-[var(--user-accent,var(--muted-foreground))]" />
+                <Hammer className="h-3.5 w-3.5 shrink-0 text-[var(--user-accent-text,var(--muted-foreground))]" />
                 <span className="text-muted-foreground">Currently building</span>
                 <span className="truncate font-medium text-foreground underline decoration-muted-foreground/40 decoration-[1.5px] underline-offset-4 transition-colors group-hover:decoration-[var(--user-accent-border,var(--primary))]">
                   {activeProject.title}

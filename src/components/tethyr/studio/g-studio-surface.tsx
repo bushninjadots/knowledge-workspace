@@ -94,6 +94,7 @@ import {
   sizeFor,
 } from "@/lib/studio-grid";
 import { BlockGlyph } from "./block-glyph";
+import { useCardInk } from "@/hooks/use-card-ink";
 import { IconButton, Choice, WidthStepper } from "./studio-controls";
 import { ThemeSection, GCustomizeAdvanced, GCustomizePanel } from "./g-customize-panel";
 /** GStudioConfig keeps the legacy component-local name so callers don't churn. */
@@ -420,6 +421,7 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
         : undefined,
     [me?.background, props.cardBorders, props.cardBorderColor],
   );
+  const cardInk = useCardInk(props.config);
   const surfaceStyle = {
     ...themeVars,
     ...themeTokensToStyle(studioConfigToThemeTokens(props.config), resolvedTheme),
@@ -443,9 +445,11 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
   return (
     <div
       className="flex h-[calc(100dvh-3rem)] min-h-0 flex-col overflow-hidden bg-[var(--studio-bg,var(--background))]"
+      ref={cardInk.ref}
       data-studio-builder="g"
       data-personality={props.config.personality}
-      style={surfaceStyle}
+      data-card-ink={cardInk.active ? "" : undefined}
+      style={{ ...surfaceStyle, ...cardInk.style }}
     >
       <GStudioTopBar
         mode={props.mode}
@@ -1010,7 +1014,7 @@ function GStudioCanvas({
             type="button"
             id="studio-add-section"
             onClick={props.onAddSection}
-            className="flex w-full items-center justify-center gap-1.5 border border-dashed border-border py-3 font-mono text-2xs uppercase tracking-widest text-muted-foreground outline-none hover:border-[var(--user-accent-border)] hover:text-[var(--user-accent)] focus-visible:border-[var(--user-accent-border)] focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1"
+            className="flex w-full items-center justify-center gap-1.5 border border-dashed border-border py-3 font-mono text-2xs uppercase tracking-widest text-muted-foreground outline-none hover:border-[var(--user-accent-border)] hover:text-[var(--user-accent-text)] focus-visible:border-[var(--user-accent-border)] focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1"
           >
             <Plus className="h-3.5 w-3.5" /> New area
           </button>
@@ -1252,7 +1256,7 @@ function GSectionBand({
             </button>
           )}
           {section.layout === "feature" && (
-            <span className="t-label text-[var(--user-accent)]">spine</span>
+            <span className="t-label text-[var(--user-accent-text)]">spine</span>
           )}
           <span className="font-mono text-3xs text-muted-foreground-subtle">
             {blocks.length} {blocks.length === 1 ? "block" : "blocks"}
@@ -1303,7 +1307,7 @@ function GSectionBand({
             data-row-height={rowHeight}
             data-margin={margin}
             onClick={() => onRequestPalette(section.id)}
-            className="flex w-full items-center justify-center gap-1.5 border border-dashed border-border py-8 text-xs text-muted-foreground outline-none hover:border-[var(--user-accent-border)] hover:text-[var(--user-accent)] focus-visible:border-[var(--user-accent-border)] focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1"
+            className="flex w-full items-center justify-center gap-1.5 border border-dashed border-border py-8 text-xs text-muted-foreground outline-none hover:border-[var(--user-accent-border)] hover:text-[var(--user-accent-text)] focus-visible:border-[var(--user-accent-border)] focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1"
           >
             <Plus className="h-3.5 w-3.5" /> Add a block
           </button>
@@ -1602,7 +1606,7 @@ const GBlockFrame = forwardRef<
           <span
             aria-hidden
             className={cn(
-              "pointer-events-none absolute left-1 top-1 z-20 flex h-6 w-6 items-center justify-center rounded-sm border border-[var(--user-accent-border)] bg-[var(--surface-elevated)] text-[var(--user-accent)] shadow-sm transition-opacity group-hover/frame:opacity-100",
+              "pointer-events-none absolute left-1 top-1 z-20 flex h-6 w-6 items-center justify-center rounded-sm border border-[var(--user-accent-border)] bg-[var(--surface-elevated)] text-[var(--user-accent-text)] shadow-sm transition-opacity group-hover/frame:opacity-100",
               selected ? "opacity-100" : "opacity-60",
             )}
           >
@@ -1723,7 +1727,10 @@ function BlockFrameSection({
   return (
     <div className="border-t border-border py-3">
       <div className="mb-3 flex items-start gap-2">
-        <Sliders className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--user-accent)]" aria-hidden />
+        <Sliders
+          className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--user-accent-text)]"
+          aria-hidden
+        />
         <div>
           <p className="text-xs font-medium text-foreground">Block appearance</p>
           <p className="mt-0.5 text-2xs leading-snug text-muted-foreground-subtle">
@@ -1816,7 +1823,7 @@ function BlockFrameSection({
       )}
 
       <div className="mt-4 flex items-start gap-2 border-t border-border pt-3">
-        <Frame className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--user-accent)]" aria-hidden />
+        <Frame className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--user-accent-text)]" aria-hidden />
         <div>
           <p className="text-xs font-medium text-foreground">Outline for this block</p>
           <p className="mt-0.5 text-2xs leading-snug text-muted-foreground-subtle">
@@ -2010,7 +2017,7 @@ function GBlockPalette(props: GStudioSurfaceProps & { onClose: () => void }) {
               if (categoryBlocks.length === 0) return null;
               return (
                 <div key={category}>
-                  <p className="t-label mb-1 mt-3 text-2xs text-[var(--user-accent)] first:mt-0">
+                  <p className="t-label mb-1 mt-3 text-2xs text-[var(--user-accent-text)] first:mt-0">
                     {BLOCK_CATEGORY_LABELS[category]}
                   </p>
                   {categoryBlocks.map((def) => blockItem(def))}
@@ -2239,7 +2246,7 @@ function GBlockInspector({
             type="button"
             disabled={section.id === findSection(props.layout, block.id)?.id}
             onClick={() => props.onMoveToSection(block.id, section.id)}
-            className="flex w-full items-center justify-between px-1.5 py-1 text-left text-xs text-muted-foreground hover:bg-[var(--surface-sunken)] disabled:text-[var(--user-accent)]"
+            className="flex w-full items-center justify-between px-1.5 py-1 text-left text-xs text-muted-foreground hover:bg-[var(--surface-sunken)] disabled:text-[var(--user-accent-text)]"
           >
             <span>{sectionLabel(section)}</span>
             {section.id === findSection(props.layout, block.id)?.id && (
@@ -2325,7 +2332,7 @@ function GMobileEditSheet(props: GStudioSurfaceProps) {
           onClick={() => setTab("arrange")}
           className={cn(
             "rounded-sm px-2.5 py-1.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))]",
-            tab === "arrange" && "bg-[var(--user-accent-subtle)] text-[var(--user-accent)]",
+            tab === "arrange" && "bg-[var(--user-accent-subtle)] text-[var(--user-accent-text)]",
           )}
         >
           Arrange
@@ -2335,7 +2342,7 @@ function GMobileEditSheet(props: GStudioSurfaceProps) {
           onClick={() => setTab("add")}
           className={cn(
             "rounded-sm px-2.5 py-1.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))]",
-            tab === "add" && "bg-[var(--user-accent-subtle)] text-[var(--user-accent)]",
+            tab === "add" && "bg-[var(--user-accent-subtle)] text-[var(--user-accent-text)]",
           )}
         >
           <Plus className="mr-1 inline h-3 w-3" /> Add
@@ -2345,7 +2352,7 @@ function GMobileEditSheet(props: GStudioSurfaceProps) {
           onClick={() => setTab("feel")}
           className={cn(
             "rounded-sm px-2.5 py-1.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))]",
-            tab === "feel" && "bg-[var(--user-accent-subtle)] text-[var(--user-accent)]",
+            tab === "feel" && "bg-[var(--user-accent-subtle)] text-[var(--user-accent-text)]",
           )}
         >
           <Sliders className="mr-1 inline h-3 w-3" /> Style
@@ -2398,7 +2405,7 @@ function GMobileEditSheet(props: GStudioSurfaceProps) {
                       className={cn(
                         "min-w-0 flex-1 truncate rounded-sm px-1 py-1.5 text-left text-xs",
                         props.selectedBlockId === block.id
-                          ? "bg-[var(--user-accent-subtle)] text-[var(--user-accent)]"
+                          ? "bg-[var(--user-accent-subtle)] text-[var(--user-accent-text)]"
                           : "text-foreground",
                       )}
                     >

@@ -144,7 +144,7 @@ export function CollectionDialog({
                     className={cn(
                       "flex h-9 w-9 items-center justify-center rounded-lg border transition-colors",
                       active
-                        ? "border-[var(--user-accent,var(--trust))]/50 bg-[var(--user-accent-subtle,var(--trust-subtle))] text-[var(--user-accent,var(--trust))]"
+                        ? "border-[var(--user-accent,var(--trust))]/50 bg-[var(--user-accent-subtle,var(--trust-subtle))] text-[var(--user-accent-text,var(--trust))]"
                         : "border-border/40 bg-surface/40 text-muted-foreground hover:bg-surface/60 hover:text-foreground",
                     )}
                     title={item.name}

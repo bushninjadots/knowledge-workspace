@@ -116,7 +116,7 @@ export function IconButton({
       className={cn(
         "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-sm border text-muted-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--surface-elevated)]",
         active
-          ? "border-[var(--user-accent-border)] bg-[var(--user-accent-subtle)] text-[var(--user-accent)]"
+          ? "border-[var(--user-accent-border)] bg-[var(--user-accent-subtle)] text-[var(--user-accent-text)]"
           : "border-transparent hover:border-border hover:bg-[var(--surface-sunken)] hover:text-foreground",
         className,
       )}

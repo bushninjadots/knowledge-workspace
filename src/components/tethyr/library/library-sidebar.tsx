@@ -135,7 +135,7 @@ export function LibrarySidebar({
                   <Icon
                     className={cn(
                       "h-3.5 w-3.5 transition-colors",
-                      active ? "text-[var(--user-accent,var(--trust))]" : "",
+                      active ? "text-[var(--user-accent-text,var(--trust))]" : "",
                     )}
                   />
                   <span className="flex-1 text-left text-[13px]">{item.label}</span>

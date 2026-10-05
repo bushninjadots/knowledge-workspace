@@ -106,7 +106,7 @@ export function SessionsSidebar({
               <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-[var(--user-accent,var(--trust))]" />
             )}
             <Icon
-              className={`h-4 w-4 transition-colors ${isActive ? "text-[var(--user-accent,var(--trust))]" : ""}`}
+              className={`h-4 w-4 transition-colors ${isActive ? "text-[var(--user-accent-text,var(--trust))]" : ""}`}
             />
             <span className="min-w-0 flex-1 text-left text-sm font-medium">{tab.label}</span>
             {tab.id === "requests" && pendingCount > 0 && (

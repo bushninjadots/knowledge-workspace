@@ -72,7 +72,7 @@ export function FeaturedProjects() {
                 <span className="flex min-w-0 items-center gap-4">
                   <CoverThumb path={p.cover_url} />
                   <span className="min-w-0">
-                    <span className="block truncate font-display text-lg font-semibold group-hover:text-[var(--user-accent,var(--primary))]">
+                    <span className="block truncate font-display text-lg font-semibold group-hover:text-[var(--user-accent-text,var(--primary))]">
                       {p.title}
                     </span>
                     {p.description ? (

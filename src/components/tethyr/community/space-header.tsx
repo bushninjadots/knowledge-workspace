@@ -259,7 +259,7 @@ export function SpaceHeader({
               onClick={() => onSortModeChange(value)}
               className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
                 sortMode === value
-                  ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] text-[var(--user-accent,var(--primary))]"
+                  ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] text-[var(--user-accent-text,var(--primary))]"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >

@@ -128,7 +128,7 @@ function CalendarEventCard({
                 })()}
           </span>
           {session.meeting_url && (
-            <span className="inline-flex items-center gap-1 text-[var(--user-accent,var(--trust))]">
+            <span className="inline-flex items-center gap-1 text-[var(--user-accent-text,var(--trust))]">
               <Video className="h-2.5 w-2.5" /> Online
             </span>
           )}
@@ -253,7 +253,7 @@ function WeekView({
               </p>
               <p
                 className={`mt-0.5 text-lg font-bold ${
-                  isToday ? "text-[var(--user-accent,var(--trust))]" : "text-foreground"
+                  isToday ? "text-[var(--user-accent-text,var(--trust))]" : "text-foreground"
                 }`}
               >
                 {d.getDate()}

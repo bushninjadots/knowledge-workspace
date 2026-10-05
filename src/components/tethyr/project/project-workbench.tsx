@@ -115,7 +115,7 @@ export function ProjectWorkbench({
       <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 sm:flex-row sm:items-center sm:justify-between sm:px-8">
         <div className="min-w-0 border-l-2 border-[var(--user-accent,var(--primary))] pl-3">
           <div className="flex items-center gap-2">
-            <Zap className="h-4 w-4 shrink-0 text-[var(--user-accent,var(--primary))]" />
+            <Zap className="h-4 w-4 shrink-0 text-[var(--user-accent-text,var(--primary))]" />
             <p id="project-workbench-heading" className="section-label">
               Project workbench
             </p>

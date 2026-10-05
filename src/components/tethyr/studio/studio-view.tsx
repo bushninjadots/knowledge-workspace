@@ -39,6 +39,7 @@ import { shouldRenderSectionInView } from "@/lib/studio-visibility";
 import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
 import { SECTION_GRID, colStartClass, spanClass } from "@/components/tethyr/page/page-layout";
 import { Button } from "@/components/ui/button";
+import { useCardInk } from "@/hooks/use-card-ink";
 import {
   CARD_SURFACE_STYLE,
   cardFillStyle,
@@ -172,6 +173,7 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
   // Keep the Studio view in step with the editor: apply the page theme so a
   // chosen preset is visible here exactly as it renders publicly.
   const { data: themeVars = {} } = useTheme(page?.themeId);
+  const cardInk = useCardInk(config);
   const surfaceStyle = {
     ...themeVars,
     ...themeTokensToStyle(studioConfigToThemeTokens(config), resolvedTheme),
@@ -241,7 +243,13 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background" data-studio-view style={surfaceStyle}>
+    <div
+      ref={cardInk.ref}
+      className="flex min-h-screen flex-col bg-background"
+      data-studio-view
+      data-card-ink={cardInk.active ? "" : undefined}
+      style={{ ...surfaceStyle, ...cardInk.style }}
+    >
       <StudioViewTopBar
         profile={profile}
         published={page?.status === "published"}
@@ -552,7 +560,7 @@ function StudioViewTopBar({
                   className={cn(
                     "flex h-6 w-7 items-center justify-center rounded-sm text-muted-foreground transition-lift",
                     device === item
-                      ? "border border-[var(--user-accent-border)] bg-[var(--user-accent-subtle)] text-[var(--user-accent)]"
+                      ? "border border-[var(--user-accent-border)] bg-[var(--user-accent-subtle)] text-[var(--user-accent-text)]"
                       : "border border-transparent hover:text-foreground",
                   )}
                 >

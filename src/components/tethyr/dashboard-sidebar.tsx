@@ -152,7 +152,7 @@ export function DashboardSidebar({
                       : null;
 
                 const stateClass = isActive
-                  ? "bg-[var(--user-accent-subtle,var(--learning-subtle))] font-medium text-[var(--user-accent,var(--foreground))]"
+                  ? "bg-[var(--user-accent-subtle,var(--learning-subtle))] font-medium text-[var(--user-accent-text,var(--foreground))]"
                   : "text-muted-foreground hover:bg-surface-sunken hover:text-foreground";
 
                 if (collapsed) {

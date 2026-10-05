@@ -172,7 +172,7 @@ export function ProjectReposSection({
               title="GitHub token — for private repos and to avoid rate limits. Managed once in your profile."
               className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs transition-lift ${
                 hasToken
-                  ? "border-[var(--user-accent,var(--trust))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--trust))]"
+                  ? "border-[var(--user-accent,var(--trust))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent-text,var(--trust))]"
                   : "border-border/60 text-muted-foreground hover:text-foreground"
               }`}
             >

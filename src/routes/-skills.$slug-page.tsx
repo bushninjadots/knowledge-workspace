@@ -46,7 +46,7 @@ const CATEGORY_BADGES: Record<string, { icon: typeof Wrench; color: string }> = 
   Development: {
     icon: Hammer,
     color:
-      "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]",
+      "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent-text,var(--primary))]",
   },
   Community: { icon: Users, color: "border-trust/40 bg-trust/10 text-trust" },
 };
@@ -728,7 +728,7 @@ function SkillPeople({ skillId, skillName }: { skillId: string; skillName: strin
           onClick={() => setFilter("sharing")}
           className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-lift ${
             filter === "sharing"
-              ? "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
+              ? "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent-text,var(--primary))]"
               : "border-border text-muted-foreground hover:text-foreground"
           }`}
         >

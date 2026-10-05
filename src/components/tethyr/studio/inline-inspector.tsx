@@ -287,7 +287,7 @@ export function InlineInspector({
                             .join(" ")}
                         >
                           {active && (
-                            <span className="mr-1 text-[10px] text-[var(--user-accent,var(--trust))]">
+                            <span className="mr-1 text-[10px] text-[var(--user-accent-text,var(--trust))]">
                               ●
                             </span>
                           )}

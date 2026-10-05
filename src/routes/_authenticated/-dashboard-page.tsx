@@ -336,7 +336,7 @@ function DashboardContent({
               </h1>
               {reputationScore != null && (
                 <p className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                  <Award className="h-3.5 w-3.5 text-[var(--user-accent,var(--trust))]" />
+                  <Award className="h-3.5 w-3.5 text-[var(--user-accent-text,var(--trust))]" />
                   {reputationScore} rep
                 </p>
               )}
@@ -426,7 +426,7 @@ function FocusBand({
         {showWeekly && projectId && (
           <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
             <div className="flex min-w-0 items-start gap-3">
-              <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-[var(--user-accent,var(--primary))]" />
+              <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-[var(--user-accent-text,var(--primary))]" />
               <div className="min-w-0">
                 <p className="section-label">Weekly ritual</p>
                 <h2 id="weekly-show-your-work-heading" className="mt-1 text-sm font-semibold">
@@ -452,7 +452,7 @@ function FocusBand({
         {showComplete && (
           <div className={twoCol ? "min-w-0 lg:border-l lg:border-border/60 lg:pl-6" : "min-w-0"}>
             <div className="flex items-center gap-2">
-              <Award className="h-4 w-4 text-[var(--user-accent,var(--trust))]" />
+              <Award className="h-4 w-4 text-[var(--user-accent-text,var(--trust))]" />
               <h2 id="dashboard-focus-heading" className="text-sm font-semibold">
                 Profile complete!
               </h2>
@@ -470,7 +470,7 @@ function FocusBand({
         {showSetup && (
           <div className={twoCol ? "min-w-0 lg:border-l lg:border-border/60 lg:pl-6" : "min-w-0"}>
             <div className="mb-3 flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-[var(--user-accent,var(--trust))]" />
+              <Sparkles className="h-4 w-4 text-[var(--user-accent-text,var(--trust))]" />
               <h2 id="dashboard-focus-heading" className="text-sm font-semibold">
                 Finish setting up your profile
               </h2>

@@ -75,7 +75,7 @@ export const CommunityLeftSidebar = memo(function CommunityLeftSidebar({
                       <Icon
                         className={cn(
                           "h-4 w-4 shrink-0",
-                          isActive && "text-[var(--user-accent,var(--primary))]",
+                          isActive && "text-[var(--user-accent-text,var(--primary))]",
                         )}
                       />
                       <span className="min-w-0 flex-1 truncate">{item.label}</span>
@@ -103,12 +103,12 @@ export const CommunityLeftSidebar = memo(function CommunityLeftSidebar({
                     <Icon
                       className={cn(
                         "h-4 w-4 shrink-0",
-                        isActive && "text-[var(--user-accent,var(--primary))]",
+                        isActive && "text-[var(--user-accent-text,var(--primary))]",
                       )}
                     />
                     <span className="min-w-0 flex-1 truncate text-left">{item.label}</span>
                     {count != null && count > 0 && (
-                      <span className="numeric shrink-0 rounded-full bg-[var(--user-accent-subtle,var(--surface-elevated))] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--user-accent,var(--primary))]">
+                      <span className="numeric shrink-0 rounded-full bg-[var(--user-accent-subtle,var(--surface-elevated))] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--user-accent-text,var(--primary))]">
                         {count}
                       </span>
                     )}

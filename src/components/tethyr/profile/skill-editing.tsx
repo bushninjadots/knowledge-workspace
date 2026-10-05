@@ -172,7 +172,7 @@ function SkillsCard({
 
   const chipCls =
     accent === "green"
-      ? "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
+      ? "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent-text,var(--primary))]"
       : "border-[var(--ai)]/40 bg-[var(--ai)]/10 text-[var(--ai)]";
 
   return (
@@ -453,7 +453,7 @@ function TeachSkillsCard({
                           }}
                           className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition-lift ${
                             on
-                              ? "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
+                              ? "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent-text,var(--primary))]"
                               : "border-border bg-background/40 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
                           }`}
                         >

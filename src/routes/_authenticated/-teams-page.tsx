@@ -114,7 +114,7 @@ export function TeamsPage() {
         {invites.length > 0 && (
           <section aria-labelledby="team-invites" className="mb-10">
             <div className="mb-3 flex items-center gap-2">
-              <Clock className="h-4 w-4 text-[var(--user-accent,var(--primary))]" />
+              <Clock className="h-4 w-4 text-[var(--user-accent-text,var(--primary))]" />
               <h2 id="team-invites" className="text-sm font-semibold">
                 Crew invitations
               </h2>

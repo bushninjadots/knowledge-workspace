@@ -235,7 +235,7 @@ export function EmptyState({
           Next step:{" "}
           <Link
             to={loopGuidance.href}
-            className="font-medium text-[var(--user-accent,var(--trust))] underline-offset-4 hover:underline"
+            className="font-medium text-[var(--user-accent-text,var(--trust))] underline-offset-4 hover:underline"
           >
             {loopGuidance.label}
           </Link>

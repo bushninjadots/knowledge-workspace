@@ -22,7 +22,7 @@ export function MobilePrimaryNav({ onOpenMore }: { onOpenMore: () => void }) {
               to={item.to}
               className={`flex min-h-12 flex-col items-center justify-center gap-1 rounded-md text-[11px] transition-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
                 active
-                  ? "bg-[var(--user-accent-subtle,var(--learning-subtle))] font-medium text-[var(--user-accent,var(--foreground))]"
+                  ? "bg-[var(--user-accent-subtle,var(--learning-subtle))] font-medium text-[var(--user-accent-text,var(--foreground))]"
                   : "text-muted-foreground hover:text-foreground"
               }`}
               aria-current={active ? "page" : undefined}

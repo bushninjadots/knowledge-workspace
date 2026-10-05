@@ -22,7 +22,7 @@ export const AVAILABILITY_OPTIONS: AvailabilityOption[] = [
     value: "available",
     label: "Available",
     icon: Circle,
-    color: "text-[var(--user-accent,var(--trust))]",
+    color: "text-[var(--user-accent-text,var(--trust))]",
     bg: "bg-[var(--user-accent,var(--trust))]/10 border-[var(--user-accent,var(--trust))]/30",
   },
   {
@@ -50,7 +50,7 @@ export const AVAILABILITY_OPTIONS: AvailabilityOption[] = [
     value: "mentoring",
     label: "Mentoring",
     icon: GraduationCap,
-    color: "text-[var(--user-accent,var(--trust))]",
+    color: "text-[var(--user-accent-text,var(--trust))]",
     bg: "bg-[var(--user-accent,var(--trust))]/10 border-[var(--user-accent,var(--trust))]/30",
   },
 ];

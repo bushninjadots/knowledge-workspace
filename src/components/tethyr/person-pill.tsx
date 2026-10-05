@@ -66,7 +66,7 @@ export function PersonPill({
         )}
       </span>
       <span className="hidden min-w-0 flex-col gap-0.5 leading-tight sm:flex">
-        <span className="truncate text-xs font-medium text-foreground group-hover:text-[var(--user-accent,var(--trust))]">
+        <span className="truncate text-xs font-medium text-foreground group-hover:text-[var(--user-accent-text,var(--trust))]">
           {name ?? handle ?? "Unknown"}
         </span>
         {caption && <span className="truncate text-[10px] text-muted-foreground">{caption}</span>}

@@ -167,7 +167,7 @@ export function WorkRecord() {
                       <Link
                         to="/u/$handle"
                         params={{ handle: credit.handle }}
-                        className="hover:text-[var(--user-accent,var(--primary))]"
+                        className="hover:text-[var(--user-accent-text,var(--primary))]"
                       >
                         {credit.name}
                       </Link>
@@ -185,7 +185,7 @@ export function WorkRecord() {
       <Link
         to="/projects/$id"
         params={{ id: project.id }}
-        className="mt-8 inline-flex items-center gap-2 text-sm font-medium transition-colors hover:text-[var(--user-accent,var(--primary))]"
+        className="mt-8 inline-flex items-center gap-2 text-sm font-medium transition-colors hover:text-[var(--user-accent-text,var(--primary))]"
       >
         Open {project.title} <ArrowRight className="h-4 w-4" aria-hidden="true" />
       </Link>

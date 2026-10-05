@@ -267,7 +267,10 @@ export function GCustomizeAdvanced({
       )}
       <div className="mb-4 border border-[var(--user-accent-border)] bg-[var(--user-accent-subtle)] p-2.5">
         <div className="mb-2 flex items-start gap-2">
-          <Frame className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--user-accent)]" aria-hidden />
+          <Frame
+            className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--user-accent-text)]"
+            aria-hidden
+          />
           <div>
             <p className="text-xs font-medium text-foreground">Card outlines</p>
             <p className="mt-0.5 text-2xs leading-snug text-muted-foreground">
@@ -428,7 +431,7 @@ export function GCustomizeAdvanced({
                       className={cn(
                         "min-w-0 flex-1 truncate rounded-sm px-1 py-1 text-left hover:bg-[var(--surface-sunken)]",
                         selectedBlockId === block.id &&
-                          "bg-[var(--user-accent-subtle)] text-[var(--user-accent)]",
+                          "bg-[var(--user-accent-subtle)] text-[var(--user-accent-text)]",
                       )}
                     >
                       <span

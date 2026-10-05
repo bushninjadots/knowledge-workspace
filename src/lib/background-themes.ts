@@ -538,6 +538,8 @@ export function accentVarsFromColor(color: string): CSSProperties & Record<strin
   const match = color.match(/^#([0-9a-f]{6})$/i);
   if (!match) return style;
   style["--user-accent"] = color;
+  // Accent used as text: mixed toward the foreground so light accents stay readable.
+  style["--user-accent-text"] = `color-mix(in oklab, ${color} 60%, var(--foreground))`;
   style["--user-accent-foreground"] = contrastingHexForeground(color);
   style["--user-accent-subtle"] = `color-mix(in oklab, ${color} 10%, transparent)`;
   style["--user-accent-border"] = `color-mix(in oklab, ${color} 30%, transparent)`;

@@ -514,7 +514,7 @@ function ProjectListRow({
                 </span>
               )}
               {isContributor && (
-                <span className="rounded-full bg-[var(--user-accent,var(--ai))]/25 px-2 py-0.5 text-[10px] font-medium text-[var(--user-accent,var(--ai))]">
+                <span className="rounded-full bg-[var(--user-accent,var(--ai))]/25 px-2 py-0.5 text-[10px] font-medium text-[var(--user-accent-text,var(--ai))]">
                   Contributing
                 </span>
               )}

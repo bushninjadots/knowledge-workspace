@@ -659,7 +659,7 @@ export function ExplorePage() {
           <section className="mb-7 border-b border-border/60 pb-7">
             <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
               <div className="max-w-2xl">
-                <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-[var(--user-accent,var(--learning))]">
+                <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-[var(--user-accent-text,var(--learning))]">
                   <span className="h-px w-8 bg-[var(--user-accent,var(--learning))]" />
                   Creative studios
                 </div>
@@ -742,7 +742,7 @@ export function ExplorePage() {
                       aria-label="Filter roles by need"
                       className={`h-8 w-auto shrink-0 gap-1 border-0 bg-transparent px-1.5 text-xs font-medium ${
                         activeNeed
-                          ? "text-[var(--user-accent,var(--primary))]"
+                          ? "text-[var(--user-accent-text,var(--primary))]"
                           : "text-muted-foreground"
                       }`}
                     >
@@ -832,8 +832,8 @@ export function ExplorePage() {
                               <span
                                 className={`mt-1 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] ${
                                   mySkillNames.has(n.skills.name.toLowerCase())
-                                    ? "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
-                                    : "border-[var(--user-accent,var(--ai))]/30 bg-[var(--user-accent,var(--ai))]/5 text-[var(--user-accent,var(--ai))]"
+                                    ? "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent-text,var(--primary))]"
+                                    : "border-[var(--user-accent,var(--ai))]/30 bg-[var(--user-accent,var(--ai))]/5 text-[var(--user-accent-text,var(--ai))]"
                                 }`}
                               >
                                 {n.skills.name}
@@ -870,7 +870,7 @@ export function ExplorePage() {
                     {(activeNeed || oppSort !== "latest" || (q && tab === "opportunities")) && (
                       <>
                         {activeNeed && (
-                          <span className="inline-flex items-center gap-1 rounded-full border border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] px-2 py-0.5 text-[11px] text-[var(--user-accent,var(--primary))]">
+                          <span className="inline-flex items-center gap-1 rounded-full border border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] px-2 py-0.5 text-[11px] text-[var(--user-accent-text,var(--primary))]">
                             Need {activeNeed}
                             <button
                               type="button"
@@ -934,7 +934,7 @@ export function ExplorePage() {
                             <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-xs uppercase tracking-wider text-[var(--user-accent,var(--ai))]">
+                                  <span className="text-xs uppercase tracking-wider text-[var(--user-accent-text,var(--ai))]">
                                     <Briefcase className="mr-1 inline h-3.5 w-3.5" />
                                     Open role
                                   </span>
@@ -1150,7 +1150,7 @@ export function ExplorePage() {
                               className="border border-trust/20 bg-trust/5 text-trust"
                             />
                             {sessionHostIds.has(c.id) && (
-                              <span className="inline-flex items-center gap-1 rounded-full border border-[var(--user-accent,var(--ai))]/25 bg-[var(--user-accent,var(--ai))]/10 px-2 py-0.5 text-[11px] font-medium text-[var(--user-accent,var(--ai))]">
+                              <span className="inline-flex items-center gap-1 rounded-full border border-[var(--user-accent,var(--ai))]/25 bg-[var(--user-accent,var(--ai))]/10 px-2 py-0.5 text-[11px] font-medium text-[var(--user-accent-text,var(--ai))]">
                                 <CalendarDays className="h-3 w-3" />
                                 Hosts sessions
                               </span>

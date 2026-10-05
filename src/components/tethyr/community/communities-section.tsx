@@ -58,7 +58,7 @@ export const CommunitiesSection = memo(function CommunitiesSection({
               onClick={() => setSortMode("popular")}
               className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-lift ${
                 sortMode === "popular"
-                  ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] text-[var(--user-accent,var(--primary))]"
+                  ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] text-[var(--user-accent-text,var(--primary))]"
                   : "text-muted-foreground hover:text-foreground"
               }`}
               title="Sort by member count"
@@ -70,7 +70,7 @@ export const CommunitiesSection = memo(function CommunitiesSection({
               onClick={() => setSortMode("newest")}
               className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-lift ${
                 sortMode === "newest"
-                  ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] text-[var(--user-accent,var(--primary))]"
+                  ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] text-[var(--user-accent-text,var(--primary))]"
                   : "text-muted-foreground hover:text-foreground"
               }`}
               title="Sort by newest first"

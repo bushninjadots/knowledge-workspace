@@ -584,6 +584,9 @@ function emitAccentFamily(
   foreground: string,
 ): void {
   style[`--${prefix}`] = source;
+  // As text the raw accent can fail contrast (a light violet on paper is
+  // ~2.3:1); pulling it toward the foreground keeps AA in light and dark.
+  style[`--${prefix}-text`] = `color-mix(in oklab, ${source} 60%, var(--foreground))`;
   style[`--${prefix}-foreground`] = foreground;
   style[`--${prefix}-subtle`] = `color-mix(in oklab, ${source} 10%, transparent)`;
   style[`--${prefix}-border`] = `color-mix(in oklab, ${source} 30%, transparent)`;

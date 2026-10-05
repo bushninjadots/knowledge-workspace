@@ -121,7 +121,7 @@ export function ProjectLiveRoom({
                         <span
                           className={
                             m.userId === me?.userId
-                              ? "font-medium text-[var(--user-accent,var(--primary))]"
+                              ? "font-medium text-[var(--user-accent-text,var(--primary))]"
                               : "font-medium text-foreground"
                           }
                         >

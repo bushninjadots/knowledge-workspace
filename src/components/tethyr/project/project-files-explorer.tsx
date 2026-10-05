@@ -56,7 +56,7 @@ function FolderRow({
           <ChevronRight className="h-3.5 w-3.5 shrink-0" />
         )}
         {open ? (
-          <FolderOpen className="h-4 w-4 shrink-0 text-[var(--user-accent,var(--primary))]" />
+          <FolderOpen className="h-4 w-4 shrink-0 text-[var(--user-accent-text,var(--primary))]" />
         ) : (
           <Folder className="h-4 w-4 shrink-0 text-muted-foreground/70" />
         )}

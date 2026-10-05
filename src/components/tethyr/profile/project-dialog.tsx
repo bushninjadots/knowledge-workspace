@@ -767,7 +767,7 @@ export function ProjectDialog({
                     onClick={() => setVisibility(v)}
                     className={`rounded-full border px-3 py-1.5 text-xs transition-lift ${
                       visibility === v
-                        ? "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
+                        ? "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent-text,var(--primary))]"
                         : "border-border bg-background/40 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
                     }`}
                   >
@@ -818,7 +818,7 @@ export function ProjectDialog({
                       }}
                       className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] transition-lift ${
                         on
-                          ? "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
+                          ? "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent-text,var(--primary))]"
                           : "border-border bg-background/40 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
                       }`}
                     >

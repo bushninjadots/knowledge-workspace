@@ -308,7 +308,7 @@ export function FileUploadZone({
           className={cn(
             "transition-colors",
             compact ? "h-4 w-4" : "h-5 w-5",
-            isDragOver ? "text-[var(--user-accent,var(--trust))]" : "text-muted-foreground",
+            isDragOver ? "text-[var(--user-accent-text,var(--trust))]" : "text-muted-foreground",
           )}
         />
       </div>

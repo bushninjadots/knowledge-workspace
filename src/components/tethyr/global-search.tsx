@@ -613,7 +613,7 @@ export function GlobalSearch({
             {...optionProps("action", i)}
             className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-lift hover:bg-surface ${isSelected("action", i - resultOffset("action")) ? "bg-surface" : ""}`}
           >
-            <Zap className="h-4 w-4 shrink-0 text-[var(--user-accent,var(--trust))]" />
+            <Zap className="h-4 w-4 shrink-0 text-[var(--user-accent-text,var(--trust))]" />
             <div className="min-w-0">
               <p className="truncate text-sm">{a.label}</p>
               <p className="truncate text-xs text-muted-foreground">{a.description}</p>
@@ -837,7 +837,7 @@ export function GlobalSearch({
             onClick={() => activateAction(a)}
             className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-lift hover:bg-surface focus-visible:bg-surface focus-visible:outline-none"
           >
-            <Zap className="h-4 w-4 shrink-0 text-[var(--user-accent,var(--trust))]" />
+            <Zap className="h-4 w-4 shrink-0 text-[var(--user-accent-text,var(--trust))]" />
             <div className="min-w-0">
               <p className="truncate text-sm">{a.label}</p>
               <p className="truncate text-xs text-muted-foreground">{a.description}</p>

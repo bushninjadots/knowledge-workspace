@@ -238,7 +238,7 @@ export function ScheduleSessionWizard({
                       active
                         ? "bg-[var(--user-accent,var(--trust))] text-[var(--user-accent-foreground,var(--background))]"
                         : done
-                          ? "bg-[var(--user-accent-subtle,var(--trust-subtle))] text-[var(--user-accent,var(--trust))]"
+                          ? "bg-[var(--user-accent-subtle,var(--trust-subtle))] text-[var(--user-accent-text,var(--trust))]"
                           : "bg-muted text-muted-foreground"
                     }`}
                   >
@@ -249,7 +249,7 @@ export function ScheduleSessionWizard({
                       active
                         ? "text-foreground"
                         : done
-                          ? "text-[var(--user-accent,var(--trust))]"
+                          ? "text-[var(--user-accent-text,var(--trust))]"
                           : "text-muted-foreground"
                     }`}
                   >
@@ -455,7 +455,7 @@ function StepParticipants({
                 </div>
                 <div className="truncate text-xs text-muted-foreground">@{p.handle ?? "—"}</div>
               </div>
-              <span className="text-xs text-[var(--user-accent,var(--trust))]">+ Invite</span>
+              <span className="text-xs text-[var(--user-accent-text,var(--trust))]">+ Invite</span>
             </button>
           ))}
         </div>
@@ -514,7 +514,7 @@ function StepType({ value, onChange }: { value: SessionType; onChange: (v: Sessi
               <div
                 className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
                   selected
-                    ? "bg-[var(--user-accent-subtle,var(--trust-subtle))] text-[var(--user-accent,var(--trust))]"
+                    ? "bg-[var(--user-accent-subtle,var(--trust-subtle))] text-[var(--user-accent-text,var(--trust))]"
                     : "bg-muted text-muted-foreground"
                 }`}
               >
@@ -791,7 +791,7 @@ function StepConfirm({ state, organizerName }: { state: WizardState; organizerNa
       <div className="rounded-xl border border-border/60 bg-surface/50 p-4 space-y-3">
         {/* Title + type */}
         <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--user-accent-subtle,var(--trust-subtle))] text-[var(--user-accent,var(--trust))]">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--user-accent-subtle,var(--trust-subtle))] text-[var(--user-accent-text,var(--trust))]">
             <TypeIcon className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">

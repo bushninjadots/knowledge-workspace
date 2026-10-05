@@ -80,7 +80,7 @@ function PublicSectionSidebar({ onNavigate }: { onNavigate?: () => void }) {
                 aria-current={isActive ? "page" : undefined}
                 className={`flex h-7 items-center gap-2 rounded-sm px-2 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${
                   isActive
-                    ? "bg-[var(--user-accent-subtle,var(--learning-subtle))] font-medium text-[var(--user-accent,var(--foreground))]"
+                    ? "bg-[var(--user-accent-subtle,var(--learning-subtle))] font-medium text-[var(--user-accent-text,var(--foreground))]"
                     : "text-muted-foreground hover:bg-surface-sunken hover:text-foreground"
                 }`}
               >

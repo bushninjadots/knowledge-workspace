@@ -289,7 +289,7 @@ export function ProjectShelfOverlay({
                               </span>
                             ) : (
                               project.looking_for_collaborators && (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-[var(--user-accent,var(--ai))]/20 px-2 py-0.5 text-[11px] font-medium text-[var(--user-accent,var(--ai))]">
+                                <span className="inline-flex items-center gap-1 rounded-full bg-[var(--user-accent,var(--ai))]/20 px-2 py-0.5 text-[11px] font-medium text-[var(--user-accent-text,var(--ai))]">
                                   <Users className="h-2.5 w-2.5" />
                                   Open
                                 </span>
@@ -463,7 +463,7 @@ export function ProjectShelfOverlay({
                                 to="/projects/$id"
                                 params={{ id: project.id }}
                                 onClick={onClose}
-                                className="inline-flex items-center gap-1 text-xs font-medium text-[var(--user-accent,var(--primary))] hover:underline"
+                                className="inline-flex items-center gap-1 text-xs font-medium text-[var(--user-accent-text,var(--primary))] hover:underline"
                               >
                                 Read the full README
                                 <ArrowRight className="h-3 w-3" />

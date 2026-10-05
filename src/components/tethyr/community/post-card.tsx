@@ -559,7 +559,7 @@ export function PostCard({
       {post.skills.length > 0 && (
         <div className="mt-3 flex flex-wrap items-center gap-1.5">
           {skillOverlap != null && skillOverlap > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-full border border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] px-2 py-0.5 text-[11px] font-medium text-[var(--user-accent,var(--primary))]">
+            <span className="inline-flex items-center gap-1 rounded-full border border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] px-2 py-0.5 text-[11px] font-medium text-[var(--user-accent-text,var(--primary))]">
               <BadgeCheck className="h-3 w-3" />
               {skillOverlap} skill{skillOverlap !== 1 ? "s" : ""} you know
             </span>

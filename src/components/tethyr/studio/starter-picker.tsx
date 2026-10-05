@@ -652,7 +652,7 @@ function TemplateRow({
             onClick={() => toggleStar.mutate({ templateId: template.id })}
             className={`flex h-7 w-7 items-center justify-center rounded-md border transition-colors ${
               template.starred
-                ? "border-[var(--user-accent-border)] bg-[var(--user-accent-subtle)] text-[var(--user-accent)]"
+                ? "border-[var(--user-accent-border)] bg-[var(--user-accent-subtle)] text-[var(--user-accent-text)]"
                 : "border-border text-muted-foreground hover:bg-[var(--surface-elevated)] hover:text-foreground"
             }`}
           >
