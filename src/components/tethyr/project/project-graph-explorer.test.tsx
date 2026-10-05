@@ -143,6 +143,25 @@ describe("ProjectGraphExplorer", () => {
     expect(screen.getByRole("button", { name: /produced\s*Atlas/i })).toBeInTheDocument();
   });
 
+  it("renders a contribution trail with inspectable work (spec VIEW 6)", async () => {
+    render(
+      <ProjectGraphExplorer
+        input={{
+          ...input,
+          contributions: [
+            { id: "contribution-1", label: "Built the navigation", description: "Shipped the first working route." },
+          ],
+        }}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /show .* connections/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Contribution trail" }));
+
+    expect(screen.getByText("Built the navigation")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Inspect Built the navigation" }));
+    expect(await screen.findByRole("dialog", { name: "Built the navigation" })).toBeInTheDocument();
+  });
+
   it("renders project history as a timeline with origins, events, and forks (spec VIEW 5)", () => {
     render(
       <ProjectGraphExplorer
