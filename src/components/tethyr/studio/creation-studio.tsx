@@ -14,9 +14,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { sizeFor } from "@/lib/studio-grid";
 import {
   GStudioSurface,
-  sizeFor,
   type GStudioConfig,
   type GStudioDevice,
   type GStudioMode,
@@ -1289,7 +1289,7 @@ function makeId(prefix: string) {
 }
 
 /** Default canvas size for a block type — single source of truth lives in
- * g-studio-surface's sizeFor() so click-to-add, drag-in placeholders, and the
+ * studio-grid's sizeFor() so click-to-add, drag-in placeholders, and the
  * canvas agree on the compact default heights. */
 function blockSize(type: string): [number, number, number, number] {
   return sizeFor(type);

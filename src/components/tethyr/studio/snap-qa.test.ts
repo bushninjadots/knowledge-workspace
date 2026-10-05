@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { snapGridPlacement } from "@/components/tethyr/studio/g-studio-surface";
+import { snapGridPlacement } from "@/lib/studio-grid";
 
 // Replicates the onDragStop flow: RGL commits a collision-free drop cell
 // (preventCollision), then settleGridSnap nudges onto the nearest neighbour

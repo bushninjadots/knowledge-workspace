@@ -6,7 +6,7 @@ import {
   sectionGrid,
   seedGridFromLayout,
 } from "@/components/tethyr/studio/creation-studio";
-import { snapGridPlacement } from "@/components/tethyr/studio/g-studio-surface";
+import { snapGridPlacement } from "@/lib/studio-grid";
 import type { StudioConfig } from "@/lib/studio-config";
 import type { LayoutSection } from "@/lib/page-blocks";
 
