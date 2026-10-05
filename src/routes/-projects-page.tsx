@@ -1,6 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { notFound, useParams, Link, useNavigate, useSearch } from "@tanstack/react-router";
-import { CalendarPlus } from "lucide-react";
+import { notFound, useParams, useNavigate, useSearch } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { supabasePending } from "@/lib/supabase-pending-schema";
@@ -29,6 +28,8 @@ import { useProjectRepos } from "@/hooks/use-project-repos";
 import { useRelatedProjects } from "@/hooks/use-related-projects";
 import { useProjectSessions } from "@/hooks/use-sessions";
 import { useProjectChallenges } from "@/hooks/use-challenges";
+import { ProjectChallengesSection } from "@/components/tethyr/project/project-challenges-section";
+import { ProjectSessionsSection } from "@/components/tethyr/project/project-sessions-section";
 import { ProjectHeader } from "@/components/tethyr/project/project-header";
 import { useMarkProjectVisited } from "@/hooks/use-project-loop";
 import {
@@ -97,11 +98,6 @@ const RelatedProjectsSection = lazy(() =>
 const ProjectJoinModal = lazy(() =>
   import("@/components/tethyr/project/project-join-modal").then((m) => ({
     default: m.ProjectJoinModal,
-  })),
-);
-const CreateChallengeDialog = lazy(() =>
-  import("@/components/tethyr/community/create-challenge-dialog").then((m) => ({
-    default: m.CreateChallengeDialog,
   })),
 );
 const ScheduleSessionWizard = lazy(() =>
@@ -961,132 +957,21 @@ export function ProjectPage() {
             {/* Sessions — live working time on this project, visible to the team. */}
             {isContributor && (
               <div className="min-w-0" style={sectionStyle("work")}>
-                <section
-                  id="project-sessions"
-                  aria-labelledby="project-sessions-heading"
-                  className="mt-10 scroll-mt-24 border-t border-border/60 pt-8"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <h2
-                        id="project-sessions-heading"
-                        className="font-display text-lg font-semibold tracking-tight"
-                      >
-                        Sessions
-                      </h2>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        Live working time on this project — past, present, and next.
-                      </p>
-                    </div>
-                    {isContributor && (
-                      <button
-                        type="button"
-                        onClick={() => setScheduleOpen(true)}
-                        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border/60 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-lift hover:text-foreground"
-                      >
-                        <CalendarPlus className="h-3 w-3" />
-                        Schedule session
-                      </button>
-                    )}
-                  </div>
-
-                  {projectSessions.length === 0 ? (
-                    <p className="mt-4 text-sm text-muted-foreground">
-                      No sessions scheduled for this project yet.
-                    </p>
-                  ) : (
-                    <ul className="mt-4 divide-y divide-border/50">
-                      {projectSessions.map((s) => (
-                        <li key={s.id}>
-                          <Link
-                            to="/sessions/$id"
-                            params={{ id: s.id }}
-                            className="flex items-center justify-between gap-4 py-3 transition-lift hover:bg-surface-elevated/40"
-                          >
-                            <div className="min-w-0">
-                              <p className="truncate text-sm font-medium">{s.title}</p>
-                              <p className="mt-0.5 text-xs text-muted-foreground">
-                                {s.starts_at
-                                  ? new Date(s.starts_at).toLocaleString(undefined, {
-                                      month: "short",
-                                      day: "numeric",
-                                      hour: "numeric",
-                                      minute: "2-digit",
-                                    })
-                                  : "Unscheduled"}
-                                {s.organizer?.display_name ? ` · ${s.organizer.display_name}` : ""}
-                              </p>
-                            </div>
-                            <span className="shrink-0 text-[11px] uppercase tracking-wider text-muted-foreground">
-                              {s.status.replace(/_/g, " ")}
-                            </span>
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </section>
+                <ProjectSessionsSection
+                  sessions={projectSessions}
+                  canSchedule={isContributor}
+                  onSchedule={() => setScheduleOpen(true)}
+                />
               </div>
             )}
 
             {/* Challenges — structured builds tied to this project. */}
             <div className="min-w-0" style={sectionStyle("work")}>
-              <section
-                id="project-challenges"
-                aria-labelledby="project-challenges-heading"
-                className="mt-10 scroll-mt-24 border-t border-border/60 pt-8"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h2
-                      id="project-challenges-heading"
-                      className="font-display text-lg font-semibold tracking-tight"
-                    >
-                      Challenges
-                    </h2>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      Structured builds tied to this project — join one to level up and earn
-                      evidence.
-                    </p>
-                  </div>
-                  {isContributor && (
-                    <Suspense fallback={null}>
-                      <CreateChallengeDialog projectId={id} />
-                    </Suspense>
-                  )}
-                </div>
-
-                {projectChallenges.length === 0 ? (
-                  <p className="mt-4 text-sm text-muted-foreground">
-                    No challenges tied to this project yet.
-                  </p>
-                ) : (
-                  <ul className="mt-4 divide-y divide-border/50">
-                    {projectChallenges.map((c) => (
-                      <li key={c.id}>
-                        <Link
-                          to="/challenges/$id"
-                          params={{ id: c.id }}
-                          className="flex items-center justify-between gap-4 py-3 transition-lift hover:bg-surface-elevated/40"
-                        >
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-medium">{c.title}</p>
-                            <p className="mt-0.5 text-xs text-muted-foreground">
-                              {c.difficulty}
-                              {c.end_date
-                                ? ` · ends ${new Date(c.end_date).toLocaleDateString()}`
-                                : ""}
-                            </p>
-                          </div>
-                          <span className="shrink-0 rounded-full border border-border/60 px-2 py-0.5 text-[11px] capitalize text-muted-foreground">
-                            {c.type.replace(/_/g, " ")}
-                          </span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
+              <ProjectChallengesSection
+                projectId={id}
+                challenges={projectChallenges}
+                canCreate={isContributor}
+              />
             </div>
 
             {/* Conversation */}
