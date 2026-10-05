@@ -11,6 +11,7 @@ import {
   Search,
 } from "lucide-react";
 import {
+  GRAPH_EDGE_TYPE_LABELS,
   GRAPH_NODE_TYPE_LABELS,
   getConnectedNodes,
   type GraphEdgeType,
@@ -435,7 +436,7 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
                             : "border-border/70 text-muted-foreground hover:border-border-strong hover:text-foreground",
                         )}
                       >
-                        {type.replaceAll("_", " ")}
+                        {GRAPH_EDGE_TYPE_LABELS[type]}
                       </button>
                     );
                   })}

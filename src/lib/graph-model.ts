@@ -72,6 +72,31 @@ export type GraphEdgeType =
   | "needs"
   | "offers";
 
+export const GRAPH_EDGE_TYPE_LABELS: Record<GraphEdgeType, string> = {
+  contributed_to: "Contributed to",
+  has_skill: "Has skill",
+  demonstrated_skill: "Demonstrated skill",
+  used_in: "Used in",
+  has_milestone: "Has milestone",
+  has_role: "Has role",
+  filled_role: "Filled role",
+  collaborated_with: "Collaborated with",
+  related_to: "Related to",
+  forked_from: "Forked from",
+  derived_from: "Derived from",
+  imported_from: "Imported from",
+  produced: "Produced",
+  referenced_by: "Referenced by",
+  references: "References",
+  supports: "Supports",
+  earned: "Earned",
+  participated_in: "Participated in",
+  uses: "Uses",
+  contains: "Contains",
+  needs: "Needs",
+  offers: "Offers",
+};
+
 export interface GraphEdge {
   id: string;
   type: GraphEdgeType;
