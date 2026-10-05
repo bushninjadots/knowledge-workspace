@@ -259,7 +259,16 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
                       <SelectContent>
                         {pathOptions.map((node) => (
                           <SelectItem key={node.id} value={node.id}>
-                            {node.label}
+                            <span className="flex items-center gap-2">
+                              <GraphNodeGlyph
+                                type={node.type}
+                                className="h-3.5 w-3.5 text-muted-foreground"
+                              />
+                              <span>{node.label}</span>
+                              <span className="text-muted-foreground">
+                                · {titleForType(node.type).replace(/s$/, "")}
+                              </span>
+                            </span>
                           </SelectItem>
                         ))}
                       </SelectContent>
