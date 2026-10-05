@@ -2,6 +2,12 @@ import { describe, it, expect } from "vitest";
 import { safeRedirectPath, isSafeUrl, safeHref } from "./validators";
 
 describe("safeRedirectPath", () => {
+  it("rejects values the router decoded to non-strings", () => {
+    // ?redirect=123 and ?redirect=true reach the login page as 123 / true.
+    expect(safeRedirectPath(123)).toBeNull();
+    expect(safeRedirectPath(true)).toBeNull();
+  });
+
   it("accepts clean internal paths", () => {
     expect(safeRedirectPath("/dashboard")).toBe("/dashboard");
     expect(safeRedirectPath("/projects/abc?section=roles")).toBe("/projects/abc?section=roles");

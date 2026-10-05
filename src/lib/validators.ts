@@ -95,8 +95,9 @@ export function sanitizeFilename(name: string): string {
 // Post-auth redirect guard. Accepts only same-origin absolute paths and blocks
 // the classic open-redirect vectors: "//evil.com", "\\evil.com", "/\\evil.com"
 // and protocol-relative URLs like "/https://evil.com".
-export function safeRedirectPath(redirect: string | null | undefined): string | null {
-  if (!redirect || !redirect.startsWith("/")) return null;
+export function safeRedirectPath(redirect: unknown): string | null {
+  // The router JSON-decodes search values, so ?redirect=123 arrives as a number.
+  if (typeof redirect !== "string" || !redirect.startsWith("/")) return null;
   // Protocol-relative (//host) and backslash tricks browsers normalize to //.
   if (/^\/\//.test(redirect) || /^\/\\/.test(redirect) || redirect.includes(":")) return null;
   if (redirect.includes("\\")) return null;
