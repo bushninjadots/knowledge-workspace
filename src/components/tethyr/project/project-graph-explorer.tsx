@@ -280,7 +280,14 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
                         <span className="tabular-nums text-xs text-muted-foreground">
                           {index + 1}
                         </span>
-                        <span>{describeGraphStep(step)}</span>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedNodeId(step.to.id)}
+                          className="rounded-md text-left underline decoration-border underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          aria-label={`Inspect ${step.to.label}`}
+                        >
+                          {describeGraphStep(step)}
+                        </button>
                       </li>
                     ))}
                   </ol>

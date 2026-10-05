@@ -85,7 +85,7 @@ describe("ProjectGraphExplorer", () => {
     expect(screen.getByRole("heading", { name: "Milestones" })).toBeInTheDocument();
   });
 
-  it("traces how two connected objects are related", () => {
+  it("traces how two connected objects are related", async () => {
     renderExpanded();
     fireEvent.click(screen.getByRole("button", { name: /how are these connected/i }));
 
@@ -98,7 +98,11 @@ describe("ProjectGraphExplorer", () => {
     fireEvent.click(screen.getByLabelText("Path to node"));
     fireEvent.click(screen.getByRole("option", { name: "Atlas" }));
 
-    expect(screen.getByText("Ari produced Atlas")).toBeInTheDocument();
+    const pathStep = screen.getByRole("button", { name: "Inspect Atlas" });
+    expect(pathStep).toHaveTextContent("Ari produced Atlas");
+
+    fireEvent.click(pathStep);
+    expect(await screen.findByRole("dialog", { name: "Atlas" })).toBeInTheDocument();
   });
 
   it("expands large connection lists progressively", () => {
