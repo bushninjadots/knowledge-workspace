@@ -154,7 +154,8 @@ export function StarterPicker({
         aria-label="Choose how your Studio feels"
         className="flex max-h-[85vh] w-full max-w-4xl flex-col gap-0 overflow-hidden rounded-lg border-card-border bg-surface-elevated p-0 shadow-lg card"
       >
-        <header className="shrink-0 border-b border-card-border px-5 py-4">
+        {/* Right padding clears the dialog's own close button. */}
+        <header className="shrink-0 border-b border-card-border py-4 pl-5 pr-12">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 className="font-display text-lg font-semibold text-foreground">
@@ -417,6 +418,10 @@ function StarterPreview({
 }) {
   const { data: me } = useCurrentUser();
   const ownerId = me?.userId ?? "";
+  // A new member's blocks are mostly empty, so live previews of their own
+  // content look the same for every direction. Until there's work to show,
+  // preview each direction's arrangement instead, labelled as an example.
+  const hasContent = (me?.projects.length ?? 0) > 0 || !!me?.profile?.bio?.trim();
   const layout = useMemo(() => starterPreviewLayout(starter), [starter]);
   const context = useMemo<BlockContext>(
     () => ({
@@ -451,7 +456,7 @@ function StarterPreview({
         <span className="h-2 w-2 rounded-full bg-border" />
         <span className="h-2 w-2 rounded-full bg-border" />
       </div>
-      {ownerId ? (
+      {ownerId && hasContent ? (
         <div
           className="pointer-events-none select-none overflow-hidden"
           style={{ height: 150, ...previewSurfaceStyle(starter) }}
@@ -461,7 +466,15 @@ function StarterPreview({
           </div>
         </div>
       ) : (
-        <Sketch rows={starter.sketch} active={active} />
+        <div
+          className="relative overflow-hidden"
+          style={{ height: 150, ...previewSurfaceStyle(starter) }}
+        >
+          <Sketch rows={starter.sketch} active={active} />
+          <span className="absolute bottom-1.5 right-2 font-mono text-3xs uppercase tracking-widest text-muted-foreground">
+            Example
+          </span>
+        </div>
       )}
     </div>
   );
@@ -492,14 +505,24 @@ function previewSurfaceStyle(starter: Starter): React.CSSProperties {
  */
 function Sketch({ rows, active }: { rows: number[][]; active: boolean }) {
   return (
-    <div aria-hidden className="flex flex-col gap-1 p-2">
+    // Half-scale gap and radius, like the live previews, so each direction's
+    // density and corner treatment show through the wireframe.
+    <div
+      aria-hidden
+      className="flex h-full flex-col p-3"
+      style={{ gap: "calc(var(--studio-gap, 14px) / 2)" }}
+    >
       {rows.map((row, rowIndex) => (
-        <div key={rowIndex} className="flex gap-1">
+        <div
+          key={rowIndex}
+          className="flex flex-1"
+          style={{ gap: "calc(var(--studio-gap, 14px) / 2)" }}
+        >
           {row.map((span, spanIndex) => (
             <span
               key={`${rowIndex}-${spanIndex}`}
-              className="h-3 rounded-sm"
               style={{
+                borderRadius: "calc(var(--studio-radius, 6px) / 2)",
                 flex: span,
                 backgroundColor:
                   active || rowIndex === 0

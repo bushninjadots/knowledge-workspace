@@ -247,7 +247,24 @@ export function findSection(layout: PageLayout, blockId: string) {
   return layout.sections.find((section) => section.blocks.some((block) => block.id === blockId));
 }
 
-/** Display label for a section: its custom title, else its layout type. */
+/** Human names for untitled sections, so the editor never shows layout ids. */
+const SECTION_LAYOUT_NAMES: Record<LayoutSection["layout"], string> = {
+  full: "Full-width area",
+  two_column: "Two-column area",
+  three_column: "Three-column area",
+  sidebar_left: "Area with left sidebar",
+  sidebar_right: "Area with right sidebar",
+  feature: "Featured area",
+  side_by_side: "Side-by-side area",
+  featured_work: "Featured work",
+  asymmetric: "Uneven columns",
+  split: "Split area",
+  image_lead: "Image-led area",
+  compact_list: "Compact list",
+};
+
+/** Display label for a section: its custom title, else a name for its layout. */
 export function sectionLabel(section: LayoutSection): string {
-  return section.title ?? section.layout.replace(/_/g, " ");
+  const title = section.title?.trim();
+  return title || (SECTION_LAYOUT_NAMES[section.layout] ?? "Area");
 }

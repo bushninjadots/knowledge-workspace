@@ -32,7 +32,7 @@ export function Choice({
             aria-pressed={value === option}
             onClick={() => onChange(option)}
             className={cn(
-              "rounded-sm px-1 py-1.5 text-2xs outline-none focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--surface-sunken)]",
+              "rounded-sm px-1 py-1.5 pointer-coarse:py-3 text-2xs outline-none focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--surface-sunken)]",
               value === option
                 ? "bg-[var(--surface-elevated)] text-foreground"
                 : "text-muted-foreground",
@@ -114,7 +114,7 @@ export function IconButton({
       aria-label={label}
       title={label}
       className={cn(
-        "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-sm border text-muted-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--surface-elevated)]",
+        "inline-flex h-7 w-7 pointer-coarse:h-10 pointer-coarse:w-10 shrink-0 items-center justify-center rounded-sm border text-muted-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--surface-elevated)]",
         active
           ? "border-[var(--user-accent-border)] bg-[var(--user-accent-subtle)] text-[var(--user-accent-text)]"
           : "border-transparent hover:border-border hover:bg-[var(--surface-sunken)] hover:text-foreground",

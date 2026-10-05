@@ -545,7 +545,7 @@ export function GCustomizePanel({
         </IconButton>
       </header>
       {/* Single scroll owner: this wrapper scrolls; the footer stays put below it. */}
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
         <ThemeSection themeId={themeId} onThemeChange={onThemeChange} />
         {onOpenTemplates && (
           <div className="mb-4 shrink-0">

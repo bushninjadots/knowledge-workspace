@@ -95,6 +95,7 @@ import {
 } from "@/lib/studio-grid";
 import { BlockGlyph } from "./block-glyph";
 import { useCardInk } from "@/hooks/use-card-ink";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { IconButton, Choice, WidthStepper } from "./studio-controls";
 import { ThemeSection, GCustomizeAdvanced, GCustomizePanel } from "./g-customize-panel";
 /** GStudioConfig keeps the legacy component-local name so callers don't churn. */
@@ -165,6 +166,9 @@ interface GStudioSurfaceProps {
   /** Open the Templates picker (starter directions). Multiple entry points:
    *  top bar, Customize panel, and the mobile Style tab. */
   onOpenTemplates?: () => void;
+  /** First-run invitation to pick a starting direction, shown as a strip
+   *  under the top bar instead of a modal over the editor. */
+  starterPrompt?: { onBrowse: () => void; onDismiss: () => void };
   /** Publish the current Studio layout as a community template. */
   onSaveAsTemplate?: () => void;
   onDragTypeChange: (type: string | null) => void;
@@ -339,7 +343,7 @@ function SectionLayoutPicker({
         type="button"
         onClick={() => setOpen(!open)}
         title="Change area layout"
-        className="h-6 max-w-[130px] rounded-sm border border-border bg-[var(--surface-sunken)] px-1 font-mono text-3xs uppercase tracking-widest text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:border-[var(--user-accent-border)] focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1"
+        className="h-6 pointer-coarse:h-10 max-w-[130px] rounded-sm border border-border bg-[var(--surface-sunken)] px-1 font-mono text-3xs uppercase tracking-widest text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:border-[var(--user-accent-border)] focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1"
       >
         {current}
       </button>
@@ -428,8 +432,8 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
     ...studioSurfaceStyle(props.config, palette?.dominant ?? null),
     ...appearanceStyle(borderPreview),
     ...cardFillStyle(props.config),
-    // The template's app-scope backdrop choice paints the editor shell too,
-    // so the builder sits on the same canvas the published page will.
+    // The template's app-scope backdrop choice paints the canvas, so the
+    // builder previews on the same backdrop the published page will.
     ...studioBackgroundVars(props.config, "app"),
   };
 
@@ -443,13 +447,12 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
   };
 
   return (
+    // The member's theme, personality and card ink apply to the canvas only.
+    // Editor chrome (top bar, panels, sheets) stays on the app's own tokens so
+    // a low-contrast theme can't make the controls unreadable.
     <div
-      className="flex h-[calc(100dvh-3rem)] min-h-0 flex-col overflow-hidden bg-[var(--studio-bg,var(--background))]"
-      ref={cardInk.ref}
+      className="flex h-[calc(100dvh-3rem)] min-h-0 flex-col overflow-hidden bg-background"
       data-studio-builder="g"
-      data-personality={props.config.personality}
-      data-card-ink={cardInk.active ? "" : undefined}
-      style={{ ...surfaceStyle, ...cardInk.style }}
     >
       <GStudioTopBar
         mode={props.mode}
@@ -484,6 +487,7 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
         versions={props.versions}
         onRollback={props.onRollback}
       />
+      {editing && props.starterPrompt && <GStarterStrip {...props.starterPrompt} />}
       <div className="flex min-h-0 flex-1 overflow-hidden">
         {editing && (customizeOpen || mobilePanel === "left") && (
           <GCustomizePanel
@@ -513,18 +517,25 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
           />
         )}
         <main
-          className="relative min-w-0 flex-1 overflow-y-auto bg-[var(--studio-bg,var(--background))] bg-noise"
+          className="relative min-w-0 flex-1 overflow-y-auto bg-[var(--studio-bg,var(--background))] bg-noise text-foreground"
           aria-label="Studio canvas"
-          style={CARD_SURFACE_STYLE}
+          data-personality={props.config.personality}
+          style={surfaceStyle}
         >
           <BackgroundLayer
             background={me?.background}
             imageUrl={me?.backgroundImageUrl}
             bannerColor={palette?.dominant ?? null}
           />
+          {/* Card surfaces nest under the theme tokens they derive from. */}
           <div
-            className="mx-auto w-full"
+            ref={cardInk.ref}
+            data-card-ink={cardInk.active ? "" : undefined}
+            // Bottom room for the docked phone editor bar so it never covers a block.
+            className={cn("mx-auto w-full", editing && compact && "pb-36")}
             style={{
+              ...CARD_SURFACE_STYLE,
+              ...cardInk.style,
               // Desktop preview is full-bleed like the public page; edit and
               // tablet/mobile preview stay capped (structure or device width).
               maxWidth: deviceWidth ?? (props.mode === "preview" ? undefined : maxWidth),
@@ -568,6 +579,34 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
           />
         )}
         {editing && compact && <GMobileEditSheet {...props} />}
+      </div>
+    </div>
+  );
+}
+
+function GStarterStrip({ onBrowse, onDismiss }: { onBrowse: () => void; onDismiss: () => void }) {
+  return (
+    <div
+      role="region"
+      aria-label="Starting directions"
+      className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b border-border bg-[var(--surface-elevated)] px-4 py-2"
+    >
+      <LayoutTemplate className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+      <p className="min-w-0 flex-1 text-xs text-muted-foreground">
+        <span className="font-medium text-foreground">Not sure where to start?</span> Pick a
+        starting direction.
+        <span className="hidden sm:inline">
+          {" "}
+          It rearranges what you have, and one undo puts it back.
+        </span>
+      </p>
+      <div className="flex shrink-0 items-center gap-1">
+        <Button size="sm" variant="secondary" onClick={onBrowse}>
+          Browse directions
+        </Button>
+        <IconButton label="Dismiss starting directions" onClick={onDismiss}>
+          <X className="h-3.5 w-3.5" />
+        </IconButton>
       </div>
     </div>
   );
@@ -663,12 +702,12 @@ function GStudioTopBar({
           <span
             role="status"
             className={cn(
-              "hidden border px-1.5 py-0.5 font-mono text-3xs sm:inline",
-              saving || dirty
-                ? "border-caution text-caution"
-                : hasUnpublishedChanges
-                  ? "border-caution text-caution"
-                  : "border-trust text-trust",
+              // Amber is too light to read as text, so caution states keep it
+              // for the border and fill and set the label in the body colour.
+              "hidden border px-1.5 py-0.5 font-mono text-2xs sm:inline",
+              saving || dirty || hasUnpublishedChanges
+                ? "border-caution bg-caution/10 text-foreground"
+                : "border-trust text-trust",
             )}
           >
             {saving
@@ -682,7 +721,7 @@ function GStudioTopBar({
                     : "Draft"}
           </span>
           {lastSavedAt && !saving && !dirty && (
-            <span className="hidden font-mono text-2xs text-muted-foreground-subtle sm:inline">
+            <span className="hidden font-mono text-2xs text-muted-foreground sm:inline">
               saved {timeAgo(new Date(lastSavedAt).toISOString())}
             </span>
           )}
@@ -706,7 +745,7 @@ function GStudioTopBar({
               aria-label={label}
               onClick={() => onModeChange(item)}
               className={cn(
-                "flex h-6 items-center gap-1.5 rounded-sm px-2 text-xs",
+                "flex h-6 pointer-coarse:h-10 items-center gap-1.5 rounded-sm px-2 text-xs",
                 mode === item
                   ? "bg-[var(--surface-elevated)] text-foreground"
                   : "text-muted-foreground hover:text-foreground",
@@ -857,9 +896,12 @@ function GStudioTopBar({
       {mode === "edit" && (
         <div className="flex min-h-5 items-center gap-2 border-t border-border bg-[var(--surface)] px-3 py-0.5">
           <span className="t-label">Editing</span>
-          <span className="truncate text-2xs text-muted-foreground-subtle">
+          <span className="truncate text-2xs text-muted-foreground-subtle pointer-coarse:hidden">
             Drag blocks between areas · pull an edge or corner to resize · arrow keys nudge · Del
             removes · Ctrl/⌘D duplicates · click a block for border and spacing options
+          </span>
+          <span className="hidden truncate text-2xs text-muted-foreground-subtle pointer-coarse:inline">
+            Tap a block to edit it · use Edit Studio below to arrange and add
           </span>
         </div>
       )}
@@ -1113,6 +1155,9 @@ function GSectionBand({
   onRequestPalette: (id: string) => void;
 }) {
   const [renaming, setRenaming] = useState(false);
+  // Phones edit in one stacked column: a 12-column desktop arrangement can't
+  // be dragged by touch and squeezes side-by-side blocks to a few words wide.
+  const stacked = useIsMobile();
   const sectionTitle = sectionLabel(section);
   const blocks = useMemo(
     () =>
@@ -1221,7 +1266,7 @@ function GSectionBand({
       onClick={(event) => event.stopPropagation()}
     >
       {editing ? (
-        <header className="mb-2 flex items-center gap-1.5">
+        <header className="mb-2 flex flex-wrap items-center gap-1.5">
           <span
             className="h-3.5 w-0.5 shrink-0"
             style={{
@@ -1250,13 +1295,10 @@ function GSectionBand({
               onClick={() => setRenaming(true)}
               title="Rename area"
               aria-label="Rename area"
-              className="t-label flex h-6 items-center truncate rounded-sm px-1 hover:text-foreground"
+              className="t-label flex h-6 pointer-coarse:h-10 items-center truncate rounded-sm px-1 hover:text-foreground"
             >
               {sectionTitle}
             </button>
-          )}
-          {section.layout === "feature" && (
-            <span className="t-label text-[var(--user-accent-text)]">spine</span>
           )}
           <span className="font-mono text-3xs text-muted-foreground-subtle">
             {blocks.length} {blocks.length === 1 ? "block" : "blocks"}
@@ -1312,6 +1354,23 @@ function GSectionBand({
             <Plus className="h-3.5 w-3.5" /> Add a block
           </button>
         ) : null
+      ) : editing && stacked ? (
+        <div className="flex flex-col" style={{ gap: margin }}>
+          {[...grid]
+            .sort((a, b) => a.y - b.y || a.x - b.x)
+            .map((item) => blocks.find((block) => block.id === item.i))
+            .filter((block): block is LayoutBlockInstance => !!block)
+            .map((block) => (
+              <GBlockFrame
+                key={block.id}
+                block={block}
+                editing={editing}
+                selected={props.selectedBlockId === block.id}
+                fluid
+                {...props}
+              />
+            ))}
+        </div>
       ) : editing ? (
         <div
           data-studio-grid={section.id}
@@ -1470,7 +1529,7 @@ function GSectionBand({
         <button
           type="button"
           onClick={() => onRequestPalette(section.id)}
-          className="mx-auto mt-1 flex h-6 items-center gap-1 border border-border bg-[var(--surface-elevated)] px-1.5 font-mono text-3xs uppercase tracking-widest text-muted-foreground opacity-40 outline-none transition-opacity hover:text-foreground hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1"
+          className="mx-auto mt-1 flex h-6 pointer-coarse:h-10 pointer-coarse:px-3 pointer-coarse:opacity-100 items-center gap-1 border border-border bg-[var(--studio-bg,var(--background))] px-1.5 font-mono text-3xs uppercase tracking-widest text-muted-foreground opacity-40 outline-none transition-opacity hover:text-foreground hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1"
         >
           <Plus className="h-3 w-3" /> Add block
         </button>
@@ -2269,9 +2328,9 @@ function GMobileEditSheet(props: GStudioSurfaceProps) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed bottom-20 left-1/2 z-40 -translate-x-1/2 border border-border bg-[var(--surface-elevated)] px-3 py-2 text-xs shadow-panel"
+        className="fixed inset-x-3 bottom-20 z-40 flex h-11 items-center justify-center gap-1.5 rounded-md border border-border bg-[var(--surface-elevated)] text-sm font-medium text-foreground shadow-panel"
       >
-        Edit Studio
+        <Settings2 className="h-4 w-4" aria-hidden /> Edit Studio
       </button>
     );
   return (
@@ -2287,7 +2346,7 @@ function GMobileEditSheet(props: GStudioSurfaceProps) {
             className={cn(
               "truncate text-2xs",
               props.saving || props.dirty || props.hasUnpublishedChanges
-                ? "text-caution"
+                ? "text-foreground"
                 : "text-trust",
             )}
           >
@@ -2305,7 +2364,7 @@ function GMobileEditSheet(props: GStudioSurfaceProps) {
         <Button
           variant={props.dirty ? "default" : "outline"}
           size="sm"
-          className="h-7 px-2 text-2xs"
+          className="h-7 px-2 text-2xs pointer-coarse:h-10 pointer-coarse:px-3"
           busy={props.saving}
           disabled={!props.dirty || props.saving}
           onClick={props.onSave}
@@ -2315,7 +2374,7 @@ function GMobileEditSheet(props: GStudioSurfaceProps) {
         <Button
           variant={props.hasUnpublishedChanges ? "default" : "outline"}
           size="sm"
-          className="h-7 px-2 text-2xs"
+          className="h-7 px-2 text-2xs pointer-coarse:h-10 pointer-coarse:px-3"
           busy={props.saving}
           disabled={!props.hasUnpublishedChanges || props.saving}
           onClick={props.onPublish}

@@ -106,8 +106,8 @@ export function CreationStudio({
   const [appearanceOpen, setAppearanceOpen] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
   const [introStarterOpen, setIntroStarterOpen] = useState(false);
+  const [starterStripVisible, setStarterStripVisible] = useState(false);
   const [renameFocusId, setRenameFocusId] = useState<string | null>(null);
-  const introStarterShownRef = useRef(false);
   const pageIdRef = useRef<string | null>(null);
   const layoutRef = useRef<PageLayout | null>(null);
   const configRef = useRef<GStudioConfig | null>(null);
@@ -198,17 +198,30 @@ export function CreationStudio({
 
   // First-run "choose a starting feel": when the Studio has never picked a
   // starter, is still a draft, and this browser hasn't dismissed the prompt,
-  // open the starter picker before the default canvas so the creator decides
-  // the feel first. One show per browser — localStorage persists dismissal.
+  // invite the creator with a strip above the canvas. It doesn't open the
+  // picker over the editor uninvited. localStorage persists dismissal.
+  const starterStripEligible = !!config && !config.starterId && page?.status !== "published";
   useEffect(() => {
-    if (!config || config.starterId) return;
-    if (page?.status === "published") return;
-    if (introStarterShownRef.current) return;
-    if (typeof window === "undefined") return;
-    if (window.localStorage.getItem(STUDIO_STARTER_INTRO_KEY) === "1") return;
-    introStarterShownRef.current = true;
-    setIntroStarterOpen(true);
-  }, [config, page?.status]);
+    if (!starterStripEligible || typeof window === "undefined") {
+      setStarterStripVisible(false);
+      return;
+    }
+    let dismissed = false;
+    try {
+      dismissed = window.localStorage.getItem(STUDIO_STARTER_INTRO_KEY) === "1";
+    } catch {
+      // Storage unavailable: show the strip; dismissing hides it this session.
+    }
+    setStarterStripVisible(!dismissed);
+  }, [starterStripEligible]);
+  const dismissStarterIntro = useCallback(() => {
+    setStarterStripVisible(false);
+    try {
+      window.localStorage.setItem(STUDIO_STARTER_INTRO_KEY, "1");
+    } catch {
+      // Storage unavailable: the strip stays hidden for this session.
+    }
+  }, []);
 
   // Deep link from the Studio view (?block= / ?section=): select the target
   // block and bring its area into view once the canvas has rendered.
@@ -1154,6 +1167,11 @@ export function CreationStudio({
         onCompleteProfile={onCompleteProfile ? completeProfile : undefined}
         onOpenAppearance={() => setAppearanceOpen(true)}
         onOpenTemplates={() => setIntroStarterOpen(true)}
+        starterPrompt={
+          starterStripVisible
+            ? { onBrowse: () => setIntroStarterOpen(true), onDismiss: dismissStarterIntro }
+            : undefined
+        }
         onSaveAsTemplate={saveAsTemplate}
         onAddProject={() => setProjectDialogOpen(true)}
         onExit={onExit ? exit : undefined}
@@ -1213,20 +1231,14 @@ export function CreationStudio({
           onChoose={(starter) => {
             chooseStarter(starter);
             setIntroStarterOpen(false);
-            if (typeof window !== "undefined") {
-              window.localStorage.setItem(STUDIO_STARTER_INTRO_KEY, "1");
-            }
+            dismissStarterIntro();
           }}
           onStartFromScratch={() => {
             setIntroStarterOpen(false);
+            dismissStarterIntro();
             resetStudio();
           }}
-          onClose={() => {
-            setIntroStarterOpen(false);
-            if (typeof window !== "undefined") {
-              window.localStorage.setItem(STUDIO_STARTER_INTRO_KEY, "1");
-            }
-          }}
+          onClose={() => setIntroStarterOpen(false)}
         />
       )}
     </>
