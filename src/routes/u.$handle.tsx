@@ -46,7 +46,8 @@ export const Route = createFileRoute("/u/$handle")({
     embed: z
       .union([z.boolean(), z.literal("true"), z.literal("false")])
       .transform((v) => v === true || v === "true")
-      .optional(),
+      .optional()
+      .catch(undefined),
   }),
   head: ({ loaderData, params }) => {
     // loaderData is the same object fetchPublicProfile resolves to (or null).

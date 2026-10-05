@@ -9,6 +9,7 @@ import { useMemo, useState } from "react";
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { ArrowRight, Search, X } from "lucide-react";
 import { z } from "zod";
+import { searchString } from "@/lib/search-params";
 import {
   useSkillsCatalog,
   useSkillDirectoryStats,
@@ -24,7 +25,7 @@ import { seoMeta } from "@/lib/seo";
 const skillsSearchSchema = z.object({
   // Optional (no .default()) so a bare /skills URL stays bare — a default
   // makes the router canonicalize /skills → /skills?q= with a 307.
-  q: z.string().optional(),
+  q: searchString(),
 });
 
 export const Route = createFileRoute("/skills")({

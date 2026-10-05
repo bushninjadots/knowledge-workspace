@@ -147,8 +147,10 @@ describe("/u/$handle validateSearch", () => {
     expect(parsed.embed).toBe(false);
   });
 
-  it("rejects junk embed values", () => {
-    expect(() => parseSearch({ embed: "maybe" })).toThrow();
+  it("ignores junk embed values instead of failing the page", () => {
+    // A throw here is a 500 for anyone opening a mangled share link; junk
+    // must simply never switch embed mode on.
+    expect(parseSearch({ embed: "maybe" }).embed).toBeUndefined();
   });
 });
 

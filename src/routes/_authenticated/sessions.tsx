@@ -6,17 +6,22 @@ const SESSION_TABS: SessionsTab[] = [
   "requests",
   "availability",
 ];
-
 import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
 import { z } from "zod";
+import { searchEnum } from "@/lib/search-params";
 import type { SessionsTab } from "@/components/tethyr/sessions/sessions-sidebar";
 import { RouteErrorBoundary } from "@/components/tethyr/route-error-boundary";
 
 export const Route = createFileRoute("/_authenticated/sessions")({
   validateSearch: z.object({
-    tab: z.enum(SESSION_TABS).optional(),
+    tab: searchEnum(SESSION_TABS),
     // Deep link used by the command palette: auto-opens the schedule wizard.
-    schedule: z.literal("1").optional(),
+    // A typed `?schedule=1` arrives JSON-decoded as the number 1.
+    schedule: z
+      .union([z.literal("1"), z.literal(1)])
+      .transform(() => "1" as const)
+      .optional()
+      .catch(undefined),
   }).parse,
   head: () => ({
     meta: [

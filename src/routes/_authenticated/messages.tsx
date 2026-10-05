@@ -2,13 +2,13 @@
 // Includes pagination, typing indicators, read receipts, unread badges.
 
 const searchSchema = z.object({
-  c: z.string().optional(),
-  project: z.string().optional(),
-  projectName: z.string().optional(),
+  c: searchString(),
+  project: searchString(),
+  projectName: searchString(),
 });
-
 import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
 import { z } from "zod";
+import { searchString } from "@/lib/search-params";
 
 export const Route = createFileRoute("/_authenticated/messages")({
   validateSearch: (search: Record<string, unknown>) => searchSchema.parse(search),

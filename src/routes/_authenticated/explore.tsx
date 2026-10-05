@@ -28,15 +28,16 @@ export type ProjectRow = {
 
 import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
 import { z } from "zod";
+import { searchEnum, searchString } from "@/lib/search-params";
 import { PROJECT_CATEGORIES } from "@/data/mocks/catalog";
 import { jsonLd, seoMeta } from "@/lib/seo";
 import type { ProfileBackground } from "@/lib/background-themes";
 
 export const Route = createFileRoute("/_authenticated/explore")({
   validateSearch: z.object({
-    tab: z.enum(["projects", "creators", "opportunities"]).optional(),
+    tab: searchEnum(["projects", "creators", "opportunities"]),
     // Optional deep link to a project's quick-look preview: /explore?project=<id>
-    project: z.string().optional(),
+    project: searchString(),
   }).parse,
   head: () => {
     const base = seoMeta({
