@@ -2,7 +2,7 @@
 
 > Date: 2026-08-31 · Status: DRAFT — design-review pass, no code changes yet.
 > Owner: `_authenticated/profile.tsx`, `_authenticated/studio.tsx`, Studio block system.
-> Follows [`../TETHYR_UX_RULES.md`](../TETHYR_UX_RULES.md) and the binding guardrails in [`../../AGENTS.md`](../../AGENTS.md).
+> Follows [`../TETHYR_UX_RULES.md`](../../TETHYR_UX_RULES.md) and the binding guardrails in [`../../AGENTS.md`](../../../AGENTS.md).
 
 ## Purpose
 

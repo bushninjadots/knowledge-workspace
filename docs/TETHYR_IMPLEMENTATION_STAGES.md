@@ -1,6 +1,6 @@
 # Tethyr Implementation Stages
 
-> Created August 9, 2026 from `docs/TETHYR_FULL_FORENSIC_AUDIT_2026-08-09.md`.
+> Created August 9, 2026 from `docs/archive/TETHYR_FULL_FORENSIC_AUDIT_2026-08-09.md`.
 > This is an implementation plan, not a permission to expand the product scope.
 > **Major redesign phases are tracked in [`TETHYR_REDESIGN_SPEC.md`](./TETHYR_REDESIGN_SPEC.md#19-phased-implementation).**
 
@@ -521,7 +521,7 @@ User opens editor → clicks "Theme" → sees 13 theme preview cards
 
 ### 2026-08-20 — UX full-review fixes (dead ends, consolidation, settings hub)
 
-Implemented the findings from `docs/UX_FULL_REVIEW_2026-08-20.md` (full status table in that doc). Highlights:
+Implemented the findings from `docs/archive/UX_FULL_REVIEW_2026-08-20.md` (full status table in that doc). Highlights:
 
 - **Routing dead ends**: dashboard activity card routes connection requests to `/connections` (browser-verified with a real incoming request); public-page "back" fallbacks go to `/` instead of the authenticated `/explore`; removed the dead `!isOwnProfile` action buttons from `ProfileLayout`; dashboard "Your projects → View all" points at `/profile`.
 - **Handle-less profile links**: new shared `ProfileLink` component guards all 7 sites that previously linked to `/u/` (a 404) when a handle was missing.

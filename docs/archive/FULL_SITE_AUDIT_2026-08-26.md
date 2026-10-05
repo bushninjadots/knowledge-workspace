@@ -22,7 +22,7 @@
 
 - **Where:** `src/components/tethyr/blocks/project/about-block.tsx` (`mdToHtml`) and `src/components/tethyr/blocks/content/markdown-block.tsx` (`markdownToHtml`). Both write unsanitized HTML via `dangerouslySetInnerHTML`.
 - **What:** The renderers HTML-escape `& < >` but **not `"`**, and never validate URL schemes. Verified outputs:
-  - `[x](javascript:location.href='//evil.example')` → `<a href="javascript:location.href='//evil.example'">` — **executes arbitrary JS on click**.
+  - `[x](javascript:location.href='/evil.example')` → `<a href="javascript:location.href='//evil.example'">` — **executes arbitrary JS on click**.
   - `[x](a" onmouseover="location.href=location.href//)` → `<a href="a" onmouseover="location.href=location.href//" ...>` — **attribute breakout, executes JS on hover**.
   - The image rule in `markdown-block.tsx` has the same `src`/`alt` breakout.
 - **Impact:** `about-block` renders `projects.readme || vision || description` on every **public project page** (default layout: Hero → About → Status+Team → Activity, and backfill created pages for every existing project). `markdown-block` content is owner-authored but rendered publicly on any page it is placed on. Any project creator can execute script in every visitor's browser (session hijack, phishing, defacement).

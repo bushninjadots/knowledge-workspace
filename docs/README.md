@@ -43,20 +43,22 @@ If a change should alter product direction or a binding rule, update the appropr
 - [`TETHYR_GRAPH_SPEC.md`](./TETHYR_GRAPH_SPEC.md) — working specification for Tethyr Graph relationships, views, lineage, contribution trails, privacy, and staged implementation
 - [`TETHYR_REDESIGN_SPEC.md`](./TETHYR_REDESIGN_SPEC.md) — major redesign specification
 - [`TETHYR_REDESIGN_ARCHITECTURE.md`](./TETHYR_REDESIGN_ARCHITECTURE.md) — redesign architecture proposal
-- [`TETHYR_REDESIGN_AUDIT_2026-08-23.md`](./TETHYR_REDESIGN_AUDIT_2026-08-23.md) — **Phase 1 audit report** (complete)
-- [`TETHYR_REDESIGN_FINAL_AUDIT_2026-08-23.md`](./TETHYR_REDESIGN_FINAL_AUDIT_2026-08-23.md) — **Phase 11 final audit** — all 11 phases complete, all gates passing
+- [`TETHYR_REDESIGN_AUDIT_2026-08-23.md`](./archive/TETHYR_REDESIGN_AUDIT_2026-08-23.md) — **Phase 1 audit report** (complete)
+- [`TETHYR_REDESIGN_FINAL_AUDIT_2026-08-23.md`](./archive/TETHYR_REDESIGN_FINAL_AUDIT_2026-08-23.md) — **Phase 11 final audit** — all 11 phases complete, all gates passing
 - [`TETHYR_IMPLEMENTATION_STAGES.md`](./TETHYR_IMPLEMENTATION_STAGES.md) — staged execution priorities (includes redesign Stages 8–18)
-- [`TETHYR_FULL_FORENSIC_AUDIT_2026-08-09.md`](./TETHYR_FULL_FORENSIC_AUDIT_2026-08-09.md) — dated forensic audit and findings
-- [`UI_UX_FULL_AUDIT.md`](./UI_UX_FULL_AUDIT.md) — detailed dated UI/UX audit
-- [`UX_AUDIT.md`](./UX_AUDIT.md) — route-level UX findings and priorities
-- [`PROJECT_AUDIT.md`](./PROJECT_AUDIT.md) — broader project audit
-- [`UX_FULL_REVIEW_2026-08-20.md`](./UX_FULL_REVIEW_2026-08-20.md) — full user-flow review (2026-08-20); findings with same-day resolution status
-- [`UI_UX_AUDIT_AND_FIXES.md`](./UI_UX_AUDIT_AND_FIXES.md) — remediation history
-- [`FULL_SITE_AUDIT_2026-08-26.md`](./FULL_SITE_AUDIT_2026-08-26.md) — full-stack site audit (2026-08-26): P0 production crash (Sentry double-init), stored XSS in block renderers, CSP gaps, bundle budget, lint debt, DB drift, and healthy-surface verification
+- [`TETHYR_FULL_FORENSIC_AUDIT_2026-08-09.md`](./archive/TETHYR_FULL_FORENSIC_AUDIT_2026-08-09.md) — dated forensic audit and findings
+- [`UI_UX_FULL_AUDIT.md`](./archive/UI_UX_FULL_AUDIT.md) — detailed dated UI/UX audit
+- [`UX_AUDIT.md`](./archive/UX_AUDIT.md) — route-level UX findings and priorities
+- [`PROJECT_AUDIT.md`](./archive/PROJECT_AUDIT.md) — broader project audit
+- [`UX_FULL_REVIEW_2026-08-20.md`](./archive/UX_FULL_REVIEW_2026-08-20.md) — full user-flow review (2026-08-20); findings with same-day resolution status
+- [`UI_UX_AUDIT_AND_FIXES.md`](./archive/UI_UX_AUDIT_AND_FIXES.md) — remediation history
+- [`FULL_SITE_AUDIT_2026-08-26.md`](./archive/FULL_SITE_AUDIT_2026-08-26.md) — full-stack site audit (2026-08-26): P0 production crash (Sentry double-init), stored XSS in block renderers, CSP gaps, bundle budget, lint debt, DB drift, and healthy-surface verification
 - [`superpowers/specs/`](./superpowers/specs/) — feature design specifications
 - [`superpowers/plans/`](./superpowers/plans/) — feature execution plans
 - [`MEDIA_STORAGE_MAINTENANCE.md`](./MEDIA_STORAGE_MAINTENANCE.md) — storage upload conventions, orphaned-media prune tool + registry contract, and bucket-growth monitoring
 
 Dated documents should be read for relevant context, but their recommendations may be complete, stale, or superseded. Check dates and compare them against the current source before acting.
+
+Superseded dated audits live in [`archive/`](./archive/) (moved 2026-10-05): the August full-site, forensic, redesign and UX audits, the numbered `audit-1..5` series, and the 2026-09-07 visual audit that the 2026-09-09 one replaces. They are history, not guidance — read them for context, never as current findings.
 
 Serial full-site/forensic audits that were superseded by a retained later audit of the same scope were pruned on 2026-09-07 (`TETHYR_FULL_SITE_AUDIT_2026-08-16/19`, `TETHYR_FORENSIC_AUDIT_2026-08-22`, and the obsolete `PAGES_TO_CREATE.md` planning artifact); the newest audit of each scope — `FULL_SITE_AUDIT_2026-08-26.md` and the `TETHYR_REDESIGN_*` audits — remains authoritative.

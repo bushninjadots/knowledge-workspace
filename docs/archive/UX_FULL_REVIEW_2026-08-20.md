@@ -13,7 +13,7 @@ viewport), plus `npm run typecheck`, `npm test` (203 tests), ESLint, and the
 production build. The notification-preferences migration
 (`supabase/migrations/20260820170000_notification_preferences.sql`) was applied
 **to the remote Supabase project** and the local dev database. See the execution
-log in [`TETHYR_IMPLEMENTATION_STAGES.md`](./TETHYR_IMPLEMENTATION_STAGES.md)
+log in [`TETHYR_IMPLEMENTATION_STAGES.md`](../TETHYR_IMPLEMENTATION_STAGES.md)
 for the full change list.
 
 | Finding                                 | Status                                                                                                                                                                                                                              |

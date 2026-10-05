@@ -1,8 +1,8 @@
 # Tethyr Visual & UI Audit (2026-09-07)
 
 > Dated audit of visual, layout, and UI consistency only — no functional/security
-> findings. Read alongside [`TETHYR_UX_RULES.md`](./TETHYR_UX_RULES.md) (the binding
-> workflow) and [`AGENTS.md`](../AGENTS.md) (the binding constitution). This is an
+> findings. Read alongside [`TETHYR_UX_RULES.md`](../TETHYR_UX_RULES.md) (the binding
+> workflow) and [`AGENTS.md`](../../AGENTS.md) (the binding constitution). This is an
 > audit findings record: it identifies what **needs to be addressed**, evaluated
 > against the current source, not a substitute for the canonical references.
 

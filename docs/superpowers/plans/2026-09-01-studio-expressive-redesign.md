@@ -1,6 +1,6 @@
 # Plan: Studio expressive redesign (Create → Customize → Personalize → Arrange → Preview → Publish)
 
-Solves: [design spec `docs/superpowers/specs/2026-09-01-studio-expressive-redesign-design.md`](README.md) (committed `60dbf2f`).
+Solves: [design spec `docs/superpowers/specs/2026-09-01-studio-expressive-redesign-design.md`](../specs/2026-09-01-studio-expressive-redesign-design.md) (committed `60dbf2f`).
 
 ## Status Key
 
