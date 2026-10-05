@@ -135,3 +135,54 @@ export function nextSteps(input: CompletenessInput, limit = 5): Section[] {
     .filter((s) => !s.done)
     .slice(0, limit);
 }
+
+// ── Essentials ───────────────────────────────────────────────────────────────
+// The three steps that switch Tethyr on for a new member: an identity people
+// can read, a project to point at, and a skill that drives matching. Every
+// onboarding surface (dashboard, Studio, community) reads these so a new
+// member sees one list with one count, not a different number per page.
+// The 18 detail sections above are optional polish once these are done.
+
+type EssentialsInput = {
+  profile: { display_name: string | null; creator_title: string | null; bio: string | null } | null;
+  projectsCount: number;
+  teachCount: number;
+};
+
+type EssentialStep = {
+  id: "studio" | "project" | "skill";
+  label: string;
+  caption: string;
+  done: boolean;
+};
+
+export function essentialSteps({
+  profile,
+  projectsCount,
+  teachCount,
+}: EssentialsInput): EssentialStep[] {
+  return [
+    {
+      id: "studio",
+      label: "Set up your Studio",
+      caption: "Your name and what you make, so people can find you.",
+      done: has(profile?.display_name) && (has(profile?.creator_title) || has(profile?.bio)),
+    },
+    {
+      id: "project",
+      label: "Start your first project",
+      caption: "Give your work a home — something people can read and join.",
+      done: projectsCount > 0,
+    },
+    {
+      id: "skill",
+      label: "Share a skill you teach",
+      caption: "Skills are the signal that switches on matching projects and people.",
+      done: teachCount > 0,
+    },
+  ];
+}
+
+export function essentialsComplete(input: EssentialsInput): boolean {
+  return essentialSteps(input).every((step) => step.done);
+}

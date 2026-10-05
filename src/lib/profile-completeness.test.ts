@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
   completenessPercent,
+  essentialSteps,
+  essentialsComplete,
   nextSteps,
   sections,
   setupCompletenessPercent,
@@ -186,5 +188,33 @@ describe("nextSteps", () => {
       { teachCount: 1, learnCount: 1, projectsCount: 1 },
     );
     expect(nextSteps(complete, 5)).toEqual([]);
+  });
+});
+
+describe("essentialSteps", () => {
+  const blank = { display_name: null, creator_title: null, bio: null };
+
+  it("counts the three first-session essentials", () => {
+    const steps = essentialSteps({ profile: blank, projectsCount: 0, teachCount: 0 });
+    expect(steps.map((step) => step.id)).toEqual(["studio", "project", "skill"]);
+    expect(steps.every((step) => !step.done)).toBe(true);
+  });
+
+  it("needs a name plus a title or bio for the Studio step, ignoring blank text", () => {
+    const named = { ...blank, display_name: "Ari", bio: "   " };
+    expect(essentialSteps({ profile: named, projectsCount: 0, teachCount: 0 })[0].done).toBe(false);
+    expect(
+      essentialSteps({
+        profile: { ...named, creator_title: "Designer" },
+        projectsCount: 0,
+        teachCount: 0,
+      })[0].done,
+    ).toBe(true);
+  });
+
+  it("is complete only when all three are done", () => {
+    const profile = { display_name: "Ari", creator_title: "Designer", bio: null };
+    expect(essentialsComplete({ profile, projectsCount: 1, teachCount: 0 })).toBe(false);
+    expect(essentialsComplete({ profile, projectsCount: 1, teachCount: 1 })).toBe(true);
   });
 });

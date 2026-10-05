@@ -3,6 +3,7 @@ import { ArrowRight, Check, Compass, FolderPlus, GraduationCap, UserRound, X } f
 import { Link } from "@tanstack/react-router";
 import { CreateProjectButton } from "./create-project-button";
 import type { CurrentUserData } from "@/hooks/use-current-user";
+import { essentialSteps } from "@/lib/profile-completeness";
 
 const DISMISSED_KEY_PREFIX = "tethyr-first-session-onboarding-dismissed";
 
@@ -28,13 +29,12 @@ export function FirstSessionOnboarding({ data }: { data: CurrentUserData }) {
     );
   }, [dismissedKey]);
 
-  const studioDone = !!(
-    data.profile?.display_name &&
-    (data.profile?.creator_title || data.profile?.bio)
-  );
-  const projectDone = data.projects.length > 0;
-  const skillDone = data.teachIds.length > 0;
-  const allDone = studioDone && projectDone && skillDone;
+  const essentials = essentialSteps({
+    profile: data.profile,
+    projectsCount: data.projects.length,
+    teachCount: data.teachIds.length,
+  });
+  const allDone = essentials.every((step) => step.done);
   if (dismissed || allDone) return null;
 
   function dismiss() {
@@ -42,35 +42,8 @@ export function FirstSessionOnboarding({ data }: { data: CurrentUserData }) {
     setDismissed(true);
   }
 
-  const steps: {
-    id: "studio" | "project" | "skill";
-    icon: React.ComponentType<{ className?: string }>;
-    label: string;
-    caption: string;
-    done: boolean;
-  }[] = [
-    {
-      id: "studio",
-      icon: UserRound,
-      label: "Set up your Studio",
-      caption: "Your name and what you make, so people can find you.",
-      done: studioDone,
-    },
-    {
-      id: "project",
-      icon: FolderPlus,
-      label: "Start your first project",
-      caption: "Give your work a home — something people can read and join.",
-      done: projectDone,
-    },
-    {
-      id: "skill",
-      icon: GraduationCap,
-      label: "Share a skill you teach",
-      caption: "Skills are the signal that switches on matching projects and people.",
-      done: skillDone,
-    },
-  ];
+  const ICONS = { studio: UserRound, project: FolderPlus, skill: GraduationCap } as const;
+  const steps = essentials.map((step) => ({ ...step, icon: ICONS[step.id] }));
 
   const activeStep = steps.find((step) => !step.done) ?? steps[0];
   const doneCount = steps.filter((step) => step.done).length;

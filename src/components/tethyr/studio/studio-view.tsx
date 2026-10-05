@@ -4,7 +4,7 @@
 // controls (banner, profile photo, caption, identity, appearance) available
 // without opening the full block editor. "Open editor" launches the builder.
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -34,7 +34,6 @@ import { useTheme as useAppTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { blockFrameStyle, normalizeStudioConfig } from "@/lib/studio-config";
 import { useCreatePage, usePublishPage } from "@/hooks/use-page-editor";
-import { setupCompletenessPercent, showcaseCompletenessPercent } from "@/lib/profile-completeness";
 import { shouldRenderSectionInView } from "@/lib/studio-visibility";
 import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
 import { SECTION_GRID, colStartClass, spanClass } from "@/components/tethyr/page/page-layout";
@@ -121,26 +120,6 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
       },
     );
   }, [page?.id, publishPage, userId]);
-
-  // The creator's own Studio answers "what should I work on next?" — compute the
-  // incomplete profile steps from data that's already loaded (no extra queries).
-  const completenessInput = useMemo(
-    () => ({
-      profile: me?.profile ?? null,
-      teachCount: (me?.teachIds ?? []).length,
-      learnCount: (me?.learnIds ?? []).length,
-      projectsCount: (me?.projects ?? []).length,
-    }),
-    [me?.profile, me?.teachIds, me?.learnIds, me?.projects],
-  );
-  const setupPercent = useMemo(
-    () => (me ? setupCompletenessPercent(completenessInput) : 0),
-    [me, completenessInput],
-  );
-  const showcasePercent = useMemo(
-    () => (me ? showcaseCompletenessPercent(completenessInput) : 0),
-    [me, completenessInput],
-  );
 
   // Auto-provision a Studio draft the first time the owner lands here, so the
   // view is never stuck on an empty state. Mirrors the editor's behaviour.
@@ -324,15 +303,10 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
                 starterChosen={
                   page?.config ? normalizeStudioConfig(page.config).starterId !== null : false
                 }
-                hasProjects={(me?.projects?.length ?? 0) > 0}
-                hasBio={!!me?.profile?.bio?.trim()}
                 hasBanner={!!me?.profile?.banner_url}
                 published={page?.status === "published"}
                 isPublishing={publishPage.isPending}
-                setup={setupPercent}
-                showcase={showcasePercent}
                 onChooseFeel={() => navigate({ to: "/studio" })}
-                onAddProject={() => setProjectDialogOpen(true)}
                 onCompleteProfile={onCompleteProfile}
                 onPublish={handlePublish}
               />
@@ -446,34 +420,6 @@ function StudioPublishStrip({
           {publishing ? "Publishing…" : "Publish now"}
         </Button>
       </div>
-    </div>
-  );
-}
-
-/** Compact "what's next" rail for the creator's own Studio. Reuses the profile
- *  completeness model; every row routes into the setup form, which is the same
- *  surface the top bar already opens. Hidden below 2xl so the canvas keeps its
- *  configured width on smaller screens. */
-function CompletenessBar({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="flex items-center gap-2">
-      <span className="w-16 shrink-0 text-2xs text-muted-foreground">{label}</span>
-      <div
-        className="h-1 flex-1 overflow-hidden rounded-full bg-border/60"
-        role="progressbar"
-        aria-valuenow={value}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label={`${label} completeness ${value}%`}
-      >
-        <div
-          className="h-full rounded-full bg-[var(--user-accent,var(--primary))]"
-          style={{ width: `${value}%` }}
-        />
-      </div>
-      <span className="w-8 shrink-0 text-right font-mono text-3xs text-muted-foreground">
-        {value}%
-      </span>
     </div>
   );
 }
@@ -710,36 +656,26 @@ function StudioViewBlock({
   );
 }
 
-/** First-session onboarding checklist. Derived entirely from data already loaded
- *  by the parent (no new queries). Shows a dismissable list of content wins;
- *  disappears once 3/5 are done — at that point the publish strip and next-steps
- *  rail carry the remaining journey. Dismissal persisted in localStorage. */
+/** Studio-specific first steps: a starting feel, a banner, and publishing.
+ *  Account essentials (bio, first project, a skill) are tracked once, by the
+ *  dashboard's first-session guide, so this list never shows a competing
+ *  count. Disappears when all three are done; dismissal persists locally. */
 function StudioOnboardingChecklist({
   ready,
   starterChosen,
-  hasProjects,
-  hasBio,
   hasBanner,
   published,
   isPublishing,
-  setup,
-  showcase,
   onChooseFeel,
-  onAddProject,
   onCompleteProfile,
   onPublish,
 }: {
   ready: boolean;
   starterChosen: boolean;
-  hasProjects: boolean;
-  hasBio: boolean;
   hasBanner: boolean;
   published: boolean;
   isPublishing: boolean;
-  setup: number;
-  showcase: number;
   onChooseFeel: () => void;
-  onAddProject: () => void;
   onCompleteProfile?: () => void;
   onPublish: () => void;
 }) {
@@ -764,18 +700,6 @@ function StudioOnboardingChecklist({
       action: onChooseFeel,
     },
     {
-      key: "project",
-      label: "Add your first project",
-      done: hasProjects,
-      action: onAddProject,
-    },
-    {
-      key: "bio",
-      label: "Write a short bio",
-      done: hasBio,
-      action: onCompleteProfile,
-    },
-    {
       key: "banner",
       label: "Upload a banner",
       done: hasBanner,
@@ -790,15 +714,18 @@ function StudioOnboardingChecklist({
   ];
 
   const doneCount = steps.filter((s) => s.done).length;
-  if (doneCount >= 3) return null;
+  if (doneCount === steps.length) return null;
 
   return (
-    <div className="mb-4 rounded-xl border border-border/60 bg-surface/60 p-4">
+    // Page chrome, not a Studio block: paints the theme background so the
+    // member's card fill (which repaints --surface on this canvas) can't
+    // turn it into a dark card with theme-coloured text.
+    <div className="mb-4 rounded-xl border border-border/60 bg-background/90 p-4">
       <header className="flex items-center justify-between gap-2">
-        <span className="t-label">Make it yours</span>
+        <span className="t-label">Make your Studio yours</span>
         <div className="flex items-center gap-2">
           <span className="text-2xs text-muted-foreground">
-            {doneCount}/{steps.length}
+            {doneCount} of {steps.length}
           </span>
           <button
             type="button"
@@ -813,12 +740,6 @@ function StudioOnboardingChecklist({
       <p className="mt-1 text-2xs text-muted-foreground-subtle">
         A few quick wins to make your Studio a place you'd be happy to share.
       </p>
-      {/* Absorbed from the 2xl-only steps rail, so completeness reads in the
-          same surface as the steps it measures. */}
-      <div className="mt-3 space-y-2">
-        <CompletenessBar label="Setup" value={setup} />
-        <CompletenessBar label="Showcase" value={showcase} />
-      </div>
       <ul className="mt-3 space-y-1">
         {steps.map((step) => (
           <li key={step.key}>

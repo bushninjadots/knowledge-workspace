@@ -6,7 +6,13 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { completenessPercent, nextSteps, sections, type Section } from "@/lib/profile-completeness";
+import {
+  completenessPercent,
+  essentialsComplete,
+  nextSteps,
+  sections,
+  type Section,
+} from "@/lib/profile-completeness";
 import { NextStepsList } from "@/components/tethyr/next-steps";
 import { CreateProjectButton } from "@/components/tethyr/create-project-button";
 import { FirstSessionOnboarding } from "@/components/tethyr/first-session-onboarding";
@@ -130,6 +136,9 @@ function DashboardContent({
     [data?.profile, data?.teachIds, data?.learnIds, data?.projects],
   );
   const activity = useMemo(() => data?.activity ?? [], [data?.activity]);
+  // While the three essentials are open, the first-session guide is the one
+  // place that tracks setup; the other setup prompts stay out of its way.
+  const onboarding = useMemo(() => !essentialsComplete(input), [input]);
   const pct = useMemo(() => (data ? completenessPercent(input) : 0), [data, input]);
   const remaining = useMemo(() => (data ? nextSteps(input, 5) : []), [data, input]);
   const totalSteps = useMemo(() => (data ? sections(input).length : 0), [data, input]);
@@ -202,47 +211,52 @@ function DashboardContent({
                 Your next move
               </h2>
               <div className="divide-y divide-border/50">
-                <TodayRow
-                  primary
-                  icon={activeProjects.length > 0 ? Folder : Plus}
-                  accent="var(--trust)"
-                  foreground="var(--trust-foreground)"
-                  title={activeProjects.length > 0 ? "Continue your project" : "Start a project"}
-                  href={activeProjects.length > 0 ? `/projects/${activeProjects[0].id}` : undefined}
-                >
-                  {activeProjects.length > 0 ? (
-                    <div className="flex flex-wrap items-center gap-3">
-                      <p className="truncate text-sm font-medium" title={activeProjects[0].title}>
-                        {activeProjects[0].title}
-                      </p>
-                      <Progress
-                        value={activeProjects[0].progress_percent ?? 0}
-                        className="h-1 w-20"
-                        aria-label={`Progress: ${activeProjects[0].progress_percent ?? 0}%`}
-                      />
-                      <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
-                        {activeProjects[0].progress_percent ?? 0}%
-                      </span>
-                      {activeProjects.length > 1 && (
-                        <span className="text-[11px] text-muted-foreground">
-                          +{activeProjects.length - 1} more
+                {/* A new member's "start a project" step lives in the guide above. */}
+                {(!onboarding || activeProjects.length > 0) && (
+                  <TodayRow
+                    primary
+                    icon={activeProjects.length > 0 ? Folder : Plus}
+                    accent="var(--trust)"
+                    foreground="var(--trust-foreground)"
+                    title={activeProjects.length > 0 ? "Continue your project" : "Start a project"}
+                    href={
+                      activeProjects.length > 0 ? `/projects/${activeProjects[0].id}` : undefined
+                    }
+                  >
+                    {activeProjects.length > 0 ? (
+                      <div className="flex flex-wrap items-center gap-3">
+                        <p className="truncate text-sm font-medium" title={activeProjects[0].title}>
+                          {activeProjects[0].title}
+                        </p>
+                        <Progress
+                          value={activeProjects[0].progress_percent ?? 0}
+                          className="h-1 w-20"
+                          aria-label={`Progress: ${activeProjects[0].progress_percent ?? 0}%`}
+                        />
+                        <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
+                          {activeProjects[0].progress_percent ?? 0}%
                         </span>
-                      )}
-                    </div>
-                  ) : (
-                    <>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        Create your first project to start building in public — or import one from
-                        GitHub.
-                      </p>
-                      <CreateProjectButton
-                        label="Create project"
-                        variant="outline"
-                        className="mt-2"
-                      />
-                    </>
-                  )}
-                </TodayRow>
+                        {activeProjects.length > 1 && (
+                          <span className="text-[11px] text-muted-foreground">
+                            +{activeProjects.length - 1} more
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Create your first project to start building in public — or import one from
+                          GitHub.
+                        </p>
+                        <CreateProjectButton
+                          label="Create project"
+                          variant="outline"
+                          className="mt-2"
+                        />
+                      </>
+                    )}
+                  </TodayRow>
+                )}
 
                 <TodayRow
                   icon={UserPlus}
@@ -311,6 +325,7 @@ function DashboardContent({
     [
       activity,
       activeProjects,
+      onboarding,
       pendingSessionCount,
       pendingConnectionCount,
       pendingInviteCount,
@@ -327,14 +342,14 @@ function DashboardContent({
         <section aria-labelledby="dashboard-next-move-heading" className="space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="section-label">Welcome back</p>
+              <p className="section-label">{onboarding ? "Welcome" : "Welcome back"}</p>
               <h1
                 id="dashboard-next-move-heading"
                 className="mt-1 font-display text-xl font-semibold tracking-tight sm:text-2xl"
               >
                 Hey {firstName}
               </h1>
-              {reputationScore != null && (
+              {reputationScore != null && reputationScore > 0 && (
                 <p className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                   <Award className="h-3.5 w-3.5 text-[var(--user-accent-text,var(--trust))]" />
                   {reputationScore} rep
@@ -354,6 +369,7 @@ function DashboardContent({
             remaining={remaining}
             doneSteps={doneSteps}
             totalSteps={totalSteps}
+            showSetupPrompt={!onboarding}
           />
         </section>
 
@@ -403,16 +419,19 @@ function FocusBand({
   remaining,
   doneSteps,
   totalSteps,
+  showSetupPrompt,
 }: {
   projectId: string | null;
   pct: number;
   remaining: Section[];
   doneSteps: number;
   totalSteps: number;
+  /** False while the first-session essentials are still open. */
+  showSetupPrompt: boolean;
 }) {
   const showWeekly = !!projectId;
-  const showComplete = pct >= 100;
-  const showSetup = !showComplete && remaining.length > 0;
+  const showComplete = showSetupPrompt && pct >= 100;
+  const showSetup = showSetupPrompt && !showComplete && remaining.length > 0;
   if (!showWeekly && !showComplete && !showSetup) return null;
 
   const twoCol = showWeekly && (showComplete || showSetup);
@@ -472,10 +491,10 @@ function FocusBand({
             <div className="mb-3 flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-[var(--user-accent-text,var(--trust))]" />
               <h2 id="dashboard-focus-heading" className="text-sm font-semibold">
-                Finish setting up your profile
+                Round out your profile
               </h2>
               <span className="text-[11px] text-muted-foreground">
-                — {doneSteps}/{totalSteps} done
+                {doneSteps} of {totalSteps} optional details
               </span>
             </div>
             <NextStepsList items={remaining} />

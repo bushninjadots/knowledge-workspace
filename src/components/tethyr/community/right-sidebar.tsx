@@ -15,7 +15,7 @@ import { useChallenges } from "@/hooks/use-challenges";
 import { useTrendingSkills, useCurrentUser } from "@/hooks/use-current-user";
 import { useInfinitePosts, flattenPosts } from "@/hooks/use-community";
 import type { DiscoverableSkill } from "@/hooks/use-current-user";
-import { completenessPercent } from "@/lib/profile-completeness";
+import { essentialSteps } from "@/lib/profile-completeness";
 import { Button } from "@/components/ui/button";
 import { safeHref } from "@/lib/validators";
 
@@ -103,15 +103,16 @@ export const CommunityRightSidebar = memo(function CommunityRightSidebar({
   const collabCount = posts.filter((p) => p.type === "collaboration_request").length;
   const digestEmpty = challenges.length === 0 && helpCount === 0 && collabCount === 0;
 
-  const completeness = me
-    ? completenessPercent({
+  // The same three essentials the dashboard guide tracks — one count everywhere.
+  const essentials = me
+    ? essentialSteps({
         profile: me.profile,
-        teachCount: me.teachIds.length,
-        learnCount: me.learnIds.length,
         projectsCount: me.projects.length,
+        teachCount: me.teachIds.length,
       })
-    : null;
-  const needsCompletion = completeness != null && completeness < 100;
+    : [];
+  const essentialsDone = essentials.filter((step) => step.done).length;
+  const nextEssential = essentials.find((step) => !step.done) ?? null;
   const resources = (me?.projects ?? [])
     .flatMap((project) =>
       (project.resources ?? [])
@@ -246,40 +247,26 @@ export const CommunityRightSidebar = memo(function CommunityRightSidebar({
         </Link>
       </RailCard>
 
-      {/* One clear CTA — complete the profile / set learning goals */}
-      {needsCompletion != null && (
+      {/* One clear CTA while the first-session essentials are open. */}
+      {nextEssential && (
         <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5">
-          <div className="mb-2 flex items-center gap-1.5 px-1">
-            <Target className="h-3.5 w-3.5 text-primary" />
-            <p className="section-label">Your Tethyr</p>
+          <div className="mb-2 flex items-center justify-between gap-2 px-1">
+            <span className="flex items-center gap-1.5">
+              <Target className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
+              <span className="section-label">Get set up</span>
+            </span>
+            <span className="text-xs tabular-nums text-muted-foreground">
+              {essentialsDone} of {essentials.length}
+            </span>
           </div>
-          {needsCompletion ? (
-            <>
-              <div className="mb-2 px-1">
-                <div className="mb-1 flex items-center justify-between text-[11px] text-muted-foreground">
-                  <span>Profile completeness</span>
-                  <span className="font-semibold text-foreground">{completeness}%</span>
-                </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-surface-elevated/60">
-                  <div
-                    className="h-full rounded-full bg-primary transition-[width] duration-150"
-                    style={{ width: `${completeness}%` }}
-                  />
-                </div>
-              </div>
-              <p className="mb-3 px-1 text-[11px] leading-relaxed text-muted-foreground">
-                Finishing your profile makes you findable for collabs and mentorships.
-              </p>
-            </>
-          ) : (
-            <p className="mb-3 px-1 text-xs leading-relaxed text-muted-foreground">
-              Set your growth goals so people with the right skills can find you.
-            </p>
-          )}
-          <Button size="sm" asChild className="w-full rounded-full">
-            <Link to="/profile">
-              {needsCompletion ? "Complete your profile" : "Set learning goals"}
-              <ArrowRight className="ml-1 h-3.5 w-3.5" />
+          <p className="px-1 text-sm font-medium text-foreground">{nextEssential.label}</p>
+          <p className="mb-3 mt-0.5 px-1 text-xs leading-relaxed text-muted-foreground">
+            {nextEssential.caption}
+          </p>
+          <Button size="sm" asChild className="w-full">
+            <Link to="/dashboard">
+              Continue setup
+              <ArrowRight className="ml-1 h-3.5 w-3.5" aria-hidden="true" />
             </Link>
           </Button>
         </div>
