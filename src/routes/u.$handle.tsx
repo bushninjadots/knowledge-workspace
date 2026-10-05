@@ -7,7 +7,6 @@ import { createFileRoute, isNotFound, lazyRouteComponent } from "@tanstack/react
 
 import { z } from "zod";
 import { seoMeta } from "@/lib/seo";
-import "@/components/tethyr/blocks/register-all";
 import { fetchPublicProfile } from "./-u.$handle-data";
 
 export const Route = createFileRoute("/u/$handle")({

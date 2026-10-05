@@ -1,5 +1,4 @@
 import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
-import "@/components/tethyr/blocks/register-all";
 
 export const Route = createFileRoute("/_authenticated/studio")({
   // Code-split: the page component loads after the eager route surface

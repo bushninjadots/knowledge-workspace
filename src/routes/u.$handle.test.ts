@@ -75,8 +75,8 @@ beforeEach(() => {
 describe("/u/$handle loader degradation", () => {
   it("resolves to the profile on the happy path", async () => {
     // Implementation-based, not once-based: the route module's import chain
-    // (blocks register-all) is alive in this test file, and any import-time
-    // query would silently eat a once-mock and fail the profile read.
+    // is alive in this test file, and any import-time query would silently
+    // eat a once-mock and fail the profile read.
     from.mockImplementation((table: string) => {
       if (table !== "profiles") throw new Error(`unexpected table: ${table}`);
       return chain({

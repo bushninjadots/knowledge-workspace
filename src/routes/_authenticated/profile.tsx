@@ -1,6 +1,5 @@
 import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
 import { RouteErrorBoundary } from "@/components/tethyr/route-error-boundary";
-import "@/components/tethyr/blocks/register-all";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({

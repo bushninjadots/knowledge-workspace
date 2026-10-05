@@ -53,6 +53,7 @@ import type {
 import type { StudioConfig } from "@/lib/studio-config";
 import { DEFAULT_STUDIO_CONFIG } from "@/lib/studio-config";
 import { createDefaultProfileLayout } from "@/lib/default-layouts";
+import "@/components/tethyr/blocks/register-all";
 
 interface CreationStudioProps {
   userId: string;

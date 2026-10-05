@@ -39,6 +39,7 @@ import type {
 import { getBlock } from "@/lib/block-registry";
 import { blockFrameStyle } from "@/lib/studio-config";
 import { isDefinitelyEmptyBlock, shouldRenderSectionInView } from "@/lib/studio-visibility";
+import "@/components/tethyr/blocks/register-all";
 
 interface PageLayoutRendererProps {
   layout: PageLayoutType;
