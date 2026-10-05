@@ -1,8 +1,16 @@
+import { useEffect } from "react";
 import { Search } from "lucide-react";
 import { registerBlock } from "@/lib/block-registry";
 import type { BlockProps } from "@/lib/page-blocks";
 
 const DEFAULT_ITEMS = ["Collaborators", "Feedback", "Community"];
+const DEFAULT_NOTE = "Open to thoughtful collaborations and useful conversations.";
+
+/** True while the block still holds the starter text it was added with — the
+ *  member hasn't said this, so visitors shouldn't see it as their words. */
+function isUntouched(items: string[], note: string) {
+  return note === DEFAULT_NOTE && items.join("|") === DEFAULT_ITEMS.join("|");
+}
 
 function ProfileLookingForBlock({ config, onChange, context }: BlockProps) {
   const items = Array.isArray(config.items)
@@ -10,10 +18,14 @@ function ProfileLookingForBlock({ config, onChange, context }: BlockProps) {
         (item): item is string => typeof item === "string" && item.trim().length > 0,
       )
     : DEFAULT_ITEMS;
-  const note =
-    typeof config.note === "string"
-      ? config.note
-      : "Open to thoughtful collaborations and useful conversations.";
+  const note = typeof config.note === "string" ? config.note : DEFAULT_NOTE;
+  const hidden = !context.isEditing && isUntouched(items, note);
+  const { blockId, onBlockEmptyChange } = context;
+
+  useEffect(() => {
+    if (context.isEditing || !blockId) return;
+    onBlockEmptyChange?.(blockId, hidden);
+  }, [blockId, context.isEditing, hidden, onBlockEmptyChange]);
 
   if (context.isEditing) {
     return (
@@ -43,6 +55,8 @@ function ProfileLookingForBlock({ config, onChange, context }: BlockProps) {
       </div>
     );
   }
+
+  if (hidden) return null;
 
   return (
     <section className="flex min-w-0 flex-col gap-3" aria-label="Looking for">
@@ -74,7 +88,7 @@ registerBlock({
   contentSource: "config",
   defaults: {
     items: DEFAULT_ITEMS,
-    note: "Open to thoughtful collaborations and useful conversations.",
+    note: DEFAULT_NOTE,
   },
   fields: [
     {

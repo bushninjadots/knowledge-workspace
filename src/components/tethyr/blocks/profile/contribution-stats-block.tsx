@@ -1,52 +1,65 @@
+import { useEffect } from "react";
 import { BarChart3 } from "lucide-react";
 import { registerBlock } from "@/lib/block-registry";
+import { BlockEmptyState } from "@/components/tethyr/blocks/block-empty-state";
+import { useProfileWorkSummary } from "@/hooks/use-profile-work-summary";
 import type { BlockProps } from "@/lib/page-blocks";
 
-const DEFAULT_STATS = [
-  { label: "Projects", value: "8" },
-  { label: "Contributions", value: "42" },
-  { label: "Collaborators", value: "12" },
-];
+// Real counts only: a profile with no projects, contributions, or
+// collaborators renders nothing publicly rather than sample numbers.
+function ProfileContributionStatsBlock({ config, context }: BlockProps) {
+  const { blockId, isEditing, onBlockEmptyChange } = context;
+  const profileId = context.ownerType === "profile" ? context.ownerId : null;
+  const { data, isLoading } = useProfileWorkSummary(profileId);
 
-function ProfileContributionStatsBlock({ config }: BlockProps) {
-  const configuredStats =
-    Array.isArray(config.stats) && config.stats.length > 0 ? config.stats : DEFAULT_STATS;
-  const visibility = [
-    config.showProjects !== false,
-    config.showContributions !== false,
-    config.showCollaborators !== false,
-  ];
-  const stats = configuredStats.filter((_, index) => visibility[index]).slice(0, 3);
+  const stats = [
+    { label: "Projects", value: data?.projects ?? 0, shown: config.showProjects !== false },
+    {
+      label: "Contributions",
+      value: data?.contributions ?? 0,
+      shown: config.showContributions !== false,
+    },
+    {
+      label: "Collaborators",
+      value: data?.collaborators.length ?? 0,
+      shown: config.showCollaborators !== false,
+    },
+  ].filter((stat) => stat.shown);
+  const isEmpty = stats.every((stat) => stat.value === 0);
+
+  useEffect(() => {
+    if (isLoading || isEditing || !blockId) return;
+    onBlockEmptyChange?.(blockId, isEmpty);
+  }, [blockId, isEmpty, isEditing, isLoading, onBlockEmptyChange]);
+
+  if (isLoading) return null;
+  if (isEmpty) {
+    return isEditing ? (
+      <BlockEmptyState
+        label="Contribution stats"
+        detail="Your project, contribution, and collaborator counts appear here once you start building."
+      />
+    ) : null;
+  }
 
   return (
     <section className="flex min-w-0 flex-col gap-3" aria-label="Contribution stats">
       <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-        <BarChart3 className="size-4 text-primary" />
+        <BarChart3 className="size-4 text-primary" aria-hidden="true" />
         Contribution stats
       </div>
-      <div className="grid grid-cols-3 gap-3">
-        {stats.slice(0, 3).map((stat, index) => {
-          const item =
-            typeof stat === "object" && stat !== null
-              ? (stat as { label?: unknown; value?: unknown })
-              : {};
-          return (
-            <div
-              key={`${String(item.label ?? "stat")}-${index}`}
-              className="border-l border-border pl-3"
-            >
-              <div className="text-xl font-semibold tracking-tight text-foreground">
-                {String(item.value ?? "—")}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {String(item.label ?? "Activity")}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      <dl className="grid grid-cols-3 gap-3">
+        {stats.map((stat) => (
+          <div key={stat.label} className="flex flex-col-reverse border-l border-border pl-3">
+            <dt className="text-xs text-muted-foreground">{stat.label}</dt>
+            <dd className="text-xl font-semibold tracking-tight text-foreground tabular-nums">
+              {stat.value.toLocaleString()}
+            </dd>
+          </div>
+        ))}
+      </dl>
       <p className="text-xs text-muted-foreground">
-        Evidence-based activity from work shared on Tethyr.
+        Counted from projects and contributions on Tethyr.
       </p>
     </section>
   );
