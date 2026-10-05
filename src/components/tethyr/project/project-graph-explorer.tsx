@@ -366,6 +366,7 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
                 rootId={projectId}
                 maxDepth={depth}
                 maxNodes={theme.nodeLimit * 4}
+                onSelectNode={setSelectedNodeId}
               />
             </div>
           ) : (
