@@ -15,7 +15,7 @@ import type { GraphEdge, GraphNode, TethyrGraph } from "./graph-model";
  *    dangling relationships are invented (spec §59).
  */
 
-export interface GraphLayoutNode {
+interface GraphLayoutNode {
   node: GraphNode;
   /** 0 = root, 1 = direct connections, 2 = extended graph. */
   ring: number;
@@ -25,7 +25,7 @@ export interface GraphLayoutNode {
   angle: number;
 }
 
-export interface GraphLayout {
+interface GraphLayout {
   nodes: GraphLayoutNode[];
   edges: GraphEdge[];
   /** Distance from the centre to the edge of the layout, including padding. */

@@ -172,9 +172,9 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
           {contributionRoleVerb(role)}
         </span>
       </div>
-  {showDescription && project.description && (
-  <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{project.description}</p>
-  )}
+      {showDescription && project.description && (
+        <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{project.description}</p>
+      )}
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <OpenWorkBadge openWork={openWork} projectId={project.id} />
         {showStatus && (
@@ -314,9 +314,9 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
                 {featured.project.title}
               </span>
             </div>
-  {showDescription && featured.project.description && (
-  <p className="mt-1 text-xs text-muted-foreground">{featured.project.description}</p>
-  )}
+            {showDescription && featured.project.description && (
+              <p className="mt-1 text-xs text-muted-foreground">{featured.project.description}</p>
+            )}
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <OpenWorkBadge openWork={openWork} projectId={featured.project.id} />
               {showStatus && (

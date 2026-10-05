@@ -190,7 +190,12 @@ export function getConnectedNodes(
 
     for (const edge of graph.edges) {
       if (options.edgeType && edge.type !== options.edgeType) continue;
-      if (options.edgeTypes && options.edgeTypes.length > 0 && !options.edgeTypes.includes(edge.type)) continue;
+      if (
+        options.edgeTypes &&
+        options.edgeTypes.length > 0 &&
+        !options.edgeTypes.includes(edge.type)
+      )
+        continue;
       const nextId = edge.from === current.id ? edge.to : edge.to === current.id ? edge.from : null;
       if (!nextId || visited.has(nextId)) continue;
 

@@ -171,11 +171,18 @@ export function GraphNetworkView({
                 </span>
               </button>
               {focusId === node.id ? (
-                <div role="tooltip" className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-44 -translate-x-1/2 border border-border bg-popover p-2 text-left text-xs shadow-sm">
+                <div
+                  role="tooltip"
+                  className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-44 -translate-x-1/2 border border-border bg-popover p-2 text-left text-xs shadow-sm"
+                >
                   <p className="font-medium text-popover-foreground">{node.label}</p>
                   <p className="text-muted-foreground">{GRAPH_NODE_TYPE_LABELS[node.type]}</p>
-                  {node.description ? <p className="mt-1 line-clamp-2 text-muted-foreground">{node.description}</p> : null}
-                  {relationshipText ? <p className="mt-1 text-muted-foreground">{relationshipText}</p> : null}
+                  {node.description ? (
+                    <p className="mt-1 line-clamp-2 text-muted-foreground">{node.description}</p>
+                  ) : null}
+                  {relationshipText ? (
+                    <p className="mt-1 text-muted-foreground">{relationshipText}</p>
+                  ) : null}
                 </div>
               ) : null}
             </div>

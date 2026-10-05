@@ -20,7 +20,6 @@ import { useCurrentUser, useTrendingSkills } from "@/hooks/use-current-user";
 import { useMyProjects } from "@/hooks/use-projects";
 import { useWatchedProjects } from "@/hooks/use-project-loop";
 import { useProjectOpenWork } from "@/hooks/use-profile-work";
-import { supabase } from "@/integrations/supabase/client";
 import { isColumnSchemaError } from "@/lib/supabase-errors";
 
 /** Secondary row actions share one weight so the demoted rows read as one list. */

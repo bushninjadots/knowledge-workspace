@@ -17,7 +17,6 @@ import { supabasePending } from "@/lib/supabase-pending-schema";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { friendlyError } from "@/lib/error-message";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";

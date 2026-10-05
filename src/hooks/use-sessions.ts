@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabasePending } from "@/lib/supabase-pending-schema";
-import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "./use-current-user";
 
 /* ───────── Types ───────── */

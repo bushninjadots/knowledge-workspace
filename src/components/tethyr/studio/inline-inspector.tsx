@@ -124,9 +124,13 @@ export function InlineInspector({
     >
       <div className="mb-3 flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Block settings</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            Block settings
+          </p>
           <h3 className="mt-1 text-sm font-semibold text-foreground">{definition.label}</h3>
-          <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">{definition.description}</p>
+          <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+            {definition.description}
+          </p>
         </div>
         <Button
           variant="ghost"
@@ -140,7 +144,8 @@ export function InlineInspector({
       </div>
 
       <div className="mb-3 rounded-md bg-surface/60 px-2.5 py-2 text-[10px] text-muted-foreground">
-        <span className="font-medium text-foreground">Changes apply live.</span> Text and colors save after you pause; layout and toggles save immediately.
+        <span className="font-medium text-foreground">Changes apply live.</span> Text and colors
+        save after you pause; layout and toggles save immediately.
       </div>
 
       {profileMedia && ownerId && onProfileMediaSaved && (
@@ -155,14 +160,17 @@ export function InlineInspector({
       {onBlockLayoutChange && (
         <div className="mb-4 flex flex-col gap-2 border-b border-border/30 pb-4">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Placement</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              Placement
+            </p>
             <p className="mt-1 text-xs font-medium text-foreground">Where this block sits</p>
             <p className="mt-0.5 text-[10px] leading-relaxed text-muted-foreground">
-              Adjust its start position and width in this section&apos;s grid. Changes save automatically.
+              Adjust its start position and width in this section&apos;s grid. Changes save
+              automatically.
             </p>
           </div>
           <div className="grid grid-cols-2 gap-2">
-              <label className="text-[11px] text-muted-foreground">
+            <label className="text-[11px] text-muted-foreground">
               Column start
               <span className="ml-1 text-[10px] text-muted-foreground/70">1–12</span>
               <Input
@@ -178,7 +186,7 @@ export function InlineInspector({
                 }
               />
             </label>
-              <label className="text-[11px] text-muted-foreground">
+            <label className="text-[11px] text-muted-foreground">
               Block width
               <span className="ml-1 text-[10px] text-muted-foreground/70">columns</span>
               <Input
@@ -208,15 +216,23 @@ export function InlineInspector({
           {fields.map((field, index) => {
             const { key, label } = field;
             const value = fieldValue(key);
-            const sectionLabel = index === 0 ? "Content & display" : index === 1 ? "Presentation" : null;
+            const sectionLabel =
+              index === 0 ? "Content & display" : index === 1 ? "Presentation" : null;
 
             if (field.type === "toggle") {
               const on = value === true;
               return (
                 <div key={key} className="flex flex-col gap-2">
-                  {sectionLabel && <p className="border-t border-border/30 pt-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{sectionLabel}</p>}
+                  {sectionLabel && (
+                    <p className="border-t border-border/30 pt-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                      {sectionLabel}
+                    </p>
+                  )}
                   <div className="flex items-center justify-between gap-3 rounded-md bg-surface/40 px-2.5 py-2">
-                    <Label htmlFor={`${block.id}-${key}`} className="min-w-0 text-[11px] font-medium">
+                    <Label
+                      htmlFor={`${block.id}-${key}`}
+                      className="min-w-0 text-[11px] font-medium"
+                    >
                       {label}
                     </Label>
                     <button
@@ -270,7 +286,11 @@ export function InlineInspector({
                             .filter(Boolean)
                             .join(" ")}
                         >
-                          {active && <span className="mr-1 text-[10px] text-[var(--user-accent,var(--trust))]">●</span>}
+                          {active && (
+                            <span className="mr-1 text-[10px] text-[var(--user-accent,var(--trust))]">
+                              ●
+                            </span>
+                          )}
                           {option.label}
                         </button>
                       );

@@ -9,9 +9,9 @@ import type { GraphNode, GraphNodeType, TethyrGraph } from "./graph-model";
  * explorer maps and lists is the single source (§69).
  */
 
-export type ProjectTimelineKind = "origin" | "milestone" | "contribution" | "import" | "fork";
+type ProjectTimelineKind = "origin" | "milestone" | "contribution" | "import" | "fork";
 
-export interface ProjectTimelineEntry {
+interface ProjectTimelineEntry {
   nodeId: string;
   kind: ProjectTimelineKind;
   title: string;
@@ -20,7 +20,7 @@ export interface ProjectTimelineEntry {
   date?: string;
 }
 
-export interface ProjectTimeline {
+interface ProjectTimeline {
   entries: ProjectTimelineEntry[];
   /** How many related events the cap left out (spec §45). */
   omitted: number;
