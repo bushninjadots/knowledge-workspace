@@ -1,7 +1,16 @@
 import { useEffect, useMemo } from "react";
-import { useParams, useSearch } from "@tanstack/react-router";
+import { Link, useParams, useSearch } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Github, Globe, Instagram, Link2, Twitch, Twitter, Youtube } from "lucide-react";
+import {
+  ArrowRight,
+  Github,
+  Globe,
+  Instagram,
+  Link2,
+  Twitch,
+  Twitter,
+  Youtube,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { avatarShapeCss, avatarRingCss } from "@/components/ui/avatar";
 import {
@@ -111,6 +120,9 @@ export function PublicProfileRoute() {
       pageThemeStyle={pageThemeStyle}
       embed={embed}
     >
+      {!embed && !profilePageQuery.isLoading && (
+        <OwnerBar profileId={profile.id} publishedVersion={profilePage?.publishedVersion ?? null} />
+      )}
       {/* The page query is a second request behind the profile query, so it
           resolves later. Rendering the fallback during that gap once flashed
           the wrong page — a visitor with a published Studio saw their
@@ -140,6 +152,46 @@ export function PublicProfileRoute() {
         <BasicProfile profile={profile} avatarSigned={data.avatarSigned} />
       )}
     </Shell>
+  );
+}
+
+/** Owner-only status for their own public URL: whether visitors see a
+ *  published Studio (and which version) or just the basic profile. */
+function OwnerBar({
+  profileId,
+  publishedVersion,
+}: {
+  profileId: string;
+  publishedVersion: number | null;
+}) {
+  const { data: me } = useCurrentUser();
+  if (!me?.userId || me.userId !== profileId) return null;
+  const live = publishedVersion !== null;
+  return (
+    <div
+      role="status"
+      className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-border/60 bg-surface px-4 py-2.5 text-sm sm:px-6"
+    >
+      <p className="text-muted-foreground">
+        {live ? (
+          <>
+            This is your Studio as visitors see it
+            <span className="text-foreground"> · version {publishedVersion}</span>
+          </>
+        ) : (
+          <>
+            Only you can see this. Your Studio isn't published yet, so visitors see your name and
+            photo only.
+          </>
+        )}
+      </p>
+      <Link
+        to="/studio"
+        className="inline-flex shrink-0 items-center gap-1.5 font-medium text-foreground underline-offset-4 hover:underline"
+      >
+        Edit Studio <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+      </Link>
+    </div>
   );
 }
 

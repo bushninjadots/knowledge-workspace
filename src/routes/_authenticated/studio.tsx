@@ -11,6 +11,6 @@ export const Route = createFileRoute("/_authenticated/studio")({
       typeof search.section === "string" && search.section.length > 0 ? search.section : undefined,
   }),
   head: () => ({
-    meta: [{ title: "Customize your Studio — Tethyr" }],
+    meta: [{ title: "Edit Studio — Tethyr" }],
   }),
 });

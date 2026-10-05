@@ -52,7 +52,7 @@ export const navigationGroups = [
     label: "You",
     items: [
       { to: "/profile", label: "Your Studio", icon: User },
-      { to: "/studio", label: "Studio editor", icon: Settings },
+      { to: "/studio", label: "Edit Studio", icon: Settings },
       { to: "/settings", label: "Settings", icon: Settings },
     ],
   },

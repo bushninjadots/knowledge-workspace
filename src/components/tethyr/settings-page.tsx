@@ -219,10 +219,18 @@ export function SettingsPage() {
           <section className="rounded-lg border border-border bg-card p-5">
             <h2 className="flex items-center gap-2 text-sm font-semibold">
               <Paintbrush className="h-4 w-4 text-muted-foreground" />
-              Appearance
+              App appearance
             </h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              How Tethyr looks and feels — theme, background, accent, and surfaces.
+              How Tethyr looks to you while you work — theme, background, accent, and surfaces. Your
+              public Studio has its own look, set in{" "}
+              <Link
+                to="/studio"
+                className="font-medium text-foreground underline-offset-4 hover:underline"
+              >
+                Edit Studio
+              </Link>
+              .
             </p>
 
             <div className="mt-4 space-y-4">
