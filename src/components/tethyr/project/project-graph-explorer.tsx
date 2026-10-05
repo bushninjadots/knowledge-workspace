@@ -208,14 +208,21 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
                           className="h-3 w-3 text-muted-foreground"
                         />
                       </span>
-                      <p className="text-xs text-muted-foreground">
-                        {PROJECT_TIMELINE_LABELS[entry.kind]}
-                        {entry.date ? ` · ${new Date(entry.date).toLocaleDateString()}` : ""}
-                      </p>
-                      <p className="text-sm font-medium">{entry.title}</p>
-                      {entry.description ? (
-                        <p className="mt-0.5 text-xs text-muted-foreground">{entry.description}</p>
-                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => setSelectedNodeId(entry.nodeId)}
+                        className="w-full rounded-md px-1 py-0.5 text-left transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        aria-label={`Inspect ${entry.title}`}
+                      >
+                        <p className="text-xs text-muted-foreground">
+                          {PROJECT_TIMELINE_LABELS[entry.kind]}
+                          {entry.date ? ` · ${new Date(entry.date).toLocaleDateString()}` : ""}
+                        </p>
+                        <p className="text-sm font-medium">{entry.title}</p>
+                        {entry.description ? (
+                          <p className="mt-0.5 text-xs text-muted-foreground">{entry.description}</p>
+                        ) : null}
+                      </button>
                     </li>
                   ))}
                 </ol>

@@ -166,6 +166,9 @@ describe("ProjectGraphExplorer", () => {
     expect(titles.findIndex((text) => text.includes("Initial idea"))).toBeLessThan(
       titles.findIndex((text) => text.includes("Launch")),
     );
+
+    fireEvent.click(screen.getByRole("button", { name: "Inspect Initial idea" }));
+    expect(screen.getByRole("dialog", { name: "Initial idea" })).toBeInTheDocument();
   });
 
   it("explains an empty filter result instead of showing nothing", () => {
