@@ -7,7 +7,7 @@
 //
 // Client (.output/public) and server chunks have separate budgets, each
 // configurable via env so CI (or a local override) can tune them:
-//   BUNDLE_CLIENT_MAX_RAW / BUNDLE_CLIENT_MAX_GZIP  (default 900000 / 280000)
+//   BUNDLE_CLIENT_MAX_RAW / BUNDLE_CLIENT_MAX_GZIP  (default 650000 / 200000)
 //   BUNDLE_SERVER_MAX_RAW / BUNDLE_SERVER_MAX_GZIP  (default 800000 / 210000)
 //
 // Run after `npm run build`. Exits 1 on any over-budget chunk.
@@ -17,8 +17,8 @@ import { join, extname } from "node:path";
 import { gzipSync } from "node:zlib";
 
 const OUT_DIR = ".output";
-const CLIENT_MAX_RAW = Number(process.env.BUNDLE_CLIENT_MAX_RAW ?? 900_000);
-const CLIENT_MAX_GZIP = Number(process.env.BUNDLE_CLIENT_MAX_GZIP ?? 280_000);
+const CLIENT_MAX_RAW = Number(process.env.BUNDLE_CLIENT_MAX_RAW ?? 650_000);
+const CLIENT_MAX_GZIP = Number(process.env.BUNDLE_CLIENT_MAX_GZIP ?? 200_000);
 const SERVER_MAX_RAW = Number(process.env.BUNDLE_SERVER_MAX_RAW ?? 800_000);
 const SERVER_MAX_GZIP = Number(process.env.BUNDLE_SERVER_MAX_GZIP ?? 210_000);
 const EXTS = new Set([".js", ".mjs"]);
