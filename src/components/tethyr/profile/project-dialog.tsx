@@ -491,7 +491,11 @@ export function ProjectDialog({
             ))}
           </div>
         )}
-        <div className="max-h-[min(65vh,38rem)] space-y-3 overflow-y-auto pr-1">
+        {/* Creation steps share one fixed body height: the dialog is centred, so
+            a shorter step used to shift the whole dialog about 75px. */}
+        <div
+          className={`${project ? "max-h-[min(65vh,38rem)]" : "h-[min(65vh,38rem)]"} space-y-3 overflow-y-auto pr-1`}
+        >
           <div className={panelClass(0)}>
             {/* Source choice — new projects only. Import pre-fills the fields
                 below from a GitHub repo; everything stays editable. */}

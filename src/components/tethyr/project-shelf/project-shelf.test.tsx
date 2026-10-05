@@ -66,7 +66,8 @@ function makeProject(
     stage: "shipped",
     tags: [],
     progress_percent: 50,
-    cover_url: null,
+    // Covered by default: coverless sets open in the grid (see defaultProjectView).
+    cover_url: `https://example.test/${id}.png`,
     is_featured: false,
     looking_for_collaborators: false,
     looking_for_feedback: false,
@@ -216,6 +217,29 @@ describe("ProjectShelf view switching", () => {
   // View choice is persisted to localStorage — keep the shared jsdom storage
   // clean so the other describes always start from the default shelf view.
   afterEach(() => localStorage.clear());
+
+  it("opens in the grid when most projects have no cover", () => {
+    renderShelf([
+      makeProject("p1", "First", { cover_url: null }),
+      makeProject("p2", "Second", { cover_url: null }),
+      makeProject("p3", "Third"),
+    ]);
+
+    expect(screen.getByRole("button", { name: "Grid view" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+  });
+
+  it("keeps a view the member picked even when covers are missing", () => {
+    localStorage.setItem("tethyr-project-view", "list");
+    renderShelf([makeProject("p1", "First", { cover_url: null })]);
+
+    expect(screen.getByRole("button", { name: "List view" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+  });
 
   it("defaults to the carousel shelf view", () => {
     const projects = [makeProject("p1", "First"), makeProject("p2", "Second")];

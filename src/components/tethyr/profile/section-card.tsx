@@ -1,6 +1,9 @@
+import { Children, cloneElement, isValidElement, useId, type ReactElement } from "react";
 import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 export function SectionCard({
   title,
@@ -38,10 +41,36 @@ export function SectionCard({
   );
 }
 
+const CONTROL_TYPES = new Set<unknown>([Input, Textarea, "input", "textarea", "select"]);
+const LABEL_CLASS = "text-xs uppercase tracking-wider text-muted-foreground";
+
+/**
+ * A labelled form field. A single input child is tied to the label by id, so
+ * screen readers announce its name rather than its placeholder; anything
+ * else (a chip picker, a row of controls) becomes a group named by the label.
+ */
 export function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  const generatedId = useId();
+  const only = Children.count(children) === 1 && isValidElement(children) ? children : null;
+  const isControl = !!only && CONTROL_TYPES.has(only.type);
+  if (only && isControl) {
+    const control = only as ReactElement<{ id?: string }>;
+    const id = control.props.id ?? generatedId;
+    return (
+      <div className="space-y-1.5">
+        <Label htmlFor={id} className={LABEL_CLASS}>
+          {label}
+        </Label>
+        {control.props.id ? control : cloneElement(control, { id })}
+      </div>
+    );
+  }
+  const labelId = `${generatedId}-label`;
   return (
-    <div className="space-y-1.5">
-      <Label className="text-xs uppercase tracking-wider text-muted-foreground">{label}</Label>
+    <div className="space-y-1.5" role="group" aria-labelledby={labelId}>
+      <Label id={labelId} className={LABEL_CLASS}>
+        {label}
+      </Label>
       {children}
     </div>
   );

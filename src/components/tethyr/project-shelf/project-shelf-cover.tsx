@@ -49,12 +49,19 @@ function ProjectShelfFace({
       <button
         onClick={onClick}
         style={ownerAccent}
-        className="group relative w-full cursor-pointer overflow-hidden text-left transition-spatial duration-150 hover:-translate-y-1 hover:border-[var(--user-accent-border,var(--border-strong))]"
+        className="group relative flex w-full cursor-pointer flex-col overflow-hidden text-left transition-spatial duration-150 hover:-translate-y-1 hover:border-[var(--user-accent-border,var(--border-strong))]"
         aria-label={`View ${project.title}`}
       >
-        {/* Cover image — 16:9, object-contain to show the whole image */}
-        <div className="relative w-full" style={{ aspectRatio: "16 / 9" }}>
-          <CoverGradient coverUrl={project.cover_url} fit="contain" hoverZoom />
+        {/* Cover image at 16:9 (object-contain shows the whole image). Without
+            one, a slim band carries the status and progress so the title and
+            stage lead instead of a large placeholder. */}
+        <div
+          className={cn("relative w-full shrink-0", !project.cover_url && "h-12")}
+          style={project.cover_url ? { aspectRatio: "16 / 9" } : undefined}
+        >
+          {project.cover_url && (
+            <CoverGradient coverUrl={project.cover_url} fit="contain" hoverZoom />
+          )}
 
           {/* Status badge */}
           <div className="absolute left-3 top-3 z-10 flex items-center gap-2">
@@ -90,7 +97,7 @@ function ProjectShelfFace({
         </div>
 
         {/* Info panel */}
-        <div className="flex flex-col gap-1.5 border-t border-black/10 bg-gradient-to-b from-surface/60 to-surface p-4 dark:border-white/10">
+        <div className="flex flex-1 flex-col gap-1.5 border-t border-black/10 bg-gradient-to-b from-surface/60 to-surface p-4 dark:border-white/10">
           <div className="flex items-start justify-between gap-2">
             <p
               className="min-w-0 text-sm font-bold text-foreground group-hover:text-primary transition-colors"

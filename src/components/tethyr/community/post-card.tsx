@@ -234,7 +234,7 @@ export function PostCard({
     >
       {/* Header */}
       <div className="flex items-start gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-trust text-sm font-semibold text-background">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-foreground text-sm font-semibold text-background">
           {initial}
         </div>
         <div className="min-w-0 flex-1">
@@ -252,7 +252,7 @@ export function PostCard({
               </HoverCardTrigger>
               <HoverCardContent className="w-64" side="top">
                 <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-trust text-sm font-semibold text-background">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-foreground text-sm font-semibold text-background">
                     {initial}
                   </div>
                   <div className="min-w-0">

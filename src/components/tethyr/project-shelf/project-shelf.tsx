@@ -30,14 +30,23 @@ interface ProjectShelfProps {
 
 const VIEW_STORAGE_KEY = "tethyr-project-view";
 
-function loadSavedView(): ProjectView {
+/** The view the member picked, or null when they never chose one. "shelf"
+ *  isn't read back: older builds stored it on every visit as the default. */
+function loadSavedView(): ProjectView | null {
   try {
     const saved = localStorage.getItem(VIEW_STORAGE_KEY);
     if (saved === "grid" || saved === "list") return saved;
   } catch {
     /* ignore */
   }
-  return "shelf";
+  return null;
+}
+
+/** The 3D shelf shows covers; when most projects have none it's a row of
+ *  placeholders, so the grid (title and stage first) is the better default. */
+export function defaultProjectView(projects: Array<{ cover_url: string | null }>): ProjectView {
+  const withCover = projects.filter((project) => project.cover_url).length;
+  return projects.length > 0 && withCover * 2 < projects.length ? "grid" : "shelf";
 }
 
 export function ProjectShelf({
@@ -67,7 +76,8 @@ export function ProjectShelf({
   }, [initialOverlayId, projects]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
-  const [view, setView] = useState<ProjectView>(loadSavedView);
+  const [chosenView, setChosenView] = useState<ProjectView | null>(loadSavedView);
+  const view = chosenView ?? defaultProjectView(projects);
   const containerRef = useRef<HTMLDivElement>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
   const prefersReducedMotion = useReducedMotion();
@@ -87,14 +97,16 @@ export function ProjectShelf({
     if (activeIndex > maxOffset) setActiveIndex(maxOffset);
   }, [maxOffset, activeIndex]);
 
-  // Remember the chosen view across visits (mirrors the opportunity filters).
-  useEffect(() => {
+  // Remember a view the member picks across visits (mirrors the opportunity
+  // filters). Only explicit picks are stored, so the default can still adapt.
+  const chooseView = useCallback((next: ProjectView) => {
+    setChosenView(next);
     try {
-      localStorage.setItem(VIEW_STORAGE_KEY, view);
+      localStorage.setItem(VIEW_STORAGE_KEY, next);
     } catch {
       /* ignore */
     }
-  }, [view]);
+  }, []);
 
   const advance = useCallback(
     (dir: -1 | 1) => {
@@ -239,7 +251,7 @@ export function ProjectShelf({
         setCategory={setCategory}
         count={projects.length}
         view={view}
-        onViewChange={setView}
+        onViewChange={chooseView}
       />
 
       {projects.length === 0 ? (

@@ -122,7 +122,7 @@ export function DiscoverSidebar({ tab }: { tab: Tab }) {
       <div className="rounded-xl border border-border/40 bg-surface/30 p-4">
         <p className="text-xs text-muted-foreground leading-relaxed">
           {tab === "projects"
-            ? "Browse projects from the community. Use the shelf to flip through covers, or search for something specific."
+            ? "Browse projects from the community as a shelf, grid or list, or search for something specific."
             : tab === "creators"
               ? "Find people to collaborate with. Filter by craft or search by name."
               : "Open roles waiting for someone like you. Match based on your skills."}

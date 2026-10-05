@@ -95,6 +95,12 @@ export function MessagesPage() {
             projectName={projectName}
             onBack={() => select(null)}
           />
+        ) : !isLoading && accepted.length === 0 ? (
+          // The list pane already explains the empty table and offers the way
+          // forward; repeating it here showed two identical calls to action.
+          <div className="flex flex-1 items-center justify-center p-8 text-center">
+            <p className="text-sm text-muted-foreground">Your conversations will open here.</p>
+          </div>
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
             <EmptyState
@@ -134,13 +140,7 @@ function ConversationRow({
           : "border-l-2 border-l-transparent hover:border-l-primary/50 hover:bg-surface/50"
       }`}
     >
-      <div
-        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-semibold transition-colors duration-150 ${
-          active
-            ? "bg-primary text-primary-foreground"
-            : "bg-ai text-background group-hover:bg-ai/90"
-        }`}
-      >
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-foreground text-sm font-semibold text-background">
         {name.charAt(0).toUpperCase()}
       </div>
       <div className="min-w-0 flex-1">
@@ -219,7 +219,7 @@ function Thread({
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-ai text-sm font-semibold text-background">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-foreground text-sm font-semibold text-background">
           {name.charAt(0).toUpperCase()}
         </div>
         <div className="min-w-0">
