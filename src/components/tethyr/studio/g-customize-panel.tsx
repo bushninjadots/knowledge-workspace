@@ -11,6 +11,7 @@ import {
   LayoutGrid,
   LayoutTemplate,
   Palette,
+  Plus,
   RotateCcw,
   X,
 } from "lucide-react";
@@ -31,7 +32,14 @@ import { sectionLabel } from "@/lib/studio-grid";
 import { IconButton, Choice } from "./studio-controls";
 import type { GStudioConfig } from "./g-studio-surface";
 
-const ACCENT_SWATCHES = ["#3f8f8a", "#2f6fd0", "#7a4ecf", "#b4632a", "#2f7d4a", "#1f2328"];
+const ACCENT_SWATCHES: Array<[hex: string, name: string]> = [
+  ["#3f8f8a", "Teal"],
+  ["#2f6fd0", "Blue"],
+  ["#7a4ecf", "Violet"],
+  ["#b4632a", "Copper"],
+  ["#2f7d4a", "Green"],
+  ["#1f2328", "Ink"],
+];
 
 const STUDIO_CUSTOMIZE_ADVANCED_KEY = "studio-customize-advanced-open";
 
@@ -170,10 +178,10 @@ export function GCustomizeAdvanced({
   selectedBlockId: string | null;
   onOpenAppearance?: () => void;
 }) {
-  // "Theme" keeps the face the personality above already sets; the rest are
-  // the shared font catalog.
+  // "Automatic" keeps the face Personality (or, for Modern, the theme) sets;
+  // the rest are the shared font catalog and override it.
   const fontChoices: Array<[string, string]> = [
-    ["", "Theme"],
+    ["", "Automatic"],
     ...FONT_OPTIONS.map((option) => [option.id, option.label] as [string, string]),
   ];
   return (
@@ -181,7 +189,8 @@ export function GCustomizeAdvanced({
       <div className="mb-4">
         <p className="t-label mb-1.5">Typeface</p>
         <p className="mb-1.5 text-2xs leading-snug text-muted-foreground-subtle">
-          The faces your Studio reads in — the published page renders the same ones.
+          Automatic follows Personality (Modern uses the theme&rsquo;s face). Pick a face to
+          override it; the published page renders the same ones.
         </p>
         <Choice
           label="Headings"
@@ -248,21 +257,47 @@ export function GCustomizeAdvanced({
         onChange={(value) => onChange({ accentMode: value as GStudioConfig["accentMode"] })}
       />
       {(config.accentMode === "custom" || config.accentMode === "dual") && (
-        <div className="mt-1.5 flex flex-wrap gap-1.5">
-          {ACCENT_SWATCHES.map((swatch) => (
+        <div className="mt-1.5 mb-4 flex flex-wrap items-center gap-1.5">
+          {ACCENT_SWATCHES.map(([swatch, name]) => (
             <button
               key={swatch}
               type="button"
-              aria-label={`Accent ${swatch}`}
+              aria-label={`${name} accent`}
+              title={name}
               aria-pressed={config.accentColor.toLowerCase() === swatch}
               onClick={() => onChange({ accentColor: swatch })}
               className={cn(
-                "h-6 w-6 rounded-sm border-2",
+                "h-6 w-6 rounded-sm border-2 pointer-coarse:h-10 pointer-coarse:w-10",
                 config.accentColor.toLowerCase() === swatch ? "border-foreground" : "border-border",
               )}
               style={{ backgroundColor: swatch }}
             />
           ))}
+          {/* Any colour works: text drawn in the accent is derived from it at a
+              readable contrast, and buttons pick their own label colour. */}
+          <label
+            title="Choose any colour"
+            className={cn(
+              "relative flex h-6 w-6 cursor-pointer items-center justify-center rounded-sm border-2 border-dashed pointer-coarse:h-10 pointer-coarse:w-10",
+              ACCENT_SWATCHES.some(([swatch]) => swatch === config.accentColor.toLowerCase())
+                ? "border-border text-muted-foreground"
+                : "border-foreground text-foreground",
+            )}
+            style={
+              ACCENT_SWATCHES.some(([swatch]) => swatch === config.accentColor.toLowerCase())
+                ? undefined
+                : { backgroundColor: config.accentColor }
+            }
+          >
+            <Plus className="h-3 w-3 mix-blend-difference" aria-hidden />
+            <input
+              type="color"
+              aria-label="Custom accent colour"
+              value={config.accentColor.toLowerCase()}
+              onChange={(event) => onChange({ accentColor: event.target.value.toLowerCase() })}
+              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+            />
+          </label>
         </div>
       )}
       <div className="mb-4 border border-[var(--user-accent-border)] bg-[var(--user-accent-subtle)] p-2.5">
@@ -573,7 +608,7 @@ export function GCustomizePanel({
         />
         <Choice
           label="Personality"
-          hint="Typography and visual character — Editorial uses Space Grotesk, Technical uses JetBrains Mono"
+          hint="Visual character and heading scale. Editorial sets Space Grotesk headings, Technical sets JetBrains Mono, Modern keeps the theme's face. Typeface under More options can override it."
           value={config.personality}
           options={[
             ["modern", "Modern"],

@@ -704,7 +704,7 @@ function GStudioTopBar({
             className={cn(
               // Amber is too light to read as text, so caution states keep it
               // for the border and fill and set the label in the body colour.
-              "hidden border px-1.5 py-0.5 font-mono text-2xs sm:inline",
+              "hidden shrink-0 whitespace-nowrap border px-1.5 py-0.5 font-mono text-2xs sm:inline",
               saving || dirty || hasUnpublishedChanges
                 ? "border-caution bg-caution/10 text-foreground"
                 : "border-trust text-trust",
@@ -743,6 +743,7 @@ function GStudioTopBar({
               role="radio"
               aria-checked={mode === item}
               aria-label={label}
+              title={item === "preview" ? "See your page as visitors do" : "Edit your page"}
               onClick={() => onModeChange(item)}
               className={cn(
                 "flex h-6 pointer-coarse:h-10 items-center gap-1.5 rounded-sm px-2 text-xs",
@@ -856,7 +857,7 @@ function GStudioTopBar({
               {(["desktop", "tablet", "mobile"] as GStudioDevice[]).map((item) => (
                 <IconButton
                   key={item}
-                  label={`${item} preview`}
+                  label={`Preview on ${item === "mobile" ? "a phone" : item === "tablet" ? "a tablet" : "desktop"}`}
                   active={device === item}
                   onClick={() => onDeviceChange(item)}
                 >
