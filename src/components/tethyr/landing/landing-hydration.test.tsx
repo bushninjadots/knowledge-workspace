@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { render } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useFeaturedProjects, useLandingStats, useRecentActivity } from "./data";
+import { useFeaturedProjects, useRecentActivity, useWorkRecord } from "./data";
 
 /**
  * Hydration-parity guard for the landing sections.
@@ -51,15 +51,16 @@ describe("landing section hydration parity", () => {
     expect(observed.at(-1)!.data).toEqual([{ id: "p1", title: "Bloom" }]);
   });
 
-  it("withholds landing stats on the first render, then shows them after mount", () => {
-    const client = clientWith("landing-stats", { members: 10, projects: 9 });
-    const { Probe, observed } = trackRenders(() => useLandingStats());
+  it("withholds the hero work record on the first render, then shows it after mount", () => {
+    const record = { project: { id: "p1", title: "Bloom" }, credits: [], milestones: [] };
+    const client = clientWith("landing-work-record", record);
+    const { Probe, observed } = trackRenders(() => useWorkRecord());
 
     render(<Probe />, { wrapper: wrapper(client) });
 
     expect(observed[0].isLoading).toBe(true);
     expect(observed[0].data).toBeUndefined();
-    expect(observed.at(-1)!.data).toEqual({ members: 10, projects: 9 });
+    expect(observed.at(-1)!.data).toEqual(record);
   });
 
   it("withholds recent activity on the first render, then shows it after mount", () => {

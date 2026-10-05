@@ -6,9 +6,7 @@ import { ArrowRight } from "lucide-react";
 import { useAuthUser } from "@/hooks/use-current-user";
 import { Navbar } from "@/components/tethyr/navbar";
 import { Footer } from "@/components/tethyr/footer";
-import { HeroShowcase } from "@/components/tethyr/landing/hero-showcase";
-import { LandingStats } from "@/components/tethyr/landing/landing-stats";
-import { HeroActions } from "@/components/tethyr/hero-actions";
+import { WorkRecord } from "@/components/tethyr/landing/work-record";
 import { Button } from "@/components/ui/button";
 
 // Below-the-fold landing sections are code-split so their JS stays off the
@@ -17,9 +15,6 @@ import { Button } from "@/components/ui/button";
 // so search engines keep seeing the full page.
 const SectionReveal = lazy(() =>
   import("@/components/tethyr/section-reveal").then((m) => ({ default: m.SectionReveal })),
-);
-const HowItWorks = lazy(() =>
-  import("@/components/tethyr/landing/how-it-works").then((m) => ({ default: m.HowItWorks })),
 );
 const TrendingSkills = lazy(() =>
   import("@/components/tethyr/landing/trending-skills").then((m) => ({
@@ -124,10 +119,8 @@ export function HomePage() {
                 )}
               </div>
             </div>
-            <HeroShowcase />
+            <WorkRecord />
           </div>
-
-          <HeroActions />
         </div>
 
         <button
@@ -140,8 +133,6 @@ export function HomePage() {
           <span className="h-9 w-px animate-scroll-line bg-gradient-to-b from-muted-foreground/80 to-transparent" />
         </button>
       </section>
-
-      <LandingStats />
 
       <section
         className="border-y border-border/50 bg-surface/35"
@@ -210,19 +201,14 @@ export function HomePage() {
 
       {/* Same id as every other frame so the global skip link lands here too */}
       <main id="main-content">
-        <SectionReveal id="how-it-works" className="content-visibility-auto">
+        <SectionReveal id="featured-projects" className="content-visibility-auto">
           <Suspense fallback={<SectionSkeleton />}>
-            <HowItWorks />
+            <FeaturedProjects />
           </Suspense>
         </SectionReveal>
         <SectionReveal id="trending-skills" className="content-visibility-auto">
           <Suspense fallback={<SectionSkeleton />}>
             <TrendingSkills />
-          </Suspense>
-        </SectionReveal>
-        <SectionReveal id="featured-projects" className="content-visibility-auto">
-          <Suspense fallback={<SectionSkeleton />}>
-            <FeaturedProjects />
           </Suspense>
         </SectionReveal>
         <SectionReveal id="recent-activity" className="content-visibility-auto">

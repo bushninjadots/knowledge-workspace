@@ -1,24 +1,23 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
-import { STATUS_STYLES } from "../project-shelf/project-shelf-cover";
-import { ProjectCoverFallback } from "@/components/tethyr/project-cover-fallback";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
+import { canonicalProjectStatus } from "@/lib/project-status";
 import { useFeaturedProjects } from "./data";
 
-function ProjectCardCover({ path }: { path: string | null }) {
-  // Resolve the raw storage path to a signed URL client-side — keeps the
-  // query data deterministic so SSR and hydration always match.
+/** A cover thumbnail only when the project has one — no placeholder art, so
+ *  projects without covers read as clean typographic rows. */
+function CoverThumb({ path }: { path: string | null }) {
   const { data: url } = useSignedStorageUrl("project-media", path);
-  if (!url) return <ProjectCoverFallback iconClassName="h-8 w-8" />;
+  if (!url) return null;
   return (
     <img
       src={url}
       alt=""
-      width="640"
-      height="360"
+      width="96"
+      height="64"
       loading="lazy"
       decoding="async"
-      className="h-full w-full object-cover transition-spatial duration-150 group-hover:scale-[1.03]"
+      className="hidden h-12 w-[4.5rem] shrink-0 rounded-md object-cover sm:block"
     />
   );
 }
@@ -27,31 +26,30 @@ export function FeaturedProjects() {
   const { data: projects = [], isLoading } = useFeaturedProjects();
   if (isLoading) {
     return (
-      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-64 animate-gentle-pulse rounded-xl border border-border/60 bg-surface"
-            />
+      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6" aria-hidden="true">
+        <div className="space-y-px">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-20 animate-gentle-pulse bg-surface" />
           ))}
         </div>
       </section>
     );
   }
-  if (projects.length === 0) return null;
+  // The first project is the hero's work record; list the rest.
+  const rest = projects.slice(1);
+  if (rest.length === 0) return null;
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
-      <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6" aria-labelledby="work-index-title">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-2xl">
-          <p className="section-label mb-3">Discover / Featured work</p>
-          <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+          <p className="section-label mb-3">In progress</p>
+          <h2
+            id="work-index-title"
+            className="font-display text-3xl font-semibold tracking-tight sm:text-4xl"
+          >
             What the community is building
           </h2>
-          <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">
-            Follow the work, meet the people behind it, and find your next way to contribute.
-          </p>
         </div>
         <Link
           to="/explore"
@@ -60,76 +58,59 @@ export function FeaturedProjects() {
           Explore projects <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {projects.map((p) => {
-          const status = STATUS_STYLES[p.status] ?? STATUS_STYLES.active;
+      <ul className="border-t border-border/60">
+        {rest.map((p) => {
+          const progress = p.progress_percent ?? 0;
+          const stage = canonicalProjectStatus(p.status, p.stage);
           return (
-            <Link
-              key={p.id}
-              to="/projects/$id"
-              params={{ id: p.id }}
-              className="group flex flex-col overflow-hidden rounded-lg border border-border/40 bg-surface-elevated/30 transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated/50"
-            >
-              <div className="relative h-36 overflow-hidden bg-surface-sunken">
-                <ProjectCardCover path={p.cover_url} />
-                <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full border border-border/60 bg-background/80 px-2.5 py-1 text-[11px] font-medium">
-                  <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />
-                  {status.label}
-                </div>
-              </div>
-              <div className="flex flex-1 flex-col p-5">
-                <h3 className="truncate font-display text-base font-semibold group-hover:text-primary">
-                  {p.title}
-                </h3>
-                {p.description && (
-                  <p className="mt-1.5 line-clamp-2 text-sm text-muted-foreground">
-                    {p.description}
-                  </p>
-                )}
-                {p.tags.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {p.tags.slice(0, 3).map((tag) => (
-                      <span
-                        key={tag}
-                        className="rounded-full border border-border/60 bg-surface-elevated px-2 py-0.5 text-[11px] text-muted-foreground"
-                      >
-                        {tag}
+            <li key={p.id} className="border-b border-border/60">
+              <Link
+                to="/projects/$id"
+                params={{ id: p.id }}
+                className="group grid gap-x-6 gap-y-2 py-5 transition-colors hover:bg-surface/60 sm:grid-cols-[minmax(0,1fr)_7rem_9rem_8rem] sm:items-center sm:px-3"
+              >
+                <span className="flex min-w-0 items-center gap-4">
+                  <CoverThumb path={p.cover_url} />
+                  <span className="min-w-0">
+                    <span className="block truncate font-display text-lg font-semibold group-hover:text-[var(--user-accent,var(--primary))]">
+                      {p.title}
+                    </span>
+                    {p.description ? (
+                      <span className="mt-0.5 block truncate text-sm text-muted-foreground">
+                        {p.description}
                       </span>
-                    ))}
-                  </div>
-                )}
-                <div className="mt-auto border-t border-border/40 pt-4">
-                  <div className="mb-2 flex items-center justify-between gap-3 text-xs">
-                    <span className="truncate text-muted-foreground">
-                      Built by {p.profiles?.display_name || p.profiles?.handle || "Member"}
-                    </span>
-                    <span className="numeric shrink-0 text-muted-foreground">
-                      {p.progress_percent ?? 0}% complete
-                    </span>
-                  </div>
-                  <div
-                    className="h-1 overflow-hidden rounded-full bg-surface-sunken"
+                    ) : null}
+                  </span>
+                </span>
+                <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+                  {stage ?? "Active"}
+                </span>
+                <span className="truncate text-sm text-muted-foreground">
+                  {p.profiles?.display_name || p.profiles?.handle || "Member"}
+                </span>
+                <span className="flex items-center gap-3">
+                  <span
+                    className="h-1 flex-1 overflow-hidden rounded-full bg-border"
                     role="progressbar"
-                    aria-label={`${p.progress_percent ?? 0}% complete`}
-                    aria-valuenow={p.progress_percent ?? 0}
+                    aria-label={`${p.title}: ${progress}% complete`}
+                    aria-valuenow={progress}
                     aria-valuemin={0}
                     aria-valuemax={100}
                   >
-                    <div
-                      className="h-full rounded-full bg-[var(--user-accent,var(--trust))] transition-[width]"
-                      style={{ width: `${p.progress_percent ?? 0}%` }}
+                    <span
+                      className="block h-full rounded-full bg-[var(--user-accent,var(--trust))]"
+                      style={{ width: `${progress}%` }}
                     />
-                  </div>
-                  <div className="mt-4 flex items-center gap-1.5 text-xs font-medium text-primary">
-                    Open project{" "}
-                    <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-                  </div>
-                </div>
-              </div>
-            </Link>
+                  </span>
+                  <span className="numeric w-9 shrink-0 text-right text-xs text-muted-foreground">
+                    {progress}%
+                  </span>
+                </span>
+              </Link>
+            </li>
           );
         })}
-      </div>
+      </ul>
     </section>
   );
 }

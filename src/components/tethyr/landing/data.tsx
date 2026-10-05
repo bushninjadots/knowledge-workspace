@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
@@ -7,90 +7,6 @@ import type { PostRow, PostType } from "@/hooks/use-community";
 import { fetchPostEngagement } from "@/lib/post-engagement";
 
 const sb = supabase;
-
-type LandingCountTable =
-  "profiles" | "projects" | "community_spaces" | "skills" | "posts" | "comments" | "challenges";
-
-/** Counts up from 0 to a real stat value once it scrolls into view. */
-export function AnimatedStat({ value }: { value: number }) {
-  const ref = useRef<HTMLParagraphElement>(null);
-  const [inView, setInView] = useState(false);
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-  const [display, setDisplay] = useState(0);
-
-  useEffect(() => {
-    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setPrefersReducedMotion(media.matches);
-    // If the stat is already in the viewport on mount (e.g. above the fold),
-    // start animating immediately instead of flashing "0" until the observer fires.
-    if (ref.current) {
-      const rect = ref.current.getBoundingClientRect();
-      if (rect.top < window.innerHeight && rect.bottom > 0) {
-        setInView(true);
-        return;
-      }
-    }
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) return;
-        setInView(true);
-        observer.disconnect();
-      },
-      { rootMargin: "-40px" },
-    );
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (!inView) return;
-    if (prefersReducedMotion) {
-      setDisplay(value);
-      return;
-    }
-    const startedAt = performance.now();
-    let frame = 0;
-    const tick = (now: number) => {
-      const progress = Math.min((now - startedAt) / 1200, 1);
-      const eased = 1 - (1 - progress) ** 3;
-      setDisplay(Math.round(value * eased));
-      if (progress < 1) frame = requestAnimationFrame(tick);
-    };
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [inView, prefersReducedMotion, value]);
-
-  return (
-    <p ref={ref} className="numeric font-display text-xl font-semibold leading-none">
-      {display.toLocaleString()}
-    </p>
-  );
-}
-
-// The fetchers are exported separately so the landing route loader can
-// prefetch them server-side (content streams with the HTML instead of
-// flashing skeletons, and the client skips the refetch on hydration).
-export async function fetchLandingStats() {
-  const count = async (table: LandingCountTable) => {
-    try {
-      const { count: c, error } = await sb.from(table).select("id", { count: "exact", head: true });
-      if (error) return 0;
-      return c ?? 0;
-    } catch {
-      return 0;
-    }
-  };
-  const [members, projects, spaces, skills, posts, comments, challenges] = await Promise.all([
-    count("profiles"),
-    count("projects"),
-    count("community_spaces"),
-    count("skills"),
-    count("posts"),
-    count("comments"),
-    count("challenges"),
-  ]);
-  return { members, projects, spaces, skills, posts, comments, challenges };
-}
 
 /**
  * True only after the first client render (post-hydration).
@@ -117,16 +33,6 @@ function useHydrationStableQuery<T extends { data: unknown; isLoading: boolean }
   return { ...query, data: undefined, isLoading: true } as T;
 }
 
-export function useLandingStats() {
-  return useHydrationStableQuery(
-    useQuery({
-      queryKey: ["landing-stats"],
-      queryFn: fetchLandingStats,
-      staleTime: 5 * 60 * 1000,
-    }),
-  );
-}
-
 type LandingProject = {
   id: string;
   title: string;
@@ -134,6 +40,7 @@ type LandingProject = {
   status: string;
   tags: string[];
   progress_percent: number;
+  stage: string | null;
   is_featured: boolean;
   cover_url: string | null;
   profiles: {
@@ -143,7 +50,7 @@ type LandingProject = {
 };
 
 const FEATURED_PROJECTS_SELECT =
-  "id, title, description, status, tags, progress_percent, is_featured, cover_url, profiles!projects_profile_id_fkey(id, handle, display_name)" as const;
+  "id, title, description, status, stage, tags, progress_percent, is_featured, cover_url, profiles!projects_profile_id_fkey(id, handle, display_name)" as const;
 
 export async function fetchFeaturedProjects(): Promise<LandingProject[]> {
   const { data, error } = await supabase
@@ -169,22 +76,69 @@ export function useFeaturedProjects() {
   );
 }
 
-export function useContributorCount(projectId: string | null | undefined) {
-  return useQuery({
-    queryKey: ["landing-project-contributors", projectId],
-    queryFn: async () => {
-      if (!projectId) return 0;
-      // project_contributors is a composite-key join table (no `id` column)
-      const { count, error } = await sb
-        .from("project_contributors")
-        .select("profile_id", { count: "exact", head: true })
-        .eq("project_id", projectId);
-      if (error) return 0;
-      return count ?? 0;
-    },
-    enabled: !!projectId,
-    staleTime: 5 * 60 * 1000,
-  });
+type WorkRecordCredit = {
+  role: string;
+  name: string;
+  handle: string | null;
+};
+
+export type WorkRecordMilestone = {
+  id: string;
+  title: string;
+  status: string;
+};
+
+export type WorkRecord = {
+  project: LandingProject;
+  credits: WorkRecordCredit[];
+  milestones: WorkRecordMilestone[];
+};
+
+const CREDIT_ORDER: Record<string, number> = { creator: 0, mentor: 1, contributor: 2 };
+
+/** The hero's subject: the top featured project with who made it and what
+ *  has shipped. Same ordering as the work index so the two agree. */
+export async function fetchWorkRecord(): Promise<WorkRecord | null> {
+  const [project] = await fetchFeaturedProjects();
+  if (!project) return null;
+  const [credits, milestones] = await Promise.all([
+    sb
+      .from("project_contributors")
+      .select("role, profiles!project_contributors_profile_id_fkey(display_name, handle)")
+      .eq("project_id", project.id)
+      .limit(8),
+    sb
+      .from("project_milestones")
+      .select("id, title, status")
+      .eq("project_id", project.id)
+      .order("position", { ascending: true })
+      .limit(5),
+  ]);
+  type CreditRow = {
+    role: string;
+    profiles: { display_name: string | null; handle: string | null } | null;
+  };
+  return {
+    project,
+    credits: ((credits.data ?? []) as CreditRow[])
+      .map((row) => ({
+        role: row.role,
+        name: row.profiles?.display_name || row.profiles?.handle || "Member",
+        handle: row.profiles?.handle ?? null,
+      }))
+      .sort((a, b) => (CREDIT_ORDER[a.role] ?? 9) - (CREDIT_ORDER[b.role] ?? 9)),
+    milestones: (milestones.data ?? []) as WorkRecordMilestone[],
+  };
+}
+
+export function useWorkRecord() {
+  return useHydrationStableQuery(
+    useQuery({
+      queryKey: ["landing-work-record"],
+      queryFn: fetchWorkRecord,
+      staleTime: 60_000,
+    }),
+  );
 }
 
 type LandingActivityPost = {

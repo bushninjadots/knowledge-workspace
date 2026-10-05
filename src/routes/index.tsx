@@ -4,8 +4,8 @@
 import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
 import {
   fetchFeaturedProjects,
-  fetchLandingStats,
   fetchRecentActivity,
+  fetchWorkRecord,
 } from "@/components/tethyr/landing/data";
 import { absoluteUrl, jsonLd, seoMeta, SITE } from "@/lib/seo";
 
@@ -16,9 +16,9 @@ export const Route = createFileRoute("/")({
     // mismatch when the client cache is warm on repeat visits.
     await Promise.allSettled([
       queryClient.prefetchQuery({
-        queryKey: ["landing-stats"],
-        queryFn: fetchLandingStats,
-        staleTime: 5 * 60 * 1000,
+        queryKey: ["landing-work-record"],
+        queryFn: fetchWorkRecord,
+        staleTime: 60_000,
       }),
       queryClient.prefetchQuery({
         queryKey: ["landing-featured-projects"],
