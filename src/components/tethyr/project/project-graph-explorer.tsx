@@ -3,6 +3,7 @@ import {
   ChevronDown,
   ChevronUp,
   GitBranch,
+  GitCommitHorizontal,
   List,
   ListTree,
   Map as MapIcon,
@@ -44,6 +45,7 @@ const MODES = [
   { value: "browse", label: "Connections", icon: Network },
   { value: "tree", label: "Relationship tree", icon: ListTree },
   { value: "lineage", label: "Project lineage", icon: GitBranch },
+  { value: "contributions", label: "Contribution trail", icon: GitCommitHorizontal },
   { value: "path", label: "How are these connected?", icon: Route },
 ] as const;
 
@@ -234,14 +236,21 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
                           className="h-3 w-3 text-muted-foreground"
                         />
                       </span>
-                      <p className="text-xs text-muted-foreground">
-                        {PROJECT_TIMELINE_LABELS[entry.kind]}
-                        {entry.date ? ` · ${new Date(entry.date).toLocaleDateString()}` : ""}
-                      </p>
-                      <p className="text-sm font-medium">{entry.title}</p>
-                      {entry.description ? (
-                        <p className="mt-0.5 text-xs text-muted-foreground">{entry.description}</p>
-                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => setSelectedNodeId(entry.nodeId)}
+                        className="w-full rounded-md px-1 py-0.5 text-left transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        aria-label={`Inspect ${entry.title}`}
+                      >
+                        <p className="text-xs text-muted-foreground">
+                          {PROJECT_TIMELINE_LABELS[entry.kind]}
+                          {entry.date ? ` · ${new Date(entry.date).toLocaleDateString()}` : ""}
+                        </p>
+                        <p className="text-sm font-medium">{entry.title}</p>
+                        {entry.description ? (
+                          <p className="mt-0.5 text-xs text-muted-foreground">{entry.description}</p>
+                        ) : null}
+                      </button>
                     </li>
                   ))}
                 </ol>
@@ -257,6 +266,47 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
                   the graph — narrow the depth or search to see the rest.
                 </p>
               ) : null}
+            </div>
+          ) : mode === "contributions" ? (
+            <div className="mt-4" aria-live="polite">
+              <p className="text-sm text-muted-foreground">
+                Follow the work behind this project: contributions, the people behind them, and the
+                relationships each contribution supports (spec §8 VIEW 6).
+              </p>
+              {(() => {
+                const contributions = connected
+                  .filter((node) => node.type === "contribution")
+                  .sort((a, b) => a.label.localeCompare(b.label));
+                return contributions.length > 0 ? (
+                  <ol className="mt-4 space-y-2 border-l border-border/70 pl-4">
+                    {contributions.map((contribution) => (
+                      <li key={contribution.id} className="relative">
+                        <span
+                          className="absolute -left-[25px] top-1 flex h-4 w-4 items-center justify-center rounded-full border border-border bg-background"
+                          aria-hidden="true"
+                        >
+                          <GraphNodeGlyph type="contribution" className="h-2.5 w-2.5" />
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedNodeId(contribution.id)}
+                          className="w-full rounded-md px-1 py-0.5 text-left transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          aria-label={`Inspect ${contribution.label}`}
+                        >
+                          <p className="text-sm font-medium">{contribution.label}</p>
+                          {contribution.description ? (
+                            <p className="mt-0.5 text-xs text-muted-foreground">{contribution.description}</p>
+                          ) : null}
+                        </button>
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  <p className="mt-4 text-sm text-muted-foreground">
+                    No credited contributions are connected to this project yet.
+                  </p>
+                );
+              })()}
             </div>
           ) : mode === "path" ? (
             <div className="mt-4">
@@ -315,7 +365,14 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
                         <span className="tabular-nums text-xs text-muted-foreground">
                           {index + 1}
                         </span>
-                        <span>{describeGraphStep(step)}</span>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedNodeId(step.to.id)}
+                          className="rounded-md text-left underline decoration-border underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          aria-label={`Inspect ${step.to.label}`}
+                        >
+                          {describeGraphStep(step)}
+                        </button>
                       </li>
                     ))}
                   </ol>
@@ -344,6 +401,7 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
                 rootId={projectId}
                 maxDepth={depth}
                 maxNodes={theme.nodeLimit * 4}
+                onSelectNode={setSelectedNodeId}
               />
             </div>
           ) : (

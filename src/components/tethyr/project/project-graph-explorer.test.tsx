@@ -85,7 +85,7 @@ describe("ProjectGraphExplorer", () => {
     expect(screen.getByRole("heading", { name: "Milestones" })).toBeInTheDocument();
   });
 
-  it("traces how two connected objects are related", () => {
+  it("traces how two connected objects are related", async () => {
     renderExpanded();
     fireEvent.click(screen.getByRole("button", { name: /how are these connected/i }));
 
@@ -98,7 +98,11 @@ describe("ProjectGraphExplorer", () => {
     fireEvent.click(screen.getByLabelText("Path to node"));
     fireEvent.click(screen.getByRole("option", { name: /^Atlas/ }));
 
-    expect(screen.getByText("Ari produced Atlas")).toBeInTheDocument();
+    const pathStep = screen.getByRole("button", { name: "Inspect Atlas" });
+    expect(pathStep).toHaveTextContent("Ari produced Atlas");
+
+    fireEvent.click(pathStep);
+    expect(await screen.findByRole("dialog", { name: "Atlas" })).toBeInTheDocument();
   });
 
   it("expands large connection lists progressively", () => {
@@ -139,6 +143,25 @@ describe("ProjectGraphExplorer", () => {
     expect(screen.getByRole("button", { name: /produced\s*Atlas/i })).toBeInTheDocument();
   });
 
+  it("renders a contribution trail with inspectable work (spec VIEW 6)", async () => {
+    render(
+      <ProjectGraphExplorer
+        input={{
+          ...input,
+          contributions: [
+            { id: "contribution-1", label: "Built the navigation", description: "Shipped the first working route." },
+          ],
+        }}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /show .* connections/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Contribution trail" }));
+
+    expect(screen.getByText("Built the navigation")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Inspect Built the navigation" }));
+    expect(await screen.findByRole("dialog", { name: "Built the navigation" })).toBeInTheDocument();
+  });
+
   it("renders project history as a timeline with origins, events, and forks (spec VIEW 5)", () => {
     render(
       <ProjectGraphExplorer
@@ -162,6 +185,9 @@ describe("ProjectGraphExplorer", () => {
     expect(titles.findIndex((text) => text.includes("Initial idea"))).toBeLessThan(
       titles.findIndex((text) => text.includes("Launch")),
     );
+
+    fireEvent.click(screen.getByRole("button", { name: "Inspect Initial idea" }));
+    expect(screen.getByRole("dialog", { name: "Initial idea" })).toBeInTheDocument();
   });
 
   it("explains an empty filter result instead of showing nothing", () => {

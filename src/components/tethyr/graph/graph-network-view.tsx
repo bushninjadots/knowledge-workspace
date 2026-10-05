@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { computeRadialLayout } from "@/lib/graph-layout";
 import { GRAPH_NODE_TYPE_LABELS, type GraphNode, type TethyrGraph } from "@/lib/graph-model";
+import { describeRelationship } from "@/lib/graph-path";
 import { GraphNodeGlyph } from "./graph-node-glyph";
 import { cn } from "@/lib/utils";
 
@@ -112,54 +113,72 @@ export function GraphNetworkView({
             (isMatch ? !isMatch(node) : false);
           const selected = selectedId === node.id;
           const isRoot = ring === 0;
+          const relationship = layout.edges.find(
+            (edge) => edge.from === node.id || edge.to === node.id,
+          );
+          const relationshipText = relationship
+            ? describeRelationship(relationship.type, relationship.from === node.id)
+            : null;
           return (
-            <button
+            <div
               key={node.id}
-              type="button"
-              onClick={() => onSelect?.(node.id)}
-              onMouseEnter={() => setHoveredId(node.id)}
-              onMouseLeave={() => setHoveredId(null)}
-              onFocus={() => setHoveredId(node.id)}
-              onBlur={() => setHoveredId(null)}
-              aria-pressed={selected || undefined}
-              aria-label={`${node.label} — ${GRAPH_NODE_TYPE_LABELS[node.type]}`}
-              className={cn(
-                "absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 rounded-lg transition-opacity duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                dimmed && !selected && "opacity-25",
-                dimmed && selected && "opacity-60",
-              )}
+              className="absolute -translate-x-1/2 -translate-y-1/2"
               style={{ left: percent(x), top: percent(y) }}
             >
-              <span
+              <button
+                type="button"
+                onClick={() => onSelect?.(node.id)}
+                onMouseEnter={() => setHoveredId(node.id)}
+                onMouseLeave={() => setHoveredId(null)}
+                onFocus={() => setHoveredId(node.id)}
+                onBlur={() => setHoveredId(null)}
+                aria-pressed={selected || undefined}
+                aria-label={`${node.label} — ${GRAPH_NODE_TYPE_LABELS[node.type]}`}
                 className={cn(
-                  "flex items-center justify-center rounded-full border bg-background transition-colors",
-                  NODE_SIZES[Math.min(ring, NODE_SIZES.length - 1)],
-                  isRoot
-                    ? "border-[var(--user-accent,var(--trust))] text-foreground"
-                    : ring === 1
-                      ? "border-border-strong text-foreground"
-                      : "border-border/70 text-muted-foreground",
-                  selected &&
-                    "border-[var(--user-accent,var(--trust))] ring-2 ring-[var(--user-accent,var(--trust))]/30",
+                  "flex flex-col items-center gap-1 rounded-lg transition-opacity duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  dimmed && !selected && "opacity-25",
+                  dimmed && selected && "opacity-60",
                 )}
               >
-                <GraphNodeGlyph
-                  type={node.type}
+                <span
                   className={cn(
-                    isRoot ? "h-5 w-5" : ring === 1 ? "h-4 w-4" : "h-3.5 w-3.5",
-                    ring === 2 && "opacity-80",
+                    "flex items-center justify-center rounded-full border bg-background transition-colors",
+                    NODE_SIZES[Math.min(ring, NODE_SIZES.length - 1)],
+                    isRoot
+                      ? "border-[var(--user-accent,var(--trust))] text-foreground"
+                      : ring === 1
+                        ? "border-border-strong text-foreground"
+                        : "border-border/70 text-muted-foreground",
+                    selected &&
+                      "border-[var(--user-accent,var(--trust))] ring-2 ring-[var(--user-accent,var(--trust))]/30",
                   )}
-                />
-              </span>
-              <span
-                className={cn(
-                  "max-w-[96px] truncate text-[10px] leading-tight",
-                  isRoot ? "font-medium text-foreground" : "text-muted-foreground",
-                )}
-              >
-                {node.label}
-              </span>
-            </button>
+                >
+                  <GraphNodeGlyph
+                    type={node.type}
+                    className={cn(
+                      isRoot ? "h-5 w-5" : ring === 1 ? "h-4 w-4" : "h-3.5 w-3.5",
+                      ring === 2 && "opacity-80",
+                    )}
+                  />
+                </span>
+                <span
+                  className={cn(
+                    "max-w-[96px] truncate text-[10px] leading-tight",
+                    isRoot ? "font-medium text-foreground" : "text-muted-foreground",
+                  )}
+                >
+                  {node.label}
+                </span>
+              </button>
+              {focusId === node.id ? (
+                <div role="tooltip" className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-44 -translate-x-1/2 border border-border bg-popover p-2 text-left text-xs shadow-sm">
+                  <p className="font-medium text-popover-foreground">{node.label}</p>
+                  <p className="text-muted-foreground">{GRAPH_NODE_TYPE_LABELS[node.type]}</p>
+                  {node.description ? <p className="mt-1 line-clamp-2 text-muted-foreground">{node.description}</p> : null}
+                  {relationshipText ? <p className="mt-1 text-muted-foreground">{relationshipText}</p> : null}
+                </div>
+              ) : null}
+            </div>
           );
         })}
       </div>
