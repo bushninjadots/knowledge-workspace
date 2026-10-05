@@ -66,6 +66,9 @@ SELECT set_eq(
       ('get_layout_lineage(start_id uuid)'),
       ('post_engagement_counts(p_post_ids uuid[])'),
       ('posts_images_are_valid(p_images text[])'),
+      -- SECURITY INVOKER count over the publicly readable project_ai_tags;
+      -- the AI badge threshold renders on signed-out project pages.
+      ('project_ai_tag_count(p_project_id uuid)'),
       ('skill_directory_stats(p_skill_ids uuid[])'),
       ('trending_skills(p_limit integer)')
     ) AS allowed(name)
