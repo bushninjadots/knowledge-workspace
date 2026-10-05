@@ -10,7 +10,12 @@ import {
   Route,
   Search,
 } from "lucide-react";
-import { GRAPH_NODE_TYPE_LABELS, getConnectedNodes, type GraphNode } from "@/lib/graph-model";
+import {
+  GRAPH_NODE_TYPE_LABELS,
+  getConnectedNodes,
+  type GraphEdgeType,
+  type GraphNode,
+} from "@/lib/graph-model";
 import { filterGraphNodes, graphTypeFacets, type GraphNodeFilter } from "@/lib/graph-exploration";
 import { describeGraphStep, findGraphPath } from "@/lib/graph-path";
 import { buildProjectGraph, type ProjectGraphInput } from "@/lib/project-graph";
@@ -73,6 +78,7 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
   const [depth, setDepth] = useState(1);
   const [query, setQuery] = useState("");
   const [activeTypes, setActiveTypes] = useState<GraphNode["type"][]>([]);
+  const [activeEdgeTypes, setActiveEdgeTypes] = useState<GraphEdgeType[]>([]);
   const [pathStart, setPathStart] = useState("");
   const [pathEnd, setPathEnd] = useState("");
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
@@ -88,7 +94,7 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
     [graph, selectedNodeId],
   );
   const connected = useMemo(
-    () => getConnectedNodes(graph, projectId, { depth }),
+    () => getConnectedNodes(graph, projectId, { depth, edgeTypes: activeEdgeTypes }),
     [graph, projectId, depth],
   );
   const facets = useMemo(() => graphTypeFacets(connected), [connected]);
@@ -140,9 +146,28 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
     );
   }
 
+  const edgeFacets = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          graph.edges
+            .filter((edge) => edge.from === projectId || edge.to === projectId)
+            .map((edge) => edge.type),
+        ),
+      ).sort(),
+    [],
+  );
+
   function clearFilters() {
     setQuery("");
     setActiveTypes([]);
+    setActiveEdgeTypes([]);
+  }
+
+  function toggleEdgeType(type: GraphEdgeType) {
+    setActiveEdgeTypes((current) =>
+      current.includes(type) ? current.filter((value) => value !== type) : [...current, type],
+    );
   }
 
   return (
@@ -393,7 +418,31 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
                 </div>
               ) : null}
 
-              {filtering ? (
+              {edgeFacets.length > 1 ? (
+                <div role="group" aria-label="Filter relationships" className="mt-3 flex flex-wrap gap-1.5">
+                  {edgeFacets.map((type) => {
+                    const active = activeEdgeTypes.includes(type);
+                    return (
+                      <button
+                        key={type}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => toggleEdgeType(type)}
+                        className={cn(
+                          "rounded-full border px-2.5 py-0.5 text-xs transition-colors",
+                          active
+                            ? "border-user-accent-border bg-accent text-foreground"
+                            : "border-border/70 text-muted-foreground hover:border-border-strong hover:text-foreground",
+                        )}
+                      >
+                        {type.replaceAll("_", " ")}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
+
+              {filtering || activeEdgeTypes.length > 0 ? (
                 <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
                   <span>
                     Showing {visible.length} of {connected.length} connections

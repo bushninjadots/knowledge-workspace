@@ -48,7 +48,7 @@ export const GRAPH_NODE_TYPE_LABELS: Record<GraphNodeType, string> = {
   organization: "Organizations",
 };
 
-type GraphEdgeType =
+export type GraphEdgeType =
   | "contributed_to"
   | "has_skill"
   | "demonstrated_skill"
@@ -151,7 +151,7 @@ export function createGraphEdge(edge: Omit<GraphEdge, "id"> & { id?: string }): 
 export function getConnectedNodes(
   graph: TethyrGraph,
   nodeId: string,
-  options: { edgeType?: GraphEdgeType; depth?: number } = {},
+  options: { edgeType?: GraphEdgeType; edgeTypes?: GraphEdgeType[]; depth?: number } = {},
 ): GraphNode[] {
   const maxDepth = Math.max(1, options.depth ?? 1);
   const nodeMap = new Map(graph.nodes.map((node) => [node.id, node]));
@@ -165,6 +165,7 @@ export function getConnectedNodes(
 
     for (const edge of graph.edges) {
       if (options.edgeType && edge.type !== options.edgeType) continue;
+      if (options.edgeTypes && options.edgeTypes.length > 0 && !options.edgeTypes.includes(edge.type)) continue;
       const nextId = edge.from === current.id ? edge.to : edge.to === current.id ? edge.from : null;
       if (!nextId || visited.has(nextId)) continue;
 
