@@ -351,6 +351,12 @@ export interface PageData {
   versions: PageVersion[];
   /** The latest published version number, or null when never published. */
   publishedVersion: number | null;
+  /**
+   * The appearance visitors see: the latest published version's config and
+   * theme id. Null when never published. Lets the editor count appearance
+   * edits as unpublished changes.
+   */
+  published: { config: StudioConfig; themeId: string } | null;
 }
 
 // ---------------------------------------------------------------------------

@@ -40,7 +40,7 @@ import type {
   LayoutSection,
   PageLayout,
 } from "@/lib/page-blocks";
-import { DEFAULT_STUDIO_CONFIG } from "@/lib/studio-config";
+import { DEFAULT_STUDIO_CONFIG, normalizeStudioConfig } from "@/lib/studio-config";
 import { createDefaultProfileLayout } from "@/lib/default-layouts";
 import "@/components/tethyr/blocks/register-all";
 import {
@@ -274,19 +274,31 @@ export function CreationStudio({
     persistedBordersRef.current = seeded;
   }, [me]);
 
-  // g/'s `hasUnpublishedChanges`: the working layout differs from the latest
-  // published snapshot. Page versions snapshot layout + theme (not config),
-  // so compare only the layout. Never published → treat as unpublished.
+  // `hasUnpublishedChanges`: the working layout or appearance differs from the
+  // latest published snapshot (versions carry layout, theme, and config).
+  // Never published → treat as unpublished.
   const latestPublishedLayout = useMemo<PageLayout | null>(
     () => page?.versions[0]?.layout ?? null,
     [page],
   );
+  const themeChanged = Boolean(page?.published && page.themeId !== page.published.themeId);
+  const appearanceChanged = useMemo(
+    () =>
+      Boolean(
+        page?.published &&
+        config &&
+        JSON.stringify(normalizeStudioConfig(config)) !== JSON.stringify(page.published.config),
+      ),
+    [config, page],
+  );
   const hasUnpublishedChanges = useMemo(
     () =>
       !latestPublishedLayout ||
+      themeChanged ||
+      appearanceChanged ||
       JSON.stringify(layout ? normalizeLayout(layout) : null) !==
         JSON.stringify(normalizeLayout(latestPublishedLayout)),
-    [latestPublishedLayout, layout],
+    [appearanceChanged, latestPublishedLayout, layout, themeChanged],
   );
 
   const commit = useCallback(
@@ -964,9 +976,11 @@ export function CreationStudio({
       const delta = count - (currentBlocks.get(label) ?? 0);
       if (delta > 0) lines.push(`Removed ${delta} ${label} block${delta === 1 ? "" : "s"}`);
     }
-    if (lines.length === 0) lines.push("Arrangement and appearance changes");
+    if (themeChanged) lines.push("Changed theme");
+    if (appearanceChanged) lines.push("Updated appearance");
+    if (lines.length === 0) lines.push("Arrangement changes");
     return lines.slice(0, 4);
-  }, [latestPublishedLayout, layout]);
+  }, [appearanceChanged, latestPublishedLayout, layout, themeChanged]);
 
   const chooseStarter = useCallback(
     (starter: StudioStarter) => {

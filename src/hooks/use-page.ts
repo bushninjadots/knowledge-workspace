@@ -34,6 +34,17 @@ interface PageRow {
   updated_at: string;
 }
 
+interface VersionRow {
+  id: string;
+  version: number;
+  layout: Json;
+  theme_id: string | null;
+  theme_overrides: Json | null;
+  config?: Json | null;
+  published_at: string;
+  note: string | null;
+}
+
 interface LayoutRow {
   sections: Json;
 }
@@ -127,30 +138,28 @@ export function usePage({ ownerId, ownerType, includeDraft = false }: FetchPageP
           []) as unknown as PageLayout["sections"],
       };
 
-      // Query 3: Get the theme tokens (optional — null means use default).
-      let theme: ThemeTokens | null = null;
-      if (pageRow.theme_id) {
-        const { data: themeRow } = await supabase
-          .from("themes")
-          .select("tokens")
-          .eq("id", pageRow.theme_id)
-          .maybeSingle();
-        // Deep-merge theme_overrides on top of base theme tokens so partial
-        // customizations (a radius change, a single font) layer onto the theme
-        // instead of replacing whole groups and dropping sibling tokens.
-        const baseTokens = (themeRow as unknown as ThemeRow | null)?.tokens ?? {};
-        const overrides = (pageRow.theme_overrides ?? {}) as ThemeTokens;
-        theme = deepMergeTokens(baseTokens as ThemeTokens, overrides);
+      // Query 3: Get published versions (newest first). Publicly readable via
+      // RLS. Each version snapshots layout, theme, and appearance config, so
+      // visitors see exactly what was published — never the autosaved draft.
+      const versionQuery = (columns: string) =>
+        supabasePending
+          .from("page_versions")
+          .select(columns)
+          .eq("page_id", pageRow.id)
+          .order("version", { ascending: false });
+      const first = await versionQuery(
+        "id, version, layout, theme_id, theme_overrides, config, published_at, note",
+      );
+      let rawVersions = first.data;
+      if (first.error && /config|column/i.test(first.error.message ?? "")) {
+        // Databases without the config snapshot column yet.
+        ({ data: rawVersions } = await versionQuery(
+          "id, version, layout, theme_id, theme_overrides, published_at, note",
+        ));
       }
+      const versionRows = (rawVersions ?? []) as unknown as VersionRow[];
 
-      // Query 4: Get published versions (newest first). Publicly readable via RLS.
-      const { data: versionRows } = await supabasePending
-        .from("page_versions")
-        .select("id, version, layout, published_at, note")
-        .eq("page_id", pageRow.id)
-        .order("version", { ascending: false });
-
-      const versions: PageVersion[] = (versionRows ?? []).map((row) => {
+      const versions: PageVersion[] = versionRows.map((row) => {
         // publish_page_version snapshots `layouts.sections` — a bare array —
         // into page_versions.layout. Defend against both shapes (an object
         // with `sections` or the raw array) so published pages never surface
@@ -164,6 +173,36 @@ export function usePage({ ownerId, ownerType, includeDraft = false }: FetchPageP
         };
       });
 
+      const latest = versionRows[0];
+      // Versions published before config was snapshotted carry no config;
+      // fall back to the page's own.
+      const published = latest
+        ? {
+            config: normalizeStudioConfig(latest.config ?? pageRow.config),
+            themeId: latest.theme_id ?? "",
+            themeOverrides: latest.theme_overrides,
+          }
+        : null;
+      const showPublished = !includeDraft && published !== null;
+      const themeId = showPublished ? published.themeId : (pageRow.theme_id ?? "");
+      const themeOverrides = showPublished ? published.themeOverrides : pageRow.theme_overrides;
+
+      // Query 4: Get the theme tokens (optional — null means use default).
+      let theme: ThemeTokens | null = null;
+      if (themeId) {
+        const { data: themeRow } = await supabase
+          .from("themes")
+          .select("tokens")
+          .eq("id", themeId)
+          .maybeSingle();
+        // Deep-merge theme_overrides on top of base theme tokens so partial
+        // customizations (a radius change, a single font) layer onto the theme
+        // instead of replacing whole groups and dropping sibling tokens.
+        const baseTokens = (themeRow as unknown as ThemeRow | null)?.tokens ?? {};
+        const overrides = (themeOverrides ?? {}) as ThemeTokens;
+        theme = deepMergeTokens(baseTokens as ThemeTokens, overrides);
+      }
+
       const publishedLayout = versions[0]?.layout ?? null;
       const layout = resolvePageLayout(liveLayout, publishedLayout, includeDraft);
 
@@ -172,17 +211,18 @@ export function usePage({ ownerId, ownerType, includeDraft = false }: FetchPageP
         ownerId: pageRow.owner_id,
         ownerType: pageRow.owner_type as PageOwnerType,
         layoutId: pageRow.layout_id ?? "",
-        themeId: pageRow.theme_id ?? "",
+        themeId,
         status: pageRow.status as PageData["status"],
         publishedAt: pageRow.published_at,
         createdAt: pageRow.created_at,
         updatedAt: pageRow.updated_at,
         layout,
         theme,
-        themeOverrides: pageRow.theme_overrides ? (pageRow.theme_overrides as ThemeTokens) : null,
-        config: normalizeStudioConfig(pageRow.config),
+        themeOverrides: themeOverrides ? (themeOverrides as ThemeTokens) : null,
+        config: showPublished ? published.config : normalizeStudioConfig(pageRow.config),
         versions,
         publishedVersion: versions.length > 0 ? versions[0].version : null,
+        published: published ? { config: published.config, themeId: published.themeId } : null,
       };
     },
     staleTime: 0, // Never serve stale page data — mutations must reflect immediately.
