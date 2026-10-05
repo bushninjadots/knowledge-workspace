@@ -94,9 +94,9 @@ describe("ProjectGraphExplorer", () => {
     ).toBeInTheDocument();
 
     fireEvent.click(screen.getByLabelText("Path from node"));
-    fireEvent.click(screen.getByRole("option", { name: "Ari" }));
+    fireEvent.click(screen.getByRole("option", { name: /^Ari/ }));
     fireEvent.click(screen.getByLabelText("Path to node"));
-    fireEvent.click(screen.getByRole("option", { name: "Atlas" }));
+    fireEvent.click(screen.getByRole("option", { name: /^Atlas/ }));
 
     expect(screen.getByText("Ari produced Atlas")).toBeInTheDocument();
   });

@@ -48,7 +48,7 @@ export const GRAPH_NODE_TYPE_LABELS: Record<GraphNodeType, string> = {
   organization: "Organizations",
 };
 
-type GraphEdgeType =
+export type GraphEdgeType =
   | "contributed_to"
   | "has_skill"
   | "demonstrated_skill"
@@ -63,6 +63,7 @@ type GraphEdgeType =
   | "imported_from"
   | "produced"
   | "referenced_by"
+  | "references"
   | "supports"
   | "earned"
   | "participated_in"
@@ -70,6 +71,31 @@ type GraphEdgeType =
   | "contains"
   | "needs"
   | "offers";
+
+export const GRAPH_EDGE_TYPE_LABELS: Record<GraphEdgeType, string> = {
+  contributed_to: "Contributed to",
+  has_skill: "Has skill",
+  demonstrated_skill: "Demonstrated skill",
+  used_in: "Used in",
+  has_milestone: "Has milestone",
+  has_role: "Has role",
+  filled_role: "Filled role",
+  collaborated_with: "Collaborated with",
+  related_to: "Related to",
+  forked_from: "Forked from",
+  derived_from: "Derived from",
+  imported_from: "Imported from",
+  produced: "Produced",
+  referenced_by: "Referenced by",
+  references: "References",
+  supports: "Supports",
+  earned: "Earned",
+  participated_in: "Participated in",
+  uses: "Uses",
+  contains: "Contains",
+  needs: "Needs",
+  offers: "Offers",
+};
 
 export interface GraphEdge {
   id: string;
@@ -150,7 +176,7 @@ export function createGraphEdge(edge: Omit<GraphEdge, "id"> & { id?: string }): 
 export function getConnectedNodes(
   graph: TethyrGraph,
   nodeId: string,
-  options: { edgeType?: GraphEdgeType; depth?: number } = {},
+  options: { edgeType?: GraphEdgeType; edgeTypes?: GraphEdgeType[]; depth?: number } = {},
 ): GraphNode[] {
   const maxDepth = Math.max(1, options.depth ?? 1);
   const nodeMap = new Map(graph.nodes.map((node) => [node.id, node]));
@@ -164,6 +190,7 @@ export function getConnectedNodes(
 
     for (const edge of graph.edges) {
       if (options.edgeType && edge.type !== options.edgeType) continue;
+      if (options.edgeTypes && options.edgeTypes.length > 0 && !options.edgeTypes.includes(edge.type)) continue;
       const nextId = edge.from === current.id ? edge.to : edge.to === current.id ? edge.from : null;
       if (!nextId || visited.has(nextId)) continue;
 
