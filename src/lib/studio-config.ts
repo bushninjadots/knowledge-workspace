@@ -44,7 +44,7 @@ import {
 // ── Dimension Types ───────────────────────────────────────────────────────────
 
 /** STRUCTURE — how the Studio is arranged. */
-export type StructureId = "single" | "sidebar" | "wide";
+export type StructureId = "single" | "sidebar" | "wide" | "full";
 /** PERSONALITY — typography + visual character. */
 export type PersonalityId = "editorial" | "modern" | "technical";
 export type DensityId = "compact" | "comfortable" | "spacious";
@@ -67,8 +67,45 @@ export const SHADOWS: Record<ShadowStyle, string> = {
 };
 type CardBorderWidth = "thin" | "medium" | "thick";
 
+/** Layout templates (src/data/starters.ts). */
 export type StarterId =
-  "focused" | "editorial" | "project-first" | "minimal" | "experimental" | "for-hire";
+  | "editorial"
+  | "magazine"
+  | "journal"
+  | "portfolio"
+  | "gallery"
+  | "split"
+  | "technical"
+  | "archive"
+  | "linear"
+  | "statement"
+  | "collage"
+  | "open"
+  | "for-hire";
+
+const STARTER_IDS = new Set<StarterId>([
+  "editorial",
+  "magazine",
+  "journal",
+  "portfolio",
+  "gallery",
+  "split",
+  "technical",
+  "archive",
+  "linear",
+  "statement",
+  "collage",
+  "open",
+  "for-hire",
+]);
+
+/** Layouts from before compositions, read as their nearest successor. */
+const LEGACY_STARTERS: Record<string, StarterId> = {
+  focused: "linear",
+  "project-first": "portfolio",
+  minimal: "linear",
+  experimental: "collage",
+};
 
 // ── Per-block frame ───────────────────────────────────────────────────────────
 
@@ -367,7 +404,8 @@ export const STRUCTURE_OPTIONS: ReadonlyArray<{ value: StructureId; label: strin
       label: "Balanced",
       hint: "A medium measure that lets blocks sit side by side.",
     },
-    { value: "wide", label: "Wide", hint: "Full width — room for three columns of signals." },
+    { value: "wide", label: "Wide", hint: "Room for three columns of signals." },
+    { value: "full", label: "Full", hint: "Edge to edge on large screens, for image-led pages." },
   ];
 
 export const PERSONALITY_OPTIONS: ReadonlyArray<{ value: PersonalityId; label: string }> = [
@@ -476,8 +514,10 @@ export function normalizeStudioConfig(raw: unknown): StudioConfig {
 
   return {
     starterId:
-      typeof value.starterId === "string" && value.starterId.length > 0
-        ? (value.starterId as StarterId)
+      typeof value.starterId === "string"
+        ? STARTER_IDS.has(value.starterId as StarterId)
+          ? (value.starterId as StarterId)
+          : (LEGACY_STARTERS[value.starterId] ?? null)
         : null,
     structure:
       legacy.structure ??
@@ -548,6 +588,7 @@ export function normalizeStudioConfig(raw: unknown): StudioConfig {
 export function structureMaxWidthCss(config: StudioConfig): string {
   if (config.structure === "single") return "min(768px, 82%)";
   if (config.structure === "sidebar") return "min(1024px, 90%)";
+  if (config.structure === "full") return "100%";
   return "min(1200px, 100%)";
 }
 
@@ -559,6 +600,7 @@ export function structureMaxWidthCss(config: StudioConfig): string {
 export function structureMaxWidth(config: StudioConfig): number {
   if (config.structure === "single") return 768;
   if (config.structure === "sidebar") return 1024;
+  if (config.structure === "full") return 1600;
   return 1200;
 }
 

@@ -31,7 +31,7 @@ import {
 } from "@/hooks/use-page-editor";
 import { createBlockInstance, getAllBlocks, getBlock } from "@/lib/block-registry";
 import { StarterPicker, type StudioStarter } from "@/components/tethyr/studio/starter-picker";
-import { applyStarter, starterConfig, starterMap } from "@/data/starters";
+import { applyStarter, starterConfig } from "@/data/starters";
 import {
   fetchTemplateSections,
   useForkTemplate,
@@ -1484,10 +1484,11 @@ export function CreationStudio({
   const chooseStarter = useCallback(
     (starter: StudioStarter) => {
       if (!layout || !config) return;
-      // Switching templates must reveal sections the previous template hid,
-      // so the new template's arrangement starts from a clean slate.
-      const previous = config.starterId ? starterMap[config.starterId] : null;
-      commit(applyStarter(layout, starter, previous), starterConfig(starter, config));
+      const next = applyStarter(layout, starter);
+      // A layout's placement *is* its grid: save every area's grid, or the
+      // public page would fall back to a plain stack.
+      for (const section of next.sections) touchedGridRef.current.add(section.id);
+      commit(next, starterConfig(starter, config));
     },
     [commit, config, layout],
   );
@@ -2004,6 +2005,8 @@ export function CreationStudio({
       {introStarterOpen && (
         <StarterPicker
           currentId={config.starterId}
+          layout={layout}
+          config={config}
           canUndo={history.length > 0}
           onUndo={undo}
           firstRun={!config.starterId && page?.status !== "published"}

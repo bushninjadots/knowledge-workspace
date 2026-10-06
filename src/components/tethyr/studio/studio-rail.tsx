@@ -656,6 +656,7 @@ export function GStudioRail(
             selectedBlockId={props.selectedBlockId}
             onCompleteProfile={props.onCompleteProfile}
             onOpenAppearance={props.onOpenAppearance}
+            onOpenLayouts={props.onOpenTemplates}
           />
         ) : tab === "add" ? (
           <GBlockPalette {...props} />

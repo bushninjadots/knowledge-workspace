@@ -288,7 +288,7 @@ export function GMobileEditSheet(props: GStudioSurfaceProps) {
                 className="mb-4 flex w-full items-center justify-center gap-1.5 rounded-md border border-border px-2 py-2 text-2xs text-foreground outline-none hover:border-[var(--user-accent-border)] hover:bg-[var(--surface-sunken)] focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1"
               >
                 <LayoutTemplate className="h-3 w-3" aria-hidden />
-                Browse templates
+                Browse layouts
               </button>
             )}
             {/* The same grouped settings as the desktop rail's Style tab. */}
@@ -307,6 +307,7 @@ export function GMobileEditSheet(props: GStudioSurfaceProps) {
               onSelect={props.onSelect}
               selectedBlockId={props.selectedBlockId}
               onOpenAppearance={props.onOpenAppearance}
+              onOpenLayouts={props.onOpenTemplates}
             />
           </div>
         )}

@@ -221,7 +221,7 @@ export function GStudioTopBar({
                 <>
                   {onTemplates && (
                     <Button variant="ghost" size="sm" onClick={onTemplates}>
-                      <LayoutTemplate className="h-3 w-3" /> Templates
+                      <LayoutTemplate className="h-3 w-3" /> Layouts
                     </Button>
                   )}
                   <Button
@@ -288,7 +288,7 @@ export function GStudioTopBar({
               </DropdownMenuItem>
               {compact && onTemplates && (
                 <DropdownMenuItem onSelect={onTemplates}>
-                  <LayoutTemplate className="h-3.5 w-3.5" /> Templates
+                  <LayoutTemplate className="h-3.5 w-3.5" /> Layouts
                 </DropdownMenuItem>
               )}
               {onCommands && (

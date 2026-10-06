@@ -51,7 +51,8 @@ describe("normalizeStudioConfig", () => {
       cardBorderWidth: "thin",
       cardColor: "",
       cardOpacity: 30,
-      starterId: "focused",
+      // Layouts from before compositions read as their successor.
+      starterId: "linear",
       visualLanguage: null,
       look: {},
     });
@@ -464,7 +465,7 @@ describe("option catalogs", () => {
     const values = <T extends string>(opts: ReadonlyArray<{ value: T; label: string }>) =>
       opts.map((o) => o.value);
     expect(values(PERSONALITY_OPTIONS)).toEqual(["editorial", "modern", "technical"]);
-    expect(values(STRUCTURE_OPTIONS)).toEqual(["single", "sidebar", "wide"]);
+    expect(values(STRUCTURE_OPTIONS)).toEqual(["single", "sidebar", "wide", "full"]);
     expect(values(DENSITY_OPTIONS)).toEqual(["compact", "comfortable", "spacious"]);
     expect(values(ACCENT_OPTIONS)).toEqual(["custom", "dual", "none"]);
     expect(values(BACKGROUND_OPTIONS as ReadonlyArray<{ value: string; label: string }>)).toEqual([

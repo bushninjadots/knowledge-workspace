@@ -1,13 +1,8 @@
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  BookOpen,
   Check,
   Clock,
-  Compass,
-  Handshake,
   Copy,
-  Focus,
-  Grid2X2,
   LayoutTemplate,
   Plus,
   Search,
@@ -18,10 +13,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
+import { VISUAL_LANGUAGES } from "@/lib/visual-language";
+import type { PageLayout } from "@/lib/page-blocks";
+import type { StudioConfig } from "@/lib/studio-config";
+import { LayoutPreview } from "./layout-preview";
 import {
+  LAYOUT_FAMILIES,
   STARTERS,
+  applyStarter,
   starterPreviewConfig,
-  starterPreviewLayout,
   type Starter,
 } from "@/data/starters";
 import {
@@ -31,10 +32,8 @@ import {
   useToggleTemplateStar,
   type CommunityTemplate,
 } from "@/hooks/use-templates";
-import { PageLayoutRenderer } from "@/components/tethyr/page/page-layout";
-import type { BlockContext, LayoutSection } from "@/lib/page-blocks";
+import type { LayoutSection } from "@/lib/page-blocks";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { studioBackgroundVars, studioSurfaceStyle } from "@/lib/studio-config";
 import { sanitizeTemplateSections } from "@/lib/template-apply";
 import "@/components/tethyr/blocks/register-all";
 
@@ -42,27 +41,6 @@ import "@/components/tethyr/blocks/register-all";
 export type StudioStarter = Starter;
 type StudioStarterId = Starter["id"];
 const STUDIO_STARTERS: StudioStarter[] = STARTERS;
-
-const STARTER_DETAILS: Record<
-  StudioStarterId,
-  {
-    icon: typeof Focus;
-    accent: string;
-    tint: string;
-    label: string;
-  }
-> = {
-  focused: { icon: Focus, accent: "#d97706", tint: "#fff7ed", label: "Clarity" },
-  editorial: { icon: BookOpen, accent: "#7c3aed", tint: "#f5f3ff", label: "Narrative" },
-  "project-first": { icon: Grid2X2, accent: "#0891b2", tint: "#ecfeff", label: "Momentum" },
-  minimal: { icon: LayoutTemplate, accent: "#475569", tint: "#f8fafc", label: "Essentials" },
-  experimental: { icon: Compass, accent: "#db2777", tint: "#fdf2f8", label: "Uncharted" },
-  "for-hire": { icon: Handshake, accent: "#059669", tint: "#ecfdf5", label: "Get hired" },
-};
-
-function starterDetail(starter: StudioStarter) {
-  return STARTER_DETAILS[starter.id];
-}
 
 /**
  * How a community template enters the member's Studio — the two actions every
@@ -72,6 +50,9 @@ type TemplateAction = "apply" | "save";
 
 interface StarterPickerProps {
   currentId: StudioStarterId | null;
+  /** The member's page and look, so each layout previews on their own work. */
+  layout: PageLayout;
+  config: StudioConfig;
   onChoose: (starter: StudioStarter) => void;
   onClose: () => void;
   canUndo: boolean;
@@ -108,6 +89,8 @@ interface StarterPickerProps {
  */
 export function StarterPicker({
   currentId,
+  layout,
+  config,
   onChoose,
   onClose,
   canUndo,
@@ -153,7 +136,7 @@ export function StarterPicker({
   return (
     <Dialog open onOpenChange={(next) => !next && onClose()}>
       <DialogContent
-        aria-label="Choose how your Studio feels"
+        aria-label="Choose a layout"
         className="flex max-h-[85vh] w-full max-w-4xl flex-col gap-0 overflow-hidden rounded-lg border-card-border bg-surface-elevated p-0 shadow-lg card"
       >
         {/* Right padding clears the dialog's own close button. */}
@@ -162,8 +145,8 @@ export function StarterPicker({
             <div>
               <h2 className="font-display text-lg font-semibold text-foreground">
                 {firstRun
-                  ? "Choose how you want your Studio to feel"
-                  : "Templates — a starting direction for your Studio"}
+                  ? "Choose how your Studio is composed"
+                  : "Layouts — how your page is composed"}
               </h2>
               <p className="mt-1 flex items-start gap-1.5 text-xs text-muted-foreground">
                 <LayoutTemplate
@@ -171,8 +154,9 @@ export function StarterPicker({
                   aria-hidden
                 />
                 <span>
-                  A starting direction. It rearranges what you already have — nothing is deleted,
-                  and one undo puts it back.
+                  A layout moves what you already have into place. Your look — theme, visual
+                  language, type and colour — stays as it is. Nothing is deleted, and one undo puts
+                  it back.
                 </span>
               </p>
             </div>
@@ -230,67 +214,25 @@ export function StarterPicker({
                   </button>
                 </li>
               )}
-              {STUDIO_STARTERS.map((starter) => {
-                const active = starter.id === currentId;
-                const detail = starterDetail(starter);
-                const Icon = detail.icon;
-                return (
-                  <li key={starter.id}>
-                    <button
-                      type="button"
-                      onClick={() => onChoose(starter)}
-                      aria-pressed={active}
-                      className={`group flex h-full w-full flex-col gap-3 rounded-lg border p-3 text-left outline-none transition-[border-color,background-color,transform] hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset ${
-                        active
-                          ? "border-[var(--starter-accent)] bg-[var(--starter-tint)]"
-                          : "border-card-border bg-surface-elevated hover:border-[var(--starter-accent)]/60 hover:bg-surface"
-                      }`}
-                      style={
-                        {
-                          "--starter-accent": detail.accent,
-                          "--starter-tint": `color-mix(in oklab, ${detail.accent} 12%, var(--background))`,
-                        } as CSSProperties
-                      }
-                    >
-                      <StarterPreview starter={starter} active={active} accent={detail.accent} />
-                      <span className="flex items-start gap-2.5">
-                        <span
-                          className="grid size-8 shrink-0 place-items-center rounded-md"
-                          style={{ backgroundColor: `${detail.accent}18`, color: detail.accent }}
-                        >
-                          <Icon aria-hidden data-icon="" />
-                        </span>
-                        <span className="min-w-0">
-                          <span className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 font-display text-sm font-semibold text-foreground">
-                            {starter.name}
-                            {active && (
-                              <span
-                                className="text-[10px] uppercase tracking-wider"
-                                style={{ color: detail.accent }}
-                              >
-                                Current
-                              </span>
-                            )}
-                          </span>
-                          <span className="mt-0.5 block text-xs font-medium text-foreground">
-                            {starter.tagline}
-                          </span>
-                        </span>
-                      </span>
-                      <span className="mt-auto block border-t border-current/10 pt-2 text-[11px] leading-relaxed text-muted-foreground">
-                        <span
-                          className="font-mono text-3xs uppercase tracking-widest"
-                          style={{ color: detail.accent }}
-                        >
-                          {detail.label}
-                        </span>{" "}
-                        — {starter.remixNote}
-                      </span>
-                    </button>
-                  </li>
-                );
-              })}
             </ul>
+            {LAYOUT_FAMILIES.map((family) => (
+              <div key={family} className="px-5 pb-4">
+                <h3 className="t-label mb-2">{family}</h3>
+                <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {STUDIO_STARTERS.filter((starter) => starter.family === family).map((starter) => (
+                    <li key={starter.id}>
+                      <LayoutCard
+                        starter={starter}
+                        active={starter.id === currentId}
+                        layout={layout}
+                        config={config}
+                        onChoose={() => onChoose(starter)}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </section>
 
           {/* ── Community directions ────────────────────────────────────── */}
@@ -388,7 +330,7 @@ export function StarterPicker({
           <span className="text-[11px] text-muted-foreground">
             {firstRun
               ? "You can change any of this directly on the canvas afterwards."
-              : "Every template keeps your content — only the arrangement and styling change."}
+              : "Every layout keeps your content and your look — only the arrangement changes."}
           </span>
           <div className="flex gap-2">
             <Button variant="ghost" size="sm" disabled={!canUndo} onClick={onUndo}>
@@ -405,142 +347,59 @@ export function StarterPicker({
   );
 }
 
-// ── Previews ─────────────────────────────────────────────────────────────────
+// ── Layout cards ─────────────────────────────────────────────────────────────
 
-/** A scaled live preview of the member's work, dressed in the starter's
- *  actual surface treatment (fonts, density, radius, backgrounds). */
-function StarterPreview({
+/** One layout: a preview of the member's own page composed this way, in their
+ *  own look, then what it does and who it's for. */
+function LayoutCard({
   starter,
   active,
-  accent,
+  layout,
+  config,
+  onChoose,
 }: {
   starter: StudioStarter;
   active: boolean;
-  accent: string;
+  layout: PageLayout;
+  config: StudioConfig;
+  onChoose: () => void;
 }) {
-  const { data: me } = useCurrentUser();
-  const ownerId = me?.userId ?? "";
-  // A new member's blocks are mostly empty, so live previews of their own
-  // content look the same for every direction. Until there's work to show,
-  // preview each direction's arrangement instead, labelled as an example.
-  const hasContent = (me?.projects.length ?? 0) > 0 || !!me?.profile?.bio?.trim();
-  const layout = useMemo(() => starterPreviewLayout(starter), [starter]);
-  const context = useMemo<BlockContext>(
-    () => ({
-      ownerId,
-      ownerType: "profile",
-      pageId: `profile:${ownerId}`,
-      isEditing: false,
-      isOwner: false,
-      quickEdit: false,
-    }),
-    [ownerId],
-  );
-
+  const composed = useMemo(() => applyStarter(layout, starter), [layout, starter]);
+  const previewConfig = useMemo(() => starterPreviewConfig(starter, config), [starter, config]);
+  const pairs = VISUAL_LANGUAGES.find((language) => language.id === starter.pairsWith);
   return (
-    <div
-      aria-hidden
-      className="overflow-hidden [border-color:var(--card-border-color,var(--border))] bg-background card"
-      style={
-        {
-          borderColor: active ? accent : "var(--card-border-color,var(--border))",
-          boxShadow: active ? `0 0 0 1px ${accent}` : undefined,
-        } as CSSProperties
-      }
-    >
-      <div className="flex items-center gap-1.5 border-b [border-color:var(--border)] px-2 py-1.5">
-        <span
-          className="h-2 w-2 rounded-full"
-          style={{
-            backgroundColor: active ? "var(--user-accent)" : "var(--border-strong)",
-          }}
-        />
-        <span className="h-2 w-2 rounded-full bg-border" />
-        <span className="h-2 w-2 rounded-full bg-border" />
-      </div>
-      {ownerId && hasContent ? (
-        <div
-          className="pointer-events-none select-none overflow-hidden"
-          style={{ height: 150, ...previewSurfaceStyle(starter) }}
-        >
-          {/* Quarter scale of a desktop-width render: at half scale the 150px
-              window held only the profile header, so identity-first
-              directions all looked the same. This shows the arrangement. */}
-          <div className="w-[1024px] origin-top-left" style={{ transform: "scale(0.25)" }}>
-            <PageLayoutRenderer layout={layout} context={context} />
-          </div>
-        </div>
-      ) : (
-        <div
-          className="relative overflow-hidden"
-          style={{ height: 150, ...previewSurfaceStyle(starter) }}
-        >
-          <Sketch rows={starter.sketch} active={active} />
-          <span className="absolute bottom-1.5 right-2 font-mono text-3xs uppercase tracking-widest text-muted-foreground">
-            Example
-          </span>
-        </div>
+    <button
+      type="button"
+      onClick={onChoose}
+      aria-pressed={active}
+      className={cn(
+        "flex h-full w-full flex-col gap-2.5 border p-2.5 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+        active
+          ? "border-[var(--user-accent-border,var(--border-strong))] bg-[var(--user-accent-subtle,var(--surface))]"
+          : "border-card-border bg-surface-elevated hover:border-[var(--border-strong)]",
       )}
-    </div>
-  );
-}
-
-/**
- * The starter's real surface CSS custom properties for the preview frame —
- * the same mapping the public Studio view applies, so each preview shows its
- * typography, density rhythm, and corner treatment instead of a generic one.
- */
-function previewSurfaceStyle(starter: Starter): React.CSSProperties {
-  const config = starterPreviewConfig(starter);
-  const style = studioSurfaceStyle(config);
-  // Backgrounds: the config's publicBackground picks the preview's backdrop —
-  // the same shared mapping the public page applies, so Paper/Surface/Sunken
-  // differences are visible between directions and never drift from reality.
-  return {
-    ...style,
-    ...studioBackgroundVars(config, "public"),
-    backgroundColor: "var(--studio-bg)",
-  };
-}
-
-/**
- * Small wireframe fallback preview of a starter's rhythm.
- * The first row renders in the accent color so the direction reads as a page
- * (lead block on top), matching how the live previews present themselves.
- */
-function Sketch({ rows, active }: { rows: number[][]; active: boolean }) {
-  return (
-    // Half-scale gap and radius, like the live previews, so each direction's
-    // density and corner treatment show through the wireframe.
-    <div
-      aria-hidden
-      className="flex h-full flex-col p-3"
-      style={{ gap: "calc(var(--studio-gap, 14px) / 2)" }}
     >
-      {rows.map((row, rowIndex) => (
-        <div
-          key={rowIndex}
-          className="flex flex-1"
-          style={{ gap: "calc(var(--studio-gap, 14px) / 2)" }}
-        >
-          {row.map((span, spanIndex) => (
-            <span
-              key={`${rowIndex}-${spanIndex}`}
-              style={{
-                borderRadius: "calc(var(--studio-radius, 6px) / 2)",
-                flex: span,
-                backgroundColor:
-                  active || rowIndex === 0
-                    ? "var(--user-accent)"
-                    : rowIndex === 1
-                      ? "var(--border-strong)"
-                      : "var(--border)",
-              }}
-            />
-          ))}
-        </div>
-      ))}
-    </div>
+      <LayoutPreview
+        layout={composed}
+        config={previewConfig}
+        height={150}
+        className="border border-border"
+      />
+      <span className="flex items-baseline justify-between gap-2">
+        <span className="font-display text-sm font-semibold text-foreground">{starter.name}</span>
+        {active && <span className="t-label">Current</span>}
+      </span>
+      <span className="text-xs font-medium text-foreground">{starter.tagline}</span>
+      <span className="text-[11px] leading-relaxed text-muted-foreground">{starter.feels}</span>
+      <span className="mt-auto border-t border-border pt-2 text-[11px] leading-relaxed text-muted-foreground">
+        {starter.remixNote}
+        {pairs && (
+          <span className="mt-1 block text-muted-foreground-subtle">
+            Drawn with the {pairs.label} look — works with any.
+          </span>
+        )}
+      </span>
+    </button>
   );
 }
 

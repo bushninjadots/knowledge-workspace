@@ -1,313 +1,273 @@
-// ── Studio Starters Tests ─────────────────────────────────────────────────────
+// ── Layout template tests ────────────────────────────────────────────────────
 
 import { describe, it, expect } from "vitest";
 import "@/components/tethyr/blocks/register-all";
-import type { PageLayout } from "@/lib/page-blocks";
+import type { LayoutGridItem, PageLayout } from "@/lib/page-blocks";
 import {
+  LAYOUT_FAMILIES,
   STARTERS,
   applyStarter,
   sectionMarker,
   starterConfig,
   starterMap,
   starterPreviewConfig,
-  starterPreviewLayout,
+  starterSketch,
   templatePreviewConfig,
 } from "@/data/starters";
 import { createDefaultProfileLayout } from "@/lib/default-layouts";
-import { DEFAULT_STUDIO_CONFIG, type StudioConfig } from "@/lib/studio-config";
+import { composeLayout } from "@/lib/layout-compose";
+import {
+  DEFAULT_STUDIO_CONFIG,
+  normalizeStudioConfig,
+  type StudioConfig,
+} from "@/lib/studio-config";
+import { chooseVisualLanguage } from "@/lib/visual-language";
 
-describe("STARTERS", () => {
-  it("exposes exactly the six starters", () => {
-    expect(STARTERS.map((s) => s.id)).toEqual([
-      "focused",
-      "editorial",
-      "project-first",
-      "minimal",
-      "experimental",
-      "for-hire",
-    ]);
-    expect(starterMap["focused"]).toBe(STARTERS[0]);
+const blocksOf = (layout: PageLayout) => layout.sections.flatMap((s) => s.blocks);
+const overlaps = (a: LayoutGridItem, b: LayoutGridItem) =>
+  a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+
+describe("the layout catalogue", () => {
+  it("offers distinct compositions in every family", () => {
+    expect(STARTERS.length).toBeGreaterThanOrEqual(12);
+    for (const family of LAYOUT_FAMILIES) {
+      expect(STARTERS.some((starter) => starter.family === family)).toBe(true);
+    }
+    const shapes = STARTERS.map((starter) => JSON.stringify(starterSketch(starter)));
+    expect(new Set(shapes).size).toBe(STARTERS.length);
   });
 
-  it("gives every starter a full config stamp, presentation, and sketch", () => {
+  it("describes each layout by what it does, not its columns", () => {
     for (const starter of STARTERS) {
-      expect(starter.name.length).toBeGreaterThan(0);
-      expect(starter.tagline.length).toBeGreaterThan(0);
-      expect(starter.feels.length).toBeGreaterThan(3);
-      expect(starter.config.structure).toBeTruthy();
-      expect(starter.config.personality).toBeTruthy();
-      expect(starter.config.density).toBeTruthy();
-      expect(starter.config.radius).toBeTruthy();
-      expect(starter.config.appBackground).toBeTruthy();
-      expect(starter.config.publicBackground).toBeTruthy();
-      expect(["spotlight", "editorial-grid", "horizontal-scroll", "minimal-list"]).toContain(
-        starter.presentation,
-      );
-      expect(starter.sketch.length).toBeGreaterThan(0);
+      expect(starter.feels.length).toBeGreaterThan(40);
+      expect(starter.feels).not.toMatch(/\bcolumns?\b.*\blayout\b/i);
+      expect(starter.remixNote).toMatch(/^For /);
     }
   });
 
-  it("gives every starter a remix note — the descriptor shared with community templates", () => {
+  it("keeps every width inside the 12-column grid", () => {
     for (const starter of STARTERS) {
-      expect(starter.remixNote.length).toBeGreaterThan(10);
+      for (const area of starter.composition.areas) {
+        for (const row of area.rows) {
+          const fixed = row.length === 1 && row[0].x !== undefined;
+          const total = row.reduce((sum, slot) => sum + slot.w, fixed ? (row[0].x ?? 0) : 0);
+          expect(total, `${starter.id}/${area.key}`).toBeLessThanOrEqual(12);
+        }
+      }
     }
-    // Notes must differ — they are what makes the five directions distinct at
-    // a glance in the picker.
-    expect(new Set(STARTERS.map((s) => s.remixNote)).size).toBe(STARTERS.length);
-  });
-
-  it("stamps five distinct personality/structure/density combinations", () => {
-    const combos = new Set(
-      STARTERS.map((s) => `${s.config.structure}/${s.config.personality}/${s.config.density}`),
-    );
-    expect(combos.size).toBeGreaterThanOrEqual(4);
-  });
-
-  it("exercises every background choice so template backdrops are part of the contract", () => {
-    const backgrounds = new Set(
-      STARTERS.flatMap((s) => [s.config.appBackground, s.config.publicBackground]),
-    );
-    // Every BackgroundId is in play across the five directions — the backdrop
-    // mapping has to handle all of them, not just the default.
-    expect([...backgrounds].sort()).toEqual(["default", "sunken", "surface"]);
   });
 });
 
-describe("preview configs", () => {
-  it("starterPreviewConfig merges the starter stamp over the defaults with its id", () => {
-    const config = starterPreviewConfig(starterMap["editorial"]);
-    expect(config.starterId).toBe("editorial");
-    expect(config.personality).toBe("editorial");
-    expect(config.density).toBe("spacious");
-    expect(config.radius).toBe(6);
-  });
-
-  it("templatePreviewConfig preserves the member's config and clears the starter id", () => {
-    const current = { ...DEFAULT_STUDIO_CONFIG, starterId: "focused", radius: 20 } as StudioConfig;
-    const config = templatePreviewConfig(current);
-    expect(config.starterId).toBeNull();
-    expect(config.radius).toBe(20);
-  });
-});
-
-describe("sectionMarker", () => {
+describe("applying a layout", () => {
   const layout = createDefaultProfileLayout();
 
-  it("classifies a profile section by the block types it holds", () => {
-    const sections = layout.sections;
-    expect(sectionMarker(sections[0])).toBe("identity"); // profile-header
-    expect(sectionMarker(sections[1])).toBe("projects"); // profile-projects
-    expect(sectionMarker(sections[2])).toBe("bio"); // profile-bio
-    expect(sectionMarker(sections[3])).toBe("readme"); // profile-readme
-    expect(sectionMarker(sections[4])).toBe("skills"); // profile-skills
-    expect(sectionMarker(sections[5])).toBe("gallery"); // profile-gallery
-  });
-});
-
-describe("applyStarter", () => {
-  const layout = createDefaultProfileLayout();
-
-  it("is non-destructive: preserves every block id, type, and content config", () => {
-    const starter = STARTERS[2]; // project-first
-    const next = applyStarter(layout, starter);
-
-    const original = layout.sections.flatMap((s) => s.blocks);
-    const applied = next.sections.flatMap((s) => s.blocks);
-
-    expect(applied).toHaveLength(original.length);
-    for (const block of original) {
-      const match = applied.find((b) => b.id === block.id);
-      expect(match).toBeDefined();
-      expect(match?.type).toBe(block.type);
-      if (block.type === "profile-projects") {
-        // A starter re-dresses the presentation but nothing else.
-        const { presentation, ...content } = block.config;
-        void presentation;
-        expect(match?.config).toMatchObject(content);
-      } else {
-        expect(match?.config).toEqual(block.config);
+  it("never deletes, duplicates or edits a block", () => {
+    for (const starter of STARTERS) {
+      const next = applyStarter(layout, starter);
+      const before = blocksOf(layout);
+      const after = blocksOf(next).filter((b) => !b.id.startsWith(`block-${starter.id}-`));
+      expect(after.map((b) => b.id).sort(), starter.id).toEqual(before.map((b) => b.id).sort());
+      for (const block of before) {
+        const match = after.find((b) => b.id === block.id)!;
+        const { presentation: _p, ...content } = match.config;
+        const { presentation: _q, ...original } = block.config;
+        expect(content).toEqual(original);
+        expect(match.visible).toBe(block.visible);
       }
     }
   });
 
-  it("reorders sections so project-first leads with the projects section", () => {
-    const starter = starterMap["project-first"];
-    const next = applyStarter(layout, starter);
-    expect(sectionMarker(next.sections[0])).toBe("projects");
-    expect(next.sections[0].position).toBe(0);
-  });
-
-  it("sets the projects presentation on every profile-projects block", () => {
-    const starter = starterMap["minimal"]; // presentation: minimal-list
-    const next = applyStarter(layout, starter);
-    const projectsBlocks = next.sections.flatMap((s) =>
-      s.blocks.filter((b) => b.type === "profile-projects"),
-    );
-    expect(projectsBlocks.length).toBeGreaterThan(0);
-    for (const block of projectsBlocks) {
-      expect(block.config.presentation).toBe("minimal-list");
-    }
-  });
-
-  it("hides (never deletes) collapsed sections for the minimal starter", () => {
-    const starter = starterMap["minimal"];
-    const next = applyStarter(layout, starter);
-    const hidden = next.sections.filter((s) => s.visible === false);
-    for (const section of hidden) {
-      const marker = sectionMarker(section);
-      expect(marker && starter.collapsedSections.includes(marker)).toBe(true);
-    }
-    // Nothing was removed from the layout.
-    expect(next.sections).toHaveLength(layout.sections.length);
-  });
-
-  it("keeps every section even when a starter does not name it in sectionOrder", () => {
-    const starter = STARTERS[1]; // editorial
-    const next = applyStarter(layout, starter);
-    expect(next.sections.map((s) => s.id).sort()).toEqual(layout.sections.map((s) => s.id).sort());
-  });
-
-  it("reveals sections hidden by the previous starter when switching templates", () => {
-    const hiddenFirst = applyStarter(layout, starterMap["minimal"]); // hides tools + gallery
-    const restored = applyStarter(hiddenFirst, starterMap["focused"], starterMap["minimal"]);
-    const stillHidden = restored.sections.filter((s) => s.visible === false);
-    expect(stillHidden).toEqual([]);
-  });
-
-  it("hands full visibility ownership to the new starter when switching", () => {
-    const hiddenFirst = applyStarter(layout, starterMap["minimal"]); // tools + gallery hidden
-    // Switch to experimental, which hides nothing: everything comes back.
-    const switched = applyStarter(hiddenFirst, starterMap["experimental"], starterMap["minimal"]);
-    expect(switched.sections.filter((s) => s.visible === false)).toEqual([]);
-    // Switch the other way, to minimal again: tools/gallery hide once more.
-    const back = applyStarter(switched, starterMap["minimal"], starterMap["experimental"]);
-    const hiddenMarkers = back.sections.filter((s) => s.visible === false).map(sectionMarker);
-    expect(hiddenMarkers).toContain("tools");
-    expect(hiddenMarkers).toContain("gallery");
-    expect(hiddenMarkers).toHaveLength(back.sections.filter((s) => s.visible === false).length);
-  });
-
-  it("applies every starter completely — sections, config, and backdrop stamp", () => {
+  it("writes real, non-overlapping grid positions for every block", () => {
     for (const starter of STARTERS) {
-      const next = applyStarter(layout, starter);
-      // The layout side always lands: every existing section survives, plus
-      // the new areas a starter brings when the Studio has none of them.
-      const present = new Set(layout.sections.flatMap((s) => s.blocks.map((b) => b.type)));
-      const added = (starter.addsSections ?? []).filter(
-        (a) => !a.blocks.some((type) => present.has(type)),
-      ).length;
-      expect(next.sections).toHaveLength(layout.sections.length + added);
-      expect(next.sections.map((s) => s.id)).toEqual(
-        expect.arrayContaining(layout.sections.map((s) => s.id)),
-      );
-      // And the config side carries the starter's full stamp, backgrounds
-      // included — nothing about the direction is silently dropped.
-      const config = starterConfig(starter, DEFAULT_STUDIO_CONFIG);
-      expect(config.starterId).toBe(starter.id);
-      expect(config.structure).toBe(starter.config.structure);
-      expect(config.personality).toBe(starter.config.personality);
-      expect(config.density).toBe(starter.config.density);
-      expect(config.radius).toBe(starter.config.radius);
-      expect(config.appBackground).toBe(starter.config.appBackground);
-      expect(config.publicBackground).toBe(starter.config.publicBackground);
-      // Determinism: applying twice produces byte-identical layout JSON.
-      expect(JSON.stringify(applyStarter(layout, starter))).toBe(JSON.stringify(next));
+      for (const section of applyStarter(layout, starter).sections) {
+        const grid = section.grid ?? [];
+        expect(grid.map((item) => item.i).sort()).toEqual(section.blocks.map((b) => b.id).sort());
+        for (const item of grid) {
+          expect(item.x + item.w, `${starter.id}`).toBeLessThanOrEqual(12);
+          for (const other of grid) if (other !== item) expect(overlaps(item, other)).toBe(false);
+        }
+      }
     }
   });
 
-  it("respects manual visibility when no previous starter was applied", () => {
-    const manuallyHidden = {
-      ...layout,
-      sections: layout.sections.map((s, i) =>
-        i === layout.sections.length - 1 ? { ...s, visible: false } : s,
-      ),
-    };
-    const next = applyStarter(manuallyHidden, starterMap["focused"], null);
-    const last = next.sections[next.sections.length - 1];
-    expect(last.visible).toBe(false);
-  });
-});
-
-describe("starterPreviewLayout", () => {
-  it("builds a standalone layout following the starter's section order", () => {
-    const starter = starterMap["project-first"];
-    const layout = starterPreviewLayout(starter);
-    expect(layout.sections.map(sectionMarker)).toEqual(starter.sectionOrder);
-    expect(layout.sections.map((s) => s.id)).toEqual(
-      starter.sectionOrder.map((marker) => `preview:${marker}`),
-    );
+  it("composes differently from one layout to the next", () => {
+    const signature = (next: PageLayout) =>
+      JSON.stringify(next.sections.map((s) => (s.grid ?? []).map((g) => [g.x, g.w])));
+    const results = STARTERS.map((starter) => signature(applyStarter(layout, starter)));
+    expect(new Set(results).size).toBeGreaterThanOrEqual(STARTERS.length - 2);
   });
 
-  it("populates each section with the marker's representative blocks", () => {
-    const starter = STARTERS[0]; // focused
-    const layout = starterPreviewLayout(starter);
-    const skills = layout.sections[starter.sectionOrder.indexOf("skills")];
-    expect(skills.blocks.map((b) => b.type)).toEqual(["profile-skills"]);
-    const byMarker = new Map(layout.sections.map((s) => [sectionMarker(s), s]));
-    expect(byMarker.get("projects")?.blocks.map((b) => b.type)).toEqual(["profile-projects"]);
-    expect(byMarker.get("identity")?.blocks.map((b) => b.type)).toEqual(["profile-header"]);
+  it("leads with the work in Portfolio and with images in Gallery", () => {
+    const portfolio = applyStarter(layout, starterMap.portfolio);
+    expect(portfolio.sections[1].blocks[0].type).toBe("profile-projects");
+    expect(portfolio.sections[1].grid?.[0]).toMatchObject({ x: 0, w: 12 });
+    const gallery = applyStarter(layout, starterMap.gallery);
+    expect(gallery.sections[1].blocks[0].type).toBe("profile-gallery");
   });
 
-  it("dresses the projects block with the starter's presentation", () => {
-    const starter = starterMap["minimal"]; // minimal-list
-    const layout = starterPreviewLayout(starter);
-    const projects = layout.sections
-      .flatMap((s) => s.blocks)
-      .find((b) => b.type === "profile-projects");
+  it("sets the projects presentation", () => {
+    const next = applyStarter(layout, starterMap.archive);
+    const projects = blocksOf(next).find((b) => b.type === "profile-projects");
     expect(projects?.config.presentation).toBe("minimal-list");
   });
 
-  it("mirrors collapsed sections so they stay hidden in the preview", () => {
-    const starter = starterMap["minimal"]; // collapsedSections: [tools, gallery]
-    const layout = starterPreviewLayout(starter);
-    for (const section of layout.sections) {
-      const marker = sectionMarker(section);
-      const collapsed = marker ? starter.collapsedSections.includes(marker) : false;
-      expect(section.visible).toBe(!collapsed);
-      for (const block of section.blocks) {
-        expect(block.visible).toBe(!collapsed);
-      }
+  it("keeps an area's own title and settings when it reuses it", () => {
+    const titled: PageLayout = {
+      sections: layout.sections.map((section) =>
+        section.blocks.some((b) => b.type === "profile-projects")
+          ? { ...section, title: "Things I made", appearance: { accent: "#ff0000" } }
+          : section,
+      ),
+    };
+    const next = applyStarter(titled, starterMap.technical);
+    const work = next.sections.find((s) => s.blocks.some((b) => b.type === "profile-projects"));
+    expect(work?.title).toBe("Things I made");
+    expect(work?.appearance?.accent).toBe("#ff0000");
+  });
+
+  it("stays well-formed when layouts are applied one after another", () => {
+    let current = layout;
+    for (const starter of [...STARTERS, ...STARTERS]) {
+      current = applyStarter(current, starter);
+      const ids = current.sections.map((s) => s.id);
+      expect(new Set(ids).size, starter.id).toBe(ids.length);
+      const blocks = blocksOf(current).map((b) => b.id);
+      expect(new Set(blocks).size).toBe(blocks.length);
     }
   });
-});
 
-describe("starterConfig", () => {
-  it("merges the starter stamp into the current config and records the starter id", () => {
-    const current: StudioConfig = { ...DEFAULT_STUDIO_CONFIG };
-    const next = starterConfig(starterMap["project-first"], current);
-    expect(next.structure).toBe("wide");
-    expect(next.personality).toBe("technical");
-    expect(next.density).toBe("compact");
-    expect(next.radius).toBe(6);
-    expect(next.appBackground).toBe("sunken");
-    expect(next.starterId).toBe("project-first");
-    // Fields not in the stamp are untouched.
-    expect(next.accentMode).toBe(current.accentMode);
-    expect(next.accentColor).toBe(current.accentColor);
+  it("drops an area's old title once it has mostly become something else", () => {
+    const block = (id: string, type: string, position: number) => ({
+      id,
+      type,
+      position,
+      config: {},
+      visible: true,
+    });
+    const page: PageLayout = {
+      sections: [
+        { id: "h", position: 0, layout: "full", blocks: [block("h1", "profile-header", 0)] },
+        {
+          id: "net",
+          position: 1,
+          layout: "full",
+          title: "Built with others",
+          blocks: [
+            block("b1", "profile-skills", 0),
+            block("n1", "profile-collaboration-network", 1),
+            block("l1", "profile-links", 2),
+          ],
+        },
+      ],
+    };
+    const next = applyStarter(page, starterMap.technical);
+    const stack = next.sections.find((s) => s.blocks.some((b) => b.type === "profile-skills"));
+    expect(stack?.title).toBe("Stack");
+    const network = next.sections.find((s) =>
+      s.blocks.some((b) => b.type === "profile-collaboration-network"),
+    );
+    expect(network?.blocks.map((b) => b.type)).toEqual([
+      "profile-collaboration-network",
+      "profile-links",
+    ]);
+  });
+
+  it("leaves blocks in hidden areas hidden, where they were", () => {
+    const hidden: PageLayout = {
+      sections: layout.sections.map((section) =>
+        section.blocks.some((b) => b.type === "profile-gallery")
+          ? { ...section, visible: false }
+          : section,
+      ),
+    };
+    const next = applyStarter(hidden, starterMap.gallery);
+    const area = next.sections.find((s) => s.blocks.some((b) => b.type === "profile-gallery"));
+    expect(area?.visible).toBe(false);
   });
 });
 
-const base = (): PageLayout => ({
-  sections: [
-    {
-      id: "s-projects",
-      position: 0,
+describe("content-aware composition", () => {
+  const page = (types: string[][]): PageLayout => ({
+    sections: types.map((blocks, index) => ({
+      id: `s${index}`,
+      position: index,
       layout: "full",
-      blocks: [{ id: "p", type: "profile-projects", position: 0, config: {}, visible: true }],
-    },
-    {
-      id: "s-identity",
-      position: 1,
-      layout: "full",
-      blocks: [{ id: "h", type: "profile-header", position: 0, config: {}, visible: true }],
-    },
-  ],
+      blocks: blocks.map((type, position) => ({
+        id: `${type}-${index}-${position}`,
+        type,
+        position,
+        config: {},
+        visible: true,
+      })),
+    })),
+  });
+
+  it("skips areas with nothing to show and widens a row's survivors", () => {
+    const next = composeLayout(page([["profile-header"], ["profile-projects"]]), {
+      areas: [
+        { key: "a", rows: [[{ role: "identity", w: 12 }]] },
+        { key: "g", rows: [[{ role: "gallery", w: 12 }]] },
+        {
+          key: "w",
+          rows: [
+            [
+              { role: "projects", w: 8 },
+              { role: "quote", w: 4 },
+            ],
+          ],
+        },
+      ],
+      rest: [6, 6],
+    });
+    expect(next.sections).toHaveLength(2);
+    expect(next.sections[1].grid?.[0]).toMatchObject({ x: 0, w: 12 });
+  });
+
+  it("re-flows everything the layout doesn't name with its rhythm", () => {
+    const next = composeLayout(page([["profile-header"], ["text", "text", "text"]]), {
+      areas: [{ key: "a", rows: [[{ role: "identity", w: 12 }]] }],
+      rest: [4, 4, 4],
+    });
+    expect(next.sections[1].grid?.map((g) => [g.x, g.w])).toEqual([
+      [0, 4],
+      [4, 4],
+      [8, 4],
+    ]);
+  });
+
+  it("sets phone widths only where the layout asks", () => {
+    const next = composeLayout(page([["profile-header", "profile-links"]]), {
+      areas: [{ key: "a", rows: [[{ role: "identity", w: 12 }]] }],
+      rest: [6, 6],
+      phoneHalf: ["links"],
+    });
+    const links = blocksOf(next).find((b) => b.type === "profile-links");
+    const header = blocksOf(next).find((b) => b.type === "profile-header");
+    expect(links?.phoneWidth).toBe("half");
+    expect(header?.phoneWidth).toBeUndefined();
+  });
 });
 
-const types = (layout: PageLayout) => layout.sections.map((s) => s.blocks.map((b) => b.type));
+describe("For hire", () => {
+  const base = (): PageLayout => ({
+    sections: [
+      {
+        id: "work",
+        position: 0,
+        layout: "full",
+        blocks: [{ id: "p", type: "profile-projects", position: 0, config: {}, visible: true }],
+      },
+      {
+        id: "identity",
+        position: 1,
+        layout: "full",
+        blocks: [{ id: "h", type: "profile-header", position: 0, config: {}, visible: true }],
+      },
+    ],
+  });
+  const types = (layout: PageLayout) => layout.sections.map((s) => s.blocks.map((b) => b.type));
 
-describe("For hire starter", () => {
-  it("adds its areas next to the sections they belong with", () => {
+  it("adds what it needs and composes it in order", () => {
     const applied = applyStarter(base(), starterMap["for-hire"]);
     expect(types(applied)).toEqual([
       ["profile-header"],
@@ -317,18 +277,46 @@ describe("For hire starter", () => {
       ["call-to-action"],
     ]);
     expect(applied.sections.at(-1)?.appearance).toEqual({ background: "accent" });
-    expect(applied.sections.map((s) => s.position)).toEqual([0, 1, 2, 3, 4]);
   });
 
-  it("never duplicates an area on a second application", () => {
+  it("never duplicates on a second application", () => {
     const once = applyStarter(base(), starterMap["for-hire"]);
-    const twice = applyStarter(once, starterMap["for-hire"], starterMap["for-hire"]);
-    expect(twice.sections).toHaveLength(once.sections.length);
+    const twice = applyStarter(once, starterMap["for-hire"]);
+    expect(blocksOf(twice)).toHaveLength(blocksOf(once).length);
+  });
+});
+
+describe("layouts and the look stay separate", () => {
+  it("a layout sets only the page width and its id", () => {
+    const styled: StudioConfig = {
+      ...DEFAULT_STUDIO_CONFIG,
+      ...chooseVisualLanguage("technical"),
+      density: "spacious",
+      accentColor: "#ff0000",
+    };
+    const next = starterConfig(starterMap.gallery, styled);
+    expect(next).toEqual({ ...styled, structure: "full", starterId: "gallery" });
+    expect(starterPreviewConfig(starterMap.gallery, styled)).toEqual(next);
   });
 
-  it("keeps every existing block", () => {
-    const applied = applyStarter(base(), starterMap["for-hire"]);
-    const ids = applied.sections.flatMap((s) => s.blocks.map((b) => b.id));
-    expect(ids).toEqual(expect.arrayContaining(["p", "h"]));
+  it("a community template keeps the member's config", () => {
+    const current = { ...DEFAULT_STUDIO_CONFIG, starterId: "magazine" } as StudioConfig;
+    expect(templatePreviewConfig(current)).toEqual({ ...current, starterId: null });
+  });
+
+  it("reads layouts from before compositions as their successors", () => {
+    expect(normalizeStudioConfig({ starterId: "focused" }).starterId).toBe("linear");
+    expect(normalizeStudioConfig({ starterId: "project-first" }).starterId).toBe("portfolio");
+    expect(normalizeStudioConfig({ starterId: "experimental" }).starterId).toBe("collage");
+    expect(normalizeStudioConfig({ starterId: "nonsense" }).starterId).toBeNull();
+  });
+});
+
+describe("sectionMarker", () => {
+  it("classifies a profile section by the block types it holds", () => {
+    const layout = createDefaultProfileLayout();
+    const markers = layout.sections.map(sectionMarker);
+    expect(markers).toContain("identity");
+    expect(markers).toContain("projects");
   });
 });

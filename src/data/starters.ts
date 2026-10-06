@@ -1,33 +1,25 @@
-// ── Studio Starters ───────────────────────────────────────────────────────────
-// Starting directions — "choose how you want your Studio to feel".
+// ── Studio layouts ────────────────────────────────────────────────────────────
+// Layout templates — "how is this page composed?". Each one is a composition
+// (src/lib/layout-compose.ts): which content leads, what sits beside what, how
+// wide each piece is, how the rest of the page keeps the rhythm, and how it
+// stacks on a phone. Not a column count.
 //
-// A starter is a STARTING POINT, never a destructive replacement: it changes
-// personality, structure, layout rhythm, section order and the projects
-// presentation, but every section, block and piece of content survives.
-// Sections that a starter prefers to tuck away are hidden, not deleted, and the
-// whole change is one undo away.
+// A layout is a STARTING POINT and only ever changes composition: it moves the
+// member's existing blocks into place (never deleting or duplicating one) and
+// sets the page width. It never touches the look — theme, visual language,
+// fonts, colours, surfaces and borders are the visual system's, so any layout
+// pairs with any look ("Technical layout + Paper theme + Editorial type").
+// Everything is one undo away.
 //
-// Unlike the g/ prototype, Tethyr sections carry no stable semantic ids — they
-// are composed from sets of blocks and identified by the block types they
-// contain. Section order and collapse behaviour are therefore expressed in
-// terms of semantic markers, resolved against the live layout.
+// Sections carry no stable semantic ids, so areas are identified by the block
+// types they contain (sectionMarker) — kept for community templates.
 
-import type {
-  BackgroundId,
-  DensityId,
-  PersonalityId,
-  StarterId,
-  StructureId,
-  StudioConfig,
-} from "@/lib/studio-config";
-import { DEFAULT_STUDIO_CONFIG, personalityPatch } from "@/lib/studio-config";
-import type {
-  AreaAppearance,
-  LayoutSection,
-  PageLayout,
-  SectionLayoutType,
-} from "@/lib/page-blocks";
+import type { StarterId, StructureId, StudioConfig } from "@/lib/studio-config";
+import type { AreaAppearance, LayoutSection, PageLayout } from "@/lib/page-blocks";
+import type { VisualLanguageId } from "@/lib/visual-language";
 import { createBlockInstance } from "@/lib/block-registry";
+import { composeLayout, type Composition } from "@/lib/layout-compose";
+import { createDefaultProfileLayout } from "@/lib/default-layouts";
 
 /** Semantic identity of a profile section, derived from the block types it holds. */
 type SectionMarker =
@@ -36,51 +28,38 @@ type SectionMarker =
 type ProfileProjectsPresentation =
   "spotlight" | "editorial-grid" | "horizontal-scroll" | "minimal-list";
 
-interface StarterConfigStamp {
-  structure: StructureId;
-  personality: PersonalityId;
-  density: DensityId;
-  radius: number;
-  appBackground: BackgroundId;
-  publicBackground: BackgroundId;
-}
+/** How the picker groups layouts. */
+export type LayoutFamily = "Editorial" | "Work-led" | "Structured" | "Expressive";
 
 export interface Starter {
   id: StarterId;
   name: string;
+  family: LayoutFamily;
   tagline: string;
+  /** What the composition does, in a sentence or two. */
   feels: string;
-  /** Who this direction is for, in one line — the remix-descriptor layer
-   *  shared with community templates so both read as one system. */
+  /** Who it's for — shared with community templates' remix descriptor. */
   remixNote: string;
-  config: StarterConfigStamp;
+  /** Page width. The only config a layout sets. */
+  structure: StructureId;
   /** Applied to the profile-projects block. */
   presentation: ProfileProjectsPresentation;
-  /** Sections by marker that should lead the Studio, in order. */
-  sectionOrder: SectionMarker[];
-  /** Sections by marker to hide (not delete). */
-  collapsedSections: SectionMarker[];
-  /** Per-marker section layout — makes each starter visually distinct when
-   *  previewed and applied, instead of every section defaulting to "full". */
-  sectionLayouts: Partial<Record<SectionMarker, SectionLayoutType>>;
-  /** Preview glyph: relative block weights, rendered as a tiny wireframe. */
-  sketch: number[][];
-  /** New areas this direction brings, added only when the Studio has none
-   *  of their block types yet (never duplicated, never replacing content). */
+  composition: Composition;
+  /** A look it was drawn with — a suggestion shown in the picker, never applied. */
+  pairsWith: VisualLanguageId;
+  /** Areas this layout brings, added only when the page has none of their
+   *  block types yet (never duplicated, never replacing content). */
   addsSections?: StarterAddedSection[];
 }
 
 export interface StarterAddedSection {
   title: string;
-  layout: SectionLayoutType;
   /** Block types, in order. */
   blocks: string[];
-  /** Placed right after this marker's section, or at the end. */
-  after: SectionMarker | "end";
   appearance?: AreaAppearance;
 }
 
-// ── Semantic markers ──────────────────────────────────────────────────────────
+// ── Semantic markers (community templates) ──────────────────────────────────
 
 const MARKER_BLOCKS: Record<SectionMarker, string[]> = {
   identity: ["profile-header"],
@@ -113,273 +92,602 @@ export function sectionMarker(section: LayoutSection): SectionMarker | null {
   return null;
 }
 
-// ── Starters ──────────────────────────────────────────────────────────────────
+// ── Layouts ───────────────────────────────────────────────────────────────────
+
+const READING: AreaAppearance = { width: "narrow" };
 
 export const STARTERS: Starter[] = [
   {
-    id: "focused",
-    name: "Focused",
-    tagline: "One project at a time, front and centre.",
-    feels:
-      "A single column that reads top to bottom. Your current work fills the screen; everything else waits its turn.",
-    remixNote: "For makers deep in one build who want the work to open the conversation.",
-    config: {
-      structure: "single",
-      personality: "modern",
-      density: "comfortable",
-      radius: 12,
-      appBackground: "surface",
-      publicBackground: "default",
-    },
-    presentation: "spotlight",
-    sectionOrder: ["projects", "identity", "bio", "readme", "skills"],
-    collapsedSections: [],
-    sectionLayouts: {
-      projects: "feature",
-      identity: "full",
-      bio: "full",
-      readme: "full",
-      skills: "compact_list",
-    },
-    sketch: [[12], [12], [7, 5], [12]],
-  },
-  {
     id: "editorial",
     name: "Editorial",
-    tagline: "Reads like a printed feature.",
-    feels: "Generous rhythm and a narrow measure. Projects become articles rather than cards.",
-    remixNote: "For writers and designers whose work is the prose — work that reads, not scans.",
-    config: {
-      structure: "single",
-      personality: "editorial",
-      density: "spacious",
-      radius: 6,
-      appBackground: "default",
-      publicBackground: "surface",
-    },
-    presentation: "editorial-grid",
-    sectionOrder: ["identity", "projects", "bio", "readme", "skills", "gallery"],
-    collapsedSections: [],
-    sectionLayouts: {
-      identity: "full",
-      projects: "side_by_side",
-      bio: "full",
-      readme: "split",
-      skills: "two_column",
-      gallery: "side_by_side",
-    },
-    sketch: [[12], [8, 4], [12], [6, 6]],
-  },
-  {
-    id: "project-first",
-    name: "Project-first",
-    tagline: "Work above identity. Dense and technical.",
-    feels: "The work opens the Studio. Compact rows, and every collaboration signal visible.",
-    remixNote: "For engineers and crews shipping in the open — signals over ceremony.",
-    config: {
-      structure: "wide",
-      personality: "technical",
-      density: "compact",
-      radius: 6,
-      appBackground: "sunken",
-      publicBackground: "default",
-    },
-    presentation: "spotlight",
-    sectionOrder: ["projects", "identity", "skills", "bio", "readme"],
-    collapsedSections: [],
-    sectionLayouts: {
-      projects: "feature",
-      identity: "full",
-      skills: "three_column",
-      bio: "split",
-      readme: "compact_list",
-    },
-    sketch: [[12], [6, 6], [4, 4, 4], [12]],
-  },
-  {
-    id: "minimal",
-    name: "Minimal",
-    tagline: "Name, work, a way to reach you.",
+    family: "Editorial",
+    tagline: "A feature story about your work.",
     feels:
-      "Almost nothing. A list of projects and a line about what you want. Supporting sections stay, hidden, until you want them.",
-    remixNote: "For quiet presence — a card you'd hand someone instead of a résumé.",
-    config: {
-      structure: "single",
-      personality: "modern",
-      density: "spacious",
-      radius: 6,
-      appBackground: "default",
-      publicBackground: "default",
+      "A wide identity, an introduction set beside a pull quote, selected work at full width, then writing in a reading column.",
+    remixNote: "For writers, designers and creative professionals whose thinking is the work.",
+    structure: "wide",
+    presentation: "editorial-grid",
+    pairsWith: "editorial",
+    composition: {
+      areas: [
+        { key: "identity", rows: [[{ role: "identity", w: 12 }]] },
+        {
+          key: "intro",
+          title: "Introduction",
+          rows: [
+            [
+              { role: "bio", w: 7 },
+              { role: ["quote", "direction"], w: 5 },
+            ],
+          ],
+        },
+        { key: "work", title: "Selected work", rows: [[{ role: "projects", w: 12 }]] },
+        {
+          key: "writing",
+          title: "Writing",
+          rows: [[{ role: "readme", w: 12 }]],
+          appearance: READING,
+        },
+        {
+          key: "practice",
+          title: "Practice",
+          rows: [
+            [
+              { role: "experience", w: 6 },
+              { role: "skills", w: 3 },
+              { role: "tools", w: 3 },
+            ],
+          ],
+        },
+      ],
+      rest: [6, 6],
     },
-    presentation: "minimal-list",
-    sectionOrder: ["identity", "projects", "bio", "readme", "links"],
-    collapsedSections: ["tools", "gallery"],
-    sectionLayouts: {
-      identity: "full",
-      projects: "compact_list",
-      bio: "full",
-      readme: "full",
-      links: "full",
-    },
-    sketch: [[12], [12], [12], [12]],
   },
   {
-    id: "experimental",
-    name: "Experimental",
-    tagline: "Uneven, wide, a little restless.",
-    feels: "Asymmetric widths and a horizontal shelf. For work that does not sit still.",
-    remixNote: "For studios and collectors whose work refuses the grid.",
-    config: {
-      structure: "wide",
-      personality: "editorial",
-      density: "compact",
-      radius: 12,
-      appBackground: "sunken",
-      publicBackground: "sunken",
+    id: "magazine",
+    name: "Magazine",
+    family: "Editorial",
+    tagline: "A cover story and an issue's worth of features.",
+    feels:
+      "Your work leads beside a pull quote, then three short features side by side, then an uneven spread of images and writing.",
+    remixNote: "For people with many threads — a practice with range.",
+    structure: "wide",
+    presentation: "editorial-grid",
+    pairsWith: "editorial",
+    composition: {
+      areas: [
+        { key: "identity", rows: [[{ role: "identity", w: 12 }]] },
+        {
+          key: "cover",
+          title: "Cover story",
+          rows: [
+            [
+              { role: "projects", w: 8 },
+              { role: ["quote", "building"], w: 4 },
+            ],
+          ],
+        },
+        {
+          key: "issue",
+          title: "In this issue",
+          rows: [
+            [
+              { role: "bio", w: 4 },
+              { role: ["building", "direction"], w: 4 },
+              { role: ["highlights", "achievements"], w: 4 },
+            ],
+          ],
+        },
+        {
+          key: "spread",
+          rows: [
+            [
+              { role: "gallery", w: 7 },
+              { role: "readme", w: 5 },
+            ],
+          ],
+        },
+        {
+          key: "practice",
+          title: "Practice",
+          rows: [
+            [
+              { role: "skills", w: 3 },
+              { role: "tools", w: 3 },
+              { role: "experience", w: 6 },
+            ],
+          ],
+        },
+      ],
+      rest: [8, 4],
     },
+  },
+  {
+    id: "journal",
+    name: "Journal",
+    family: "Editorial",
+    tagline: "Long-form, chronological, few boxes.",
+    feels:
+      "One reading column: who you are, your story, your timeline, your writing, then the work as a quiet list.",
+    remixNote: "For people whose path is the story — careers, practices, long projects.",
+    structure: "single",
+    presentation: "minimal-list",
+    pairsWith: "personal",
+    composition: {
+      areas: [
+        { key: "identity", rows: [[{ role: "identity", w: 12 }]] },
+        { key: "story", rows: [[{ role: "bio", w: 12 }], [{ role: "quote", w: 12 }]] },
+        { key: "path", title: "Path", rows: [[{ role: "experience", w: 12 }]] },
+        { key: "writing", title: "Notes", rows: [[{ role: "readme", w: 12 }]] },
+        { key: "work", title: "Work", rows: [[{ role: "projects", w: 12 }]] },
+      ],
+      rest: [12],
+    },
+  },
+  {
+    id: "portfolio",
+    name: "Portfolio",
+    family: "Work-led",
+    tagline: "The work, big, first.",
+    feels:
+      "A full-width featured project, current work and proof beside each other, then images, then a short about with links.",
+    remixNote: "For makers whose projects should open the conversation.",
+    structure: "wide",
+    presentation: "spotlight",
+    pairsWith: "portfolio",
+    composition: {
+      areas: [
+        { key: "identity", rows: [[{ role: "identity", w: 12 }]] },
+        {
+          key: "featured",
+          title: "Featured work",
+          rows: [
+            [{ role: "projects", w: 12 }],
+            [
+              { role: "building", w: 7 },
+              { role: "proof", w: 5 },
+            ],
+          ],
+        },
+        { key: "images", rows: [[{ role: "gallery", w: 12 }]] },
+        {
+          key: "about",
+          title: "About",
+          rows: [
+            [
+              { role: "bio", w: 8 },
+              { role: ["links", "direction"], w: 4 },
+            ],
+          ],
+        },
+      ],
+      rest: [4, 4, 4],
+      phoneHalf: ["links", "tools"],
+    },
+  },
+  {
+    id: "gallery",
+    name: "Gallery",
+    family: "Work-led",
+    tagline: "Images lead; words step back.",
+    feels:
+      "Edge-to-edge images straight after your name, work on a horizontal shelf, and a small caption-like note to close.",
+    remixNote: "For illustrators, photographers and visual artists.",
+    structure: "full",
     presentation: "horizontal-scroll",
-    sectionOrder: ["identity", "projects", "bio", "readme", "gallery"],
-    collapsedSections: [],
-    sectionLayouts: {
-      identity: "full",
-      projects: "asymmetric",
-      bio: "image_lead",
-      readme: "split",
-      gallery: "side_by_side",
+    pairsWith: "minimal",
+    composition: {
+      areas: [
+        { key: "identity", rows: [[{ role: "identity", w: 12 }]] },
+        { key: "images", rows: [[{ role: "gallery", w: 12 }]] },
+        { key: "work", title: "Work", rows: [[{ role: "projects", w: 12 }]] },
+        {
+          key: "note",
+          rows: [
+            [
+              { role: "bio", w: 5 },
+              { role: "links", w: 4 },
+              { role: "direction", w: 3 },
+            ],
+          ],
+        },
+      ],
+      rest: [7, 5],
+      phoneHalf: ["links", "direction"],
     },
-    sketch: [[12], [5, 7], [3, 5, 4], [7, 5]],
+  },
+  {
+    id: "split",
+    name: "Split",
+    family: "Work-led",
+    tagline: "Identity on one side, story on the other.",
+    feels:
+      "Your header and your introduction share the opening line, then the work runs full width, then images beside a quote.",
+    remixNote: "For people with a strong visual identity and a short story.",
+    structure: "wide",
+    presentation: "editorial-grid",
+    pairsWith: "personal",
+    composition: {
+      areas: [
+        {
+          key: "opening",
+          rows: [
+            [
+              { role: "identity", w: 7 },
+              { role: ["bio", "direction"], w: 5 },
+            ],
+          ],
+        },
+        { key: "work", title: "Work", rows: [[{ role: "projects", w: 12 }]] },
+        {
+          key: "images",
+          rows: [
+            [
+              { role: "gallery", w: 7 },
+              { role: ["quote", "readme"], w: 5 },
+            ],
+          ],
+        },
+        {
+          key: "reach",
+          rows: [
+            [
+              { role: ["direction", "links"], w: 6 },
+              { role: "links", w: 6 },
+            ],
+          ],
+        },
+      ],
+      rest: [6, 6],
+    },
+  },
+  {
+    id: "technical",
+    name: "Technical",
+    family: "Structured",
+    tagline: "A precise grid of work, stack and signals.",
+    feels:
+      "Numbers first, then work beside what you're building, a three-part stack, and activity beside achievements.",
+    remixNote: "For engineers and crews shipping in the open — signals over ceremony.",
+    structure: "wide",
+    presentation: "spotlight",
+    pairsWith: "technical",
+    composition: {
+      areas: [
+        { key: "identity", rows: [[{ role: "identity", w: 12 }]] },
+        { key: "numbers", rows: [[{ role: "highlights", w: 12 }]] },
+        {
+          key: "work",
+          title: "Work",
+          rows: [
+            [
+              { role: "projects", w: 8 },
+              { role: ["building", "proof"], w: 4 },
+            ],
+          ],
+        },
+        {
+          key: "stack",
+          title: "Stack",
+          rows: [
+            [
+              { role: "skills", w: 4 },
+              { role: "tools", w: 4 },
+              { role: "experience", w: 4 },
+            ],
+          ],
+        },
+        {
+          key: "signals",
+          title: "Signals",
+          rows: [
+            [
+              { role: "activity", w: 8 },
+              { role: "achievements", w: 4 },
+            ],
+          ],
+        },
+        {
+          key: "network",
+          rows: [
+            [
+              { role: "network", w: 6 },
+              { role: ["links", "direction"], w: 6 },
+            ],
+          ],
+        },
+      ],
+      rest: [4, 4, 4],
+      phoneHalf: ["tools", "links", "achievements"],
+    },
+  },
+  {
+    id: "archive",
+    name: "Archive",
+    family: "Structured",
+    tagline: "Dense, chronological, catalogued.",
+    feels:
+      "A record: your timeline beside achievements, the work as a list, then a compact index of skills, tools and links.",
+    remixNote: "For long careers and deep catalogues.",
+    structure: "sidebar",
+    presentation: "minimal-list",
+    pairsWith: "technical",
+    composition: {
+      areas: [
+        { key: "identity", rows: [[{ role: "identity", w: 12 }]] },
+        {
+          key: "record",
+          title: "Record",
+          rows: [
+            [
+              { role: "experience", w: 8 },
+              { role: "achievements", w: 4 },
+            ],
+          ],
+        },
+        { key: "work", title: "Catalogue", rows: [[{ role: "projects", w: 12 }]] },
+        {
+          key: "index",
+          title: "Index",
+          rows: [
+            [
+              { role: "skills", w: 4 },
+              { role: "tools", w: 4 },
+              { role: "links", w: 4 },
+            ],
+          ],
+        },
+        { key: "notes", title: "Notes", rows: [[{ role: "readme", w: 12 }]] },
+      ],
+      rest: [4, 4, 4],
+      phoneHalf: ["skills", "tools", "links"],
+    },
+  },
+  {
+    id: "linear",
+    name: "Linear",
+    family: "Structured",
+    tagline: "One clear line, with the facts beside it.",
+    feels:
+      "Your story, experience and work run down one main line; skills, tools, availability and links sit in a narrow rail beside them.",
+    remixNote: "For professional profiles that should read in thirty seconds.",
+    structure: "wide",
+    presentation: "minimal-list",
+    pairsWith: "minimal",
+    composition: {
+      areas: [
+        { key: "identity", rows: [[{ role: "identity", w: 12 }]] },
+        {
+          key: "line",
+          rows: [
+            [
+              { role: "bio", w: 8 },
+              { role: "direction", w: 4 },
+            ],
+            [
+              { role: "experience", w: 8 },
+              { role: "skills", w: 4 },
+            ],
+            [
+              { role: "projects", w: 8 },
+              { role: "tools", w: 4 },
+            ],
+            [
+              { role: ["readme", "proof"], w: 8 },
+              { role: ["links", "cta"], w: 4 },
+            ],
+          ],
+        },
+      ],
+      rest: [8, 4],
+      phoneHalf: ["tools", "links"],
+    },
+  },
+  {
+    id: "statement",
+    name: "Statement",
+    family: "Expressive",
+    tagline: "A point of view, said big.",
+    feels:
+      "A large opening, one sentence you stand behind, the work, and a single next step. Everything else waits further down.",
+    remixNote: "For people with a strong personal point of view.",
+    structure: "sidebar",
+    presentation: "spotlight",
+    pairsWith: "experimental",
+    composition: {
+      areas: [
+        { key: "identity", rows: [[{ role: "identity", w: 12 }]] },
+        { key: "statement", rows: [[{ role: ["quote", "direction"], w: 12 }]] },
+        { key: "work", rows: [[{ role: "projects", w: 12 }]] },
+        { key: "next", rows: [[{ role: ["cta", "links"], w: 12 }]] },
+      ],
+      rest: [6, 6],
+    },
+  },
+  {
+    id: "collage",
+    name: "Collage",
+    family: "Expressive",
+    tagline: "Uneven, layered, a little restless.",
+    feels:
+      "Alternating wide and narrow pieces — work beside a quote, images beside your story — so no two rows match.",
+    remixNote: "For studios and collectors whose work refuses the grid.",
+    structure: "full",
+    presentation: "horizontal-scroll",
+    pairsWith: "experimental",
+    composition: {
+      areas: [
+        { key: "identity", rows: [[{ role: "identity", w: 12 }]] },
+        {
+          key: "one",
+          rows: [
+            [
+              { role: "projects", w: 7 },
+              { role: ["quote", "direction"], w: 5 },
+            ],
+          ],
+        },
+        {
+          key: "two",
+          rows: [
+            [
+              { role: "gallery", w: 5 },
+              { role: "bio", w: 7 },
+            ],
+          ],
+        },
+        {
+          key: "three",
+          rows: [
+            [
+              { role: ["building", "proof"], w: 4 },
+              { role: ["highlights", "readme"], w: 8 },
+            ],
+          ],
+        },
+      ],
+      rest: [5, 7],
+    },
+  },
+  {
+    id: "open",
+    name: "Open canvas",
+    family: "Expressive",
+    tagline: "Room around everything.",
+    feels:
+      "Pieces placed rather than stacked: an off-centre introduction, the work set in from the edge, wide pauses between.",
+    remixNote: "For people who want space to do the talking.",
+    structure: "wide",
+    presentation: "editorial-grid",
+    pairsWith: "minimal",
+    composition: {
+      areas: [
+        { key: "identity", rows: [[{ role: "identity", w: 12 }]] },
+        {
+          key: "intro",
+          rows: [[{ role: ["bio", "quote"], w: 7, x: 4 }]],
+          appearance: { spacing: "loose" },
+        },
+        {
+          key: "work",
+          rows: [[{ role: "projects", w: 10, x: 0 }]],
+          appearance: { spacing: "loose" },
+        },
+        {
+          key: "aside",
+          rows: [[{ role: ["quote", "direction", "readme"], w: 6, x: 6 }]],
+          appearance: { spacing: "loose" },
+        },
+        { key: "images", rows: [[{ role: "gallery", w: 12 }]], appearance: { spacing: "loose" } },
+      ],
+      rest: [6, 6],
+    },
+  },
+  {
+    id: "for-hire",
+    name: "For hire",
+    family: "Work-led",
+    tagline: "What you do, the proof, and how to start.",
+    feels:
+      "Leads with your numbers and what you offer, backs it with work and a testimonial, and ends on one clear next step.",
+    remixNote: "For freelancers and consultants who want visitors to get in touch.",
+    structure: "sidebar",
+    presentation: "editorial-grid",
+    pairsWith: "personal",
+    composition: {
+      areas: [
+        { key: "identity", rows: [[{ role: "identity", w: 12 }]] },
+        { key: "numbers", rows: [[{ role: "highlights", w: 12 }]] },
+        { key: "work", title: "Work", rows: [[{ role: "projects", w: 12 }]] },
+        {
+          key: "offer",
+          title: "What I offer",
+          rows: [
+            [
+              { role: "services", w: 7 },
+              { role: "quote", w: 5 },
+            ],
+          ],
+        },
+        {
+          key: "about",
+          title: "About",
+          rows: [
+            [
+              { role: "bio", w: 7 },
+              { role: "skills", w: 5 },
+            ],
+          ],
+        },
+        { key: "next", rows: [[{ role: "cta", w: 12 }]], appearance: { background: "accent" } },
+      ],
+      rest: [6, 6],
+    },
+    addsSections: [
+      { title: "", blocks: ["highlights"] },
+      { title: "What I offer", blocks: ["services", "quote"] },
+      { title: "", blocks: ["call-to-action"], appearance: { background: "accent" } },
+    ],
   },
 ];
 
-STARTERS.push({
-  id: "for-hire",
-  name: "For hire",
-  tagline: "What you do, the proof, and how to start.",
-  feels:
-    "Leads with your numbers and what you offer, backs it with work and a testimonial, and ends on one clear next step.",
-  remixNote: "For freelancers and consultants who want visitors to get in touch.",
-  config: {
-    structure: "sidebar",
-    personality: "modern",
-    density: "comfortable",
-    radius: 14,
-    appBackground: "surface",
-    publicBackground: "default",
-  },
-  presentation: "editorial-grid",
-  sectionOrder: ["identity", "projects", "bio", "skills", "links"],
-  collapsedSections: ["gallery"],
-  sectionLayouts: {
-    identity: "full",
-    projects: "feature",
-    bio: "two_column",
-    skills: "two_column",
-    links: "full",
-  },
-  sketch: [[12], [12], [7, 5], [12], [12]],
-  addsSections: [
-    { title: "", layout: "full", blocks: ["highlights"], after: "identity" },
-    {
-      title: "What I offer",
-      layout: "two_column",
-      blocks: ["services", "quote"],
-      after: "projects",
-    },
-    {
-      title: "",
-      layout: "full",
-      blocks: ["call-to-action"],
-      after: "end",
-      appearance: { background: "accent" },
-    },
-  ],
-});
+/** Titles the member never typed: every layout's own area titles and the
+ *  default page's. An area carrying one takes the next layout's title. */
+const GENERATED_TITLES: ReadonlySet<string> = new Set(
+  [
+    ...STARTERS.flatMap((starter) => starter.composition.areas.map((area) => area.title ?? "")),
+    ...createDefaultProfileLayout().sections.map((section) => section.title ?? ""),
+  ]
+    .filter(Boolean)
+    .map((title) => title.toLowerCase()),
+);
 
 export const starterMap: Record<StarterId, Starter> = STARTERS.reduce(
   (acc, starter) => ({ ...acc, [starter.id]: starter }),
   {} as Record<StarterId, Starter>,
 );
 
+/** Families in picker order. */
+export const LAYOUT_FAMILIES: LayoutFamily[] = [
+  "Editorial",
+  "Work-led",
+  "Structured",
+  "Expressive",
+];
+
 // ── Non-destructive application ────────────────────────────────────────────────
 
 /**
- * Apply a starter to a live layout. Reorders the leading sections, hides (never
- * deletes) collapsed ones, and re-dresses the projects presentation. Every
- * block's id, config and content are preserved.
+ * Compose a live layout with a layout template: the template's additions
+ * (only those whose blocks the page doesn't have yet), then every block moved
+ * into the composition, then the projects presentation. Block ids, content and
+ * visibility are preserved; nothing is deleted.
  *
- * `previouslyApplied` (the starter already recorded on the Studio config, if
- * any) matters when switching templates: sections hidden by the previous
- * starter must be revealed again before the new one decides what stays hidden,
- * otherwise they remain invisible no matter which template the creator picks
- * next.
+ * `_previouslyApplied` is accepted for callers from before compositions; a
+ * composition owns placement outright, so the previous layout doesn't matter.
  */
 export function applyStarter(
   layout: PageLayout,
   starter: Starter,
-  previouslyApplied?: Starter | null,
+  _previouslyApplied?: Starter | null,
 ): PageLayout {
-  // Order sections so markers named in `sectionOrder` lead (in that order),
-  // then any remaining sections follow in their existing relative order.
-  const byMarker = new Map<SectionMarker, LayoutSection[]>();
-  for (const section of layout.sections) {
-    const marker = sectionMarker(section);
-    if (!marker) continue;
-    const list = byMarker.get(marker) ?? [];
-    list.push(section);
-    byMarker.set(marker, list);
-  }
-
-  const orderedUnique = new Set<string>();
-  const ordered: LayoutSection[] = [];
-  const push = (section: LayoutSection) => {
-    if (orderedUnique.has(section.id)) return;
-    orderedUnique.add(section.id);
-    ordered.push(section);
-  };
-  for (const marker of starter.sectionOrder) {
-    for (const section of byMarker.get(marker) ?? []) push(section);
-  }
-  for (const section of layout.sections) push(section);
-
-  const collapsed = new Set(starter.collapsedSections);
-  const previouslyHidden = new Set(previouslyApplied?.collapsedSections ?? []);
-
-  const sectionLayouts = starter.sectionLayouts ?? {};
-  const applied = {
-    sections: ordered.map((section, position) => {
-      const marker = sectionMarker(section);
-      const nextBlocks = section.blocks.map((block) =>
+  const withAdditions = addStarterSections(layout, starter.id, starter.addsSections ?? []);
+  const composed = composeLayout(withAdditions, starter.composition, {
+    generatedTitles: GENERATED_TITLES,
+  });
+  return {
+    sections: composed.sections.map((section) => ({
+      ...section,
+      blocks: section.blocks.map((block) =>
         block.type === "profile-projects"
           ? { ...block, config: { ...block.config, presentation: starter.presentation } }
           : block,
-      );
-      // Sections the previous starter hid come back when switching, unless the
-      // new starter hides them too. Sections hidden manually by the creator
-      // (no previous starter, or a marker no starter owns) keep their state.
-      const hiddenByPreviousStarter =
-        previouslyApplied != null && marker != null && previouslyHidden.has(marker);
-      const visible =
-        marker == null
-          ? section.visible
-          : hiddenByPreviousStarter
-            ? !collapsed.has(marker)
-            : (section.visible ?? true) && !collapsed.has(marker);
-      // Apply the starter's per-marker section layout so each direction
-      // produces a visually distinct arrangement, not just reordering.
-      const nextLayout = marker && sectionLayouts[marker] ? sectionLayouts[marker] : section.layout;
-      return {
-        ...section,
-        position,
-        visible,
-        layout: nextLayout,
-        blocks: nextBlocks,
-      };
-    }),
+      ),
+    })),
   };
-  return addStarterSections(applied, starter.id, starter.addsSections ?? []);
 }
 
-/** Insert a starter's new areas, skipping any whose blocks already exist. */
+/** Add a layout's new areas, skipping any whose blocks already exist. */
 function addStarterSections(
   layout: PageLayout,
   starterId: StarterId,
@@ -394,7 +702,7 @@ function addStarterSections(
       .map((type) => createBlockInstance(type))
       .filter((created): created is NonNullable<typeof created> => !!created)
       .map((created, position) => ({
-        // Deterministic ids: applying a starter twice gives identical JSON, and
+        // Deterministic ids: applying a layout twice gives identical JSON, and
         // a second application never adds these again (their types exist).
         id: `block-${starterId}-${index}-${created.type}`,
         type: created.type,
@@ -403,109 +711,43 @@ function addStarterSections(
         visible: true,
       }));
     if (blocks.length === 0) return;
-    const section: LayoutSection = {
+    sections.push({
       id: `section-${starterId}-${index}`,
-      position: 0,
+      position: sections.length,
       title: addition.title,
-      layout: addition.layout,
+      layout: "full",
       visible: true,
       blocks,
       appearance: addition.appearance,
-    };
-    const anchor =
-      addition.after === "end"
-        ? -1
-        : sections.findIndex((candidate) => sectionMarker(candidate) === addition.after);
-    if (anchor < 0) sections.push(section);
-    else sections.splice(anchor + 1, 0, section);
+    });
     for (const block of blocks) present.add(block.type);
   });
-  return { sections: sections.map((section, position) => ({ ...section, position })) };
+  return { sections };
 }
 
-/** Merge a starter's configuration stamp into the current config. */
+/** A layout sets the page width and records itself; the look is untouched. */
 export function starterConfig(starter: Starter, current: StudioConfig): StudioConfig {
-  return {
-    ...current,
-    ...starter.config,
-    // The starter's personality brings its paired heading face; the member's
-    // body face is theirs and stays.
-    ...personalityPatch(starter.config.personality),
-    starterId: starter.id,
-  };
+  return { ...current, structure: starter.structure, starterId: starter.id };
 }
 
-// ── Live preview layout ────────────────────────────────────────────────────────
-
-const PREVIEW_TITLES: Partial<Record<SectionMarker, string>> = {
-  projects: "Work",
-  bio: "About",
-  readme: "README",
-  skills: "Skills",
-  gallery: "Gallery",
-  tools: "Tools",
-  links: "Links",
-};
-
-const PREVIEW_LAYOUTS: Partial<Record<SectionMarker, SectionLayoutType>> = {
-  projects: "feature",
-  tools: "two_column",
-};
-
-/** Fallback section layout when a starter doesn't specify one for a marker. */
-const DEFAULT_SECTION_LAYOUT: SectionLayoutType = "full";
-
-/**
- * Build a small representative layout for a starter, used to render a live
- * preview of what applying it would look like. Blocks are built from the
- * starter's semantic markers with empty configs (blocks self-default), so the
- * member's own data renders inside the real block components.
- */
-export function starterPreviewLayout(starter: Starter): PageLayout {
-  const collapsed = new Set(starter.collapsedSections);
-  const sectionLayouts = starter.sectionLayouts ?? {};
-  return {
-    sections: starter.sectionOrder.map((marker, index) => ({
-      id: `preview:${marker}`,
-      position: index,
-      title: PREVIEW_TITLES[marker],
-      layout: sectionLayouts[marker] ?? PREVIEW_LAYOUTS[marker] ?? DEFAULT_SECTION_LAYOUT,
-      visible: !collapsed.has(marker),
-      blocks: MARKER_BLOCKS[marker].map((type, blockIndex) => ({
-        id: `preview:${marker}:${type}`,
-        type,
-        position: blockIndex,
-        visible: !collapsed.has(marker),
-        config: type === "profile-projects" ? { presentation: starter.presentation } : {},
-      })),
-    })),
-  };
-}
-
-// ── Preview surface dressing ───────────────────────────────────────────────────
-
-/**
- * The StudioConfig stamp a starter would set, merged over the defaults. Used
- * by the picker to render each preview in its starter's real surface
- * treatment — fonts, density, radius, backgrounds — instead of a generic
- * canvas, so previews actually differ the way applying them would differ.
- */
-export function starterPreviewConfig(starter: Starter): StudioConfig {
-  return {
-    ...DEFAULT_STUDIO_CONFIG,
-    ...starter.config,
-    ...personalityPatch(starter.config.personality),
-    starterId: starter.id,
-  };
+/** The config a layout preview renders with: the member's own look, at the
+ *  layout's width — so the preview shows this layout in *their* style. */
+export function starterPreviewConfig(starter: Starter, current: StudioConfig): StudioConfig {
+  return starterConfig(starter, current);
 }
 
 /**
  * The StudioConfig stamp a community template applies. Templates carry no
  * config of their own (the layouts table is structure + theme only), so the
- * member's current config is preserved — only the sections change. Kept as a
- * sibling of {@link starterPreviewConfig} so the picker can treat both layers
- * with one code path.
+ * member's current config is preserved — only the sections change.
  */
 export function templatePreviewConfig(current: StudioConfig): StudioConfig {
   return { ...current, starterId: null };
+}
+
+/** A tiny wireframe of the composition's opening rows (picker fallback). */
+export function starterSketch(starter: Starter): number[][] {
+  return starter.composition.areas
+    .flatMap((area) => area.rows.map((row) => row.map((slot) => slot.w)))
+    .slice(0, 5);
 }

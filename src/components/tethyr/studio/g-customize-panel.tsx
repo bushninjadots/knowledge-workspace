@@ -18,6 +18,8 @@ import { cn } from "@/lib/utils";
 import { CARD_FILL_SWATCHES, RADIUS_MAX, RADIUS_MIN } from "@/lib/studio-config";
 import { FONT_OPTIONS } from "@/lib/fonts";
 import { resolveTitles } from "@/lib/visual-language";
+import { starterMap } from "@/data/starters";
+import { LayoutPreview } from "./layout-preview";
 import { FineTune, GroupHeading, LanguagePicker, LookOptions } from "./look-controls";
 import { sectionLabel } from "@/lib/studio-grid";
 import { IconButton, Choice } from "./studio-controls";
@@ -198,6 +200,8 @@ export type StyleSectionProps = {
   onCompleteProfile?: () => void;
   /** Opens the shared background/appearance dialog (banner → Appearance). */
   onOpenAppearance?: () => void;
+  /** Opens the layout picker. */
+  onOpenLayouts?: () => void;
 };
 
 const STYLE_TABS = [
@@ -232,6 +236,7 @@ export function GStyleSections({
   onSelect,
   selectedBlockId,
   onOpenAppearance,
+  onOpenLayouts,
 }: StyleSectionProps) {
   const [tab, setTab] = useState<StyleTab>("identity");
   useEffect(() => {
@@ -652,6 +657,33 @@ export function GStyleSections({
         )}
         {tab === "layout" && (
           <>
+            <section className="mb-5" aria-labelledby="composition-heading">
+              <p id="composition-heading" className="t-label mb-1.5">
+                Composition
+              </p>
+              <p className="mb-2 text-2xs leading-snug text-muted-foreground-subtle">
+                <span className="font-medium text-foreground">
+                  {config.starterId ? starterMap[config.starterId]?.name : "Your own arrangement"}
+                </span>{" "}
+                — how your page is arranged. Changing it moves blocks into place; your look stays.
+              </p>
+              <LayoutPreview
+                layout={layout}
+                config={config}
+                height={120}
+                className="mb-2 border border-border"
+              />
+              {onOpenLayouts && (
+                <button
+                  type="button"
+                  onClick={onOpenLayouts}
+                  className="flex w-full items-center justify-center gap-1.5 rounded-sm border border-border px-2 py-1.5 text-2xs text-foreground outline-none hover:bg-[var(--surface-sunken)] focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))]"
+                >
+                  <LayoutGrid className="h-3 w-3" aria-hidden />
+                  Browse layouts
+                </button>
+              )}
+            </section>
             <Choice
               label="Structure"
               hint="How wide your Studio reads"
@@ -660,6 +692,7 @@ export function GStyleSections({
                 ["single", "Column"],
                 ["sidebar", "Balanced"],
                 ["wide", "Wide"],
+                ["full", "Full"],
               ]}
               onChange={(value) => onChange({ structure: value as GStudioConfig["structure"] })}
             />
