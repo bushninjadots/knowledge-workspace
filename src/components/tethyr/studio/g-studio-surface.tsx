@@ -95,7 +95,7 @@ import {
 } from "@/lib/studio-grid";
 import { BlockGlyph } from "./block-glyph";
 import { useCardInk } from "@/hooks/use-card-ink";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile, useMediaQuery } from "@/hooks/use-mobile";
 import { IconButton, Choice, WidthStepper } from "./studio-controls";
 import {
   ThemeSection,
@@ -394,14 +394,16 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
   // Live theme preview: derive the page theme's CSS vars for the active
   // light/dark scheme so picking a preset repaints the canvas immediately.
   const { data: themeVars = {} } = useTheme(props.themeId);
-  // Customization is the whole point of this view, so the panel starts open on
-  // desktop instead of hiding behind a toggle the owner has to discover.
-  const [customizeOpen, setCustomizeOpen] = useState(
-    () => typeof window !== "undefined" && window.innerWidth >= 1024,
+  // One side rail with three tabs (Style, Add, Block) instead of a panel on
+  // each side: selecting a block switches tabs rather than squeezing the
+  // canvas. Style starts open on desktop so customizing is discoverable.
+  const [railTab, setRailTab] = useState<RailTab | null>(() =>
+    typeof window !== "undefined" && window.innerWidth >= 1024 ? "style" : null,
   );
-  const [paletteOpen, setPaletteOpen] = useState(false);
+  // The tab to return to when the selection clears while Block is showing.
+  const lastPanelTabRef = useRef<Exclude<RailTab, "block">>("style");
+  if (railTab && railTab !== "block") lastPanelTabRef.current = railTab;
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [mobilePanel, setMobilePanel] = useState<"left" | "right" | null>(null);
   const [emptyBlocks, setEmptyBlocks] = useState<Set<string>>(() => new Set());
   const [snapToBlocks, setSnapToBlocks] = useState(true);
   const handleBlockEmpty = useCallback((blockId: string, isEmpty: boolean) => {
@@ -417,9 +419,11 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
       return next;
     });
   }, []);
-  const compact = typeof window !== "undefined" && window.matchMedia("(max-width: 1023px)").matches;
-  const touch = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
-  const directManipulation = !touch;
+  const compact = useMediaQuery("(max-width: 1023px)");
+  const touch = useMediaQuery("(pointer: coarse)");
+  // Drag and resize wherever the grid is shown (lg and up), touch included:
+  // on touch screens a drag starts from the grip so the canvas still scrolls.
+  const directManipulation = !compact;
   const editing = props.mode === "edit";
   const deviceWidth = props.mode === "preview" ? DEVICE_WIDTHS[props.device] : undefined;
   const maxWidth = structureMaxWidthCss(props.config);
@@ -445,14 +449,14 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
     ...studioBackgroundVars(props.config, "app"),
   };
 
-  const toggleCustomize = () => {
-    setCustomizeOpen((open) => !open);
-    setPaletteOpen(false);
-  };
-  const togglePalette = () => {
-    setPaletteOpen((open) => !open);
-    setCustomizeOpen(false);
-  };
+  // Follow the selection: a selected block (including one just added) shows
+  // its settings; clearing it returns to the panel that was open before.
+  useEffect(() => {
+    if (props.selectedBlockId) setRailTab("block");
+    else setRailTab((tab) => (tab === "block" ? lastPanelTabRef.current : tab));
+  }, [props.selectedBlockId]);
+  const toggleTab = (tab: Exclude<RailTab, "block">) =>
+    setRailTab((current) => (current === tab ? null : tab));
 
   return (
     // The member's theme, personality and card ink apply to the canvas only.
@@ -483,12 +487,12 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
         onDeviceChange={props.onDeviceChange}
         onUndo={props.onUndo}
         onRedo={props.onRedo}
-        onCustomize={toggleCustomize}
-        onPalette={togglePalette}
+        onCustomize={() => toggleTab("style")}
+        onPalette={() => toggleTab("add")}
         onSave={props.onSave}
         onPublish={props.onPublish}
-        customizeOpen={customizeOpen}
-        paletteOpen={paletteOpen}
+        customizeOpen={railTab === "style"}
+        paletteOpen={railTab === "add"}
         onExit={props.onExit}
         profile={props.profile}
         onTemplates={props.onOpenTemplates}
@@ -497,33 +501,6 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
       />
       {editing && props.starterPrompt && <GStarterStrip {...props.starterPrompt} />}
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        {editing && (customizeOpen || mobilePanel === "left") && (
-          <GCustomizePanel
-            config={props.config}
-            layout={props.layout}
-            compact={mobilePanel === "left"}
-            onChange={props.onCustomizeChange}
-            themeId={props.themeId}
-            onThemeChange={props.onThemeChange}
-            cardBorders={props.cardBorders}
-            cardBorderColor={props.cardBorderColor}
-            onCardBordersChange={props.onCardBordersChange}
-            onCardBorderColorChange={props.onCardBorderColorChange}
-            onToggleSection={props.onToggleSection}
-            onBlockAction={props.onBlockAction}
-            onSelect={props.onSelect}
-            selectedBlockId={props.selectedBlockId}
-            onClose={() => {
-              setCustomizeOpen(false);
-              setMobilePanel(null);
-            }}
-            onCompleteProfile={props.onCompleteProfile}
-            onOpenAppearance={props.onOpenAppearance}
-            onOpenTemplates={props.onOpenTemplates}
-            onSaveAsTemplate={props.onSaveAsTemplate}
-            onReset={props.onReset}
-          />
-        )}
         <main
           className="relative min-w-0 flex-1 overflow-y-auto bg-[var(--studio-bg,var(--background))] bg-noise text-foreground"
           aria-label="Studio canvas"
@@ -564,6 +541,7 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
               sections={sections}
               editing={editing}
               directManipulation={directManipulation}
+              touchDrag={touch}
               frameWidth={deviceWidth}
               onBlockEmptyChange={handleBlockEmpty}
               emptyBlockIds={emptyBlocks}
@@ -571,21 +549,12 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
               onGridChange={props.onGridChange}
               onRequestPalette={(sectionId) => {
                 props.onPaletteTargetChange(sectionId);
-                setPaletteOpen(true);
+                setRailTab("add");
               }}
             />
           </div>
         </main>
-        {editing && (paletteOpen || props.selectedBlockId || mobilePanel === "right") && (
-          <GInspectorRail
-            {...props}
-            paletteOpen={paletteOpen}
-            onClose={() => {
-              setPaletteOpen(false);
-              props.onSelect(null);
-            }}
-          />
-        )}
+        {editing && railTab && <GStudioRail {...props} tab={railTab} onTabChange={setRailTab} />}
         {editing && compact && <GMobileEditSheet {...props} />}
       </div>
     </div>
@@ -1022,6 +991,7 @@ function GStudioCanvas({
   sections,
   editing,
   directManipulation,
+  touchDrag,
   frameWidth,
   snapToBlocks,
   onRequestPalette,
@@ -1030,6 +1000,7 @@ function GStudioCanvas({
   sections: LayoutSection[];
   editing: boolean;
   directManipulation: boolean;
+  touchDrag: boolean;
   frameWidth?: number;
   snapToBlocks: boolean;
   onRequestPalette: (id: string) => void;
@@ -1055,6 +1026,7 @@ function GStudioCanvas({
             total={sections.length}
             editing={editing}
             directManipulation={directManipulation}
+            touchDrag={touchDrag}
             snapToBlocks={snapToBlocks}
             {...props}
             onRequestPalette={onRequestPalette}
@@ -1083,7 +1055,8 @@ function ResizeHandle(axis: string, ref: React.Ref<HTMLElement>) {
       className={cn(
         "react-resizable-handle",
         `react-resizable-handle-${axis}`,
-        "opacity-0 transition-opacity duration-140 group-hover/frame:opacity-100",
+        // Hover reveals the handles; a selected block keeps them (touch has no hover).
+        "opacity-0 transition-opacity duration-140 group-hover/frame:opacity-100 [[aria-current=true]>&]:opacity-100",
       )}
     >
       <span
@@ -1151,6 +1124,7 @@ function GSectionBand({
   total,
   editing,
   directManipulation,
+  touchDrag,
   snapToBlocks,
   onRequestPalette,
   ...props
@@ -1160,6 +1134,7 @@ function GSectionBand({
   total: number;
   editing: boolean;
   directManipulation: boolean;
+  touchDrag: boolean;
   snapToBlocks: boolean;
   onRequestPalette: (id: string) => void;
 }) {
@@ -1400,6 +1375,7 @@ function GSectionBand({
             isDroppable={editing && directManipulation && Boolean(props.dragType)}
             droppingItem={dropItem}
             draggableCancel={BLOCK_DRAG_CANCEL}
+            draggableHandle={touchDrag ? ".studio-drag-handle" : undefined}
             resizeHandles={["se", "e", "s"]}
             resizeHandle={ResizeHandle}
             useCSSTransforms
@@ -1634,12 +1610,28 @@ const GBlockFrame = forwardRef<
     <div
       ref={ref}
       style={style}
+      data-block-id={block.id}
+      // Keyboard path to every block: Tab reaches it, Enter or Space selects
+      // it, and then the arrow / Delete / Ctrl+D shortcuts apply.
+      tabIndex={editing ? 0 : undefined}
+      role={editing ? "group" : undefined}
+      aria-label={editing ? `${def?.label ?? block.type} block` : undefined}
+      aria-current={editing && selected ? "true" : undefined}
+      onKeyDown={(event) => {
+        if (!editing || event.target !== event.currentTarget) return;
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          props.onSelect(block.id);
+        }
+      }}
       onMouseDown={onMouseDown}
       onMouseUp={onMouseUp}
       onTouchEnd={onTouchEnd}
       className={cn(
         className,
-        "group/frame relative",
+        "group/frame relative scroll-mt-20",
+        editing &&
+          "outline-none focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-2",
         !fluid && "h-full min-h-0",
         editing && "cursor-grab active:cursor-grabbing",
         selected && "ring-1 ring-[var(--user-accent)]",
@@ -1683,7 +1675,9 @@ const GBlockFrame = forwardRef<
           <span
             aria-hidden
             className={cn(
-              "pointer-events-none absolute left-1 top-1 z-20 flex h-6 w-6 items-center justify-center rounded-sm border border-[var(--user-accent-border)] bg-[var(--surface-elevated)] text-[var(--user-accent-text)] shadow-sm transition-opacity group-hover/frame:opacity-100",
+              // The drag handle on touch screens (pointer-coarse); decoration
+              // elsewhere, where the whole frame drags.
+              "studio-drag-handle pointer-events-none absolute left-1 top-1 z-20 flex h-6 w-6 items-center justify-center rounded-sm border border-[var(--user-accent-border)] bg-[var(--surface-elevated)] text-[var(--user-accent-text)] shadow-sm transition-opacity group-hover/frame:opacity-100 pointer-coarse:pointer-events-auto pointer-coarse:h-9 pointer-coarse:w-9 pointer-coarse:touch-none",
               selected ? "opacity-100" : "opacity-60",
             )}
           >
@@ -1977,19 +1971,85 @@ function BlockFrameSection({
   );
 }
 
-function GInspectorRail(
-  props: GStudioSurfaceProps & { paletteOpen: boolean; onClose: () => void },
+type RailTab = "style" | "add" | "block";
+
+const RAIL_TABS: Array<[RailTab, string]> = [
+  ["style", "Style"],
+  ["add", "Add"],
+  ["block", "Block"],
+];
+
+function GStudioRail(
+  props: GStudioSurfaceProps & { tab: RailTab; onTabChange: (tab: RailTab | null) => void },
 ) {
+  const { tab, onTabChange } = props;
   const block = props.layout.sections
     .flatMap((section) => section.blocks)
     .find((item) => item.id === props.selectedBlockId);
   return (
-    <aside className="hidden h-[calc(100dvh-2.75rem)] min-h-0 w-72 shrink-0 overflow-y-auto border-l border-border bg-[var(--surface-elevated)] lg:block">
-      {props.paletteOpen ? (
-        <GBlockPalette {...props} />
-      ) : (
-        <GBlockInspector {...props} block={block} onClose={props.onClose} />
-      )}
+    <aside
+      aria-label="Studio panels"
+      className="hidden h-full min-h-0 w-72 shrink-0 flex-col border-l border-border bg-[var(--surface-elevated)] lg:flex"
+    >
+      <header className="flex shrink-0 items-center gap-1 border-b border-border px-2 py-1.5">
+        <div role="tablist" aria-label="Studio panels" className="flex flex-1 gap-0.5">
+          {RAIL_TABS.map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              role="tab"
+              id={`studio-rail-tab-${value}`}
+              aria-selected={tab === value}
+              aria-controls="studio-rail-panel"
+              onClick={() => onTabChange(value)}
+              className={cn(
+                "rounded-sm px-2.5 py-1 text-xs outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))]",
+                tab === value
+                  ? "bg-[var(--user-accent-subtle)] font-medium text-[var(--user-accent-text)]"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <IconButton label="Close panel" onClick={() => onTabChange(null)}>
+          <X className="h-3.5 w-3.5" />
+        </IconButton>
+      </header>
+      <div
+        role="tabpanel"
+        id="studio-rail-panel"
+        aria-labelledby={`studio-rail-tab-${tab}`}
+        className={cn("min-h-0 flex-1", tab === "style" ? "flex flex-col" : "overflow-y-auto")}
+      >
+        {tab === "style" ? (
+          <GCustomizePanel
+            config={props.config}
+            layout={props.layout}
+            onChange={props.onCustomizeChange}
+            themeId={props.themeId}
+            onThemeChange={props.onThemeChange}
+            cardBorders={props.cardBorders}
+            cardBorderColor={props.cardBorderColor}
+            onCardBordersChange={props.onCardBordersChange}
+            onCardBorderColorChange={props.onCardBorderColorChange}
+            onToggleSection={props.onToggleSection}
+            onBlockAction={props.onBlockAction}
+            onSelect={props.onSelect}
+            selectedBlockId={props.selectedBlockId}
+            onCompleteProfile={props.onCompleteProfile}
+            onOpenAppearance={props.onOpenAppearance}
+            onOpenTemplates={props.onOpenTemplates}
+            onSaveAsTemplate={props.onSaveAsTemplate}
+            onReset={props.onReset}
+          />
+        ) : tab === "add" ? (
+          <GBlockPalette {...props} />
+        ) : (
+          <GBlockInspector {...props} block={block} onClose={() => props.onSelect(null)} />
+        )}
+      </div>
     </aside>
   );
 }
@@ -2005,7 +2065,7 @@ function dedupeSharedReadmeBlocks(blockType: string, usedTypes: Set<string>): bo
   return true;
 }
 
-function GBlockPalette(props: GStudioSurfaceProps & { onClose: () => void }) {
+function GBlockPalette(props: GStudioSurfaceProps) {
   const [query, setQuery] = useState("");
   const sections = props.layout.sections;
   const selectedSectionId = props.selectedBlockId
@@ -2051,13 +2111,7 @@ function GBlockPalette(props: GStudioSurfaceProps & { onClose: () => void }) {
     </button>
   );
   return (
-    <aside aria-label="Add blocks" className="flex min-h-full w-full flex-col">
-      <header className="flex items-center justify-between border-b border-border px-3 py-2">
-        <h2 className="t-label">Add to Studio</h2>
-        <IconButton label="Close palette" onClick={props.onClose}>
-          <X className="h-3.5 w-3.5" />
-        </IconButton>
-      </header>
+    <div className="flex min-h-full w-full flex-col">
       <div className="space-y-2 border-b border-border px-3 py-2">
         <input
           type="search"
@@ -2104,7 +2158,7 @@ function GBlockPalette(props: GStudioSurfaceProps & { onClose: () => void }) {
           </>
         )}
       </div>
-    </aside>
+    </div>
   );
 }
 
@@ -2280,7 +2334,7 @@ function GBlockInspector({
           <Button
             variant="outline"
             size="sm"
-            className="w-20 justify-center"
+            className="flex-1 justify-center"
             onClick={() => props.onMove(block.id, -1)}
           >
             <ChevronUp className="h-3 w-3" /> Move up
@@ -2288,7 +2342,7 @@ function GBlockInspector({
           <Button
             variant="outline"
             size="sm"
-            className="w-20 justify-center"
+            className="flex-1 justify-center"
             onClick={() => props.onMove(block.id, 1)}
           >
             <ChevronDown className="h-3 w-3" /> Move down
@@ -2336,9 +2390,32 @@ function GBlockInspector({
   );
 }
 
+const MOBILE_SHEET_TABS: Array<["arrange" | "add" | "feel" | "block", string]> = [
+  ["arrange", "Arrange"],
+  ["add", "Add"],
+  ["feel", "Style"],
+  ["block", "Block"],
+];
+
 function GMobileEditSheet(props: GStudioSurfaceProps) {
-  const [tab, setTab] = useState<"arrange" | "add" | "feel">("arrange");
+  const [tab, setTab] = useState<"arrange" | "add" | "feel" | "block">("arrange");
   const [open, setOpen] = useState(false);
+  const selectedBlock = props.layout.sections
+    .flatMap((section) => section.blocks)
+    .find((block) => block.id === props.selectedBlockId);
+  // Below lg there is no side rail, so a tapped block opens its settings
+  // here and scrolls up into the half of the screen the sheet leaves free.
+  useEffect(() => {
+    if (!props.selectedBlockId) return;
+    setOpen(true);
+    setTab("block");
+    const id = props.selectedBlockId;
+    window.requestAnimationFrame(() =>
+      document
+        .querySelector(`[data-block-id="${CSS.escape(id)}"]`)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" }),
+    );
+  }, [props.selectedBlockId]);
   const [targetArea, setTargetArea] = useState<string | undefined>(props.layout.sections[0]?.id);
   const usedBlockTypes = new Set(props.layout.sections.flatMap((s) => s.blocks.map((b) => b.type)));
   if (!open)
@@ -2358,11 +2435,10 @@ function GMobileEditSheet(props: GStudioSurfaceProps) {
     >
       <div className="flex items-center gap-2 border-b border-border px-3 py-2">
         <div className="flex min-w-0 flex-1 items-center gap-2">
-          <span className="t-label">Edit Studio</span>
           <span
             role="status"
             className={cn(
-              "truncate text-2xs",
+              "text-xs leading-tight",
               props.saving || props.dirty || props.hasUnpublishedChanges
                 ? "text-foreground"
                 : "text-trust",
@@ -2403,37 +2479,26 @@ function GMobileEditSheet(props: GStudioSurfaceProps) {
           <X className="h-3.5 w-3.5" />
         </IconButton>
       </div>
-      <div className="flex items-center gap-1 border-b border-border px-3 py-1.5">
-        <button
-          type="button"
-          onClick={() => setTab("arrange")}
-          className={cn(
-            "rounded-sm px-2.5 py-1.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))]",
-            tab === "arrange" && "bg-[var(--user-accent-subtle)] text-[var(--user-accent-text)]",
-          )}
-        >
-          Arrange
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("add")}
-          className={cn(
-            "rounded-sm px-2.5 py-1.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))]",
-            tab === "add" && "bg-[var(--user-accent-subtle)] text-[var(--user-accent-text)]",
-          )}
-        >
-          <Plus className="mr-1 inline h-3 w-3" /> Add
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("feel")}
-          className={cn(
-            "rounded-sm px-2.5 py-1.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))]",
-            tab === "feel" && "bg-[var(--user-accent-subtle)] text-[var(--user-accent-text)]",
-          )}
-        >
-          <Sliders className="mr-1 inline h-3 w-3" /> Style
-        </button>
+      <div
+        role="tablist"
+        aria-label="Studio editor"
+        className="flex items-center gap-1 border-b border-border px-3 py-1.5"
+      >
+        {MOBILE_SHEET_TABS.map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            role="tab"
+            aria-selected={tab === value}
+            onClick={() => setTab(value)}
+            className={cn(
+              "min-h-10 rounded-sm px-2.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))]",
+              tab === value && "bg-[var(--user-accent-subtle)] text-[var(--user-accent-text)]",
+            )}
+          >
+            {label}
+          </button>
+        ))}
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2">
         {tab === "arrange" && (
@@ -2491,6 +2556,9 @@ function GMobileEditSheet(props: GStudioSurfaceProps) {
                     <WidthStepper block={block} section={section} onResize={props.onResizeBlock} />
                     <IconButton label="Move block up" onClick={() => props.onMove(block.id, -1)}>
                       <ChevronUp className="h-3.5 w-3.5" />
+                    </IconButton>
+                    <IconButton label="Move block down" onClick={() => props.onMove(block.id, 1)}>
+                      <ChevronDown className="h-3.5 w-3.5" />
                     </IconButton>
                     <IconButton
                       label={block.visible === false ? "Show block" : "Hide block"}
@@ -2559,6 +2627,16 @@ function GMobileEditSheet(props: GStudioSurfaceProps) {
               );
             })}
           </div>
+        )}
+        {tab === "block" && (
+          <GBlockInspector
+            {...props}
+            block={selectedBlock}
+            onClose={() => {
+              props.onSelect(null);
+              setTab("arrange");
+            }}
+          />
         )}
         {tab === "feel" && (
           <div>

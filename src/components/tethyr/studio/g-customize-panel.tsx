@@ -1,4 +1,4 @@
-// Studio "Customize" panel — theme, presets, and page-level appearance
+// Studio "Style" panel — theme, presets, and page-level appearance
 // settings, shared by the desktop panel and the mobile edit sheet.
 //
 // Split out of g-studio-surface.tsx.
@@ -13,7 +13,6 @@ import {
   Palette,
   Plus,
   RotateCcw,
-  X,
 } from "lucide-react";
 import {
   BORDER_SWATCHES,
@@ -540,7 +539,6 @@ export function GCustomizeAdvanced({
 export function GCustomizePanel({
   config,
   layout,
-  compact,
   onChange,
   themeId,
   onThemeChange,
@@ -552,7 +550,6 @@ export function GCustomizePanel({
   onBlockAction,
   onSelect,
   selectedBlockId,
-  onClose,
   onOpenAppearance,
   onOpenTemplates,
   onSaveAsTemplate,
@@ -560,7 +557,6 @@ export function GCustomizePanel({
 }: {
   config: GStudioConfig;
   layout: PageLayout;
-  compact: boolean;
   onChange: (patch: Partial<GStudioConfig>) => void;
   themeId: string | null;
   onThemeChange: (themeId: string | null) => void;
@@ -572,7 +568,6 @@ export function GCustomizePanel({
   onBlockAction: (id: string, patch: Partial<LayoutBlockInstance>) => void;
   onSelect: (id: string | null) => void;
   selectedBlockId: string | null;
-  onClose: () => void;
   onCompleteProfile?: () => void;
   /** Opens the shared background/appearance dialog (banner → Appearance). */
   onOpenAppearance?: () => void;
@@ -598,18 +593,8 @@ export function GCustomizePanel({
     });
   }, []);
   return (
-    <aside
-      className={cn(
-        "flex h-full min-h-0 w-64 shrink-0 flex-col overflow-hidden border-r border-border bg-[var(--surface-elevated)]",
-        compact && "fixed bottom-0 left-0 top-11 z-40",
-      )}
-    >
-      <header className="flex items-center justify-between border-b border-border px-3 py-2">
-        <p className="t-label">Customize</p>
-        <IconButton label="Close customize" onClick={onClose}>
-          <X className="h-3.5 w-3.5" />
-        </IconButton>
-      </header>
+    // Body of the rail's Style tab; the rail owns the frame, tabs and close.
+    <div className="flex h-full min-h-0 flex-col">
       {/* Single scroll owner: this wrapper scrolls; the footer stays put below it. */}
       <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
         <ThemeSection themeId={themeId} onThemeChange={onThemeChange} />
@@ -695,6 +680,6 @@ export function GCustomizePanel({
           Reset to default Studio
         </button>
       </footer>
-    </aside>
+    </div>
   );
 }
