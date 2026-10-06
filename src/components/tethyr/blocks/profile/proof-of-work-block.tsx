@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from "react";
+import { BlockTitle } from "@/components/tethyr/blocks/block-title";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
@@ -186,9 +187,7 @@ function ProfileProofOfWorkBlock({ config, context }: BlockProps) {
 
   return (
     <div className="min-w-0">
-      <h2 className="[font-family:inherit] mb-3 text-sm font-medium text-foreground">
-        Proof of work
-      </h2>
+      <BlockTitle config={config}>Proof of work</BlockTitle>
       <div className="space-y-4">
         {groups.map(([label, list]) => (
           <section key={label || "all"}>
@@ -262,8 +261,9 @@ function EvidenceRow({
 
 registerBlock({
   type: "profile-proof-of-work",
-  category: "people",
+  category: "work",
   label: "Proof of work",
+  title: "Proof of work",
   description: "An evidence shelf of what you've shipped, finished and contributed.",
   icon: "BadgeCheck",
   defaults: {

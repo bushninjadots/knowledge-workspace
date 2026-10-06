@@ -334,7 +334,9 @@ export function PageShell({
     : isEditing
       ? "mx-auto w-full max-w-5xl overflow-hidden border-y border-border/50"
       : ownerType === "profile" && structureWidth
-        ? "mx-auto w-full"
+        ? // A 16px gutter so cards and area labels never touch a phone's edge;
+          // the max width grows by the same amount, so desktop is unchanged.
+          "mx-auto w-full px-4"
         : "w-full";
   const workspaceClass =
     isPreviewing || isEditing ? "bg-surface-sunken px-3 py-5 sm:px-8 sm:py-10" : "";
@@ -362,7 +364,11 @@ export function PageShell({
           className={`${canvasFrameClass} relative isolate bg-[var(--studio-bg,var(--background))] bg-noise font-sans text-foreground`}
           style={
             ownerType === "profile" && structureWidth && !isPreviewing && !isEditing
-              ? { ...containerStyle, maxWidth: structureWidth, marginInline: "auto" }
+              ? {
+                  ...containerStyle,
+                  maxWidth: structureWidth + 32,
+                  marginInline: "auto",
+                }
               : containerStyle
           }
           data-page-id={page.id}

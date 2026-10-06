@@ -127,6 +127,16 @@ async function ensureCustomizeOpen(page) {
     .catch(() => false);
 }
 
+/** The Style tab groups settings into sub-tabs (Look, Type, Layout, Cards,
+ *  Outline); open the one a check needs. */
+async function openStyleTab(page, name) {
+  const tab = page.getByRole("tab", { name, exact: true }).first();
+  if (!(await tab.isVisible().catch(() => false))) return false;
+  await tab.click({ timeout: 6000 }).catch(() => {});
+  await page.waitForTimeout(300);
+  return true;
+}
+
 async function expandMoreOptions(page) {
   const more = page.getByRole("button", { name: /more options/i }).first();
   if (!(await more.isVisible().catch(() => false))) return false;
@@ -387,7 +397,11 @@ const LABELS = () => {
       utility: el.className.toString().split(/\s+/)[0],
       // Block titles are h2s set in the body face on purpose (they read as
       // labels); only display headings promise the personality face.
-      bodyFace: el.className.toString().includes("[font-family:inherit]"),
+      // ...and shared block titles follow the Studio's "Block titles" setting.
+      bodyFace:
+        el.className.toString().includes("[font-family:inherit]") ||
+        el.classList.contains("block-title") ||
+        el.classList.contains("block-subtitle"),
       // Editor chrome stays on the app's fonts by design; only labels on the
       // canvas follow the Studio's label font.
       inCanvas: !!el.closest('[aria-label="Studio canvas"]'),
@@ -800,13 +814,14 @@ try {
     await ensureCustomizeOpen(page);
     await expandMoreOptions(page);
     const probes = [
-      ["Structure", ["Column", "Balanced", "Wide"]],
-      ["Personality", ["Editorial", "Technical", "Modern"]],
-      ["Density", ["Compact", "Spacious"]],
-      ["Border weight", ["Medium", "Thick", "Thin"]],
+      ["Structure", ["Column", "Balanced", "Wide"], "Layout"],
+      ["Personality", ["Editorial", "Technical", "Modern"], "Type"],
+      ["Density", ["Compact", "Spacious"], "Layout"],
+      ["Border weight", ["Medium", "Thick", "Thin"], "Cards"],
     ];
     const function_ = [];
-    for (const [group, options] of probes) {
+    for (const [group, options, styleTab] of probes) {
+      await openStyleTab(page, styleTab);
       for (const option of options) {
         const btn = page.getByRole("button", { name: new RegExp(`^${option}$`, "i") }).first();
         if (!(await btn.isVisible().catch(() => false))) {
@@ -900,6 +915,7 @@ try {
     // Structure is three fixed max-widths. Two of them can be wider than the
     // space the panel leaves the canvas, which makes the setting look dead.
     const structure = [];
+    await openStyleTab(page, "Layout");
     for (const option of ["Column", "Balanced", "Wide"]) {
       const btn = page.getByRole("button", { name: new RegExp(`^${option}$`, "i") }).first();
       await btn.evaluate((el) => el.scrollIntoView({ block: "center" })).catch(() => {});
@@ -926,7 +942,11 @@ try {
 
     // sliders
     const sliders = [];
-    for (const label of [/corner radius in pixels/i, /opacity/i]) {
+    for (const [label, styleTab] of [
+      [/corner radius in pixels/i, "Layout"],
+      [/opacity/i, "Cards"],
+    ]) {
+      await openStyleTab(page, styleTab);
       const el = page.getByLabel(label).first();
       if (!(await el.isVisible().catch(() => false))) {
         sliders.push({ label: String(label), found: false });
@@ -964,6 +984,7 @@ try {
     );
 
     // 6 ─ theme tiles
+    await openStyleTab(page, "Look");
     const tiles = await page.evaluate(THEME_TILES);
     report.sections.themeTiles = tiles;
     const pressed = tiles.filter((t) => t.pressed);
@@ -982,6 +1003,7 @@ try {
     await openStudio(page);
     await ensureCustomizeOpen(page);
     const perPersonality = {};
+    await openStyleTab(page, "Type");
     for (const personality of ["Editorial", "Technical", "Modern"]) {
       const btn = page.getByRole("button", { name: new RegExp(`^${personality}$`, "i") }).first();
       await btn.evaluate((el) => el.scrollIntoView({ block: "center" })).catch(() => {});

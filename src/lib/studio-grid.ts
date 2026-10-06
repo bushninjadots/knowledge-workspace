@@ -37,9 +37,24 @@ const BLOCK_SIZES: Record<string, [number, number, number, number]> = {
   "profile-availability": [5, 4, 3, 2],
   "profile-contribution-stats": [7, 4, 3, 2],
   "profile-collaboration-network": [7, 5, 4, 3],
+  // Content blocks register as "text"/"heading"/"divider"; the "content-*"
+  // keys never matched, so a new Heading landed half-width and 4 rows tall.
+  // Kept for older fixtures.
   "content-text": [6, 3, 3, 2],
   "content-heading": [12, 2, 3, 2],
   "content-divider": [12, 1, 2, 1],
+  text: [6, 3, 3, 2],
+  heading: [12, 2, 3, 2],
+  divider: [12, 1, 2, 1],
+  markdown: [8, 4, 3, 2],
+  quote: [6, 3, 3, 2],
+  "call-to-action": [12, 3, 4, 2],
+  highlights: [12, 3, 4, 2],
+  timeline: [6, 5, 4, 3],
+  faq: [8, 4, 4, 3],
+  "featured-link": [6, 3, 3, 2],
+  services: [12, 4, 4, 3],
+  callout: [12, 2, 4, 2],
 };
 
 export function overlapsGridItems(a: LayoutGridItem, b: LayoutGridItem): boolean {

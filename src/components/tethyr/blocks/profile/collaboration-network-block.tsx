@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { BlockTitle } from "@/components/tethyr/blocks/block-title";
 import { Link } from "@tanstack/react-router";
 import { Network } from "lucide-react";
 import { registerBlock } from "@/lib/block-registry";
@@ -34,10 +35,9 @@ function ProfileCollaborationNetworkBlock({ config, context }: BlockProps) {
 
   return (
     <section className="flex min-w-0 flex-col gap-3" aria-label="Collaboration network">
-      <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-        <Network className="size-4 text-primary" aria-hidden="true" />
+      <BlockTitle config={config} icon={<Network aria-hidden />}>
         Collaboration network
-      </div>
+      </BlockTitle>
       <ul className="flex flex-col gap-2">
         {people.map((person) => (
           <li
@@ -73,8 +73,9 @@ function ProfileCollaborationNetworkBlock({ config, context }: BlockProps) {
 
 registerBlock({
   type: "profile-collaboration-network",
-  category: "community",
+  category: "network",
   label: "Collaboration network",
+  title: "Collaboration network",
   description: "Show the people and work connected through real collaboration.",
   icon: "Network",
   contentSource: "data",

@@ -3,6 +3,7 @@
 // Role verbs say whether they BUILT it or CONTRIBUTED to it, and each card
 // carries the avatar cluster of the people they collaborated with.
 
+import { BlockTitle } from "@/components/tethyr/blocks/block-title";
 import { useEffect, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -136,7 +137,7 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
   const showProgress = config.showProgress !== false;
   const showDescription = config.showDescription !== false;
   const presentation = getProfileProjectPresentation(config.presentation);
-  const heading = <h2 className="mb-3 text-sm font-medium text-foreground">Projects</h2>;
+  const heading = <BlockTitle config={config}>Projects</BlockTitle>;
 
   const ProjectImage = ({
     project,
@@ -508,8 +509,9 @@ function CollaboratorAvatar({ row }: { row: CollaboratorRow }) {
 
 registerBlock({
   type: "profile-projects",
-  category: "people",
-  label: "Featured Projects",
+  category: "work",
+  label: "Featured projects",
+  title: "Projects",
   description: "Projects the person has contributed to, with role and status.",
   icon: "Folder",
   defaults: {

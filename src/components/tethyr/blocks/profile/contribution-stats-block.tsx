@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { BlockTitle } from "@/components/tethyr/blocks/block-title";
 import { BarChart3 } from "lucide-react";
 import { registerBlock } from "@/lib/block-registry";
 import { BlockEmptyState } from "@/components/tethyr/blocks/block-empty-state";
@@ -44,10 +45,9 @@ function ProfileContributionStatsBlock({ config, context }: BlockProps) {
 
   return (
     <section className="flex min-w-0 flex-col gap-3" aria-label="Contribution stats">
-      <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-        <BarChart3 className="size-4 text-primary" aria-hidden="true" />
+      <BlockTitle config={config} icon={<BarChart3 aria-hidden />}>
         Contribution stats
-      </div>
+      </BlockTitle>
       <dl className="grid grid-cols-3 gap-3">
         {stats.map((stat) => (
           <div key={stat.label} className="flex flex-col-reverse border-l border-border pl-3">
@@ -67,8 +67,9 @@ function ProfileContributionStatsBlock({ config, context }: BlockProps) {
 
 registerBlock({
   type: "profile-contribution-stats",
-  category: "community",
+  category: "work",
   label: "Contribution stats",
+  title: "Contribution stats",
   description: "A restrained summary of meaningful work and collaboration.",
   icon: "BarChart3",
   contentSource: "data",

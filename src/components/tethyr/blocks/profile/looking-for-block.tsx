@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { BlockTitle } from "@/components/tethyr/blocks/block-title";
 import { Search } from "lucide-react";
 import { registerBlock } from "@/lib/block-registry";
 import type { BlockProps } from "@/lib/page-blocks";
@@ -30,10 +31,9 @@ function ProfileLookingForBlock({ config, onChange, context }: BlockProps) {
   if (context.isEditing) {
     return (
       <div className="flex min-w-0 flex-col gap-3">
-        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-          <Search className="size-4 text-primary" />
+        <BlockTitle config={config} icon={<Search aria-hidden />}>
           Looking for
-        </div>
+        </BlockTitle>
         <div className="flex flex-wrap gap-1.5">
           {items.map((item) => (
             <span
@@ -81,8 +81,9 @@ function ProfileLookingForBlock({ config, onChange, context }: BlockProps) {
 
 registerBlock({
   type: "profile-looking-for",
-  category: "people",
+  category: "identity",
   label: "Looking for",
+  title: "Looking for",
   description: "Show the kinds of collaborators, feedback, or conversations you want next.",
   icon: "Search",
   contentSource: "config",

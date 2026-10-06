@@ -1,14 +1,16 @@
 // Studio editor side rail: Style, Add (block palette) and Block (inspector).
 // Split out of g-studio-surface.tsx.
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import {
   ChevronDown,
   ChevronUp,
   Copy,
   Frame,
-  GripHorizontal,
+  Plus,
+  Search,
   Settings2,
   Sliders,
+  Sparkles,
   Trash2,
   X,
 } from "lucide-react";
@@ -27,13 +29,21 @@ import {
 } from "@/lib/studio-config";
 import type { BlockShape } from "@/lib/page-blocks";
 import { findSection, sectionLabel } from "@/lib/studio-grid";
-import { BlockGlyph } from "./block-glyph";
 import { ProfileMediaControls } from "./profile-media-controls";
+import { BlockFields } from "./block-fields";
+import { BlockIcon } from "./block-icon";
+import { suggestBlocks } from "@/lib/block-suggestions";
 import { IconButton, WidthStepper } from "./studio-controls";
 import { GCustomizePanel } from "./g-customize-panel";
 import type { GStudioSurfaceProps } from "./g-studio-surface";
 
+/** Palette groups, in the order a Studio usually reads: who you are, what
+ *  you've made, what you know, who you build with, then free-form content. */
 export const BLOCK_CATEGORY_ORDER: BlockCategory[] = [
+  "identity",
+  "work",
+  "skills",
+  "network",
   "content",
   "media",
   "people",
@@ -42,7 +52,11 @@ export const BLOCK_CATEGORY_ORDER: BlockCategory[] = [
   "utility",
 ];
 export const BLOCK_CATEGORY_LABELS: Record<BlockCategory, string> = {
-  content: "Content",
+  identity: "About you",
+  work: "Work & proof",
+  skills: "Skills",
+  network: "Network",
+  content: "Text & layout",
   media: "Media",
   people: "People",
   project: "Projects",
@@ -379,9 +393,22 @@ function sectionInView(): string | undefined {
   return undefined;
 }
 
+/** Blocks added since the editor audit, flagged "New" in the palette. */
+const NEW_BLOCKS = new Set([
+  "quote",
+  "call-to-action",
+  "highlights",
+  "timeline",
+  "faq",
+  "featured-link",
+  "services",
+  "callout",
+]);
+
 function GBlockPalette(props: GStudioSurfaceProps) {
   const [query, setQuery] = useState("");
   const [inView] = useState(sectionInView);
+  const { data: me } = useCurrentUser();
   const sections = props.layout.sections;
   const selectedSectionId = props.selectedBlockId
     ? findSection(props.layout, props.selectedBlockId)?.id
@@ -401,9 +428,23 @@ function GBlockPalette(props: GStudioSurfaceProps) {
         ),
     [query, usedTypes],
   );
-  const blockItem = (def: BlockDefinition) => (
+  const suggestions = useMemo(
+    () =>
+      suggestBlocks(props.layout, {
+        projectCount: me?.projects.length ?? 0,
+        skillCount: (me?.teachIds.length ?? 0) + (me?.learnIds.length ?? 0),
+        hasBio: !!me?.profile?.bio?.trim(),
+        linkCount: me?.profile?.portfolio_links?.length ?? 0,
+        toolCount:
+          (me?.profile?.favourite_tools?.length ?? 0) + (me?.profile?.software_stack?.length ?? 0),
+        yearsExperience: me?.profile?.years_experience ?? null,
+        availability: me?.profile?.availability ?? null,
+      }).filter((s) => getBlock(s.type)),
+    [me, props.layout],
+  );
+  const blockItem = (def: BlockDefinition, reason?: string) => (
     <button
-      key={def.type}
+      key={`${reason ? "suggested-" : ""}${def.type}`}
       type="button"
       draggable
       onDragStart={(event) => {
@@ -413,37 +454,71 @@ function GBlockPalette(props: GStudioSurfaceProps) {
       }}
       onDragEnd={() => props.onDragTypeChange(null)}
       onClick={() => props.onAdd(def.type, target)}
-      className="group/item mb-1 flex w-full cursor-grab items-center gap-2 border border-border bg-[var(--surface)] px-2 py-1.5 text-left hover:border-[var(--user-accent-border)]"
+      title={`Add ${def.label} — or drag it onto the canvas`}
+      className="group/item flex w-full cursor-pointer items-start gap-2.5 rounded-md border border-transparent px-2 py-2 text-left outline-none transition-colors hover:border-border hover:bg-[var(--surface)] focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))]"
     >
-      <span className="flex h-7 w-9 shrink-0 items-center justify-center rounded-sm border border-border/60 bg-[var(--surface-sunken)] py-0.5">
-        <BlockGlyph type={def.type} category={def.category} />
+      <BlockIcon name={def.icon} />
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center gap-1.5 text-xs font-medium text-foreground">
+          {def.label}
+          {NEW_BLOCKS.has(def.type) && (
+            <span className="rounded-full bg-[var(--user-accent-subtle)] px-1.5 text-[10px] font-medium leading-4 text-[var(--user-accent-text)]">
+              New
+            </span>
+          )}
+          {usedTypes.has(def.type) && (
+            <span className="text-[10px] font-normal text-muted-foreground">· on page</span>
+          )}
+        </span>
+        <span className="mt-0.5 block text-2xs leading-snug text-muted-foreground">
+          {reason ?? def.description}
+        </span>
       </span>
-      <GripHorizontal className="h-3.5 w-3.5 shrink-0 text-muted-foreground-subtle" />
-      <span className="min-w-0">
-        <span className="block text-xs font-medium text-foreground">{def.label}</span>
-        <span className="block text-2xs text-muted-foreground-subtle">{def.description}</span>
-      </span>
+      <Plus
+        aria-hidden
+        className="mt-1 h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover/item:opacity-100 group-focus-visible/item:opacity-100"
+      />
     </button>
+  );
+  const group = (title: string, children: React.ReactNode, accent?: boolean) => (
+    <section className="mt-3 first:mt-0">
+      <h3
+        className={cn(
+          "t-label mb-1 flex items-center gap-1 px-2",
+          accent && "text-[var(--user-accent-text)]",
+        )}
+      >
+        {accent && <Sparkles className="h-3 w-3" aria-hidden />}
+        {title}
+      </h3>
+      {children}
+    </section>
   );
   return (
     <div className="flex min-h-full w-full flex-col">
-      <div className="space-y-2 border-b border-border px-3 py-2">
-        <input
-          type="search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search blocks"
-          aria-label="Search blocks"
-          className="w-full rounded-sm border border-border bg-[var(--surface-sunken)] px-2 py-1 text-xs outline-none"
-        />
-        <label className="block">
-          <span className="t-label">Add to area</span>
+      <div className="space-y-2 border-b border-border px-3 py-2.5">
+        <div className="relative">
+          <Search
+            aria-hidden
+            className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
+          />
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search blocks"
+            aria-label="Search blocks"
+            className="w-full rounded-sm border border-border bg-[var(--surface-sunken)] py-1.5 pl-7 pr-2 text-xs outline-none focus-visible:border-[var(--user-accent-border)] focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))]"
+          />
+        </div>
+        <label className="flex items-center gap-2">
+          <span className="shrink-0 text-2xs text-muted-foreground">Add to</span>
           {/* Studio chrome keeps its compact sunken control instead of the app field grammar. */}
           {/* eslint-disable-next-line no-restricted-syntax */}
           <select
             value={target ?? ""}
             onChange={(event) => props.onPaletteTargetChange(event.target.value)}
-            className="mt-1 w-full rounded-sm border border-border bg-[var(--surface-sunken)] px-2 py-1 text-xs"
+            className="min-w-0 flex-1 rounded-sm border border-border bg-[var(--surface-sunken)] px-2 py-1 text-xs"
           >
             {sections.map((section) => (
               <option key={section.id} value={section.id}>
@@ -453,21 +528,33 @@ function GBlockPalette(props: GStudioSurfaceProps) {
           </select>
         </label>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2">
+      <div className="min-h-0 flex-1 overflow-y-auto px-1.5 py-2.5">
         {query.trim() ? (
-          blocks.map((def) => blockItem(def))
+          blocks.length > 0 ? (
+            blocks.map((def) => blockItem(def))
+          ) : (
+            <p className="px-2 py-6 text-center text-xs text-muted-foreground">
+              No blocks match “{query.trim()}”.
+            </p>
+          )
         ) : (
           <>
+            {suggestions.length > 0 &&
+              group(
+                "Suggested for you",
+                suggestions.map((s) => blockItem(getBlock(s.type)!, s.reason)),
+                true,
+              )}
             {BLOCK_CATEGORY_ORDER.map((category) => {
               const categoryBlocks = blocks.filter((b) => b.category === category);
               if (categoryBlocks.length === 0) return null;
               return (
-                <div key={category}>
-                  <p className="t-label mb-1 mt-3 text-2xs text-[var(--user-accent-text)] first:mt-0">
-                    {BLOCK_CATEGORY_LABELS[category]}
-                  </p>
-                  {categoryBlocks.map((def) => blockItem(def))}
-                </div>
+                <Fragment key={category}>
+                  {group(
+                    BLOCK_CATEGORY_LABELS[category],
+                    categoryBlocks.map((def) => blockItem(def)),
+                  )}
+                </Fragment>
               );
             })}
           </>
@@ -498,13 +585,13 @@ export function GBlockInspector({
     );
   return (
     <div className="p-3">
-      <header className="flex items-start justify-between gap-2 border-b border-border pb-3">
-        <div>
-          <p className="t-label">Block inspector</p>
-          <h2 className="mt-1 text-sm font-semibold text-foreground">{def.label}</h2>
-          <p className="mt-1 text-2xs text-muted-foreground">{def.description}</p>
+      <header className="flex items-start gap-2.5 border-b border-border pb-3">
+        <BlockIcon name={def.icon} />
+        <div className="min-w-0 flex-1">
+          <h2 className="text-sm font-semibold text-foreground">{def.label}</h2>
+          <p className="mt-0.5 text-2xs leading-snug text-muted-foreground">{def.description}</p>
         </div>
-        <IconButton label="Close inspector" onClick={onClose}>
+        <IconButton label="Deselect block (Esc)" onClick={onClose}>
           <X className="h-3.5 w-3.5" />
         </IconButton>
       </header>
@@ -520,150 +607,11 @@ export function GBlockInspector({
           />
         </div>
       )}
-      <div className="space-y-3 py-3">
-        {(def.fields ?? []).map((field) => {
-          const value = block.config[field.key] ?? def.defaults[field.key];
-          const update = (v: unknown) =>
-            props.onUpdateBlockConfig(block.id, { ...block.config, [field.key]: v });
-
-          if (field.type === "toggle") {
-            return (
-              <label
-                key={field.key}
-                className="flex items-center justify-between gap-2 text-xs text-muted-foreground"
-              >
-                {field.label}
-                <input
-                  type="checkbox"
-                  checked={Boolean(value)}
-                  onChange={(event) => update(event.target.checked)}
-                  className="h-6 w-6 rounded-sm accent-[var(--user-accent,var(--primary))]"
-                />
-              </label>
-            );
-          }
-
-          if (field.type === "select") {
-            return (
-              <label key={field.key} className="block text-xs text-muted-foreground">
-                {field.label}
-                {/* Studio chrome keeps its compact sunken control instead of the app field grammar. */}
-                {/* eslint-disable-next-line no-restricted-syntax */}
-                <select
-                  className="mt-1 w-full rounded-sm border border-border bg-[var(--surface-sunken)] px-2 py-1 text-xs"
-                  value={String(value ?? "")}
-                  onChange={(event) => update(event.target.value)}
-                >
-                  {field.options?.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            );
-          }
-
-          if (field.type === "range") {
-            const raw = typeof value === "number" ? value : Number(value);
-            const num = Number.isNaN(raw) ? (field.min ?? 0) : raw;
-            return (
-              <label key={field.key} className="block text-xs text-muted-foreground">
-                <div className="flex items-center justify-between">
-                  {field.label}
-                  <span className="font-mono text-2xs text-muted-foreground">{num}</span>
-                </div>
-                <input
-                  type="range"
-                  min={field.min ?? 0}
-                  max={field.max ?? 100}
-                  step={field.step ?? 1}
-                  value={num}
-                  onChange={(event) => update(Number(event.target.value))}
-                  className="mt-1 w-full accent-[var(--user-accent,var(--primary))]"
-                />
-              </label>
-            );
-          }
-
-          if (field.type === "color") {
-            return (
-              <label
-                key={field.key}
-                className="flex items-center justify-between gap-2 text-xs text-muted-foreground"
-              >
-                {field.label}
-                <div className="flex items-center gap-1.5">
-                  {value ? (
-                    <button
-                      type="button"
-                      onClick={() => update("")}
-                      className="text-2xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-                    >
-                      Reset
-                    </button>
-                  ) : (
-                    <span className="text-2xs text-muted-foreground">Theme</span>
-                  )}
-                  <input
-                    type="color"
-                    aria-label={field.label}
-                    value={String(value || "#808080")}
-                    onChange={(event) => update(event.target.value)}
-                    className="h-6 w-8 cursor-pointer rounded-sm border border-border bg-transparent p-0.5"
-                  />
-                </div>
-              </label>
-            );
-          }
-
-          if (field.type === "image") {
-            return (
-              <div key={field.key} className="text-xs text-muted-foreground">
-                <span className="mb-1 block">{field.label}</span>
-                {typeof value === "string" && value.startsWith("http") && (
-                  <div className="relative mb-1.5 overflow-hidden rounded-sm border border-border/50">
-                    <img src={value} alt="" className="h-16 w-full object-cover" />
-                  </div>
-                )}
-                <input
-                  aria-label={field.label}
-                  className="w-full rounded-sm border border-border bg-[var(--surface-sunken)] px-2 py-1 text-xs"
-                  placeholder={field.placeholder ?? "https://…"}
-                  value={String(value ?? "")}
-                  onChange={(event) => update(event.target.value)}
-                />
-              </div>
-            );
-          }
-
-          if (field.type === "textarea") {
-            return (
-              <label key={field.key} className="block text-xs text-muted-foreground">
-                {field.label}
-                <textarea
-                  className="mt-1 min-h-16 w-full rounded-sm border border-border bg-[var(--surface-sunken)] px-2 py-1 text-xs"
-                  value={String(value ?? "")}
-                  onChange={(event) => update(event.target.value)}
-                />
-              </label>
-            );
-          }
-
-          // text (default)
-          return (
-            <label key={field.key} className="block text-xs text-muted-foreground">
-              {field.label}
-              <input
-                className="mt-1 w-full rounded-sm border border-border bg-[var(--surface-sunken)] px-2 py-1 text-xs"
-                placeholder={field.placeholder}
-                value={String(value ?? "")}
-                onChange={(event) => update(event.target.value)}
-              />
-            </label>
-          );
-        })}
-      </div>
+      <BlockFields
+        definition={def}
+        config={block.config}
+        onChange={(config) => props.onUpdateBlockConfig(block.id, config)}
+      />
       <BlockFrameSection block={block} {...props} />
       <div className="border-t border-border pt-3">
         <p className="t-label mb-2">Actions</p>

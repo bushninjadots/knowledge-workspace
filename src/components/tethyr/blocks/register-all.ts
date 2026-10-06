@@ -9,6 +9,14 @@ import "./content/text-block";
 import "./content/heading-block";
 import "./content/markdown-block";
 import "./content/divider-block";
+import "./content/quote-block";
+import "./content/call-to-action-block";
+import "./content/highlights-block";
+import "./content/timeline-block";
+import "./content/faq-block";
+import "./content/featured-link-block";
+import "./content/services-block";
+import "./content/callout-block";
 
 import "./project/hero-block";
 import "./project/about-block";

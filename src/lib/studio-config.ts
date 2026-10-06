@@ -42,6 +42,9 @@ export type DensityId = "compact" | "comfortable" | "spacious";
 export type AccentMode = "custom" | "dual" | "none";
 /** BACKGROUND — app shell vs public Studio. */
 export type BackgroundId = "default" | "surface" | "sunken";
+/** How every block's title is set: a small uppercase label, a sentence-case
+ *  heading in the heading face, or hidden (kept for screen readers). */
+export type BlockTitleStyle = "label" | "heading" | "hidden";
 type CardBorderWidth = "thin" | "medium" | "thick";
 
 export type StarterId = "focused" | "editorial" | "project-first" | "minimal" | "experimental";
@@ -183,6 +186,8 @@ export interface StudioConfig {
   /** Card/block fill opacity, 0–100. Lower values let the backdrop show through,
    * the way Dashboard panels do. */
   cardOpacity?: number;
+  /** Treatment of block titles across the Studio. Unset = "label". */
+  blockTitles?: BlockTitleStyle;
   /** App shell background while editing. */
   appBackground: BackgroundId;
   /** Public Studio background. */
@@ -254,6 +259,7 @@ export const BACKGROUND_OPTIONS: ReadonlyArray<{ value: BackgroundId; label: str
 
 const STRUCTURE_VALUES = new Set(STRUCTURE_OPTIONS.map((o) => o.value));
 const PERSONALITY_VALUES = new Set(PERSONALITY_OPTIONS.map((o) => o.value));
+const BLOCK_TITLE_VALUES = new Set<BlockTitleStyle>(["label", "heading", "hidden"]);
 const DENSITY_VALUES = new Set(DENSITY_OPTIONS.map((o) => o.value));
 const ACCENT_VALUES = new Set(ACCENT_OPTIONS.map((o) => o.value));
 const BACKGROUND_VALUES = new Set(BACKGROUND_OPTIONS.map((o) => o.value));
@@ -372,6 +378,7 @@ export function normalizeStudioConfig(raw: unknown): StudioConfig {
       typeof value.cardColor === "string" && /^#([0-9a-f]{6})$/i.test(value.cardColor)
         ? value.cardColor
         : DEFAULT_STUDIO_CONFIG.cardColor,
+    blockTitles: isOneOf(BLOCK_TITLE_VALUES)(value.blockTitles) ? value.blockTitles : undefined,
     cardOpacity:
       typeof value.cardOpacity === "number" &&
       Number.isFinite(value.cardOpacity) &&
@@ -628,6 +635,7 @@ export function studioSurfaceStyle(
 ): React.CSSProperties {
   const style = studioConfigToStyle(config, secondaryColor) as React.CSSProperties &
     Record<string, string>;
+  Object.assign(style, blockTitleVars(config.blockTitles ?? "label"));
   // Labels go monospace alongside monospace headings (Technical's pairing).
   style["--studio-label-font"] =
     config.headingFont === "jetbrains-mono" ? "JetBrains Mono" : "Inter";
@@ -642,6 +650,30 @@ export function studioSurfaceStyle(
   const bodyFont = fontStack(config.bodyFont);
   if (bodyFont) style["--font-sans"] = bodyFont;
   return style;
+}
+
+/**
+ * Custom properties the shared `.block-title` reads (src/styles.css), so one
+ * Studio setting restyles every block's title on every surface. "hidden"
+ * collapses the title visually but keeps it in the accessibility tree.
+ */
+export function blockTitleVars(style: BlockTitleStyle): Record<string, string> {
+  if (style === "heading") {
+    return {
+      "--bt-size": "0.9375rem",
+      "--bt-weight": "600",
+      "--bt-transform": "none",
+      "--bt-tracking": "-0.01em",
+      "--bt-family": "var(--font-title)",
+      "--bt-strength": "100%",
+      "--bt-gap": "0.75rem",
+      "--bt-height": "auto",
+    };
+  }
+  if (style === "hidden") {
+    return { "--bt-height": "0px", "--bt-gap": "0px", "--bt-size": "0px" };
+  }
+  return {};
 }
 
 /** Card fill swatches; "" means "follow the page surface". */

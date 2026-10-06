@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { BlockTitle } from "@/components/tethyr/blocks/block-title";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Image, Camera, Plus, X } from "lucide-react";
@@ -219,22 +220,25 @@ function ProfileGalleryBlock({ config, context }: BlockProps) {
   }
   return (
     <div>
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <h2 className="[font-family:inherit] text-sm font-medium text-foreground">
-          Gallery ({items.length})
-        </h2>
-        {isEditing && (
-          <button
-            type="button"
-            disabled={uploading}
-            onClick={() => fileRef.current?.click()}
-            className="inline-flex items-center gap-1 rounded-md border border-border/60 px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
-          >
-            <Plus className="h-3 w-3" />
-            {uploading ? "Uploading…" : "Add images"}
-          </button>
-        )}
-      </div>
+      <BlockTitle
+        config={config}
+        count={items.length}
+        action={
+          isEditing ? (
+            <button
+              type="button"
+              disabled={uploading}
+              onClick={() => fileRef.current?.click()}
+              className="inline-flex items-center gap-1 rounded-md border border-border/60 px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+            >
+              <Plus className="h-3 w-3" />
+              {uploading ? "Uploading…" : "Add images"}
+            </button>
+          ) : undefined
+        }
+      >
+        Gallery
+      </BlockTitle>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
         {items.map((item) => (
           <div
@@ -301,8 +305,9 @@ function ProfileGalleryBlock({ config, context }: BlockProps) {
 }
 registerBlock({
   type: "profile-gallery",
-  category: "media",
+  category: "work",
   label: "Gallery",
+  title: "Gallery",
   description: "Images and videos shared as evidence.",
   icon: "Image",
   defaults: { showCaptions: true },

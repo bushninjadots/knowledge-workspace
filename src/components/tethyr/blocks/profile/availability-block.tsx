@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { BlockTitle } from "@/components/tethyr/blocks/block-title";
 import { CalendarClock } from "lucide-react";
 import { registerBlock } from "@/lib/block-registry";
 import type { BlockProps } from "@/lib/page-blocks";
@@ -33,10 +34,9 @@ function ProfileAvailabilityBlock({ config, onChange, context }: BlockProps) {
 
   return (
     <section className="flex min-w-0 flex-col gap-3" aria-label="Availability">
-      <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-        <CalendarClock className="size-4 text-primary" />
+      <BlockTitle config={config} icon={<CalendarClock aria-hidden />}>
         Availability
-      </div>
+      </BlockTitle>
       <div className="flex items-center gap-2">
         <span className="size-2 rounded-full bg-primary" aria-hidden="true" />
         <span className="text-sm capitalize text-foreground">{capacity}</span>
@@ -69,8 +69,9 @@ function ProfileAvailabilityBlock({ config, onChange, context }: BlockProps) {
 
 registerBlock({
   type: "profile-availability",
-  category: "people",
+  category: "identity",
   label: "Availability",
+  title: "Availability",
   description: "Set a clear, human signal for how you can collaborate right now.",
   icon: "CalendarClock",
   contentSource: "config",

@@ -9,6 +9,7 @@
 // visitors never download it). Owners can also import their GitHub profile
 // README (`<username>/<username>`) in one click.
 
+import { BlockTitle } from "@/components/tethyr/blocks/block-title";
 import { useCallback, useEffect, useState } from "react";
 import { supabasePending } from "@/lib/supabase-pending-schema";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -117,23 +118,20 @@ function ProfileReadmeBlock({ config, context }: BlockProps) {
 
   return (
     <div className="space-y-3">
-      {(showHeading || canEdit) && (
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          {showHeading ? (
-            <h2 className="[font-family:inherit] text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              README
-            </h2>
-          ) : (
-            <span />
-          )}
-          {canEdit && (
+      <BlockTitle
+        // The older "Show heading" toggle still hides it for existing Studios.
+        config={showHeading ? config : { ...config, hideTitle: true }}
+        action={
+          canEdit ? (
             <Button variant="outline" size="sm" onClick={startEdit}>
               <Pencil className="h-3.5 w-3.5" />
               Edit README
             </Button>
-          )}
-        </div>
-      )}
+          ) : undefined
+        }
+      >
+        README
+      </BlockTitle>
       <ReadmeMarkdown>{readme}</ReadmeMarkdown>
       {editor}
     </div>
@@ -142,8 +140,9 @@ function ProfileReadmeBlock({ config, context }: BlockProps) {
 
 registerBlock({
   type: "profile-readme",
-  category: "people",
+  category: "identity",
   label: "README",
+  title: "README",
   description: "The long-form introduction to you. Markdown, with GitHub profile README import.",
   icon: "FileText",
   defaults: { showHeading: true },

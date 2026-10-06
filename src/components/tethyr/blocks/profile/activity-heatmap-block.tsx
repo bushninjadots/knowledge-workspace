@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from "react";
+import { BlockTitle } from "@/components/tethyr/blocks/block-title";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -98,15 +99,19 @@ function ProfileActivityHeatmapBlock({ config, context }: BlockProps) {
 
   return (
     <div className="min-w-0">
-      <div className="mb-3 flex items-baseline justify-between gap-3">
-        <h2 className="[font-family:inherit] text-sm font-medium text-foreground">Activity</h2>
-        {showSummary && (
-          <p className="text-xs text-muted-foreground">
-            {total} {total === 1 ? "contribution" : "contributions"} · {activeDays}{" "}
-            {activeDays === 1 ? "active day" : "active days"}
-          </p>
-        )}
-      </div>
+      <BlockTitle
+        config={config}
+        action={
+          showSummary ? (
+            <p className="shrink-0 text-xs text-muted-foreground">
+              {total} {total === 1 ? "contribution" : "contributions"} · {activeDays}{" "}
+              {activeDays === 1 ? "active day" : "active days"}
+            </p>
+          ) : undefined
+        }
+      >
+        Activity
+      </BlockTitle>
       <div className="overflow-x-auto pb-1">
         <div
           role="img"
@@ -128,8 +133,9 @@ function ProfileActivityHeatmapBlock({ config, context }: BlockProps) {
 
 registerBlock({
   type: "profile-activity-heatmap",
-  category: "people",
+  category: "work",
   label: "Activity heatmap",
+  title: "Activity",
   description: "Your rhythm of building, collaborating and contributing.",
   icon: "Activity",
   defaults: { source: "all", range: "12", showSummary: true },

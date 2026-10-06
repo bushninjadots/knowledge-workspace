@@ -24,7 +24,17 @@ export function Choice({
     <div className="mb-4">
       <p className="t-label mb-1.5">{label}</p>
       {hint && <p className="mb-1.5 text-2xs leading-snug text-muted-foreground-subtle">{hint}</p>}
-      <div className="grid grid-cols-3 gap-1 border border-border bg-[var(--surface-sunken)] p-0.5">
+      <div
+        className={cn(
+          "grid gap-1 border border-border bg-[var(--surface-sunken)] p-0.5",
+          // Four choices sit in one row; more wrap in threes.
+          options.length === 2
+            ? "grid-cols-2"
+            : options.length === 4
+              ? "grid-cols-4"
+              : "grid-cols-3",
+        )}
+      >
         {options.map(([option, text]) => (
           <button
             key={option}

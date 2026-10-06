@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { BlockTitle } from "@/components/tethyr/blocks/block-title";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Wrench, Layers } from "lucide-react";
@@ -40,7 +41,7 @@ function ProfileToolsBlock({ config, context }: BlockProps) {
     if (context.isEditing)
       return (
         <BlockEmptyState
-          label="Tools & Stack"
+          label="Tools & stack"
           detail="Show the tools and software you build with."
         />
       );
@@ -48,17 +49,20 @@ function ProfileToolsBlock({ config, context }: BlockProps) {
   }
   if (!hasContent) {
     if (context.isEditing)
-      return <BlockEmptyState label="Tools & Stack" detail="Add the tools and software you use." />;
+      return <BlockEmptyState label="Tools & stack" detail="Add the tools and software you use." />;
     return null;
   }
 
   return (
     <div className="space-y-3">
+      <BlockTitle config={config} hiddenByDefault>
+        Tools & stack
+      </BlockTitle>
       {tools.length > 0 && (
         <div>
-          <h2 className="[font-family:inherit] mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-            <Wrench className="h-3.5 w-3.5" /> favourite tools
-          </h2>
+          <h3 className="block-subtitle flex items-center gap-1.5">
+            <Wrench className="h-3.5 w-3.5" aria-hidden /> Favourite tools
+          </h3>
           <div className="flex flex-wrap gap-1.5">
             {tools.map((t) => (
               <span
@@ -73,9 +77,9 @@ function ProfileToolsBlock({ config, context }: BlockProps) {
       )}
       {stack.length > 0 && (
         <div>
-          <h2 className="[font-family:inherit] mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-            <Layers className="h-3.5 w-3.5" /> software stack
-          </h2>
+          <h3 className="block-subtitle flex items-center gap-1.5">
+            <Layers className="h-3.5 w-3.5" aria-hidden /> Software stack
+          </h3>
           <div className="flex flex-wrap gap-1.5">
             {stack.map((t) => (
               <span
@@ -94,8 +98,10 @@ function ProfileToolsBlock({ config, context }: BlockProps) {
 
 registerBlock({
   type: "profile-tools",
-  category: "people",
-  label: "Tools & Stack",
+  category: "skills",
+  label: "Tools & stack",
+  title: "Tools & stack",
+  titleHiddenByDefault: true,
   description: "Favourite tools and software stack.",
   icon: "Wrench",
   defaults: { showFavourites: true, showStack: true },

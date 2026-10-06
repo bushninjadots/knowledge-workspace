@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { BlockTitle } from "@/components/tethyr/blocks/block-title";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight } from "lucide-react";
@@ -101,9 +102,7 @@ function ProfileCurrentlyBuildingBlock({ config, context }: BlockProps) {
 
   return (
     <div className="min-w-0">
-      <h2 className="[font-family:inherit] mb-3 text-sm font-medium text-foreground">
-        Currently building
-      </h2>
+      <BlockTitle config={config}>Currently building</BlockTitle>
       <ul className="divide-y divide-border">
         {data!.map((p) => (
           <li key={p.id} className="py-3 first:pt-0 last:pb-0">
@@ -177,8 +176,9 @@ function ProfileCurrentlyBuildingBlock({ config, context }: BlockProps) {
 
 registerBlock({
   type: "profile-currently-building",
-  category: "people",
+  category: "work",
   label: "Currently building",
+  title: "Currently building",
   description: "What you're actively working on, with progress and what you need.",
   icon: "Hammer",
   defaults: {

@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { BlockTitle } from "@/components/tethyr/blocks/block-title";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ExternalLink, LinkIcon } from "lucide-react";
@@ -64,11 +65,9 @@ function ProfileLinksBlock({ context, config }: BlockProps) {
 
   return (
     <div className="space-y-2">
-      {showCategories && (
-        <h2 className="[font-family:inherit] text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          Links
-        </h2>
-      )}
+      <BlockTitle config={showCategories ? config : { ...config, hideTitle: true }}>
+        Links
+      </BlockTitle>
       <div className="flex flex-wrap gap-2">
         {portfolio.map((link) => (
           <a
@@ -99,8 +98,9 @@ function ProfileLinksBlock({ context, config }: BlockProps) {
 
 registerBlock({
   type: "profile-links",
-  category: "people",
+  category: "identity",
   label: "Links",
+  title: "Links",
   description: "Portfolio and social links.",
   icon: "ExternalLink",
   defaults: { showCategories: true },

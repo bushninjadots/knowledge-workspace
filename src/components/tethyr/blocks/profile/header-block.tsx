@@ -364,8 +364,8 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
 
 registerBlock({
   type: "profile-header",
-  category: "people",
-  label: "Profile Header",
+  category: "identity",
+  label: "Profile header",
   description: "Avatar, name, title, what you're building, availability, and reputation progress.",
   icon: "User",
   defaults: {

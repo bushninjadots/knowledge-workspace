@@ -13,7 +13,17 @@ import type { StudioConfig } from "@/lib/studio-config";
 export type BlockType = string;
 
 /** Category groups for the block picker and library browsing. */
-export type BlockCategory = "content" | "media" | "project" | "people" | "community" | "utility";
+export type BlockCategory =
+  | "content"
+  | "identity"
+  | "work"
+  | "skills"
+  | "network"
+  | "media"
+  | "project"
+  | "people"
+  | "community"
+  | "utility";
 
 /** The page owner context a block can render in. Omit (or "both") to allow everywhere. */
 type BlockOwnerContext = "profile" | "project" | "both";
@@ -97,6 +107,11 @@ export interface BlockDefinition {
   icon: string;
   /** Default config used when the block is first added. */
   defaults: BlockConfig;
+  /** The block's own title, when it renders one through BlockTitle. Its
+   *  presence gives the block the inspector's Title controls. */
+  title?: string;
+  /** The title starts hidden (the block's content labels itself). */
+  titleHiddenByDefault?: boolean;
   /** Whether the block expects to control its own container (e.g. full-width hero). */
   containerless?: boolean;
   /**
@@ -128,7 +143,15 @@ export interface BlockField {
   /** Human-readable label shown in the inspector. */
   label: string;
   /** The type of form control to render. */
-  type: "text" | "textarea" | "toggle" | "select" | "image" | "color" | "range";
+  type: "text" | "textarea" | "toggle" | "select" | "image" | "color" | "range" | "url" | "list";
+  /** Hint under the control. */
+  help?: string;
+  /** list: the fields each item has (text/textarea/url/select). */
+  itemFields?: BlockField[];
+  /** list: what one item is called ("stat", "question"). */
+  itemLabel?: string;
+  /** list: the most items allowed. */
+  maxItems?: number;
   /** Placeholder text for text/textarea inputs. */
   placeholder?: string;
   /** Options for select-type fields. */

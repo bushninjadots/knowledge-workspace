@@ -1,6 +1,7 @@
 // ── Profile Skills Block ──────────────────────────────────────────────────────
 // Shows the profile's teach/learn skills with experience and verification badges.
 
+import { BlockTitle } from "@/components/tethyr/blocks/block-title";
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -84,14 +85,13 @@ function ProfileSkillsBlock({ context, config }: BlockProps) {
 
   return (
     <div className="space-y-4">
+      <BlockTitle config={config} hiddenByDefault>
+        Skills
+      </BlockTitle>
       {/* Skills I share */}
       {teach.length > 0 && (
         <div>
-          {showCategories && (
-            <h2 className="[font-family:inherit] mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Skills I share
-            </h2>
-          )}
+          {showCategories && <h3 className="block-subtitle">Skills I share</h3>}
           <div className="flex flex-wrap gap-1.5">
             {teach.map((row) => {
               const skill = row.skills;
@@ -113,11 +113,7 @@ function ProfileSkillsBlock({ context, config }: BlockProps) {
       {/* Skills I'm growing */}
       {learn.length > 0 && (
         <div>
-          {showCategories && (
-            <h2 className="[font-family:inherit] mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Skills I'm growing
-            </h2>
-          )}
+          {showCategories && <h3 className="block-subtitle">Skills I'm growing</h3>}
           <div className="flex flex-wrap gap-1.5">
             {learn.map((row) => {
               const skill = row.skills;
@@ -140,8 +136,10 @@ function ProfileSkillsBlock({ context, config }: BlockProps) {
 
 registerBlock({
   type: "profile-skills",
-  category: "people",
+  category: "skills",
   label: "Skills",
+  title: "Skills",
+  titleHiddenByDefault: true,
   description: "Skills the person shares and skills they're growing.",
   icon: "GraduationCap",
   defaults: { showCategories: true, showEndorsements: true },

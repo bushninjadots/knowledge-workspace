@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { BlockTitle } from "@/components/tethyr/blocks/block-title";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Award } from "lucide-react";
@@ -65,9 +66,9 @@ function ProfileAchievementsBlock({ config, context }: BlockProps) {
   }
   return (
     <div>
-      <h2 className="[font-family:inherit] mb-3 text-sm font-medium text-foreground">
-        Achievements ({achievements.length})
-      </h2>
+      <BlockTitle config={config} count={achievements.length}>
+        Achievements
+      </BlockTitle>
       <div className="flex flex-wrap gap-3">
         {achievements.map((a) => (
           <div
@@ -103,8 +104,9 @@ function ProfileAchievementsBlock({ config, context }: BlockProps) {
 }
 registerBlock({
   type: "profile-achievements",
-  category: "people",
+  category: "work",
   label: "Achievements",
+  title: "Achievements",
   description: "Badges, trophies, and milestones earned.",
   icon: "Award",
   defaults: { showDescription: true, showDate: true },

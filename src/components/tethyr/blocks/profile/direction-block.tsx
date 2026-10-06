@@ -129,7 +129,7 @@ function ProfileDirectionBlock({ config, context }: BlockProps) {
 }
 registerBlock({
   type: "profile-direction",
-  category: "people",
+  category: "identity",
   label: "Direction",
   description: "Availability, learning goals, and active project.",
   icon: "Compass",

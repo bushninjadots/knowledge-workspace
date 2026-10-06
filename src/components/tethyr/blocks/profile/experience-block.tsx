@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { BlockTitle } from "@/components/tethyr/blocks/block-title";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Star } from "lucide-react";
@@ -59,9 +60,7 @@ function ProfileExperienceBlock({ config, context }: BlockProps) {
 
   return (
     <div className="space-y-3">
-      <h2 className="[font-family:inherit] text-xs font-medium uppercase tracking-wider text-muted-foreground">
-        Experience
-      </h2>
+      <BlockTitle config={config}>Experience</BlockTitle>
       <div className="grid gap-3 sm:grid-cols-2">
         {hasExp && (
           <div className="flex items-center gap-2 rounded-lg border border-border bg-surface p-3">
@@ -84,8 +83,9 @@ function ProfileExperienceBlock({ config, context }: BlockProps) {
 
 registerBlock({
   type: "profile-experience",
-  category: "people",
+  category: "skills",
   label: "Experience",
+  title: "Experience",
   description: "Years of experience and teaching style.",
   icon: "Briefcase",
   defaults: { showYears: true, showTeachingStyle: true },

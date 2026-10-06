@@ -2,6 +2,7 @@
 // Shows the profile's bio and learning goals. Simple text display.
 // `learning_goals` is owned by the Direction block; this block shows bio only.
 
+import { BlockTitle } from "@/components/tethyr/blocks/block-title";
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,7 +45,7 @@ function ProfileBioBlock({ config, context }: BlockProps) {
     if (context.isEditing) {
       return (
         <BlockEmptyState
-          label="About / Bio"
+          label="About"
           detail="A few lines about what you make and how people can work with you."
           actionLabel="Write your bio"
           onAction={context.onCompleteProfile}
@@ -56,9 +57,7 @@ function ProfileBioBlock({ config, context }: BlockProps) {
 
   return (
     <div>
-      <h2 className="[font-family:inherit] mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-        About
-      </h2>
+      <BlockTitle config={config}>About</BlockTitle>
       <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">{data.bio}</p>
     </div>
   );
@@ -66,8 +65,9 @@ function ProfileBioBlock({ config, context }: BlockProps) {
 
 registerBlock({
   type: "profile-bio",
-  category: "people",
-  label: "About / Bio",
+  category: "identity",
+  label: "About",
+  title: "About",
   description: "The person's bio.",
   icon: "FileText",
   defaults: { showAbout: true },

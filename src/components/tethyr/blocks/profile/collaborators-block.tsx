@@ -3,6 +3,7 @@
 // surfaced as PersonPills that link to each collaborator's public Studio.
 // Fetches from project_contributors (the people-join for projects).
 
+import { BlockTitle } from "@/components/tethyr/blocks/block-title";
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Users } from "lucide-react";
@@ -27,7 +28,7 @@ type CollaboratorRow = {
   } | null;
 };
 
-function ProfileCollaboratorsBlock({ context }: BlockProps) {
+function ProfileCollaboratorsBlock({ config, context }: BlockProps) {
   const { blockId, isEditing, onBlockEmptyChange } = context;
   const profileId = context.ownerType === "profile" ? context.ownerId : null;
 
@@ -97,10 +98,9 @@ function ProfileCollaboratorsBlock({ context }: BlockProps) {
 
   return (
     <div>
-      <h3 className="mb-3 flex items-center gap-1.5 text-sm font-medium text-foreground">
-        <Users className="h-4 w-4 text-muted-foreground" />
+      <BlockTitle config={config} icon={<Users aria-hidden />}>
         People they build with
-      </h3>
+      </BlockTitle>
       <div className="flex flex-wrap gap-2">
         {people.map((c) => (
           <CollaboratorPill key={c.profile_id} row={c} />
@@ -126,8 +126,9 @@ function CollaboratorPill({ row }: { row: CollaboratorRow }) {
 
 registerBlock({
   type: "profile-collaborators",
-  category: "people",
-  label: "People They Build With",
+  category: "network",
+  label: "People they build with",
+  title: "People they build with",
   description: "The people this profile co-builds projects with, each leading to their Studio.",
   icon: "Users",
   defaults: {},

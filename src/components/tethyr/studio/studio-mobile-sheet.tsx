@@ -17,9 +17,10 @@ import { Button } from "@/components/ui/button";
 import { getAllBlocks, getBlock } from "@/lib/block-registry";
 import { cn } from "@/lib/utils";
 import { sectionLabel } from "@/lib/studio-grid";
-import { IconButton, Choice, WidthStepper } from "./studio-controls";
-import { ThemeSection, TypeSection, GCustomizeAdvanced } from "./g-customize-panel";
-import type { GStudioSurfaceProps, GStudioConfig } from "./g-studio-surface";
+import { IconButton, WidthStepper } from "./studio-controls";
+import { GStyleSections } from "./g-customize-panel";
+import { BlockIcon } from "./block-icon";
+import type { GStudioSurfaceProps } from "./g-studio-surface";
 import {
   BLOCK_CATEGORY_ORDER,
   BLOCK_CATEGORY_LABELS,
@@ -256,9 +257,10 @@ export function GMobileEditSheet(props: GStudioSurfaceProps) {
                         key={def.type}
                         type="button"
                         onClick={() => props.onAdd(def.type, targetArea)}
-                        className="rounded-sm border border-border px-2 py-2 text-left text-xs hover:border-[var(--user-accent-border)]"
+                        className="flex min-h-11 items-center gap-2 rounded-sm border border-border px-2 py-1.5 text-left text-xs hover:border-[var(--user-accent-border)]"
                       >
-                        {def.label}
+                        <BlockIcon name={def.icon} size="sm" />
+                        <span className="min-w-0 leading-tight">{def.label}</span>
                       </button>
                     ))}
                   </div>
@@ -279,7 +281,6 @@ export function GMobileEditSheet(props: GStudioSurfaceProps) {
         )}
         {tab === "feel" && (
           <div>
-            <ThemeSection themeId={props.themeId} onThemeChange={props.onThemeChange} />
             {props.onOpenTemplates && (
               <button
                 type="button"
@@ -290,26 +291,13 @@ export function GMobileEditSheet(props: GStudioSurfaceProps) {
                 Browse templates
               </button>
             )}
-            <Choice
-              label="Structure"
-              hint="How wide your Studio reads"
-              value={props.config.structure}
-              options={[
-                ["single", "Column"],
-                ["sidebar", "Balanced"],
-                ["wide", "Wide"],
-              ]}
-              onChange={(value) =>
-                props.onCustomizeChange({ structure: value as GStudioConfig["structure"] })
-              }
-            />
-            <TypeSection config={props.config} onChange={props.onCustomizeChange} />
-            {/* Same list as the desktop panel's "More options" — one component,
-                so phone parity cannot drift again. */}
-            <GCustomizeAdvanced
+            {/* The same grouped settings as the desktop rail's Style tab. */}
+            <GStyleSections
               config={props.config}
               layout={props.layout}
               onChange={props.onCustomizeChange}
+              themeId={props.themeId}
+              onThemeChange={props.onThemeChange}
               cardBorders={props.cardBorders}
               cardBorderColor={props.cardBorderColor}
               onCardBordersChange={props.onCardBordersChange}
