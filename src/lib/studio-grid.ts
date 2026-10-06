@@ -293,3 +293,44 @@ export function sectionLabel(section: LayoutSection): string {
   if (blockLabel) return `${blockLabel} area`;
   return SECTION_LAYOUT_NAMES[section.layout] ?? "Area";
 }
+
+/**
+ * Close the holes hidden blocks leave. On the page a block that has nothing
+ * to show (or is hidden) disappears, but its columns stayed reserved, so a
+ * half-width block sat next to empty space. For every row that lost a block,
+ * the blocks still showing share the row's original width in proportion to
+ * their own widths (one survivor takes it all). Rows that lost nothing keep
+ * their layout, including gaps the member left on purpose.
+ *
+ * Returns the placement to use for each visible item, by id.
+ */
+export function reflowAroundHidden(
+  grid: LayoutGridItem[],
+  hiddenIds: ReadonlySet<string>,
+): Map<string, { x: number; w: number }> {
+  const placements = new Map<string, { x: number; w: number }>();
+  const rows = new Map<number, LayoutGridItem[]>();
+  for (const item of grid) rows.set(item.y, [...(rows.get(item.y) ?? []), item]);
+  for (const row of rows.values()) {
+    const ordered = [...row].sort((a, b) => a.x - b.x);
+    const visible = ordered.filter((item) => !hiddenIds.has(item.i));
+    if (visible.length === 0) continue;
+    if (visible.length === ordered.length) {
+      for (const item of visible) placements.set(item.i, { x: item.x, w: item.w });
+      continue;
+    }
+    const start = ordered[0].x;
+    const span = Math.min(COLS - start, ordered.at(-1)!.x + ordered.at(-1)!.w - start);
+    const total = visible.reduce((sum, item) => sum + item.w, 0);
+    let x = start;
+    visible.forEach((item, index) => {
+      const w =
+        index === visible.length - 1
+          ? start + span - x
+          : Math.max(1, Math.round((item.w / total) * span));
+      placements.set(item.i, { x, w });
+      x += w;
+    });
+  }
+  return placements;
+}

@@ -47,7 +47,8 @@ export type BackgroundId = "default" | "surface" | "sunken";
 export type BlockTitleStyle = "label" | "heading" | "hidden";
 type CardBorderWidth = "thin" | "medium" | "thick";
 
-export type StarterId = "focused" | "editorial" | "project-first" | "minimal" | "experimental";
+export type StarterId =
+  "focused" | "editorial" | "project-first" | "minimal" | "experimental" | "for-hire";
 
 // ── Per-block frame ───────────────────────────────────────────────────────────
 
@@ -77,6 +78,30 @@ const SHAPE_RADIUS: Record<Exclude<BlockShape, "default">, string> = {
   blob: "63% 37% 30% 70% / 60% 30% 70% 40%",
   leaf: "0 50% 50% 0",
 };
+
+/**
+ * Extra room each shape needs so content stays inside its curves (added to
+ * the block's own inset). Horizontal values in % follow the frame's width —
+ * percentage padding is width-relative, which is exactly how these radii
+ * scale. A rounded corner's safe point sits ~29% of the radius in from each
+ * edge, so curvier shapes push content further in, on the sides that curve.
+ * Order: top right bottom left.
+ */
+const SHAPE_PADDING: Partial<Record<BlockShape, [string, string, string, string]>> = {
+  pill: ["0.5rem", "max(1.25rem, 4%)", "0.5rem", "max(1.25rem, 4%)"],
+  // Tall, narrow frames (phones, sidebars) curve deeper, so the top and
+  // bottom also grow with the width.
+  organic: ["max(2rem, 12%)", "12%", "max(2rem, 12%)", "13%"],
+  blob: ["max(2.5rem, 13%)", "12%", "max(2.5rem, 14%)", "14%"],
+  leaf: ["0.25rem", "16%", "0.25rem", "0px"],
+};
+
+/** The padding shorthand for a shaped frame, or null for plain corners. */
+export function shapePadding(shape: BlockShape | undefined): string | null {
+  const extra = shape ? SHAPE_PADDING[shape] : undefined;
+  if (!extra) return null;
+  return extra.map((side) => `calc(var(--studio-block-inset, 1rem) + ${side})`).join(" ");
+}
 
 /**
  * Per-block frame style from the block instance's optional `frame` fields:
@@ -113,6 +138,9 @@ export function blockFrameStyle(
   if (shape && shape !== "default" && SHAPE_RADIUS[shape]) {
     style["--studio-block-radius"] = SHAPE_RADIUS[shape];
   }
+  // Curved shapes move content in so it never runs under the curve.
+  const padding = shapePadding(shape);
+  if (padding) style["--studio-block-padding"] = padding;
   const radius = block.frameRadius;
   if (typeof radius === "number" && Number.isFinite(radius)) {
     style["--studio-block-radius"] = `${Math.round(radius)}px`;

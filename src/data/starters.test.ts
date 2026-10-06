@@ -1,6 +1,8 @@
 // ── Studio Starters Tests ─────────────────────────────────────────────────────
 
 import { describe, it, expect } from "vitest";
+import "@/components/tethyr/blocks/register-all";
+import type { PageLayout } from "@/lib/page-blocks";
 import {
   STARTERS,
   applyStarter,
@@ -15,13 +17,14 @@ import { createDefaultProfileLayout } from "@/lib/default-layouts";
 import { DEFAULT_STUDIO_CONFIG, type StudioConfig } from "@/lib/studio-config";
 
 describe("STARTERS", () => {
-  it("exposes exactly the five starters", () => {
+  it("exposes exactly the six starters", () => {
     expect(STARTERS.map((s) => s.id)).toEqual([
       "focused",
       "editorial",
       "project-first",
       "minimal",
       "experimental",
+      "for-hire",
     ]);
     expect(starterMap["focused"]).toBe(STARTERS[0]);
   });
@@ -187,10 +190,15 @@ describe("applyStarter", () => {
   it("applies every starter completely — sections, config, and backdrop stamp", () => {
     for (const starter of STARTERS) {
       const next = applyStarter(layout, starter);
-      // The layout side always lands.
-      expect(next.sections).toHaveLength(layout.sections.length);
-      expect(next.sections.map((s) => s.id).sort()).toEqual(
-        layout.sections.map((s) => s.id).sort(),
+      // The layout side always lands: every existing section survives, plus
+      // the new areas a starter brings when the Studio has none of them.
+      const present = new Set(layout.sections.flatMap((s) => s.blocks.map((b) => b.type)));
+      const added = (starter.addsSections ?? []).filter(
+        (a) => !a.blocks.some((type) => present.has(type)),
+      ).length;
+      expect(next.sections).toHaveLength(layout.sections.length + added);
+      expect(next.sections.map((s) => s.id)).toEqual(
+        expect.arrayContaining(layout.sections.map((s) => s.id)),
       );
       // And the config side carries the starter's full stamp, backgrounds
       // included — nothing about the direction is silently dropped.
@@ -276,5 +284,51 @@ describe("starterConfig", () => {
     // Fields not in the stamp are untouched.
     expect(next.accentMode).toBe(current.accentMode);
     expect(next.accentColor).toBe(current.accentColor);
+  });
+});
+
+const base = (): PageLayout => ({
+  sections: [
+    {
+      id: "s-projects",
+      position: 0,
+      layout: "full",
+      blocks: [{ id: "p", type: "profile-projects", position: 0, config: {}, visible: true }],
+    },
+    {
+      id: "s-identity",
+      position: 1,
+      layout: "full",
+      blocks: [{ id: "h", type: "profile-header", position: 0, config: {}, visible: true }],
+    },
+  ],
+});
+
+const types = (layout: PageLayout) => layout.sections.map((s) => s.blocks.map((b) => b.type));
+
+describe("For hire starter", () => {
+  it("adds its areas next to the sections they belong with", () => {
+    const applied = applyStarter(base(), starterMap["for-hire"]);
+    expect(types(applied)).toEqual([
+      ["profile-header"],
+      ["highlights"],
+      ["profile-projects"],
+      ["services", "quote"],
+      ["call-to-action"],
+    ]);
+    expect(applied.sections.at(-1)?.appearance).toEqual({ background: "accent" });
+    expect(applied.sections.map((s) => s.position)).toEqual([0, 1, 2, 3, 4]);
+  });
+
+  it("never duplicates an area on a second application", () => {
+    const once = applyStarter(base(), starterMap["for-hire"]);
+    const twice = applyStarter(once, starterMap["for-hire"], starterMap["for-hire"]);
+    expect(twice.sections).toHaveLength(once.sections.length);
+  });
+
+  it("keeps every existing block", () => {
+    const applied = applyStarter(base(), starterMap["for-hire"]);
+    const ids = applied.sections.flatMap((s) => s.blocks.map((b) => b.id));
+    expect(ids).toEqual(expect.arrayContaining(["p", "h"]));
   });
 });

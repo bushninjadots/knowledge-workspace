@@ -336,7 +336,7 @@ export function PageShell({
       : ownerType === "profile" && structureWidth
         ? // A 16px gutter so cards and area labels never touch a phone's edge;
           // the max width grows by the same amount, so desktop is unchanged.
-          "mx-auto w-full px-4"
+          "mx-auto w-full px-4 pb-16 pt-6 sm:pt-10"
         : "w-full";
   const workspaceClass =
     isPreviewing || isEditing ? "bg-surface-sunken px-3 py-5 sm:px-8 sm:py-10" : "";

@@ -21,7 +21,13 @@ import type {
   StudioConfig,
 } from "@/lib/studio-config";
 import { DEFAULT_STUDIO_CONFIG, personalityPatch } from "@/lib/studio-config";
-import type { LayoutSection, PageLayout, SectionLayoutType } from "@/lib/page-blocks";
+import type {
+  AreaAppearance,
+  LayoutSection,
+  PageLayout,
+  SectionLayoutType,
+} from "@/lib/page-blocks";
+import { createBlockInstance } from "@/lib/block-registry";
 
 /** Semantic identity of a profile section, derived from the block types it holds. */
 type SectionMarker =
@@ -59,6 +65,19 @@ export interface Starter {
   sectionLayouts: Partial<Record<SectionMarker, SectionLayoutType>>;
   /** Preview glyph: relative block weights, rendered as a tiny wireframe. */
   sketch: number[][];
+  /** New areas this direction brings, added only when the Studio has none
+   *  of their block types yet (never duplicated, never replacing content). */
+  addsSections?: StarterAddedSection[];
+}
+
+export interface StarterAddedSection {
+  title: string;
+  layout: SectionLayoutType;
+  /** Block types, in order. */
+  blocks: string[];
+  /** Placed right after this marker's section, or at the end. */
+  after: SectionMarker | "end";
+  appearance?: AreaAppearance;
 }
 
 // ── Semantic markers ──────────────────────────────────────────────────────────
@@ -232,6 +251,50 @@ export const STARTERS: Starter[] = [
   },
 ];
 
+STARTERS.push({
+  id: "for-hire",
+  name: "For hire",
+  tagline: "What you do, the proof, and how to start.",
+  feels:
+    "Leads with your numbers and what you offer, backs it with work and a testimonial, and ends on one clear next step.",
+  remixNote: "For freelancers and consultants who want visitors to get in touch.",
+  config: {
+    structure: "sidebar",
+    personality: "modern",
+    density: "comfortable",
+    radius: 14,
+    appBackground: "surface",
+    publicBackground: "default",
+  },
+  presentation: "editorial-grid",
+  sectionOrder: ["identity", "projects", "bio", "skills", "links"],
+  collapsedSections: ["gallery"],
+  sectionLayouts: {
+    identity: "full",
+    projects: "feature",
+    bio: "two_column",
+    skills: "two_column",
+    links: "full",
+  },
+  sketch: [[12], [12], [7, 5], [12], [12]],
+  addsSections: [
+    { title: "", layout: "full", blocks: ["highlights"], after: "identity" },
+    {
+      title: "What I offer",
+      layout: "two_column",
+      blocks: ["services", "quote"],
+      after: "projects",
+    },
+    {
+      title: "",
+      layout: "full",
+      blocks: ["call-to-action"],
+      after: "end",
+      appearance: { background: "accent" },
+    },
+  ],
+});
+
 export const starterMap: Record<StarterId, Starter> = STARTERS.reduce(
   (acc, starter) => ({ ...acc, [starter.id]: starter }),
   {} as Record<StarterId, Starter>,
@@ -282,7 +345,7 @@ export function applyStarter(
   const previouslyHidden = new Set(previouslyApplied?.collapsedSections ?? []);
 
   const sectionLayouts = starter.sectionLayouts ?? {};
-  return {
+  const applied = {
     sections: ordered.map((section, position) => {
       const marker = sectionMarker(section);
       const nextBlocks = section.blocks.map((block) =>
@@ -313,6 +376,51 @@ export function applyStarter(
       };
     }),
   };
+  return addStarterSections(applied, starter.id, starter.addsSections ?? []);
+}
+
+/** Insert a starter's new areas, skipping any whose blocks already exist. */
+function addStarterSections(
+  layout: PageLayout,
+  starterId: StarterId,
+  additions: StarterAddedSection[],
+): PageLayout {
+  if (additions.length === 0) return layout;
+  const sections = [...layout.sections];
+  const present = new Set(sections.flatMap((s) => s.blocks.map((b) => b.type)));
+  additions.forEach((addition, index) => {
+    if (addition.blocks.some((type) => present.has(type))) return;
+    const blocks = addition.blocks
+      .map((type) => createBlockInstance(type))
+      .filter((created): created is NonNullable<typeof created> => !!created)
+      .map((created, position) => ({
+        // Deterministic ids: applying a starter twice gives identical JSON, and
+        // a second application never adds these again (their types exist).
+        id: `block-${starterId}-${index}-${created.type}`,
+        type: created.type,
+        position,
+        config: created.config,
+        visible: true,
+      }));
+    if (blocks.length === 0) return;
+    const section: LayoutSection = {
+      id: `section-${starterId}-${index}`,
+      position: 0,
+      title: addition.title,
+      layout: addition.layout,
+      visible: true,
+      blocks,
+      appearance: addition.appearance,
+    };
+    const anchor =
+      addition.after === "end"
+        ? -1
+        : sections.findIndex((candidate) => sectionMarker(candidate) === addition.after);
+    if (anchor < 0) sections.push(section);
+    else sections.splice(anchor + 1, 0, section);
+    for (const block of blocks) present.add(block.type);
+  });
+  return { sections: sections.map((section, position) => ({ ...section, position })) };
 }
 
 /** Merge a starter's configuration stamp into the current config. */

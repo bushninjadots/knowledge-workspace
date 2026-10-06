@@ -4,6 +4,7 @@ import {
   Check,
   Clock,
   Compass,
+  Handshake,
   Copy,
   Focus,
   Grid2X2,
@@ -56,6 +57,7 @@ const STARTER_DETAILS: Record<
   "project-first": { icon: Grid2X2, accent: "#0891b2", tint: "#ecfeff", label: "Momentum" },
   minimal: { icon: LayoutTemplate, accent: "#475569", tint: "#f8fafc", label: "Essentials" },
   experimental: { icon: Compass, accent: "#db2777", tint: "#fdf2f8", label: "Uncharted" },
+  "for-hire": { icon: Handshake, accent: "#059669", tint: "#ecfdf5", label: "Get hired" },
 };
 
 function starterDetail(starter: StudioStarter) {

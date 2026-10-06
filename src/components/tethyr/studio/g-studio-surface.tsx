@@ -19,9 +19,12 @@ import {
   Plus,
   Trash2,
   X,
+  SlidersHorizontal,
 } from "lucide-react";
 import { ReactGridLayout as LegacyGridLayout, WidthProvider } from "react-grid-layout/legacy";
 import "react-grid-layout/css/styles.css";
+import type { AreaAppearance } from "@/lib/page-blocks";
+import { AreaTitle, areaSurfaceClass, areaSurfaceStyle } from "@/components/tethyr/page/area-frame";
 import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
 import { BackgroundLayer } from "@/components/tethyr/background-layer";
 import {
@@ -38,7 +41,12 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuCheckboxItem,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getBlock } from "@/lib/block-registry";
@@ -142,6 +150,8 @@ export interface GStudioSurfaceProps {
   onToggleSection: (id: string) => void;
   onRenameSection: (id: string, title: string) => void;
   onSectionLayoutChange: (sectionId: string, layout: LayoutSection["layout"]) => void;
+  /** Change how an area presents itself (title, background, spacing). */
+  onSectionAppearanceChange: (sectionId: string, patch: AreaAppearance) => void;
   onAddSection: () => void;
   onMoveToSection: (
     id: string,
@@ -339,6 +349,60 @@ function SectionLayoutPicker({
             <span className="text-2xs leading-tight text-muted-foreground">{option.label}</span>
           </DropdownMenuItem>
         ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+/** An area's presentation: whether its title shows on the page, a background
+ *  behind the whole area, and the room after it. */
+function AreaSettingsMenu({
+  section,
+  areaName,
+  onChange,
+}: {
+  section: LayoutSection;
+  areaName: string;
+  onChange: (patch: AreaAppearance) => void;
+}) {
+  const appearance = section.appearance ?? {};
+  const titled = !!section.title?.trim() && !/^area\s+\d+$/i.test(section.title.trim());
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <IconButton label={`Settings for ${areaName}`}>
+          <SlidersHorizontal className="h-3.5 w-3.5" />
+        </IconButton>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="studio-editor-chrome w-56">
+        <DropdownMenuLabel className="t-label">Title</DropdownMenuLabel>
+        <DropdownMenuCheckboxItem
+          disabled={!titled}
+          checked={titled && appearance.showTitle !== false}
+          onCheckedChange={(checked) => onChange({ showTitle: checked === true })}
+        >
+          {titled ? "Show the title on the page" : "Name the area to show a title"}
+        </DropdownMenuCheckboxItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel className="t-label">Background</DropdownMenuLabel>
+        <DropdownMenuRadioGroup
+          value={appearance.background ?? "none"}
+          onValueChange={(value) => onChange({ background: value as AreaAppearance["background"] })}
+        >
+          <DropdownMenuRadioItem value="none">None</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="tint">Soft tint</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="accent">Accent panel</DropdownMenuRadioItem>
+        </DropdownMenuRadioGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel className="t-label">Space after</DropdownMenuLabel>
+        <DropdownMenuRadioGroup
+          value={appearance.spacing ?? "normal"}
+          onValueChange={(value) => onChange({ spacing: value as AreaAppearance["spacing"] })}
+        >
+          <DropdownMenuRadioItem value="tight">Tight</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="normal">Normal</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="loose">Generous</DropdownMenuRadioItem>
+        </DropdownMenuRadioGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -821,7 +885,14 @@ function GSectionBand({
     <section
       data-section-id={section.id}
       aria-label={sectionTitle}
-      className={cn("relative", section.visible === false && editing && "opacity-60")}
+      // The area's own surface (background, spacing) renders in the editor
+      // exactly as on the page.
+      className={cn(
+        "relative",
+        areaSurfaceClass(section),
+        section.visible === false && editing && "opacity-60",
+      )}
+      style={areaSurfaceStyle(section)}
       onClick={(event) => event.stopPropagation()}
     >
       {editing ? (
@@ -867,6 +938,11 @@ function GSectionBand({
             areaName={sectionTitle}
             onChange={(layout) => props.onSectionLayoutChange(section.id, layout)}
           />
+          <AreaSettingsMenu
+            section={section}
+            areaName={sectionTitle}
+            onChange={(patch) => props.onSectionAppearanceChange(section.id, patch)}
+          />
           <div className="ml-auto flex gap-0.5">
             <IconButton
               label="Move area up"
@@ -894,13 +970,9 @@ function GSectionBand({
             </IconButton>
           </div>
         </header>
-      ) : section.layout === "feature" ? (
-        <header className="mb-2 flex items-center gap-2">
-          <span className="h-3 w-0.5" style={{ backgroundColor: "var(--user-accent)" }} />
-          <span className="t-label">{sectionTitle}</span>
-          <span className="t-rule flex-1" />
-        </header>
-      ) : null}
+      ) : (
+        <AreaTitle section={section} />
+      )}
       {blocks.length === 0 ? (
         editing ? (
           <button

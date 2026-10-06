@@ -528,8 +528,12 @@
   /* Per-block shape (frameShape) wins; then the global studio radius; then
      the design-system default. The transition makes shape changes fluid. */
   border-radius: var(--studio-block-radius, var(--studio-radius, var(--radius-lg)));
-  padding: var(--studio-block-inset, 1rem);
-  transition: border-radius 220ms ease;
+  /* Shaped frames (pill, organic, blob, leaf) supply their own padding so
+     content moves in with the curve; see shapePadding(). */
+  padding: var(--studio-block-padding, var(--studio-block-inset, 1rem));
+  transition:
+    border-radius 220ms ease,
+    padding 220ms ease;
 }
 
 /* Member-picked card fill (Ink, Midnight, Teal…): text inside block frames
@@ -671,11 +675,7 @@
   /* Mixed here, not on the canvas: a card with its own ink sets its own
      --foreground/--muted-foreground, and a var() inside --bt-* would be
      resolved at the canvas and miss it. --bt-strength is a plain number. */
-  color: color-mix(
-    in oklab,
-    var(--foreground) var(--bt-strength, 0%),
-    var(--muted-foreground)
-  );
+  color: color-mix(in oklab, var(--foreground) var(--bt-strength, 0%), var(--muted-foreground));
 }
 .block-title > svg {
   width: 1.1em;

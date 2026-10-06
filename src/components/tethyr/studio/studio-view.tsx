@@ -32,6 +32,13 @@ import { useUserPalette } from "@/lib/dominant-color";
 import { themeTokensToStyle } from "@/lib/theme-tokens";
 import { useTheme as useAppTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
+import { reflowAroundHidden } from "@/lib/studio-grid";
+import {
+  AreaTitle,
+  areaSurfaceClass,
+  areaSurfaceStyle,
+  areaTitle,
+} from "@/components/tethyr/page/area-frame";
 import { blockFrameStyle, normalizeStudioConfig } from "@/lib/studio-config";
 import { useCreatePage, usePublishPage } from "@/hooks/use-page-editor";
 import { shouldRenderSectionInView } from "@/lib/studio-visibility";
@@ -330,6 +337,7 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
                         key={section.id}
                         section={section}
                         context={blockContext}
+                        emptyBlockIds={emptyBlocks}
                         revealEdits={revealEdits}
                         onEdit={() =>
                           navigate({
@@ -540,11 +548,15 @@ function StudioViewTopBar({
 function StudioViewSection({
   section,
   context,
+  emptyBlockIds,
   onEdit,
   revealEdits,
 }: {
   section: LayoutSection;
   context: BlockContext;
+  /** Blocks that reported nothing to show: kept mounted (so they can report
+   *  content that loads later) but hidden, and their rows reflow. */
+  emptyBlockIds: ReadonlySet<string>;
   onEdit: () => void;
   /** Until first edit, section edit buttons are always visible (discoverability). */
   revealEdits: boolean;
@@ -558,29 +570,41 @@ function StudioViewSection({
 
   const gridClass = SECTION_GRID[section.layout] ?? "";
   const hasGrid = (section.grid?.length ?? 0) > 0;
-  const gridMap = new Map((section.grid ?? []).map((item) => [item.i, item]));
+  const hidden = new Set(
+    section.blocks
+      .filter((block) => block.visible === false || emptyBlockIds.has(block.id))
+      .map((block) => block.id),
+  );
+  const placed = reflowAroundHidden(section.grid ?? [], hidden);
+  const gridMap = new Map(
+    (section.grid ?? []).map((item) => [item.i, { ...item, ...(placed.get(item.i) ?? {}) }]),
+  );
 
   return (
-    <section aria-label={section.title ?? section.layout} className="group/section relative">
-      {section.title && !/^area\s+\d+$/i.test(section.title) && (
-        <header className="mb-2 flex items-center gap-2">
-          <span className="h-3 w-0.5" style={{ backgroundColor: "var(--user-accent)" }} />
-          <span className="t-label">{section.title}</span>
-          <span className="t-rule flex-1" />
-          <button
-            type="button"
-            onClick={onEdit}
-            title="Edit this area in Customize"
-            aria-label="Edit this area in Customize"
-            className={cn(
-              "flex h-6 items-center gap-1 rounded-sm px-1.5 text-muted-foreground transition-lift hover:bg-[var(--surface-elevated)] hover:text-foreground focus-visible:opacity-100",
-              revealEdits ? "opacity-100" : "opacity-0 group-hover/section:opacity-100",
-            )}
-          >
-            <Pencil className="h-3 w-3" />
-          </button>
-        </header>
-      )}
+    <section
+      aria-label={section.title ?? section.layout}
+      className={cn("group/section relative", areaSurfaceClass(section))}
+      style={areaSurfaceStyle(section)}
+    >
+      <AreaTitle
+        section={section}
+        action={
+          areaTitle(section) ? (
+            <button
+              type="button"
+              onClick={onEdit}
+              title="Edit this area"
+              aria-label="Edit this area"
+              className={cn(
+                "flex h-6 items-center gap-1 rounded-sm px-1.5 text-muted-foreground transition-lift hover:bg-[var(--surface-elevated)] hover:text-foreground focus-visible:opacity-100",
+                revealEdits ? "opacity-100" : "opacity-0 group-hover/section:opacity-100",
+              )}
+            >
+              <Pencil className="h-3 w-3" />
+            </button>
+          ) : undefined
+        }
+      />
       <div
         className={
           hasGrid
@@ -599,6 +623,7 @@ function StudioViewSection({
           <StudioViewBlock
             key={block.id}
             block={block}
+            hidden={emptyBlockIds.has(block.id)}
             gridItem={gridMap.get(block.id)}
             gridClass={gridClass}
             hasGrid={hasGrid}
@@ -612,12 +637,14 @@ function StudioViewSection({
 
 function StudioViewBlock({
   block,
+  hidden,
   gridItem,
   gridClass,
   hasGrid,
   context,
 }: {
   block: LayoutBlockInstance;
+  hidden: boolean;
   gridItem?: LayoutGridItem;
   gridClass: string;
   hasGrid: boolean;
@@ -637,6 +664,8 @@ function StudioViewBlock({
             : "min-w-0"
       }
       style={{ borderRadius: "var(--studio-radius)" }}
+      // Empty: no frame, no space — but still mounted so it can report content.
+      hidden={hidden}
     >
       <div
         style={blockFrameStyle(block)}

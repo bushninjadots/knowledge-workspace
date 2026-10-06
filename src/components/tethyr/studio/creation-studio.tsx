@@ -34,6 +34,7 @@ import {
 import { applyTemplateSections, sanitizeTemplateSections } from "@/lib/template-apply";
 import { withCardBorderPreference, type CardBorderPreference } from "@/lib/background-themes";
 import type {
+  AreaAppearance,
   BlockConfig,
   LayoutBlockInstance,
   LayoutGridItem,
@@ -807,6 +808,24 @@ export function CreationStudio({
 
   // Live grid updates: drag/resize frames (history was recorded when the
   // gesture began) and content auto-fit (deliberately not an undo step).
+  const setSectionAppearance = useCallback(
+    (sectionId: string, patch: AreaAppearance) => {
+      if (!layout) return;
+      commit(
+        {
+          sections: layout.sections.map((section) =>
+            section.id === sectionId
+              ? { ...section, appearance: { ...section.appearance, ...patch } }
+              : section,
+          ),
+        },
+        undefined,
+        `area:${sectionId}`,
+      );
+    },
+    [commit, layout],
+  );
+
   const applyGrid = useCallback(
     (sectionId: string, nextGrid: LayoutGridItem[]) => {
       const next = layoutWithGrid(sectionId, nextGrid);
@@ -1387,6 +1406,7 @@ export function CreationStudio({
         onToggleSection={toggleSection}
         onRenameSection={renameSection}
         onSectionLayoutChange={setSectionLayout}
+        onSectionAppearanceChange={setSectionAppearance}
         onAddSection={addSection}
         onMoveToSection={moveToSection}
         onAdd={addBlock}

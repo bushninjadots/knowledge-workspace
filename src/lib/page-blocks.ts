@@ -280,6 +280,19 @@ export interface LayoutSection {
   frames?: ResponsiveFrames;
   /** When true, the section uses freeform placement in the page canvas. */
   freeform?: boolean;
+  /** How the area itself presents: its title, a background, its spacing. */
+  appearance?: AreaAppearance;
+}
+
+/** Per-area presentation, shared by the editor, the owner view and the
+ *  public page (components/tethyr/page/area-frame.tsx). */
+export interface AreaAppearance {
+  /** Show the area's title above it on the page (default true when titled). */
+  showTitle?: boolean;
+  /** A surface behind the whole area. */
+  background?: "none" | "tint" | "accent";
+  /** Room after the area. */
+  spacing?: "tight" | "normal" | "loose";
 }
 
 /** A complete page layout: an ordered list of sections. */

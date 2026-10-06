@@ -11,6 +11,7 @@ import { ChevronDown, Copy, Eye, EyeOff, LayoutGrid, MoreVertical, Trash2 } from
 import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
 import { SortableBlock } from "@/components/tethyr/page/sortable-block";
 import { InlineInspector } from "@/components/tethyr/studio/inline-inspector";
+import { AreaTitle, areaSurfaceClass, areaSurfaceStyle } from "./area-frame";
 import { StudioSectionGrid } from "@/components/tethyr/page/studio-section-grid";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -39,6 +40,7 @@ import type {
 import { getBlock } from "@/lib/block-registry";
 import { blockFrameStyle } from "@/lib/studio-config";
 import { isDefinitelyEmptyBlock, shouldRenderSectionInView } from "@/lib/studio-visibility";
+import { reflowAroundHidden } from "@/lib/studio-grid";
 import "@/components/tethyr/blocks/register-all";
 
 interface PageLayoutRendererProps {
@@ -418,6 +420,18 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
               (b.visible !== false && !emptyBlockIds.has(b.id) && !isDefinitelyEmptyBlock(b)),
           )
           .sort((a, b) => a.position - b.position);
+        // Blocks that won't show (hidden or empty) give their columns back to
+        // the rest of their row instead of leaving a hole.
+        const placed = context.isEditing
+          ? null
+          : reflowAroundHidden(
+              section.grid ?? [],
+              new Set(
+                (section.grid ?? [])
+                  .map((item) => item.i)
+                  .filter((id) => !blocks.some((block) => block.id === id)),
+              ),
+            );
         const gridClass = sparseSafeGridClass(section.layout, blocks.length);
         const persistedBlocks = layout.sections[layoutSectionIndex]?.blocks ?? [];
 
@@ -428,8 +442,10 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
             key={section.id}
             data-section-id={section.id}
             data-section-layout={section.layout}
+            style={context.isEditing ? undefined : areaSurfaceStyle(section)}
             className={[
               context.isEditing ? "py-8 first:pt-0" : "first:pt-0",
+              context.isEditing ? "" : areaSurfaceClass(section),
               // Public rhythm mirrors the private Studio view: whitespace-led
               // gaps (density-scaled) instead of full-width divider rules.
               isWhitespaceLed || !context.isEditing
@@ -558,16 +574,7 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
               </div>
             ) : (
               <>
-                {!context.isEditing && section.title && !/^area\s+\d+$/i.test(section.title) && (
-                  <header className="mb-2 flex items-center gap-2">
-                    <span
-                      className="h-3 w-0.5 shrink-0"
-                      style={{ backgroundColor: "var(--user-accent, var(--trust))" }}
-                    />
-                    <span className="t-label">{section.title}</span>
-                    <span className="t-rule flex-1" />
-                  </header>
-                )}
+                {!context.isEditing && <AreaTitle section={section} />}
                 <div
                   className={`${
                     hasGrid
@@ -588,7 +595,10 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
                     const persistedBlockIndex = persistedBlocks.findIndex(
                       (candidate) => candidate.id === block.id,
                     );
-                    const gridItem = hasGrid ? gridByBlock.get(block.id) : undefined;
+                    const stored = hasGrid ? gridByBlock.get(block.id) : undefined;
+                    const gridItem = stored
+                      ? { ...stored, ...(placed?.get(block.id) ?? {}) }
+                      : undefined;
                     const blockDef = getBlock(block.type);
                     // Full-bleed blocks opt out of the studio-block frame, exactly
                     // like the owner Studio view and the editor canvas.

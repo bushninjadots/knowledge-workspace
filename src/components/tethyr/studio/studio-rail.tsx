@@ -132,7 +132,8 @@ function BlockFrameSection({
       </div>
       <p className="t-label mb-1">Shape</p>
       <p className="mb-2 text-2xs leading-snug text-muted-foreground-subtle">
-        Choose the silhouette of this block&apos;s surface.
+        Choose the silhouette of this block&apos;s surface. Curved shapes move the content in so it
+        stays inside the curve.
       </p>
       <div role="radiogroup" aria-label="Block shape" className="grid grid-cols-4 gap-1">
         {SHAPE_PRESETS.map((preset) => {
