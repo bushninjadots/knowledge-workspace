@@ -19,7 +19,9 @@ import {
   Plus,
   Trash2,
   X,
+  Monitor,
   SlidersHorizontal,
+  Smartphone,
 } from "lucide-react";
 import { ReactGridLayout as LegacyGridLayout, WidthProvider } from "react-grid-layout/legacy";
 import "react-grid-layout/css/styles.css";
@@ -77,6 +79,8 @@ import {
   sectionGrid,
   sectionLabel,
   settleGridSnap,
+  snapGridPlacement,
+  alignedEdges,
   sizeFor,
 } from "@/lib/studio-grid";
 import { useCardInk } from "@/hooks/use-card-ink";
@@ -427,6 +431,24 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [emptyBlocks, setEmptyBlocks] = useState<Set<string>>(() => new Set());
   const [snapToBlocks, setSnapToBlocks] = useState(true);
+  // "Show layout grid": the 12 columns stay visible while editing (they
+  // always appear during a drag or resize). Remembered per browser.
+  const [showGrid, setShowGrid] = useState(false);
+  useEffect(() => {
+    try {
+      setShowGrid(window.localStorage.getItem("studio-show-grid") === "1");
+    } catch {
+      // Storage unavailable: off.
+    }
+  }, []);
+  const toggleShowGrid = (next: boolean) => {
+    setShowGrid(next);
+    try {
+      window.localStorage.setItem("studio-show-grid", next ? "1" : "0");
+    } catch {
+      // Storage unavailable: lasts this visit.
+    }
+  };
   const handleBlockEmpty = useCallback((blockId: string, isEmpty: boolean) => {
     setEmptyBlocks((previous) => {
       // Every block reports its emptiness from a mount effect, so this runs a
@@ -510,6 +532,8 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
         historyOpen={historyOpen}
         snapToBlocks={snapToBlocks}
         onSnapToBlocksChange={setSnapToBlocks}
+        showGrid={showGrid}
+        onShowGridChange={toggleShowGrid}
         onHistory={() => setHistoryOpen((open) => !open)}
         onHistoryClosed={() => setHistoryOpen(false)}
         onModeChange={props.onModeChange}
@@ -587,6 +611,7 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
                 onBlockEmptyChange={handleBlockEmpty}
                 emptyBlockIds={emptyBlocks}
                 snapToBlocks={snapToBlocks}
+                showGrid={showGrid}
                 onGridChange={props.onGridChange}
                 onRequestPalette={(sectionId) => {
                   props.onPaletteTargetChange(sectionId);
@@ -637,6 +662,7 @@ function GStudioCanvas({
   directManipulation,
   touchDrag,
   snapToBlocks,
+  showGrid,
   onRequestPalette,
   ...props
 }: GStudioSurfaceProps & {
@@ -645,6 +671,7 @@ function GStudioCanvas({
   directManipulation: boolean;
   touchDrag: boolean;
   snapToBlocks: boolean;
+  showGrid: boolean;
   onRequestPalette: (id: string) => void;
 }) {
   return (
@@ -663,6 +690,7 @@ function GStudioCanvas({
             directManipulation={directManipulation}
             touchDrag={touchDrag}
             snapToBlocks={snapToBlocks}
+            showGrid={showGrid}
             {...props}
             onRequestPalette={onRequestPalette}
           />
@@ -753,6 +781,94 @@ function cellUnderPointer(
   };
 }
 
+/** What the grid overlay draws during a drag or resize. */
+type GridGesture = {
+  kind: "drag" | "resize";
+  item: { x: number; y: number; w: number; h: number };
+  guides: { cols: number[]; rows: number[] };
+};
+
+/**
+ * Drawn over an area's grid while editing: the 12 columns (during a gesture,
+ * or always with "Show layout grid"), alignment guides at edges the moving
+ * block lines up with, and a width readout while resizing. Pixel positions
+ * use the same column maths as the grid library.
+ */
+function GridOverlay({
+  width,
+  margin,
+  rowHeight,
+  gesture,
+  showGrid,
+  layer,
+}: {
+  width: number;
+  margin: number;
+  rowHeight: number;
+  gesture: GridGesture | null;
+  showGrid: boolean;
+  /** "columns" sits behind the blocks; "guides" is drawn over them. */
+  layer: "columns" | "guides";
+}) {
+  if (!width || (!gesture && !showGrid)) return null;
+  if (layer === "guides" && !gesture) return null;
+  const colW = (width - margin * (COLS - 1)) / COLS;
+  const colX = (c: number) => c * (colW + margin);
+  const rowY = (r: number) => r * (rowHeight + margin);
+  // A boundary sits in the gutter between columns (at the outer edges, on them).
+  const colLine = (c: number) => (c <= 0 ? 0 : c >= COLS ? width - 1 : colX(c) - margin / 2);
+  const rowLine = (r: number) => (r <= 0 ? 0 : rowY(r) - margin / 2);
+  return (
+    <div
+      aria-hidden
+      className={cn("pointer-events-none absolute inset-0", layer === "guides" ? "z-[35]" : "z-0")}
+    >
+      {layer === "columns" &&
+        Array.from({ length: COLS }, (_, c) => (
+          <span
+            key={c}
+            className={cn(
+              "absolute inset-y-0 rounded-[2px] transition-opacity duration-150",
+              gesture
+                ? "bg-[color-mix(in_oklab,var(--user-accent,var(--primary))_7%,transparent)]"
+                : "bg-[color-mix(in_oklab,var(--foreground)_3%,transparent)]",
+            )}
+            style={{ left: colX(c), width: colW }}
+          />
+        ))}
+      {layer === "guides" &&
+        gesture?.guides.cols.map((c) => (
+          <span
+            key={`c${c}`}
+            className="absolute -inset-y-3 w-px bg-[var(--user-accent,var(--primary))]"
+            style={{ left: colLine(c) }}
+          />
+        ))}
+      {layer === "guides" &&
+        gesture?.guides.rows.map((r) => (
+          <span
+            key={`r${r}`}
+            className="absolute inset-x-0 h-px bg-[var(--user-accent,var(--primary))]"
+            style={{ top: rowLine(r) }}
+          />
+        ))}
+      {layer === "guides" && gesture?.kind === "resize" && (
+        <span
+          className="absolute rounded-sm bg-[var(--user-accent,var(--primary))] px-1.5 py-0.5 font-mono text-2xs whitespace-nowrap text-[var(--user-accent-foreground,var(--primary-foreground))] shadow-sm"
+          style={{
+            // Inside the block's top-right corner, clear of the area header.
+            left: colX(gesture.item.x + gesture.item.w) - margin - 8,
+            top: rowY(gesture.item.y) + 8,
+            transform: "translateX(-100%)",
+          }}
+        >
+          {gesture.item.w} / {COLS} columns
+        </span>
+      )}
+    </div>
+  );
+}
+
 function GSectionBand({
   section,
   index,
@@ -761,6 +877,7 @@ function GSectionBand({
   directManipulation,
   touchDrag,
   snapToBlocks,
+  showGrid,
   onRequestPalette,
   ...props
 }: GStudioSurfaceProps & {
@@ -771,8 +888,20 @@ function GSectionBand({
   directManipulation: boolean;
   touchDrag: boolean;
   snapToBlocks: boolean;
+  showGrid: boolean;
   onRequestPalette: (id: string) => void;
 }) {
+  const [gesture, setGesture] = useState<GridGesture | null>(null);
+  const gridBoxRef = useRef<HTMLDivElement | null>(null);
+  const [gridWidth, setGridWidth] = useState(0);
+  useEffect(() => {
+    const node = gridBoxRef.current;
+    if (!node) return;
+    const observer = new ResizeObserver(() => setGridWidth(node.clientWidth));
+    observer.observe(node);
+    setGridWidth(node.clientWidth);
+    return () => observer.disconnect();
+  }, [editing, section.blocks.length]);
   const [renaming, setRenaming] = useState(false);
   // Phones edit in one stacked column: a 12-column desktop arrangement can't
   // be dragged by touch and squeezes side-by-side blocks to a few words wide.
@@ -1005,11 +1134,28 @@ function GSectionBand({
         </div>
       ) : editing ? (
         <div
+          ref={gridBoxRef}
           data-studio-grid={section.id}
           data-row-height={rowHeight}
           data-margin={margin}
           className="relative"
         >
+          <GridOverlay
+            layer="columns"
+            width={gridWidth}
+            margin={margin}
+            rowHeight={rowHeight}
+            gesture={gesture}
+            showGrid={showGrid}
+          />
+          <GridOverlay
+            layer="guides"
+            width={gridWidth}
+            margin={margin}
+            rowHeight={rowHeight}
+            gesture={gesture}
+            showGrid={showGrid}
+          />
           <EditorGrid
             className="layout"
             layout={grid}
@@ -1041,7 +1187,46 @@ function GSectionBand({
               gestureRef.current = true;
               props.onGridInteractionStart();
             }}
+            // Live snapping: move the landing preview to the snapped cell as the
+            // block is dragged, so what you see is where it lands (the drop is
+            // settled with the same rule). Guides mark edges that line up.
+            onDrag={(current, _old, item, placeholder) => {
+              if (!item) return;
+              const others = (current as unknown as LayoutGridItem[]).filter(
+                (other) => other.i !== item.i,
+              );
+              let { x, y } = item;
+              if (snapToBlocks) {
+                const snapped = snapGridPlacement(
+                  { sectionId: section.id, col: x, row: y },
+                  item.w,
+                  item.h,
+                  others,
+                  true,
+                  String(item.i),
+                );
+                if (snapped) {
+                  x = snapped.col;
+                  y = snapped.row;
+                  if (placeholder) {
+                    placeholder.x = x;
+                    placeholder.y = y;
+                  }
+                }
+              }
+              const box = { x, y, w: item.w, h: item.h };
+              setGesture({ kind: "drag", item: box, guides: alignedEdges(box, others) });
+            }}
+            onResize={(current, _old, item) => {
+              if (!item) return;
+              const others = (current as unknown as LayoutGridItem[]).filter(
+                (other) => other.i !== item.i,
+              );
+              const box = { x: item.x, y: item.y, w: item.w, h: item.h };
+              setGesture({ kind: "resize", item: box, guides: alignedEdges(box, others) });
+            }}
             onDragStop={(current, _oldItem, newItem, _placeholder, event) => {
+              setGesture(null);
               // The final onLayoutChange lands after this callback.
               window.setTimeout(() => (gestureRef.current = false), 0);
               props.onGridInteractionEnd();
@@ -1080,6 +1265,7 @@ function GSectionBand({
               }
             }}
             onResizeStop={() => {
+              setGesture(null);
               window.setTimeout(() => (gestureRef.current = false), 0);
               props.onGridInteractionEnd();
             }}
@@ -1338,6 +1524,16 @@ const GBlockFrame = forwardRef<
           />
         </div>
       </div>
+      {editing && block.showOn && block.showOn !== "all" && (
+        <span className="absolute right-1.5 top-1.5 z-20 inline-flex items-center gap-1 rounded-sm border border-border bg-[var(--surface-elevated)] px-1.5 py-0.5 text-2xs text-muted-foreground shadow-sm">
+          {block.showOn === "desktop" ? (
+            <Monitor className="h-3 w-3" aria-hidden />
+          ) : (
+            <Smartphone className="h-3 w-3" aria-hidden />
+          )}
+          {block.showOn === "desktop" ? "Desktop only" : "Phone only"}
+        </span>
+      )}
       {editing && props.emptyBlockIds?.has(block.id) && block.visible !== false && (
         <span
           title="Visitors won't see this block until it has content"

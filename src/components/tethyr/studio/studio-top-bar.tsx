@@ -62,6 +62,8 @@ export function GStudioTopBar({
   onRedo,
   snapToBlocks,
   onSnapToBlocksChange,
+  showGrid,
+  onShowGridChange,
   onExit,
   onCustomize,
   onPalette,
@@ -96,6 +98,8 @@ export function GStudioTopBar({
   onRedo: () => void;
   snapToBlocks: boolean;
   onSnapToBlocksChange: (enabled: boolean) => void;
+  showGrid: boolean;
+  onShowGridChange: (enabled: boolean) => void;
   onExit?: () => void;
   onCustomize: () => void;
   onPalette: () => void;
@@ -299,6 +303,14 @@ export function GStudioTopBar({
                   onCheckedChange={(checked) => onSnapToBlocksChange(checked === true)}
                 >
                   Snap to block edges
+                </DropdownMenuCheckboxItem>
+              )}
+              {!compact && mode === "edit" && (
+                <DropdownMenuCheckboxItem
+                  checked={showGrid}
+                  onCheckedChange={(checked) => onShowGridChange(checked === true)}
+                >
+                  Show layout grid
                 </DropdownMenuCheckboxItem>
               )}
               {!compact && (

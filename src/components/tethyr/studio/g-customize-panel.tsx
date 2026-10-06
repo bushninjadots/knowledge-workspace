@@ -268,11 +268,13 @@ export function GStyleSections({
     }
   };
   return (
-    <div>
+    // The group tabs sit above the scrolling settings (not inside them), so
+    // nothing ever scrolls underneath them.
+    <div className="flex h-full min-h-0 flex-col">
       <div
         role="tablist"
         aria-label="Style settings"
-        className="sticky top-0 z-10 -mx-3 mb-3 flex gap-0.5 border-b border-border bg-[var(--surface-elevated)] px-3 pb-2"
+        className="flex shrink-0 gap-0.5 border-b border-border bg-[var(--surface-elevated)] px-3 py-2"
       >
         {STYLE_TABS.map(([value, label]) => (
           <button
@@ -292,10 +294,24 @@ export function GStyleSections({
           </button>
         ))}
       </div>
-      <div role="tabpanel" aria-label={STYLE_TABS.find(([v]) => v === tab)?.[1]}>
+      <div
+        role="tabpanel"
+        aria-label={STYLE_TABS.find(([v]) => v === tab)?.[1]}
+        className="min-h-0 flex-1 overflow-y-auto px-3 py-3"
+      >
         {tab === "look" && (
           <>
             <ThemeSection themeId={themeId} onThemeChange={onThemeChange} />
+            <Choice
+              label="Motion"
+              hint="Blocks rise gently into place as visitors scroll. Off for anyone who prefers reduced motion."
+              value={config.motion ?? "none"}
+              options={[
+                ["none", "Still"],
+                ["rise", "Rise in"],
+              ]}
+              onChange={(value) => onChange({ motion: value === "rise" ? "rise" : "none" })}
+            />
             <Choice
               label="Accent"
               hint={
@@ -443,6 +459,17 @@ export function GStyleSections({
         )}
         {tab === "cards" && (
           <>
+            <Choice
+              label="Shadow"
+              hint="Depth under every block. A block can choose its own in its settings."
+              value={config.cardShadow ?? "none"}
+              options={[
+                ["none", "Flat"],
+                ["soft", "Soft"],
+                ["lifted", "Lifted"],
+              ]}
+              onChange={(value) => onChange({ cardShadow: value as GStudioConfig["cardShadow"] })}
+            />
             <div className="mb-4">
               <div className="mb-2 flex items-start gap-2">
                 <Frame
@@ -649,9 +676,7 @@ export function GStyleSections({
 export function GCustomizePanel(props: StyleSectionProps) {
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
-        <GStyleSections {...props} />
-      </div>
+      <GStyleSections {...props} />
     </div>
   );
 }

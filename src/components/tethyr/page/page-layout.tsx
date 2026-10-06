@@ -608,6 +608,9 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
                       <div
                         key={`drop-${block.id}`}
                         className={[
+                          // "Show on" desktop / phone only (block settings).
+                          !context.isEditing && block.showOn === "desktop" ? "max-md:hidden" : "",
+                          !context.isEditing && block.showOn === "mobile" ? "md:hidden" : "",
                           context.isEditing
                             ? "relative rounded-md border border-transparent p-1 transition-colors hover:border-card-border hover:bg-surface/20"
                             : hasGrid

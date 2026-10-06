@@ -208,6 +208,31 @@ try {
   }
   await page.waitForTimeout(2500);
 
+  // 6b ─ snap: a near-miss drag lines back up with its neighbour
+  const pair = page
+    .locator("section[data-section-id]")
+    .filter({ has: page.locator(".react-grid-item:nth-child(2)") })
+    .first();
+  const mover = pair.locator(".react-grid-item").nth(1);
+  if (await mover.count()) {
+    await mover.scrollIntoViewIfNeeded();
+    const before = await mover.boundingBox();
+    await page.mouse.move(before.x + 30, before.y + 8);
+    await page.mouse.down();
+    await page.mouse.move(before.x + 50, before.y + 60, { steps: 12 });
+    await page.mouse.up();
+    await page.waitForTimeout(800);
+    const after = await mover.boundingBox();
+    log(
+      "Snap lines a near-miss drop back up with its neighbour",
+      Math.abs(after.y - before.y) < 4,
+      `top ${Math.round(before.y)} → ${Math.round(after.y)}`,
+    );
+    await blank(page);
+    await page.keyboard.press("Control+z");
+    await page.waitForTimeout(2500);
+  }
+
   // 7 ─ leaving straight after an edit doesn't lose it (then put it back)
   const label0 = await areaToggle(page, 1).getAttribute("aria-label");
   await areaToggle(page, 1).click();

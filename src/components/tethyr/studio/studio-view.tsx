@@ -654,15 +654,18 @@ function StudioViewBlock({
   const def = getBlock(block.type);
   return (
     <div
-      className={
+      className={cn(
         hasGrid
           ? gridItem
             ? `relative min-w-0 ${colStartClass(gridItem.x + 1)} ${spanClass(span)}`
             : "relative min-w-0"
           : gridClass
             ? `min-w-0 ${spanClass(span)}`
-            : "min-w-0"
-      }
+            : "min-w-0",
+        // "Show on" desktop / phone only (block settings).
+        block.showOn === "desktop" && "max-md:hidden",
+        block.showOn === "mobile" && "md:hidden",
+      )}
       style={{ borderRadius: "var(--studio-radius)" }}
       // Empty: no frame, no space — but still mounted so it can report content.
       hidden={hidden}

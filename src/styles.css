@@ -518,7 +518,11 @@
    The frame owns the inset: block content renders flush inside it, so
    text never starts on the border. Full-bleed blocks opt out. */
 @utility studio-block {
-  background-color: var(--surface);
+  /* Per-block fill (blockFillVars) wins over the Studio's card fill. */
+  background-color: var(--studio-block-bg, var(--surface));
+  /* Per-block shadow, else the Studio's card shadow. */
+  box-shadow: var(--studio-block-shadow, var(--studio-card-shadow, none));
+  text-align: var(--studio-block-align, start);
   /* Per-block override (blockFrameStyle) wins; default follows the member's
      card-border appearance exactly as before. */
   border: var(
@@ -655,7 +659,7 @@
 .block-title-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: var(--studio-block-justify, space-between);
   gap: 0.5rem;
   margin-bottom: var(--bt-gap, 0.625rem);
   height: var(--bt-height, auto);
@@ -1223,12 +1227,25 @@
   transition: none;
   z-index: 30;
 }
-.react-grid-item.react-grid-placeholder {
-  background: var(--user-accent, var(--primary));
-  border: 1px dashed var(--user-accent, var(--primary));
-  border-radius: var(--radius);
-  opacity: 0.14;
+/* Where the dragged block will land (snapped live): a clear dashed outline
+   on a light tint, sliding between cells instead of blinking. */
+/* Scoped one level up: react-grid-layout's own stylesheet loads after this
+   one and would otherwise win with its red default. */
+.react-grid-layout .react-grid-item.react-grid-placeholder {
+  background: color-mix(in oklab, var(--user-accent, var(--primary)) 12%, transparent);
+  border: 2px dashed var(--user-accent, var(--primary));
+  border-radius: var(--studio-radius, var(--radius));
+  opacity: 1;
   z-index: 2;
+  transition:
+    transform 120ms ease,
+    width 120ms ease,
+    height 120ms ease;
+}
+/* The block being dragged lifts off the canvas. */
+.react-grid-item.react-draggable-dragging {
+  filter: drop-shadow(0 12px 24px rgb(0 0 0 / 0.18));
+  opacity: 0.92;
 }
 .react-grid-item > .react-resizable-handle {
   position: absolute;
@@ -1353,4 +1370,35 @@
   outline: 1px dashed var(--user-accent-border, var(--border-strong));
   outline-offset: -1px;
   border-radius: 1rem;
+}
+
+/* Studio motion ("Rise in"): blocks rise into place as they scroll into view.
+   Scroll-driven, so it costs nothing until it plays; skipped where
+   unsupported, for reduced motion, and in the editor. */
+@keyframes studio-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .studio-block {
+      animation: var(--studio-enter, none);
+      animation-timeline: view();
+      animation-range: entry 0% cover 22%;
+    }
+  }
+}
+[data-studio-builder] .studio-block {
+  animation: none;
+}
+@media print {
+  .studio-block {
+    animation: none !important;
+  }
 }

@@ -766,9 +766,10 @@ export function CreationStudio({
   );
 
   /** The layout with one area's grid replaced, or null when nothing changes. */
-  const layoutWithGrid = useCallback(
-    (sectionId: string, nextGrid: LayoutGridItem[]): PageLayout | null => {
-      if (!layout) return null;
+  /** `base` with one area's grid replaced, or null when nothing changes. */
+  const gridOn = useCallback(
+    (base: PageLayout, sectionId: string, nextGrid: LayoutGridItem[]): PageLayout | null => {
+      const layout = base;
       const section = layout.sections.find((candidate) => candidate.id === sectionId);
       if (!section) return null;
       const validIds = new Set(section.blocks.map((block) => block.id));
@@ -803,7 +804,12 @@ export function CreationStudio({
         ),
       };
     },
-    [layout],
+    [],
+  );
+  const layoutWithGrid = useCallback(
+    (sectionId: string, nextGrid: LayoutGridItem[]) =>
+      layout ? gridOn(layout, sectionId, nextGrid) : null,
+    [gridOn, layout],
   );
 
   // Live grid updates: drag/resize frames (history was recorded when the
@@ -826,12 +832,17 @@ export function CreationStudio({
     [commit, layout],
   );
 
+  // Applied to the latest layout, not the one this callback closed over: a
+  // drop's snap correction arrives a tick after the drop itself, and against
+  // the stale layout a snap back to the starting cell looked like "no change"
+  // and was dropped — which is why Snap appeared to do nothing.
   const applyGrid = useCallback(
     (sectionId: string, nextGrid: LayoutGridItem[]) => {
-      const next = layoutWithGrid(sectionId, nextGrid);
-      if (next) setLayout(next);
+      setLayout((current) =>
+        current ? (gridOn(current, sectionId, nextGrid) ?? current) : current,
+      );
     },
-    [layoutWithGrid],
+    [gridOn],
   );
 
   // Content auto-fit: patch the working layout and the saved baseline alike,

@@ -33,7 +33,7 @@ import { ProfileMediaControls } from "./profile-media-controls";
 import { BlockFields } from "./block-fields";
 import { BlockIcon } from "./block-icon";
 import { suggestBlocks } from "@/lib/block-suggestions";
-import { IconButton, WidthStepper } from "./studio-controls";
+import { Choice, IconButton, WidthStepper } from "./studio-controls";
 import { GCustomizePanel } from "./g-customize-panel";
 import type { GStudioSurfaceProps } from "./g-studio-surface";
 
@@ -179,7 +179,7 @@ function BlockFrameSection({
       {showRadiusSlider && (
         <label className="mt-2.5 block">
           <span className="mb-1 flex items-center justify-between font-mono text-3xs uppercase tracking-widest text-muted-foreground-subtle">
-            Corner radius <span>{radius ?? "auto"}px</span>
+            Corner radius <span>{radius === undefined ? "Auto" : `${radius}px`}</span>
           </span>
           <input
             type="range"
@@ -214,6 +214,137 @@ function BlockFrameSection({
           Reset to theme shape
         </button>
       )}
+
+      <div className="mt-4 border-t border-border pt-3">
+        <p className="t-label mb-1">Fill</p>
+        <p className="mb-2 text-2xs leading-snug text-muted-foreground-subtle">
+          This block&apos;s background. A picked colour brings readable text with it.
+        </p>
+        <div
+          role="radiogroup"
+          aria-label="Block fill"
+          className="flex flex-wrap items-center gap-1.5"
+        >
+          {(
+            [
+              ["", "Theme", "var(--studio-card-fill, var(--surface-elevated))"],
+              ["none", "None", "transparent"],
+              [
+                "tint",
+                "Tint",
+                "color-mix(in oklab, var(--foreground) 8%, var(--surface-elevated))",
+              ],
+              [
+                "accent",
+                "Accent",
+                "color-mix(in oklab, var(--user-accent) 22%, var(--surface-elevated))",
+              ],
+            ] as Array<[string, string, string]>
+          ).map(([value, label, swatch]) => {
+            const active = (block.frameFill ?? "") === value;
+            return (
+              <button
+                key={label}
+                type="button"
+                role="radio"
+                aria-checked={active}
+                title={label}
+                onClick={() => props.onBlockAction(block.id, { frameFill: value || undefined })}
+                className={cn(
+                  "flex h-7 items-center gap-1.5 rounded-sm border px-1.5 text-2xs",
+                  active
+                    ? "border-[var(--user-accent-border)] bg-[var(--user-accent-subtle)] text-foreground"
+                    : "border-border text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <span
+                  aria-hidden
+                  className="h-3.5 w-3.5 rounded-[3px] border border-border"
+                  style={{
+                    background:
+                      value === "none"
+                        ? "repeating-linear-gradient(45deg, transparent 0 3px, var(--border) 3px 4px)"
+                        : swatch,
+                  }}
+                />
+                {label}
+              </button>
+            );
+          })}
+          <label
+            title="Any colour"
+            className={cn(
+              "relative flex h-7 cursor-pointer items-center gap-1.5 rounded-sm border px-1.5 text-2xs",
+              /^#/.test(block.frameFill ?? "")
+                ? "border-[var(--user-accent-border)] bg-[var(--user-accent-subtle)] text-foreground"
+                : "border-border text-muted-foreground hover:text-foreground",
+            )}
+          >
+            <span
+              aria-hidden
+              className="h-3.5 w-3.5 rounded-[3px] border border-border"
+              style={{
+                background: /^#/.test(block.frameFill ?? "")
+                  ? block.frameFill
+                  : "conic-gradient(#f87171, #fbbf24, #34d399, #60a5fa, #a78bfa, #f87171)",
+              }}
+            />
+            Colour
+            <input
+              type="color"
+              aria-label="Custom block fill colour"
+              value={/^#/.test(block.frameFill ?? "") ? block.frameFill : "#3f8f8a"}
+              onChange={(event) => props.onBlockAction(block.id, { frameFill: event.target.value })}
+              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+            />
+          </label>
+        </div>
+        <div className="mt-3">
+          <Choice
+            label="Shadow"
+            value={block.frameShadow ?? "theme"}
+            options={[
+              ["theme", "Theme"],
+              ["none", "None"],
+              ["soft", "Soft"],
+              ["lifted", "Lifted"],
+            ]}
+            onChange={(value) =>
+              props.onBlockAction(block.id, {
+                frameShadow: value === "theme" ? undefined : (value as "none" | "soft" | "lifted"),
+              })
+            }
+          />
+          <Choice
+            label="Text alignment"
+            value={block.frameAlign ?? "start"}
+            options={[
+              ["start", "Left"],
+              ["center", "Centred"],
+            ]}
+            onChange={(value) =>
+              props.onBlockAction(block.id, {
+                frameAlign: value === "center" ? "center" : undefined,
+              })
+            }
+          />
+          <Choice
+            label="Show on"
+            hint="Hide a block on phones or on bigger screens. The editor always shows it."
+            value={block.showOn ?? "all"}
+            options={[
+              ["all", "Everywhere"],
+              ["desktop", "Desktop"],
+              ["mobile", "Phone"],
+            ]}
+            onChange={(value) =>
+              props.onBlockAction(block.id, {
+                showOn: value === "all" ? undefined : (value as "desktop" | "mobile"),
+              })
+            }
+          />
+        </div>
+      </div>
 
       <div className="mt-4 flex items-start gap-2 border-t border-border pt-3">
         <Frame className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--user-accent-text)]" aria-hidden />

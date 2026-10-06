@@ -45,6 +45,14 @@ export type BackgroundId = "default" | "surface" | "sunken";
 /** How every block's title is set: a small uppercase label, a sentence-case
  *  heading in the heading face, or hidden (kept for screen readers). */
 export type BlockTitleStyle = "label" | "heading" | "hidden";
+export type ShadowStyle = "none" | "soft" | "lifted";
+
+/** Shadow presets shared by the Studio-wide card shadow and per-block shadow. */
+export const SHADOWS: Record<ShadowStyle, string> = {
+  none: "none",
+  soft: "0 1px 2px rgb(0 0 0 / 0.05), 0 4px 14px rgb(0 0 0 / 0.07)",
+  lifted: "0 2px 4px rgb(0 0 0 / 0.06), 0 14px 36px rgb(0 0 0 / 0.14)",
+};
 type CardBorderWidth = "thin" | "medium" | "thick";
 
 export type StarterId =
@@ -80,6 +88,56 @@ const SHAPE_RADIUS: Record<Exclude<BlockShape, "default">, string> = {
 };
 
 /**
+ * A block's own fill. Resolved on the block itself (inline custom properties
+ * outrank the card-ink rule), and a picked colour brings a readable ink so a
+ * dark fill on a light Studio never leaves dark text on it.
+ */
+export function blockFillVars(fill: string | undefined): Record<string, string> {
+  if (!fill) return {};
+  // Transparent: the block sits on the page, so it takes the page's ink, not
+  // the card ink a dark card fill would give it (light text on a light page).
+  if (fill === "none")
+    return {
+      "--studio-block-bg": "transparent",
+      // No surface, so no shadow outlining an invisible card (a block-level
+      // shadow choice still wins: it is applied after this).
+      "--studio-block-shadow": "none",
+      "--foreground": "inherit",
+      "--muted-foreground": "inherit",
+      "--muted-foreground-subtle": "inherit",
+      "--border": "inherit",
+      color: "inherit",
+    };
+  if (fill === "tint")
+    return { "--studio-block-bg": "color-mix(in oklab, var(--foreground) 5%, var(--surface))" };
+  if (fill === "accent")
+    return {
+      "--studio-block-bg":
+        "color-mix(in oklab, var(--user-accent, var(--primary)) 14%, var(--surface))",
+    };
+  const hex = /^#([0-9a-f]{6})$/i.exec(fill);
+  if (!hex) return {};
+  const n = parseInt(hex[1], 16);
+  const channel = (v: number) => {
+    const c = v / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  };
+  const luminance =
+    0.2126 * channel((n >> 16) & 255) +
+    0.7152 * channel((n >> 8) & 255) +
+    0.0722 * channel(n & 255);
+  const light = luminance > 0.4;
+  return {
+    "--studio-block-bg": fill,
+    "--foreground": light ? "#111827" : "#f8fafc",
+    "--muted-foreground": light ? "#4b5563" : "#cbd5e1",
+    "--muted-foreground-subtle": light ? "#4b5563" : "#cbd5e1",
+    "--border": light ? "rgb(17 24 39 / 0.14)" : "rgb(248 250 252 / 0.18)",
+    color: light ? "#111827" : "#f8fafc",
+  };
+}
+
+/**
  * Extra room each shape needs so content stays inside its curves (added to
  * the block's own inset). Horizontal values in % follow the frame's width —
  * percentage padding is width-relative, which is exactly how these radii
@@ -112,7 +170,16 @@ export function shapePadding(shape: BlockShape | undefined): string | null {
  * exactly the global look.
  */
 export function blockFrameStyle(
-  block: Pick<LayoutBlockInstance, "frameBorder" | "frameInset" | "frameShape" | "frameRadius">,
+  block: Pick<
+    LayoutBlockInstance,
+    | "frameBorder"
+    | "frameInset"
+    | "frameShape"
+    | "frameRadius"
+    | "frameFill"
+    | "frameShadow"
+    | "frameAlign"
+  >,
 ): React.CSSProperties {
   const style = {} as React.CSSProperties & Record<string, string>;
   if (block.frameBorder === "none") {
@@ -141,6 +208,12 @@ export function blockFrameStyle(
   // Curved shapes move content in so it never runs under the curve.
   const padding = shapePadding(shape);
   if (padding) style["--studio-block-padding"] = padding;
+  Object.assign(style, blockFillVars(block.frameFill));
+  if (block.frameShadow) style["--studio-block-shadow"] = SHADOWS[block.frameShadow];
+  if (block.frameAlign === "center") {
+    style["--studio-block-align"] = "center";
+    style["--studio-block-justify"] = "center";
+  }
   const radius = block.frameRadius;
   if (typeof radius === "number" && Number.isFinite(radius)) {
     style["--studio-block-radius"] = `${Math.round(radius)}px`;
@@ -216,6 +289,10 @@ export interface StudioConfig {
   cardOpacity?: number;
   /** Treatment of block titles across the Studio. Unset = "label". */
   blockTitles?: BlockTitleStyle;
+  /** Shadow under every block. Unset = "none". */
+  cardShadow?: ShadowStyle;
+  /** Blocks rise in as they scroll into view on the page. Unset = "none". */
+  motion?: "none" | "rise";
   /** App shell background while editing. */
   appBackground: BackgroundId;
   /** Public Studio background. */
@@ -288,6 +365,7 @@ export const BACKGROUND_OPTIONS: ReadonlyArray<{ value: BackgroundId; label: str
 const STRUCTURE_VALUES = new Set(STRUCTURE_OPTIONS.map((o) => o.value));
 const PERSONALITY_VALUES = new Set(PERSONALITY_OPTIONS.map((o) => o.value));
 const BLOCK_TITLE_VALUES = new Set<BlockTitleStyle>(["label", "heading", "hidden"]);
+const SHADOW_VALUES = new Set<ShadowStyle>(["none", "soft", "lifted"]);
 const DENSITY_VALUES = new Set(DENSITY_OPTIONS.map((o) => o.value));
 const ACCENT_VALUES = new Set(ACCENT_OPTIONS.map((o) => o.value));
 const BACKGROUND_VALUES = new Set(BACKGROUND_OPTIONS.map((o) => o.value));
@@ -407,6 +485,8 @@ export function normalizeStudioConfig(raw: unknown): StudioConfig {
         ? value.cardColor
         : DEFAULT_STUDIO_CONFIG.cardColor,
     blockTitles: isOneOf(BLOCK_TITLE_VALUES)(value.blockTitles) ? value.blockTitles : undefined,
+    cardShadow: isOneOf(SHADOW_VALUES)(value.cardShadow) ? value.cardShadow : undefined,
+    motion: value.motion === "rise" ? "rise" : undefined,
     cardOpacity:
       typeof value.cardOpacity === "number" &&
       Number.isFinite(value.cardOpacity) &&
@@ -664,6 +744,10 @@ export function studioSurfaceStyle(
   const style = studioConfigToStyle(config, secondaryColor) as React.CSSProperties &
     Record<string, string>;
   Object.assign(style, blockTitleVars(config.blockTitles ?? "label"));
+  if (config.cardShadow && config.cardShadow !== "none") {
+    style["--studio-card-shadow"] = SHADOWS[config.cardShadow];
+  }
+  if (config.motion === "rise") style["--studio-enter"] = "studio-rise linear both";
   // Labels go monospace alongside monospace headings (Technical's pairing).
   style["--studio-label-font"] =
     config.headingFont === "jetbrains-mono" ? "JetBrains Mono" : "Inter";

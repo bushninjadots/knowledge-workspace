@@ -236,6 +236,15 @@ export interface LayoutBlockInstance {
   /** Per-block uniform corner radius in px (0–48). Only meaningful when
    *  frameShape is "rounded" or "soft"; omitted = the shape's built-in default. */
   frameRadius?: number;
+  /** Per-block fill: "tint", "accent", "none" or a #rrggbb colour (text
+   *  switches to a readable ink). Omitted = the Studio's card fill. */
+  frameFill?: string;
+  /** Per-block shadow. Omitted = the Studio's card shadow. */
+  frameShadow?: "none" | "soft" | "lifted";
+  /** Text alignment inside the block. Omitted = start. */
+  frameAlign?: "start" | "center";
+  /** Where the block appears. Omitted = everywhere. */
+  showOn?: "all" | "desktop" | "mobile";
 }
 
 /** Per-block corner shape presets. Percentage-based shapes ("organic", "blob",

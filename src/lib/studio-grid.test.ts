@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import "@/components/tethyr/blocks/register-all";
 import type { LayoutSection } from "@/lib/page-blocks";
-import { fitGridItemToContent, reflowAroundHidden, sectionLabel } from "./studio-grid";
+import {
+  alignedEdges,
+  fitGridItemToContent,
+  reflowAroundHidden,
+  sectionLabel,
+} from "./studio-grid";
 
 const section = (patch: Partial<LayoutSection>) =>
   ({ id: "s1", layout: "full", blocks: [], ...patch }) as LayoutSection;
@@ -84,5 +89,22 @@ describe("reflowAroundHidden", () => {
     const out = reflowAroundHidden(row, new Set(["b"]));
     expect(out.get("f")).toEqual({ x: 0, w: 6 });
     expect(out.get("d")).toEqual({ x: 4, w: 4 });
+  });
+});
+
+describe("alignedEdges", () => {
+  it("reports the edges that line up with neighbours", () => {
+    expect(
+      alignedEdges({ x: 6, y: 0, w: 6, h: 3 }, [
+        { x: 0, y: 0, w: 6, h: 3 },
+        { x: 0, y: 5, w: 12, h: 2 },
+      ]),
+    ).toEqual({ cols: [6, 12], rows: [0, 3] });
+  });
+  it("reports nothing when nothing lines up", () => {
+    expect(alignedEdges({ x: 1, y: 1, w: 3, h: 1 }, [{ x: 5, y: 4, w: 2, h: 2 }])).toEqual({
+      cols: [],
+      rows: [],
+    });
   });
 });

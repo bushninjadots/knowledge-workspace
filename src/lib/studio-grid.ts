@@ -334,3 +334,23 @@ export function reflowAroundHidden(
   }
   return placements;
 }
+
+/**
+ * Edges of `target` that line up with an edge of another block, for drawing
+ * alignment guides while dragging. Columns are grid-column boundaries (0–12),
+ * rows are grid-row boundaries; each is reported once.
+ */
+export function alignedEdges(
+  target: Pick<LayoutGridItem, "x" | "y" | "w" | "h">,
+  others: Array<Pick<LayoutGridItem, "x" | "y" | "w" | "h">>,
+): { cols: number[]; rows: number[] } {
+  const colEdges = new Set(others.flatMap((o) => [o.x, o.x + o.w]));
+  const rowEdges = new Set(others.flatMap((o) => [o.y, o.y + o.h]));
+  const cols = [target.x, target.x + target.w].filter(
+    (c, i, all) => colEdges.has(c) && all.indexOf(c) === i,
+  );
+  const rows = [target.y, target.y + target.h].filter(
+    (r, i, all) => rowEdges.has(r) && all.indexOf(r) === i,
+  );
+  return { cols, rows };
+}

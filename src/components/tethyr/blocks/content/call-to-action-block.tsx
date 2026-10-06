@@ -31,13 +31,26 @@ function CallToActionBlock({ config, context }: BlockProps) {
   const external = (url: string) =>
     url.startsWith("mailto:") ? {} : { target: "_blank", rel: "noreferrer" };
   return (
-    <div className={cn("flex min-w-0 flex-col gap-3", centered && "items-center text-center")}>
+    <div
+      className={cn(
+        "flex min-w-0 flex-col gap-3",
+        centered ? "items-center text-center" : "[align-items:var(--studio-block-justify,stretch)]",
+      )}
+    >
       {heading && (
         <p className="font-display text-xl font-semibold leading-snug text-foreground">{heading}</p>
       )}
       {text && <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">{text}</p>}
       {(hasButton || (secondLabel && secondHref)) && (
-        <div className={cn("mt-1 flex flex-wrap items-center gap-3", centered && "justify-center")}>
+        <div
+          className={cn(
+            "mt-1 flex flex-wrap items-center gap-3",
+            // Follows the block's own alignment setting as well as its own.
+            centered
+              ? "justify-center"
+              : "[justify-content:var(--studio-block-justify,flex-start)]",
+          )}
+        >
           {hasButton && (
             <a
               href={href!}
