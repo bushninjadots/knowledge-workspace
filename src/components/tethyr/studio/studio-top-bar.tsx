@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   ExternalLink,
   Eye,
+  Command,
   History,
   Keyboard,
   LayoutTemplate,
@@ -53,6 +54,7 @@ export function GStudioTopBar({
   canRedo,
   historyOpen,
   onHistory,
+  onCommands,
   onHistoryClosed,
   versions,
   onRollback,
@@ -91,6 +93,8 @@ export function GStudioTopBar({
   canRedo: boolean;
   historyOpen: boolean;
   onHistory: () => void;
+  /** Open the Studio command palette (Ctrl/⌘+J). */
+  onCommands?: () => void;
   onHistoryClosed: () => void;
   onModeChange: (mode: GStudioMode) => void;
   onDeviceChange: (device: GStudioDevice) => void;
@@ -285,6 +289,12 @@ export function GStudioTopBar({
               {compact && onTemplates && (
                 <DropdownMenuItem onSelect={onTemplates}>
                   <LayoutTemplate className="h-3.5 w-3.5" /> Templates
+                </DropdownMenuItem>
+              )}
+              {onCommands && (
+                <DropdownMenuItem onSelect={onCommands}>
+                  <Command className="h-3.5 w-3.5" /> All commands
+                  <DropdownMenuShortcut>Ctrl+J</DropdownMenuShortcut>
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem onSelect={onHistory}>

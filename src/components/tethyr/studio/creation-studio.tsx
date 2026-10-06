@@ -4,7 +4,15 @@ import { toast } from "sonner";
 import { ProjectDialog } from "@/components/tethyr/profile";
 import { BackgroundPickerDialog } from "@/components/tethyr/profile/background-picker-dialog";
 import { CURRENT_USER_KEY, useSkillsCatalog } from "@/hooks/use-current-user";
-import { arrangeGrid, overlapsGridItems, type GridArrangement } from "@/lib/studio-grid";
+import {
+  arrangeGrid,
+  overlapsGridItems,
+  sectionLabel,
+  type GridArrangement,
+} from "@/lib/studio-grid";
+import type { StudioCommand } from "@/lib/studio-commands";
+import { StudioCommandPalette } from "./studio-command-palette";
+import { dedupeSharedReadmeBlocks } from "./studio-rail";
 import {
   GStudioSurface,
   type GStudioConfig,
@@ -21,7 +29,7 @@ import {
   useRollbackPageVersion,
   useUpdatePageTheme,
 } from "@/hooks/use-page-editor";
-import { createBlockInstance, getBlock } from "@/lib/block-registry";
+import { createBlockInstance, getAllBlocks, getBlock } from "@/lib/block-registry";
 import { StarterPicker, type StudioStarter } from "@/components/tethyr/studio/starter-picker";
 import { applyStarter, starterConfig, starterMap } from "@/data/starters";
 import {
@@ -136,6 +144,7 @@ export function CreationStudio({
   const [introStarterOpen, setIntroStarterOpen] = useState(false);
   const [starterStripVisible, setStarterStripVisible] = useState(false);
   const [renameFocusId, setRenameFocusId] = useState<string | null>(null);
+  const [commandsOpen, setCommandsOpen] = useState(false);
   const pageIdRef = useRef<string | null>(null);
   const layoutRef = useRef<PageLayout | null>(null);
   const configRef = useRef<GStudioConfig | null>(null);
@@ -1129,6 +1138,13 @@ export function CreationStudio({
         saveRef.current();
         return;
       }
+      if (mod && event.key.toLowerCase() === "j") {
+        event.preventDefault();
+        // Inside another dialog it only closes the palette, never stacks one.
+        const inDialog = !!target?.closest?.('[role="dialog"]');
+        setCommandsOpen((open) => (inDialog ? false : !open));
+        return;
+      }
       if (editable || target?.closest?.('[role="dialog"]')) return;
       if (mod && event.key.toLowerCase() === "z") {
         event.preventDefault();
@@ -1169,10 +1185,20 @@ export function CreationStudio({
         event.preventDefault();
         const dx = event.key === "ArrowLeft" ? -1 : event.key === "ArrowRight" ? 1 : 0;
         const dy = event.key === "ArrowUp" ? -1 : event.key === "ArrowDown" ? 1 : 0;
-        const x = Math.max(0, Math.min(12 - item.w, item.x + dx));
-        const y = Math.max(0, item.y + dy);
-        if (x === item.x && y === item.y) return;
-        const candidate = { ...item, x, y };
+        let candidate: LayoutGridItem;
+        if (event.shiftKey) {
+          // Shift+arrows resize from the bottom-right corner instead.
+          const [, , minW, minH] = blockSize(findBlock(selectedBlockId)?.type ?? "");
+          const w = Math.max(item.minW ?? minW, Math.min(12 - item.x, item.w + dx));
+          const h = Math.max(item.minH ?? minH, item.h + dy);
+          if (w === item.w && h === item.h) return;
+          candidate = { ...item, w, h };
+        } else {
+          const x = Math.max(0, Math.min(12 - item.w, item.x + dx));
+          const y = Math.max(0, item.y + dy);
+          if (x === item.x && y === item.y) return;
+          candidate = { ...item, x, y };
+        }
         const others = (section.grid ?? []).filter((gridItem) => gridItem.i !== item.i);
         if (others.some((other) => overlapsGridItems(candidate, other))) return;
         const next = cloneLayout(layout);
@@ -1572,6 +1598,238 @@ export function CreationStudio({
     return ids;
   }, [forkTemplate.isPending, forkTemplate.variables]);
 
+  // Everything the command palette (Ctrl/⌘+J) can do, built from the same
+  // handlers the toolbar, rail and keyboard use.
+  const commands = useMemo<StudioCommand[]>(() => {
+    if (!layout) return [];
+    const list: StudioCommand[] = [];
+    const add = (command: StudioCommand) => list.push(command);
+    const selected = selectedBlockId ? findBlock(selectedBlockId) : undefined;
+    if (mode === "edit" && selectedBlockIds.length > 1) {
+      const ids = selectedBlockIds;
+      const count = `${ids.length} blocks`;
+      add({
+        id: "multi-group",
+        label: "Group selection into a new area",
+        group: "Selection",
+        run: () => groupIntoArea(ids),
+      });
+      add({
+        id: "multi-width",
+        label: "Match widths",
+        group: "Selection",
+        keywords: "size",
+        run: () => arrangeBlocks(ids, "match-width"),
+      });
+      add({
+        id: "multi-height",
+        label: "Match heights",
+        group: "Selection",
+        keywords: "size",
+        run: () => arrangeBlocks(ids, "match-height"),
+      });
+      add({
+        id: "multi-left",
+        label: "Align left edges",
+        group: "Selection",
+        run: () => arrangeBlocks(ids, "align-left"),
+      });
+      add({
+        id: "multi-top",
+        label: "Align tops",
+        group: "Selection",
+        run: () => arrangeBlocks(ids, "align-top"),
+      });
+      add({
+        id: "multi-row",
+        label: "Put side by side",
+        group: "Selection",
+        keywords: "row",
+        run: () => arrangeBlocks(ids, "row"),
+      });
+      add({
+        id: "multi-hide",
+        label: `Hide ${count}`,
+        group: "Selection",
+        run: () => applyBlockStyle(ids, { visible: false }, `Hid ${count}`),
+      });
+      add({
+        id: "multi-show",
+        label: `Show ${count}`,
+        group: "Selection",
+        run: () => applyBlockStyle(ids, { visible: true }, `Showing ${count}`),
+      });
+      add({
+        id: "multi-remove",
+        label: `Remove ${count}`,
+        group: "Selection",
+        keywords: "delete",
+        shortcut: "Del",
+        run: () => removeBlocks(ids),
+      });
+    } else if (mode === "edit" && selected) {
+      const name = getBlock(selected.type)?.label ?? selected.type;
+      add({
+        id: "sel-duplicate",
+        label: `Duplicate ${name}`,
+        group: "Selection",
+        keywords: "copy",
+        shortcut: "Ctrl+D",
+        run: () => duplicateBlock(selected.id),
+      });
+      add({
+        id: "sel-visible",
+        label: `${selected.visible === false ? "Show" : "Hide"} ${name}`,
+        group: "Selection",
+        run: () => updateBlock(selected.id, { visible: selected.visible === false }),
+      });
+      add({
+        id: "sel-lock",
+        label: `${selected.locked ? "Unlock" : "Lock"} ${name}`,
+        group: "Selection",
+        keywords: "pin",
+        run: () => updateBlock(selected.id, { locked: !selected.locked }),
+      });
+      if (!selected.locked) {
+        add({
+          id: "sel-remove",
+          label: `Remove ${name}`,
+          group: "Selection",
+          keywords: "delete",
+          shortcut: "Del",
+          run: () => removeBlock(selected.id),
+        });
+      }
+    }
+    if (selectedBlockIds.length > 0) {
+      add({
+        id: "sel-clear",
+        label: "Clear selection",
+        group: "Selection",
+        keywords: "deselect",
+        shortcut: "Esc",
+        run: () => setSelectedBlockIds([]),
+      });
+    }
+    add({ id: "undo", label: "Undo", group: "Page", shortcut: "Ctrl+Z", run: undo });
+    add({ id: "redo", label: "Redo", group: "Page", shortcut: "Ctrl+Shift+Z", run: redo });
+    add({
+      id: "save",
+      label: "Save now",
+      group: "Page",
+      shortcut: "Ctrl+S",
+      run: () => void save(),
+    });
+    add({
+      id: "publish",
+      label: "Publish",
+      group: "Page",
+      keywords: "go live",
+      run: requestPublish,
+    });
+    add({
+      id: "mode",
+      label: mode === "edit" ? "Preview the page" : "Back to editing",
+      group: "Page",
+      keywords: "edit preview",
+      run: () => {
+        setMode(mode === "edit" ? "preview" : "edit");
+        if (mode === "edit" && dirty) void save({ announce: false });
+      },
+    });
+    add({
+      id: "device",
+      label: device === "desktop" ? "Show the phone layout" : "Show the desktop layout",
+      group: "Page",
+      keywords: "mobile device",
+      run: () => setDevice(device === "desktop" ? "mobile" : "desktop"),
+    });
+    if (mode === "edit") {
+      add({
+        id: "area",
+        label: "Add an area",
+        group: "Page",
+        keywords: "section",
+        run: addSection,
+      });
+    }
+    add({
+      id: "templates",
+      label: "Browse templates",
+      group: "Page",
+      keywords: "starter",
+      run: () => setIntroStarterOpen(true),
+    });
+    add({
+      id: "background",
+      label: "Background and appearance",
+      group: "Page",
+      keywords: "backdrop pattern",
+      run: () => setAppearanceOpen(true),
+    });
+    if (mode === "edit") {
+      const target = selectedBlockId
+        ? layout.sections.find((section) => section.blocks.some((b) => b.id === selectedBlockId))
+            ?.id
+        : undefined;
+      const used = new Set(layout.sections.flatMap((section) => section.blocks.map((b) => b.type)));
+      for (const block of getAllBlocks()) {
+        if (block.ownerContext === "project" || !dedupeSharedReadmeBlocks(block.type, used))
+          continue;
+        add({
+          id: `add-${block.type}`,
+          label: `Add ${block.label}`,
+          group: "Add a block",
+          keywords: block.description,
+          run: () => addBlock(block.type, target),
+        });
+      }
+    }
+    for (const section of layout.sections) {
+      for (const block of section.blocks) {
+        add({
+          id: `go-${block.id}`,
+          label: `${getBlock(block.type)?.label ?? block.type} · ${sectionLabel(section)}`,
+          group: "Go to a block",
+          keywords: "select find",
+          run: () => {
+            setMode("edit");
+            setSelectedBlockIds([block.id]);
+            window.setTimeout(() => {
+              const el = document.querySelector<HTMLElement>(
+                `[data-block-id="${CSS.escape(block.id)}"]`,
+              );
+              el?.scrollIntoView({ behavior: "smooth", block: "center" });
+              el?.focus({ preventScroll: true });
+            }, 60);
+          },
+        });
+      }
+    }
+    return list;
+  }, [
+    addBlock,
+    addSection,
+    applyBlockStyle,
+    arrangeBlocks,
+    device,
+    dirty,
+    duplicateBlock,
+    findBlock,
+    groupIntoArea,
+    layout,
+    mode,
+    redo,
+    removeBlock,
+    removeBlocks,
+    requestPublish,
+    save,
+    selectedBlockId,
+    selectedBlockIds,
+    undo,
+    updateBlock,
+  ]);
+
   // Conflict resolution. "Load latest" discards this tab's unsaved edits;
   // "Keep mine" adopts the remote timestamp and saves over it.
   const loadLatest = async () => {
@@ -1636,6 +1894,7 @@ export function CreationStudio({
         onMoveSection={moveSection}
         onToggleSection={toggleSection}
         onRemoveSection={removeSection}
+        onOpenCommands={() => setCommandsOpen(true)}
         onRenameSection={renameSection}
         onSectionLayoutChange={setSectionLayout}
         onSectionAppearanceChange={setSectionAppearance}
@@ -1704,6 +1963,11 @@ export function CreationStudio({
           if (restoreTarget !== null) void rollback(restoreTarget);
           setRestoreTarget(null);
         }}
+      />
+      <StudioCommandPalette
+        open={commandsOpen}
+        onOpenChange={setCommandsOpen}
+        commands={commands}
       />
       <StudioPublishDialog
         open={publishConfirmOpen}

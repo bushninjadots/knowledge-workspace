@@ -241,6 +241,43 @@ try {
   await page.keyboard.press("Escape");
   await page.waitForTimeout(2500);
 
+  // 6c ─ Shift+arrows resize the selected block, one undo step each
+  await blank(page);
+  await selectBlock(page, 1);
+  await page.waitForTimeout(300);
+  const w1 = await width();
+  await page.keyboard.press("Shift+ArrowLeft");
+  await page.waitForTimeout(300);
+  const w2 = await width();
+  await page.keyboard.press("Control+z");
+  await page.waitForTimeout(300);
+  log(
+    "Shift+arrow resizes the selected block and undo restores it",
+    Number(w2) === Number(w1) - 1 && (await width()) === w1,
+    `${w1} → ${w2} → ${await width()}`,
+  );
+
+  // 6d ─ Ctrl+J opens the command palette; a command runs and undoes
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("Control+j");
+  const palette = page.getByRole("dialog", { name: "Studio commands" });
+  const paletteOpen = await palette.isVisible().catch(() => false);
+  const headings0 = await headings();
+  await palette.getByRole("combobox").fill("add heading");
+  await page.keyboard.press("Enter");
+  await page.waitForTimeout(800);
+  const headings1 = await headings();
+  await blank(page);
+  await page.keyboard.press("Control+z");
+  await page.waitForTimeout(500);
+  log(
+    "Ctrl+J opens the command palette and runs a command",
+    paletteOpen && headings1 === headings0 + 1 && (await headings()) === headings0,
+    `open=${paletteOpen} headings ${headings0} → ${headings1} → ${await headings()}`,
+  );
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(2500);
+
   // 6b ─ snap: a near-miss drag lines back up with its neighbour
   const pair = page
     .locator("section[data-section-id]")

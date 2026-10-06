@@ -161,6 +161,8 @@ export interface GStudioSurfaceProps {
   onToggleSection: (id: string) => void;
   /** Remove an area that has no blocks left. */
   onRemoveSection: (id: string) => void;
+  /** Open the command palette (Ctrl/⌘+J). */
+  onOpenCommands?: () => void;
   onRenameSection: (id: string, title: string) => void;
   onSectionLayoutChange: (sectionId: string, layout: LayoutSection["layout"]) => void;
   /** Apply one style patch to several blocks as a single undo step. */
@@ -511,6 +513,7 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
         showGrid={showGrid}
         onShowGridChange={toggleShowGrid}
         onHistory={() => setHistoryOpen((open) => !open)}
+        onCommands={props.onOpenCommands}
         onHistoryClosed={() => setHistoryOpen(false)}
         onModeChange={props.onModeChange}
         onDeviceChange={props.onDeviceChange}
