@@ -389,6 +389,7 @@ export function CreationStudio({
             ...createHistoryEntry(layout, config),
             themeId: themeIdRef.current,
             borders: { cardBorders, cardBorderColor },
+            arranged: [...touchedGridRef.current],
           }
         : null,
     [cardBorderColor, cardBorders, config, layout],
@@ -1097,6 +1098,7 @@ export function CreationStudio({
         setCardBorders(entry.borders.cardBorders);
         setCardBorderColor(entry.borders.cardBorderColor);
       }
+      if (entry.arranged) touchedGridRef.current = new Set(entry.arranged);
     },
     [applyTheme],
   );
@@ -1485,10 +1487,11 @@ export function CreationStudio({
     (starter: StudioStarter) => {
       if (!layout || !config) return;
       const next = applyStarter(layout, starter);
-      // A layout's placement *is* its grid: save every area's grid, or the
-      // public page would fall back to a plain stack.
-      for (const section of next.sections) touchedGridRef.current.add(section.id);
       commit(next, starterConfig(starter, config));
+      // A layout's placement *is* its grid: save every area's grid, or the
+      // public page would fall back to a plain stack. Marked after the commit
+      // so the undo step records the areas as they were before.
+      for (const section of next.sections) touchedGridRef.current.add(section.id);
     },
     [commit, config, layout],
   );

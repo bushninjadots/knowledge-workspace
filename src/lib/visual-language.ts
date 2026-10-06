@@ -172,7 +172,7 @@ export const VISUAL_LANGUAGES: readonly VisualLanguage[] = [
     look: {
       typePairing: "contemporary",
       typeScale: "display",
-      surface: "flat",
+      surface: "raised",
       borders: "none",
       dividers: "none",
       transitions: "space",

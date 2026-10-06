@@ -22,6 +22,10 @@ export type HistoryEntry = {
   themeId?: string | null;
   /** The member's card outline preference at the time. */
   borders?: { cardBorders: CardBorderPreference; cardBorderColor: string };
+  /** Areas arranged on the grid at the time (their grids are saved). Undo
+   *  restores this too, or undoing a layout would still save the grids it
+   *  wrote and change how those areas look on the public page. */
+  arranged?: string[];
 };
 
 export function createHistoryEntry(layout: PageLayout, config: GStudioConfig): HistoryEntry {

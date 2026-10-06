@@ -268,25 +268,6 @@
   --destructive-foreground: var(--warning-foreground);
 
   --accent-border: var(--border);
-
-  /* User-theme dynamic overrides (set via style prop from banner) */
-  --user-accent: var(--learning);
-  /* Accent as text: pulled toward the foreground so it reads at AA. */
-  --user-accent-text: color-mix(in oklab, var(--user-accent) 60%, var(--foreground));
-  --user-accent-foreground: var(--background);
-  --user-accent-subtle: color-mix(in oklab, var(--learning) 10%, transparent);
-  --user-accent-border: color-mix(in oklab, var(--learning) 30%, transparent);
-  --user-accent-glow: color-mix(in oklab, var(--learning) 6%, transparent);
-  /* Accent as small text on --user-accent-subtle: the raw accent fails AA at
-     chip sizes. The mix ratio is per theme — light needs ~40% accent to stay
-     ≥4.5:1 for every accent hue (yellow included), dark holds AA at ~78%.
-     Verified over the full accent sweep; do not “simplify” to one ratio. */
-  --user-accent-emphasis: color-mix(in oklab, var(--learning) 40%, var(--foreground));
-  --card-border-color: var(--border);
-  --card-border-width: 1px;
-  --content-density-gap: 1rem;
-  --content-density-padding: 1rem;
-  --spacing-section: 4rem;
 }
 
 /* ---------------------------------------------------------------------------
@@ -356,7 +337,34 @@
   --destructive-foreground: var(--warning-foreground);
 
   --accent-border: var(--border);
+}
 
+/* Member-level defaults: the accent family, card outline and density a
+ * person's own appearance sets. Deliberately not re-declared on
+ * [data-base-palette]: a profile keeps its owner's outline colour and
+ * density (set on the page around it) instead of falling back to these. */
+:root {
+  /* User-theme dynamic overrides (set via style prop from banner) */
+  --user-accent: var(--learning);
+  /* Accent as text: pulled toward the foreground so it reads at AA. */
+  --user-accent-text: color-mix(in oklab, var(--user-accent) 60%, var(--foreground));
+  --user-accent-foreground: var(--background);
+  --user-accent-subtle: color-mix(in oklab, var(--learning) 10%, transparent);
+  --user-accent-border: color-mix(in oklab, var(--learning) 30%, transparent);
+  --user-accent-glow: color-mix(in oklab, var(--learning) 6%, transparent);
+  /* Accent as small text on --user-accent-subtle: the raw accent fails AA at
+     chip sizes. The mix ratio is per theme — light needs ~40% accent to stay
+     ≥4.5:1 for every accent hue (yellow included), dark holds AA at ~78%.
+     Verified over the full accent sweep; do not “simplify” to one ratio. */
+  --user-accent-emphasis: color-mix(in oklab, var(--learning) 40%, var(--foreground));
+  --card-border-color: var(--border);
+  --card-border-width: 1px;
+  --content-density-gap: 1rem;
+  --content-density-padding: 1rem;
+  --spacing-section: 4rem;
+}
+
+.dark {
   /* User-theme dynamic overrides (set via style prop from banner; fallbacks use color-mix for correct opacity from learning token) */
   --user-accent: var(--learning);
   /* Accent as text: pulled toward the foreground so it reads at AA. */
@@ -2009,8 +2017,10 @@
 [data-vl-details="technical"] .studio-block::before {
   content: "+";
   position: absolute;
-  top: -0.6rem;
-  left: -0.3rem;
+  /* Inside the corner, in the frame's padding: block frames clip their own
+     overflow in the editor, so a mark outside would show on the page only. */
+  top: 0.15rem;
+  left: 0.3rem;
   font: 400 0.75rem/1 var(--font-mono);
   color: var(--vl-mark, var(--muted-foreground));
   pointer-events: none;

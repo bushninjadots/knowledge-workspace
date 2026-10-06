@@ -378,6 +378,30 @@ try {
   );
   await page.keyboard.press("Escape");
 
+  // ── A member's own outline colour reaches their public page ──────────────
+  await chooseLanguage(page, "Technical"); // solid outlines, so there is one to see
+  await openStyle(page, "Look");
+  const fine = rail(page).getByRole("button", { name: "Fine tune", expanded: false });
+  for (let i = await fine.count(); i > 0; i--) await fine.first().click();
+  await rail(page)
+    .getByRole("button", { name: /^Colour$/ })
+    .first()
+    .click();
+  await rail(page).getByRole("button", { name: "Card border #7a4ecf" }).click();
+  await page.waitForTimeout(1500);
+  await publish(page);
+  await publicPage(page);
+  const outline = await page
+    .locator(".studio-canvas .studio-block:not(.studio-block-flush)")
+    .first()
+    .evaluate((el) => getComputedStyle(el).borderTopColor);
+  log(
+    "a member's own outline colour shows on their public page",
+    outline === "rgb(122, 78, 207)",
+    outline,
+  );
+  await openStudio(page);
+
   // ── Flow 5 ────────────────────────────────────────────────────────────────
   // As the owner: some of a new account's areas are private to visitors.
   const phone = await browser.newContext({
@@ -406,6 +430,27 @@ try {
       )
       .catch((error) => [`axe unavailable: ${String(error).slice(0, 80)}`]);
     log(`${name} passes axe (WCAG A/AA)`, axe.length === 0, axe.join(" | "));
+    // …and in dark mode, where every palette is rebuilt for the dark canvas.
+    await page.evaluate(() => localStorage.setItem("tethyr-theme", "dark"));
+    await page.reload({ waitUntil: "load" });
+    await page.waitForSelector(".studio-canvas", { timeout: 30000 });
+    await page.waitForTimeout(1200);
+    const darkAxe = await page
+      .addScriptTag({ url: "https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.10.2/axe.min.js" })
+      .then(() =>
+        page.evaluate(async () => {
+          const result = await window.axe.run(".studio-canvas", {
+            runOnly: { type: "tag", values: ["wcag2a", "wcag2aa"] },
+          });
+          return result.violations.map(
+            (v) => `${v.id}×${v.nodes.length}: ${v.nodes[0]?.target.join(" ")}`,
+          );
+        }),
+      )
+      .catch((error) => [`axe unavailable: ${String(error).slice(0, 80)}`]);
+    await page.screenshot({ path: `${OUT}/public-dark-${name.toLowerCase()}.png`, fullPage: true });
+    log(`${name} passes axe in dark mode`, darkAxe.length === 0, darkAxe.join(" | "));
+    await page.evaluate(() => localStorage.setItem("tethyr-theme", "light"));
     await mobile.goto(`${BASE}/u/${HANDLE}`, { waitUntil: "load" });
     await mobile.waitForSelector(".studio-canvas", { timeout: 30000 });
     await mobile.waitForTimeout(1200);
