@@ -731,6 +731,15 @@ function emitAccentFamily(
   style[`--${prefix}-glow`] = `color-mix(in oklab, ${source} 6%, transparent)`;
 }
 
+/** The full `--user-accent-*` family for one colour, e.g. an area's own
+ *  accent. Null when the value isn't a #rrggbb colour. */
+export function accentFamilyVars(hex: string | undefined): Record<string, string> | null {
+  if (!hex || !/^#([0-9a-f]{6})$/i.test(hex)) return null;
+  const style: Record<string, string> = {};
+  emitAccentFamily(style, "user-accent", hex, contrastingHexForeground(hex));
+  return style;
+}
+
 /**
  * Page-local style for a Studio surface: the config's custom properties plus
  * the personality font hints. Shared by the owner Studio view, the editor

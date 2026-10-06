@@ -26,7 +26,13 @@ import {
 import { ReactGridLayout as LegacyGridLayout, WidthProvider } from "react-grid-layout/legacy";
 import "react-grid-layout/css/styles.css";
 import type { AreaAppearance } from "@/lib/page-blocks";
-import { AreaTitle, areaSurfaceClass, areaSurfaceStyle } from "@/components/tethyr/page/area-frame";
+import {
+  AreaDivider,
+  AreaTitle,
+  areaGapScale,
+  areaSurfaceClass,
+  areaSurfaceStyle,
+} from "@/components/tethyr/page/area-frame";
 import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
 import { BackgroundLayer } from "@/components/tethyr/background-layer";
 import {
@@ -43,12 +49,7 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuCheckboxItem,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getBlock } from "@/lib/block-registry";
@@ -154,6 +155,10 @@ export interface GStudioSurfaceProps {
   onToggleSection: (id: string) => void;
   onRenameSection: (id: string, title: string) => void;
   onSectionLayoutChange: (sectionId: string, layout: LayoutSection["layout"]) => void;
+  /** Open an area's settings in the rail (set by the surface itself). */
+  onEditArea?: (sectionId: string) => void;
+  /** The area whose settings the rail shows. */
+  editingAreaId?: string | null;
   /** Change how an area presents itself (title, background, spacing). */
   onSectionAppearanceChange: (sectionId: string, patch: AreaAppearance) => void;
   onAddSection: () => void;
@@ -358,60 +363,6 @@ function SectionLayoutPicker({
   );
 }
 
-/** An area's presentation: whether its title shows on the page, a background
- *  behind the whole area, and the room after it. */
-function AreaSettingsMenu({
-  section,
-  areaName,
-  onChange,
-}: {
-  section: LayoutSection;
-  areaName: string;
-  onChange: (patch: AreaAppearance) => void;
-}) {
-  const appearance = section.appearance ?? {};
-  const titled = !!section.title?.trim() && !/^area\s+\d+$/i.test(section.title.trim());
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <IconButton label={`Settings for ${areaName}`}>
-          <SlidersHorizontal className="h-3.5 w-3.5" />
-        </IconButton>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="studio-editor-chrome w-56">
-        <DropdownMenuLabel className="t-label">Title</DropdownMenuLabel>
-        <DropdownMenuCheckboxItem
-          disabled={!titled}
-          checked={titled && appearance.showTitle !== false}
-          onCheckedChange={(checked) => onChange({ showTitle: checked === true })}
-        >
-          {titled ? "Show the title on the page" : "Name the area to show a title"}
-        </DropdownMenuCheckboxItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuLabel className="t-label">Background</DropdownMenuLabel>
-        <DropdownMenuRadioGroup
-          value={appearance.background ?? "none"}
-          onValueChange={(value) => onChange({ background: value as AreaAppearance["background"] })}
-        >
-          <DropdownMenuRadioItem value="none">None</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="tint">Soft tint</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="accent">Accent panel</DropdownMenuRadioItem>
-        </DropdownMenuRadioGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuLabel className="t-label">Space after</DropdownMenuLabel>
-        <DropdownMenuRadioGroup
-          value={appearance.spacing ?? "normal"}
-          onValueChange={(value) => onChange({ spacing: value as AreaAppearance["spacing"] })}
-        >
-          <DropdownMenuRadioItem value="tight">Tight</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="normal">Normal</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="loose">Generous</DropdownMenuRadioItem>
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
 export function GStudioSurface(props: GStudioSurfaceProps) {
   const { resolvedTheme } = useAppTheme();
   const { data: me } = useCurrentUser();
@@ -429,6 +380,11 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
   const lastPanelTabRef = useRef<Exclude<RailTab, "block">>("style");
   if (railTab && railTab !== "block") lastPanelTabRef.current = railTab;
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [editingAreaId, setEditingAreaId] = useState<string | null>(null);
+  const editArea = (sectionId: string) => {
+    setEditingAreaId(sectionId);
+    setRailTab("area");
+  };
   const [emptyBlocks, setEmptyBlocks] = useState<Set<string>>(() => new Set());
   const [snapToBlocks, setSnapToBlocks] = useState(true);
   // "Show layout grid": the 12 columns stay visible while editing (they
@@ -612,6 +568,8 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
                 emptyBlockIds={emptyBlocks}
                 snapToBlocks={snapToBlocks}
                 showGrid={showGrid}
+                onEditArea={editArea}
+                editingAreaId={railTab === "area" ? editingAreaId : null}
                 onGridChange={props.onGridChange}
                 onRequestPalette={(sectionId) => {
                   props.onPaletteTargetChange(sectionId);
@@ -621,7 +579,14 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
             </div>
           </div>
         )}
-        {editing && railTab && <GStudioRail {...props} tab={railTab} onTabChange={setRailTab} />}
+        {editing && railTab && (
+          <GStudioRail
+            {...props}
+            editingAreaId={editingAreaId}
+            tab={railTab}
+            onTabChange={setRailTab}
+          />
+        )}
         {editing && compact && <GMobileEditSheet {...props} />}
       </div>
     </div>
@@ -917,8 +882,10 @@ function GSectionBand({
   const grid = useMemo(() => sectionGrid(section, blocks), [section, blocks]);
   const rowHeight =
     props.config.density === "compact" ? 20 : props.config.density === "spacious" ? 28 : 24;
-  const margin =
-    props.config.density === "compact" ? 10 : props.config.density === "spacious" ? 20 : 14;
+  const margin = Math.round(
+    (props.config.density === "compact" ? 10 : props.config.density === "spacious" ? 20 : 14) *
+      areaGapScale(section),
+  );
   const dropItem = props.dragType
     ? {
         i: "__dropping-elem__",
@@ -1067,11 +1034,13 @@ function GSectionBand({
             areaName={sectionTitle}
             onChange={(layout) => props.onSectionLayoutChange(section.id, layout)}
           />
-          <AreaSettingsMenu
-            section={section}
-            areaName={sectionTitle}
-            onChange={(patch) => props.onSectionAppearanceChange(section.id, patch)}
-          />
+          <IconButton
+            label={`Settings for ${sectionTitle}`}
+            active={props.editingAreaId === section.id}
+            onClick={() => props.onEditArea?.(section.id)}
+          >
+            <SlidersHorizontal className="h-3.5 w-3.5" />
+          </IconButton>
           <div className="ml-auto flex gap-0.5">
             <IconButton
               label="Move area up"
@@ -1139,6 +1108,11 @@ function GSectionBand({
           data-row-height={rowHeight}
           data-margin={margin}
           className="relative"
+          style={
+            section.appearance?.width === "narrow"
+              ? { maxWidth: "min(100%, 46rem)", marginInline: "auto" }
+              : undefined
+          }
         >
           <GridOverlay
             layer="columns"
@@ -1365,6 +1339,7 @@ function GSectionBand({
           <Plus className="h-3 w-3" /> Add block
         </button>
       )}
+      <AreaDivider section={section} />
     </section>
   );
 }

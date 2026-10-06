@@ -11,7 +11,13 @@ import { ChevronDown, Copy, Eye, EyeOff, LayoutGrid, MoreVertical, Trash2 } from
 import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
 import { SortableBlock } from "@/components/tethyr/page/sortable-block";
 import { InlineInspector } from "@/components/tethyr/studio/inline-inspector";
-import { AreaTitle, areaSurfaceClass, areaSurfaceStyle } from "./area-frame";
+import {
+  AreaDivider,
+  AreaTitle,
+  areaGridStyle,
+  areaSurfaceClass,
+  areaSurfaceStyle,
+} from "./area-frame";
 import { StudioSectionGrid } from "@/components/tethyr/page/studio-section-grid";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -581,13 +587,14 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
                       ? "grid grid-cols-1 gap-8 md:grid-cols-12 content-safe"
                       : `${gridClass} content-safe ${context.isEditing ? "transition-colors" : ""}`
                   }`}
-                  style={
+                  style={areaGridStyle(
+                    section,
                     hasGrid
                       ? { gridAutoFlow: "row dense", alignItems: "start" }
                       : gridClass
                         ? { gridAutoFlow: "row", alignItems: "start" }
-                        : undefined
-                  }
+                        : undefined,
+                  )}
                   data-section-canvas={context.isEditing ? "true" : undefined}
                   data-section-grid={hasGrid ? "true" : undefined}
                 >
@@ -731,6 +738,7 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
                 </div>
               </>
             )}
+            {!context.isEditing && <AreaDivider section={section} />}
           </section>
         );
       })}

@@ -31,6 +31,7 @@ import type { BlockShape } from "@/lib/page-blocks";
 import { findSection, sectionLabel } from "@/lib/studio-grid";
 import { ProfileMediaControls } from "./profile-media-controls";
 import { BlockFields } from "./block-fields";
+import { AreaInspector } from "./area-inspector";
 import { BlockIcon } from "./block-icon";
 import { suggestBlocks } from "@/lib/block-suggestions";
 import { Choice, IconButton, WidthStepper } from "./studio-controls";
@@ -424,18 +425,20 @@ function BlockFrameSection({
   );
 }
 
-export type RailTab = "style" | "add" | "block";
+export type RailTab = "style" | "add" | "block" | "area";
 
 const RAIL_TABS: Array<[RailTab, string]> = [
   ["style", "Style"],
   ["add", "Add"],
   ["block", "Block"],
+  ["area", "Area"],
 ];
 
 export function GStudioRail(
   props: GStudioSurfaceProps & { tab: RailTab; onTabChange: (tab: RailTab | null) => void },
 ) {
   const { tab, onTabChange } = props;
+  const editingArea = props.layout.sections.find((s) => s.id === props.editingAreaId);
   const block = props.layout.sections
     .flatMap((section) => section.blocks)
     .find((item) => item.id === props.selectedBlockId);
@@ -446,25 +449,27 @@ export function GStudioRail(
     >
       <header className="flex shrink-0 items-center gap-1 border-b border-border px-2 py-1.5">
         <div role="tablist" aria-label="Studio panels" className="flex flex-1 gap-0.5">
-          {RAIL_TABS.map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              role="tab"
-              id={`studio-rail-tab-${value}`}
-              aria-selected={tab === value}
-              aria-controls="studio-rail-panel"
-              onClick={() => onTabChange(value)}
-              className={cn(
-                "rounded-sm px-2.5 py-1 text-xs outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))]",
-                tab === value
-                  ? "bg-[var(--user-accent-subtle)] font-medium text-[var(--user-accent-text)]"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {label}
-            </button>
-          ))}
+          {RAIL_TABS.filter(([value]) => value !== "area" || !!editingArea).map(
+            ([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                role="tab"
+                id={`studio-rail-tab-${value}`}
+                aria-selected={tab === value}
+                aria-controls="studio-rail-panel"
+                onClick={() => onTabChange(value)}
+                className={cn(
+                  "rounded-sm px-2.5 py-1 text-xs outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))]",
+                  tab === value
+                    ? "bg-[var(--user-accent-subtle)] font-medium text-[var(--user-accent-text)]"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {label}
+              </button>
+            ),
+          )}
         </div>
         <IconButton label="Close panel" onClick={() => onTabChange(null)}>
           <X className="h-3.5 w-3.5" />
@@ -496,6 +501,11 @@ export function GStudioRail(
           />
         ) : tab === "add" ? (
           <GBlockPalette {...props} />
+        ) : tab === "area" && editingArea ? (
+          <AreaInspector
+            section={editingArea}
+            onChange={(patch) => props.onSectionAppearanceChange(editingArea.id, patch)}
+          />
         ) : (
           <GBlockInspector {...props} block={block} onClose={() => props.onSelect(null)} />
         )}

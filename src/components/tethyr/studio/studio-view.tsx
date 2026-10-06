@@ -34,7 +34,9 @@ import { useTheme as useAppTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { reflowAroundHidden } from "@/lib/studio-grid";
 import {
+  AreaDivider,
   AreaTitle,
+  areaGridStyle,
   areaSurfaceClass,
   areaSurfaceStyle,
   areaTitle,
@@ -611,13 +613,14 @@ function StudioViewSection({
             ? "grid grid-cols-1 gap-8 content-safe md:grid-cols-12"
             : `${gridClass} content-safe`
         }
-        style={
+        style={areaGridStyle(
+          section,
           hasGrid
             ? { gridAutoFlow: "row dense", alignItems: "start" }
             : gridClass
               ? { gridAutoFlow: "row", alignItems: "start" }
-              : undefined
-        }
+              : undefined,
+        )}
       >
         {blocks.map((block) => (
           <StudioViewBlock
@@ -631,6 +634,7 @@ function StudioViewSection({
           />
         ))}
       </div>
+      <AreaDivider section={section} />
     </section>
   );
 }

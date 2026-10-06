@@ -299,9 +299,23 @@ export interface AreaAppearance {
   /** Show the area's title above it on the page (default true when titled). */
   showTitle?: boolean;
   /** A surface behind the whole area. */
-  background?: "none" | "tint" | "accent";
+  background?: "none" | "tint" | "accent" | "gradient" | "image";
+  /** background "image": an https image shown behind the area. */
+  imageUrl?: string;
+  /** The background runs edge to edge instead of as a rounded panel. */
+  bleed?: boolean;
   /** Room after the area. */
   spacing?: "tight" | "normal" | "loose";
+  /** Space between the area's blocks. */
+  gap?: "tight" | "normal" | "roomy";
+  /** How blocks of different heights sit in a row. */
+  align?: "start" | "center" | "stretch";
+  /** Narrow keeps the area's blocks in a centred, narrower column. */
+  width?: "full" | "narrow";
+  /** A line, dots or a fade after the area. */
+  divider?: "none" | "line" | "dots" | "fade";
+  /** This area's own accent colour (#rrggbb). */
+  accent?: string;
 }
 
 /** A complete page layout: an ordered list of sections. */
