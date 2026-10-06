@@ -169,3 +169,41 @@ export function StudioRestoreDialog({
     </Dialog>
   );
 }
+
+/** The draft changed in another tab or on another device since this editor
+ *  loaded it. Saving is paused until the member picks a version. */
+export function StudioConflictDialog({
+  open,
+  onLoadLatest,
+  onKeepMine,
+}: {
+  open: boolean;
+  onLoadLatest: () => void;
+  onKeepMine: () => void;
+}) {
+  return (
+    <Dialog open={open}>
+      <DialogContent
+        className="studio-editor-chrome sm:max-w-sm"
+        onEscapeKeyDown={(event) => event.preventDefault()}
+        onPointerDownOutside={(event) => event.preventDefault()}
+      >
+        <DialogHeader>
+          <DialogTitle>Your Studio changed somewhere else</DialogTitle>
+          <DialogDescription>
+            It was edited in another tab or on another device after you opened it here. Saving is
+            paused so neither version is lost by accident. Which one do you want to keep?
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="gap-2 sm:justify-start">
+          <Button variant="default" size="sm" onClick={onLoadLatest}>
+            Load the latest version
+          </Button>
+          <Button variant="outline" size="sm" onClick={onKeepMine}>
+            Keep mine and overwrite
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

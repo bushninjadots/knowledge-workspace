@@ -4,6 +4,7 @@
 // and grid items; the canvas-level placement and snapping rules they build on
 // live in studio-grid.ts.
 
+import type { CardBorderPreference } from "@/lib/background-themes";
 import { overlapsGridItems, sizeFor } from "@/lib/studio-grid";
 import type { GStudioConfig } from "@/components/tethyr/studio/g-studio-surface";
 import type {
@@ -14,7 +15,14 @@ import type {
 } from "@/lib/page-blocks";
 import type { StudioConfig } from "@/lib/studio-config";
 
-export type HistoryEntry = { layout: PageLayout; config: GStudioConfig };
+export type HistoryEntry = {
+  layout: PageLayout;
+  config: GStudioConfig;
+  /** The page theme at the time (null = default). Absent = leave the theme. */
+  themeId?: string | null;
+  /** The member's card outline preference at the time. */
+  borders?: { cardBorders: CardBorderPreference; cardBorderColor: string };
+};
 
 export function createHistoryEntry(layout: PageLayout, config: GStudioConfig): HistoryEntry {
   return { layout: cloneLayout(layout), config: cloneConfig(config) };

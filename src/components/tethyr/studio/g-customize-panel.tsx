@@ -346,7 +346,7 @@ export function GCustomizeAdvanced({
         </div>
         <Choice
           label="Outline style"
-          hint="Theme is quiet · Accent follows your Studio accent · Colour pins one · None hides outlines"
+          hint="Theme is quiet · Accent follows your Studio accent · Colour pins one · None hides outlines. Part of your profile, so visitors see a change as soon as it saves, without publishing."
           value={cardBorders}
           options={CARD_BORDER_OPTIONS.map((option) => [option.id, option.label])}
           onChange={(value) => {
@@ -442,7 +442,8 @@ export function GCustomizeAdvanced({
       <div className="mb-4 border-t border-border pt-3">
         <p className="t-label mb-1.5">Background</p>
         <p className="mb-2 text-2xs leading-snug text-muted-foreground-subtle">
-          Colour, pattern, or image — for your app and your public Studio.
+          Colour, pattern, or image for your app and your public Studio. Saved to your profile
+          straight away, so visitors see it without publishing.
         </p>
         {onOpenAppearance ? (
           <button

@@ -66,6 +66,7 @@ import {
   StudioPublishDialog,
   StudioResetDialog,
   StudioRestoreDialog,
+  StudioConflictDialog,
 } from "./studio-confirm-dialogs";
 
 interface CreationStudioProps {
@@ -80,6 +81,13 @@ interface CreationStudioProps {
 }
 
 const STUDIO_STARTER_INTRO_KEY = "studio-starter-intro-dismissed";
+
+/** A save stopped because the page changed elsewhere since this editor loaded. */
+class StudioConflictError extends Error {
+  constructor() {
+    super("Studio changed elsewhere");
+  }
+}
 
 export function CreationStudio({
   userId,
@@ -142,24 +150,40 @@ export function CreationStudio({
   const page = pageQuery.data;
   const { data: communityTemplates } = usePublicTemplates();
 
-  /** When a template with a theme is applied, the theme mutation must run
-   *  after the commit that lands the sections. Committed at click time,
-   *  consumed by the effect below. */
-  const pendingTemplateThemeRef = useRef<string | null>(null);
+  // The page theme is saved straight away (not with the draft), but it is
+  // tracked here so it shows instantly and undo can put it back.
+  const [themeId, setThemeId] = useState<string | null>(null);
+  const themeIdRef = useRef<string | null>(null);
+
+  // Two tabs (or devices) editing one Studio used to overwrite each other
+  // silently. `baselineRef` is the page's updated_at as of this editor's last
+  // load or write; a save that finds it moved stops and asks instead.
+  const baselineRef = useRef<string | null>(null);
+  const [conflict, setConflict] = useState(false);
+  const conflictRef = useRef(false);
+  const readUpdatedAt = useCallback(async () => {
+    const id = pageIdRef.current;
+    if (!id) return null;
+    const { data } = await supabase.from("pages").select("updated_at").eq("id", id).maybeSingle();
+    return (data as { updated_at: string } | null)?.updated_at ?? null;
+  }, []);
+  // This editor's own writes run one at a time, each refreshing the baseline
+  // before the next starts, so they can never look like someone else's.
+  const writeChainRef = useRef<Promise<unknown>>(Promise.resolve());
+  const serialWrite = useCallback(<T,>(write: () => Promise<T>): Promise<T> => {
+    const run = writeChainRef.current.catch(() => undefined).then(write);
+    writeChainRef.current = run;
+    return run;
+  }, []);
+  const refreshBaselineRef = useRef(async () => {});
+  refreshBaselineRef.current = async () => {
+    baselineRef.current = (await readUpdatedAt()) ?? baselineRef.current;
+  };
 
   useEffect(() => {
     layoutRef.current = layout;
     configRef.current = config;
   }, [config, layout]);
-
-  // Consume the theme handoff: after a template's sections are committed, set
-  // the page's theme (clearing stale overrides) so the whole direction lands.
-  useEffect(() => {
-    const themeId = pendingTemplateThemeRef.current;
-    if (!themeId || !page?.id) return;
-    pendingTemplateThemeRef.current = null;
-    updateTheme.mutate({ pageId: page.id, themeId, ownerId: userId, ownerType: "profile" });
-  }, [page?.id, updateTheme, userId]);
 
   /** Load a page row into the editor as the saved baseline. `carry` keeps one
    *  undo step (the editor state just before a restore) so a restore can be
@@ -172,6 +196,9 @@ export function CreationStudio({
     setSavedLayout(cloneLayout(nextLayout));
     setConfig(cloneConfig(nextConfig));
     setSavedConfig({ ...nextConfig });
+    themeIdRef.current = source.themeId || null;
+    setThemeId(source.themeId || null);
+    baselineRef.current = source.updatedAt ?? null;
     setHistory(carry ? [carry] : []);
     setFuture([]);
     setSelectedBlockId(null);
@@ -329,21 +356,48 @@ export function CreationStudio({
     [appearanceChanged, latestPublishedLayout, layout, themeChanged],
   );
 
-  const commit = useCallback(
-    (nextLayout: PageLayout, nextConfig?: GStudioConfig) => {
-      if (!layout || !config) return;
-      const resolvedConfig = nextConfig ?? config;
-      setHistory((entries) => [
-        ...entries.slice(-49),
-        // Capture the state before the change. Using the next config here
-        // makes appearance undo restore the setting the user just changed.
-        createHistoryEntry(layout, config),
-      ]);
+  /** The editor state as one undo step: layout, config, theme and borders. */
+  const snapshot = useCallback(
+    (): HistoryEntry | null =>
+      layout && config
+        ? {
+            ...createHistoryEntry(layout, config),
+            themeId: themeIdRef.current,
+            borders: { cardBorders, cardBorderColor },
+          }
+        : null,
+    [cardBorderColor, cardBorders, config, layout],
+  );
+
+  // Rapid edits to the same thing (typing in a field, dragging a slider) are
+  // one undo step: an edit with the same key within a second of the last one
+  // extends that step instead of pushing a new one. Typing a sentence used to
+  // fill the 50-step history one letter at a time.
+  const lastEditRef = useRef<{ key: string; at: number } | null>(null);
+  const pushHistory = useCallback(
+    (key?: string) => {
+      const now = Date.now();
+      const last = lastEditRef.current;
+      lastEditRef.current = key ? { key, at: now } : null;
+      if (key && last && last.key === key && now - last.at < 1000) return;
+      const entry = snapshot();
+      if (!entry) return;
+      setHistory((entries) => [...entries.slice(-49), entry]);
       setFuture([]);
-      setLayout(normalizeLayout(nextLayout));
-      setConfig({ ...resolvedConfig });
     },
-    [config, layout],
+    [snapshot],
+  );
+
+  const commit = useCallback(
+    (nextLayout: PageLayout, nextConfig?: GStudioConfig, mergeKey?: string) => {
+      if (!layout || !config) return;
+      // Capture the state before the change. Using the next config here
+      // makes appearance undo restore the setting the user just changed.
+      pushHistory(mergeKey);
+      setLayout(normalizeLayout(nextLayout));
+      setConfig({ ...(nextConfig ?? config) });
+    },
+    [config, layout, pushHistory],
   );
 
   // Toast actions outlive the render that created them, so they call the
@@ -359,14 +413,18 @@ export function CreationStudio({
   const updateBlock = useCallback(
     (blockId: string, patch: Partial<LayoutBlockInstance>) => {
       if (!layout) return;
-      commit({
-        sections: layout.sections.map((section) => ({
-          ...section,
-          blocks: section.blocks.map((block) =>
-            block.id === blockId ? { ...block, ...patch } : block,
-          ),
-        })),
-      });
+      commit(
+        {
+          sections: layout.sections.map((section) => ({
+            ...section,
+            blocks: section.blocks.map((block) =>
+              block.id === blockId ? { ...block, ...patch } : block,
+            ),
+          })),
+        },
+        undefined,
+        `block:${blockId}:${Object.keys(patch).sort().join(",")}`,
+      );
     },
     [commit, layout],
   );
@@ -374,6 +432,50 @@ export function CreationStudio({
   const updateBlockConfig = useCallback(
     (blockId: string, nextConfig: BlockConfig) => updateBlock(blockId, { config: nextConfig }),
     [updateBlock],
+  );
+
+  /** Save the page theme now (themes aren't part of the draft save). */
+  const applyTheme = useCallback(
+    (next: string | null) => {
+      themeIdRef.current = next;
+      setThemeId(next);
+      const pageId = page?.id;
+      if (!pageId) return;
+      serialWrite(async () => {
+        await updateTheme.mutateAsync({
+          pageId,
+          themeId: next,
+          ownerId: userId,
+          ownerType: "profile",
+        });
+        await refreshBaselineRef.current();
+      }).catch(() => toast.error("Could not change the theme"));
+    },
+    [page?.id, serialWrite, updateTheme, userId],
+  );
+
+  const changeTheme = useCallback(
+    (next: string | null) => {
+      if ((next || null) === themeIdRef.current) return;
+      pushHistory();
+      applyTheme(next || null);
+    },
+    [applyTheme, pushHistory],
+  );
+
+  const changeCardBorders = useCallback(
+    (next: CardBorderPreference) => {
+      pushHistory("borders");
+      setCardBorders(next);
+    },
+    [pushHistory],
+  );
+  const changeCardBorderColor = useCallback(
+    (next: string) => {
+      pushHistory("borders");
+      setCardBorderColor(next);
+    },
+    [pushHistory],
   );
 
   const addBlock = useCallback(
@@ -722,32 +824,45 @@ export function CreationStudio({
   const beginGridInteraction = useCallback(() => {
     if (gridInteraction || !layout || !config) return;
     setGridInteraction(true);
-    setHistory((entries) => [
-      ...entries.slice(-49),
-      { layout: cloneLayout(layout), config: { ...config } },
-    ]);
-    setFuture([]);
-  }, [config, gridInteraction, layout]);
+    pushHistory();
+  }, [config, gridInteraction, layout, pushHistory]);
 
   const endGridInteraction = useCallback(() => setGridInteraction(false), []);
 
+  /** Put the editor back to a history entry, theme and borders included. */
+  const restoreEntry = useCallback(
+    (entry: HistoryEntry) => {
+      lastEditRef.current = null;
+      setLayout(cloneLayout(entry.layout));
+      setConfig(cloneConfig(entry.config));
+      if (entry.themeId !== undefined && entry.themeId !== themeIdRef.current) {
+        applyTheme(entry.themeId);
+      }
+      if (entry.borders) {
+        setCardBorders(entry.borders.cardBorders);
+        setCardBorderColor(entry.borders.cardBorderColor);
+      }
+    },
+    [applyTheme],
+  );
+
   const undo = useCallback(() => {
     const previous = history[history.length - 1];
-    if (!previous || !layout || !config) return;
-    setFuture((entries) => [{ layout: cloneLayout(layout), config: { ...config } }, ...entries]);
+    const current = snapshot();
+    if (!previous || !current) return;
+    setFuture((entries) => [current, ...entries]);
     setHistory((entries) => entries.slice(0, -1));
-    setLayout(cloneLayout(previous.layout));
-    setConfig(cloneConfig(previous.config));
-  }, [config, history, layout]);
+    restoreEntry(previous);
+  }, [history, restoreEntry, snapshot]);
 
   const redo = useCallback(() => {
     const next = future[0];
-    if (!next || !layout || !config) return;
-    setHistory((entries) => [...entries, { layout: cloneLayout(layout), config: { ...config } }]);
+    const current = snapshot();
+    if (!next || !current) return;
+    setHistory((entries) => [...entries, current]);
     setFuture((entries) => entries.slice(1));
-    setLayout(cloneLayout(next.layout));
-    setConfig(cloneConfig(next.config));
-  }, [config, future, layout]);
+    restoreEntry(next);
+  }, [future, restoreEntry, snapshot]);
 
   undoRef.current = undo;
 
@@ -825,7 +940,7 @@ export function CreationStudio({
   const rollback = useCallback(
     async (version: number) => {
       if (!page || saving) return;
-      const before = layout && config ? createHistoryEntry(layout, config) : undefined;
+      const before = snapshot() ?? undefined;
       setSaving(true);
       try {
         await rollbackPage.mutateAsync({
@@ -847,7 +962,7 @@ export function CreationStudio({
         setSaving(false);
       }
     },
-    [config, layout, page, pageQuery, rollbackPage, saving, seedFromPage, userId],
+    [page, pageQuery, rollbackPage, saving, seedFromPage, snapshot, userId],
   );
 
   // Writes the card-border preference to the member's appearance. Silent and
@@ -874,26 +989,35 @@ export function CreationStudio({
 
   /** Write a draft snapshot (layout + config) and the border preference. */
   const persistDraft = useCallback(
-    async (snapshotLayout: PageLayout, snapshotConfig: GStudioConfig) => {
-      if (!page) return;
-      await applyComposition.mutateAsync({
-        pageId: page.id,
-        layoutId: page.layoutId,
-        // Sections the user never arranged on the grid are persisted without
-        // a `grid`, so the public page keeps their template-based layout.
-        layout: {
-          ...snapshotLayout,
-          sections: snapshotLayout.sections.map((section) =>
-            !touchedGridRef.current.has(section.id) ? { ...section, grid: undefined } : section,
-          ),
-        },
-        config: toTethyrConfig(snapshotConfig, page.config),
-        ownerId: userId,
-        ownerType: "profile",
-      });
-      await persistBorderPreference();
-    },
-    [applyComposition, page, persistBorderPreference, userId],
+    (snapshotLayout: PageLayout, snapshotConfig: GStudioConfig) =>
+      serialWrite(async () => {
+        if (!page) return;
+        if (conflictRef.current) throw new StudioConflictError();
+        const remote = await readUpdatedAt();
+        if (baselineRef.current && remote && remote !== baselineRef.current) {
+          conflictRef.current = true;
+          setConflict(true);
+          throw new StudioConflictError();
+        }
+        await applyComposition.mutateAsync({
+          pageId: page.id,
+          layoutId: page.layoutId,
+          // Sections the user never arranged on the grid are persisted without
+          // a `grid`, so the public page keeps their template-based layout.
+          layout: {
+            ...snapshotLayout,
+            sections: snapshotLayout.sections.map((section) =>
+              !touchedGridRef.current.has(section.id) ? { ...section, grid: undefined } : section,
+            ),
+          },
+          config: toTethyrConfig(snapshotConfig, page.config),
+          ownerId: userId,
+          ownerType: "profile",
+        });
+        await persistBorderPreference();
+        await refreshBaselineRef.current();
+      }),
+    [applyComposition, page, persistBorderPreference, readUpdatedAt, serialWrite, userId],
   );
 
   const save = useCallback(
@@ -916,7 +1040,8 @@ export function CreationStudio({
         }
         if (announce) toast.success("Draft saved");
         setLastSavedAt(Date.now());
-      } catch {
+      } catch (error) {
+        if (error instanceof StudioConflictError) return;
         if (announce) toast.error("Could not save your Studio draft");
       } finally {
         setSaving(false);
@@ -928,7 +1053,7 @@ export function CreationStudio({
   // Persist the current draft after a short pause, rather than making every
   // field edit a network request. Manual Save draft remains available.
   useEffect(() => {
-    if (!page || !layout || !config || !dirty || saving) return;
+    if (!page || !layout || !config || !dirty || saving || conflict) return;
     const snapshot = JSON.stringify({ layout: normalizeLayout(layout), config });
     // A failed autosave should not produce a toast/retry loop. A later edit
     // creates a new snapshot and schedules another attempt.
@@ -942,6 +1067,7 @@ export function CreationStudio({
     cardBorderColor,
     cardBorders,
     config,
+    conflict,
     dirty,
     layout,
     page,
@@ -968,7 +1094,7 @@ export function CreationStudio({
   // component; only the toast reports a failure.
   const flushRef = useRef<() => void>(() => {});
   flushRef.current = () => {
-    if (!dirty || !layout || !config) return;
+    if (!dirty || !layout || !config || conflictRef.current) return;
     persistDraft(normalizeLayout(layout), { ...config }).catch(() =>
       toast.error("Your last Studio change didn't save", {
         description: "Open the Studio editor again to redo it.",
@@ -992,22 +1118,22 @@ export function CreationStudio({
           setSavedLayout(cloneLayout(snapshotLayout));
           setSavedConfig(cloneConfig(config));
         }
-        await publishPage.mutateAsync({
-          pageId: page.id,
-          ownerId: userId,
-          ownerType: "profile",
-          note,
+        const pageId = page.id;
+        await serialWrite(async () => {
+          await publishPage.mutateAsync({ pageId, ownerId: userId, ownerType: "profile", note });
+          await refreshBaselineRef.current();
         });
         toast.success("Studio published");
         setLastSavedAt(Date.now());
         setPublishNote("");
-      } catch {
+      } catch (error) {
+        if (error instanceof StudioConflictError) return;
         toast.error("Could not publish your Studio");
       } finally {
         setSaving(false);
       }
     },
-    [config, dirty, layout, page, persistDraft, publishPage, saving, userId],
+    [config, dirty, layout, page, persistDraft, publishPage, saving, serialWrite, userId],
   );
 
   const requestPublish = useCallback(() => {
@@ -1084,10 +1210,12 @@ export function CreationStudio({
         toast.error("That template has no renderable sections.");
         return;
       }
-      pendingTemplateThemeRef.current = themeId;
       commit(applyTemplateSections(layout, sections), { ...config, starterId: null });
+      // Same undo step as the sections: the history entry above holds the
+      // previous theme, so "one undo puts it back" covers the theme too.
+      if (themeId) applyTheme(themeId);
     },
-    [commit, config, layout],
+    [applyTheme, commit, config, layout],
   );
 
   const applyCommunityTemplate = useCallback(
@@ -1163,6 +1291,21 @@ export function CreationStudio({
     return ids;
   }, [forkTemplate.isPending, forkTemplate.variables]);
 
+  // Conflict resolution. "Load latest" discards this tab's unsaved edits;
+  // "Keep mine" adopts the remote timestamp and saves over it.
+  const loadLatest = async () => {
+    const { data: latest } = await pageQuery.refetch();
+    conflictRef.current = false;
+    setConflict(false);
+    if (latest) seedFromPage(latest);
+  };
+  const keepMine = async () => {
+    baselineRef.current = await readUpdatedAt();
+    conflictRef.current = false;
+    setConflict(false);
+    autosaveSnapshotRef.current = null;
+  };
+
   if (!layout || !config) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background p-8 text-sm text-muted-foreground">
@@ -1217,16 +1360,15 @@ export function CreationStudio({
         onAdd={addBlock}
         onDragTypeChange={setDragType}
         onPaletteTargetChange={setPaletteTarget}
-        onCustomizeChange={(patch) => commit(layout, { ...config, ...patch })}
-        themeId={page?.themeId ?? null}
-        onThemeChange={(themeId) => {
-          if (!page?.id) return;
-          updateTheme.mutate({ pageId: page.id, themeId, ownerId: userId, ownerType: "profile" });
-        }}
+        onCustomizeChange={(patch) =>
+          commit(layout, { ...config, ...patch }, `style:${Object.keys(patch).sort().join(",")}`)
+        }
+        themeId={themeId}
+        onThemeChange={changeTheme}
         cardBorders={cardBorders}
         cardBorderColor={cardBorderColor}
-        onCardBordersChange={setCardBorders}
-        onCardBorderColorChange={setCardBorderColor}
+        onCardBordersChange={changeCardBorders}
+        onCardBorderColorChange={changeCardBorderColor}
         onSave={() => void save()}
         onPublish={requestPublish}
         onRollback={setRestoreTarget}
@@ -1252,6 +1394,11 @@ export function CreationStudio({
         open={resetConfirmOpen}
         onOpenChange={setResetConfirmOpen}
         onConfirm={resetStudio}
+      />
+      <StudioConflictDialog
+        open={conflict}
+        onLoadLatest={() => void loadLatest()}
+        onKeepMine={() => void keepMine()}
       />
       <StudioRestoreDialog
         version={restoreTarget}
