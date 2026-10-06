@@ -121,3 +121,51 @@ export function StudioPublishDialog({
     </Dialog>
   );
 }
+
+/** Restoring replaces the draft only — what visitors see changes on publish. */
+export function StudioRestoreDialog({
+  version,
+  live,
+  onOpenChange,
+  onConfirm,
+}: {
+  /** The version to restore; null keeps the dialog closed. */
+  version: number | null;
+  /** The version is the one visitors see now (restoring discards the draft). */
+  live: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <Dialog open={version !== null} onOpenChange={onOpenChange}>
+      <DialogContent className="studio-editor-chrome sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>
+            {live ? "Discard your draft changes?" : `Replace your draft with v${version}?`}
+          </DialogTitle>
+          <DialogDescription>
+            {live
+              ? "Your draft goes back to exactly what visitors see now: layout, theme and appearance."
+              : `Your draft becomes v${version}'s layout, theme and appearance. Visitors keep seeing the live version until you publish.`}{" "}
+            You can undo this.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="gap-2 sm:justify-start">
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => {
+              onOpenChange(false);
+              onConfirm();
+            }}
+          >
+            {live ? "Discard draft changes" : "Replace draft"}
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

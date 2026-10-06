@@ -147,7 +147,10 @@ interface GStudioSurfaceProps {
   onModeChange: (mode: GStudioMode) => void;
   onDeviceChange: (device: GStudioDevice) => void;
   onSelect: (id: string | null) => void;
+  /** Live grid updates (drag/resize frames, auto-fit) — not undo steps. */
   onGridChange: (sectionId: string, grid: LayoutGridItem[]) => void;
+  /** A discrete grid edit (the width stepper), recorded as one undo step. */
+  onResizeBlock: (sectionId: string, grid: LayoutGridItem[]) => void;
   onGridInteractionStart: () => void;
   onGridInteractionEnd: () => void;
   onUpdateBlockConfig: (id: string, config: BlockConfig) => void;
@@ -986,7 +989,7 @@ function VersionPopover({
             <li key={version.version} className="flex items-center gap-2 py-1.5">
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-xs text-foreground">
-                  {version.version === publishedVersion ? "Latest published" : "Published"}
+                  {version.version === publishedVersion ? "Live now" : "Earlier version"}
                 </span>
                 <span className="font-mono text-2xs text-muted-foreground-subtle">
                   v{version.version} · {timeAgo(version.publishedAt)}
@@ -1005,7 +1008,7 @@ function VersionPopover({
                   onClose();
                 }}
               >
-                Restore
+                {version.version === publishedVersion ? "Discard draft…" : "Restore…"}
               </Button>
             </li>
           ))}
@@ -1642,6 +1645,15 @@ const GBlockFrame = forwardRef<
         selected && "ring-1 ring-[var(--user-accent)]",
         block.visible === false && "opacity-45",
       )}
+      // Links inside a block stay inert while editing: a click on a project
+      // card selects the block instead of leaving the editor. Modifier clicks
+      // still open the link in a new tab.
+      onClickCapture={(event) => {
+        if (!editing) return;
+        const link = (event.target as Element).closest?.("a[href]");
+        if (!link || event.metaKey || event.ctrlKey || event.shiftKey) return;
+        event.preventDefault();
+      }}
       onClick={(event) => {
         if (!editing) return;
         event.stopPropagation();
@@ -2299,7 +2311,7 @@ function GBlockInspector({
                 blocks: [],
               }
             }
-            onResize={props.onGridChange}
+            onResize={props.onResizeBlock}
           />
         </div>
       </div>
@@ -2476,7 +2488,7 @@ function GMobileEditSheet(props: GStudioSurfaceProps) {
                     >
                       {getBlock(block.type)?.label ?? block.type}
                     </button>
-                    <WidthStepper block={block} section={section} onResize={props.onGridChange} />
+                    <WidthStepper block={block} section={section} onResize={props.onResizeBlock} />
                     <IconButton label="Move block up" onClick={() => props.onMove(block.id, -1)}>
                       <ChevronUp className="h-3.5 w-3.5" />
                     </IconButton>

@@ -61,7 +61,11 @@ import {
   seedGridFromLayout,
   type HistoryEntry,
 } from "@/lib/studio-layout";
-import { StudioPublishDialog, StudioResetDialog } from "./studio-confirm-dialogs";
+import {
+  StudioPublishDialog,
+  StudioResetDialog,
+  StudioRestoreDialog,
+} from "./studio-confirm-dialogs";
 
 interface CreationStudioProps {
   userId: string;
@@ -99,6 +103,7 @@ export function CreationStudio({
   const [gridInteraction, setGridInteraction] = useState(false);
   const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const [restoreTarget, setRestoreTarget] = useState<number | null>(null);
   const [publishNote, setPublishNote] = useState("");
   const [projectDialogOpen, setProjectDialogOpen] = useState(false);
   // The Customize panel's Background entry opens the same dialog the banner's
@@ -155,23 +160,32 @@ export function CreationStudio({
     updateTheme.mutate({ pageId: page.id, themeId, ownerId: userId, ownerType: "profile" });
   }, [page?.id, updateTheme, userId]);
 
-  useEffect(() => {
-    if (!page || pageIdRef.current === page.id) return;
-    const nextLayout = normalizeLayout(page.layout);
-    const nextConfig = fromTethyrConfig(page.config);
-    pageIdRef.current = page.id;
+  /** Load a page row into the editor as the saved baseline. `carry` keeps one
+   *  undo step (the editor state just before a restore) so a restore can be
+   *  undone like any other change. */
+  const seedFromPage = useCallback((source: NonNullable<typeof page>, carry?: HistoryEntry) => {
+    const nextLayout = normalizeLayout(source.layout);
+    const nextConfig = fromTethyrConfig(source.config);
+    pageIdRef.current = source.id;
     setLayout(cloneLayout(nextLayout));
     setSavedLayout(cloneLayout(nextLayout));
     setConfig(cloneConfig(nextConfig));
     setSavedConfig({ ...nextConfig });
-    setHistory([]);
+    setHistory(carry ? [carry] : []);
     setFuture([]);
     setSelectedBlockId(null);
     autosaveSnapshotRef.current = null;
     touchedGridRef.current = new Set(
       nextLayout.sections.filter((s) => s.grid && s.grid.length > 0).map((s) => s.id),
     );
-  }, [page]);
+  }, []);
+
+  // Seed once per page. Later refetches (every save invalidates the page
+  // query) must not clobber edits in progress; a restore re-seeds explicitly.
+  useEffect(() => {
+    if (!page || pageIdRef.current === page.id) return;
+    seedFromPage(page);
+  }, [page, seedFromPage]);
 
   useEffect(() => {
     if (
@@ -331,6 +345,16 @@ export function CreationStudio({
     [config, layout],
   );
 
+  // Toast actions outlive the render that created them, so they call the
+  // latest undo through a ref (assigned once `undo` is defined below).
+  const undoRef = useRef<() => void>(() => {});
+  const toastUndoable = useCallback((message: string) => {
+    toast(message, {
+      id: "studio-undoable",
+      action: { label: "Undo", onClick: () => undoRef.current() },
+    });
+  }, []);
+
   const updateBlock = useCallback(
     (blockId: string, patch: Partial<LayoutBlockInstance>) => {
       if (!layout) return;
@@ -422,8 +446,9 @@ export function CreationStudio({
         })),
       });
       setSelectedBlockId(null);
+      toastUndoable("Block removed");
     },
-    [commit, layout],
+    [commit, layout, toastUndoable],
   );
 
   const duplicateBlock = useCallback(
@@ -618,25 +643,27 @@ export function CreationStudio({
       touchedGridRef.current.add(sectionId);
       commit(next);
       setSelectedBlockId(null);
+      toastUndoable("Area layout changed — blocks were rearranged");
     },
-    [commit, layout],
+    [commit, layout, toastUndoable],
   );
 
-  const applyGrid = useCallback(
-    (sectionId: string, nextGrid: LayoutGridItem[]) => {
-      if (!layout) return;
+  /** The layout with one area's grid replaced, or null when nothing changes. */
+  const layoutWithGrid = useCallback(
+    (sectionId: string, nextGrid: LayoutGridItem[]): PageLayout | null => {
+      if (!layout) return null;
       const section = layout.sections.find((candidate) => candidate.id === sectionId);
-      if (!section) return;
+      if (!section) return null;
       const validIds = new Set(section.blocks.map((block) => block.id));
       const normalized = nextGrid
         .filter((item) => item.i !== "__dropping-elem__" && validIds.has(item.i))
         .map((item) =>
           normalizeGridItem(item, item.i, item.w, item.h, item.minW ?? 2, item.minH ?? 2),
         );
-      if (sameGrid(section.grid ?? [], normalized)) return;
+      if (sameGrid(section.grid ?? [], normalized)) return null;
       touchedGridRef.current.add(sectionId);
       const positions = new Map(normalized.map((item, index) => [item.i, { item, index }]));
-      setLayout({
+      return {
         ...layout,
         sections: layout.sections.map((candidate) =>
           candidate.id !== sectionId
@@ -657,9 +684,28 @@ export function CreationStudio({
                 }),
               },
         ),
-      });
+      };
     },
     [layout],
+  );
+
+  // Live grid updates: drag/resize frames (history was recorded when the
+  // gesture began) and content auto-fit (deliberately not an undo step).
+  const applyGrid = useCallback(
+    (sectionId: string, nextGrid: LayoutGridItem[]) => {
+      const next = layoutWithGrid(sectionId, nextGrid);
+      if (next) setLayout(next);
+    },
+    [layoutWithGrid],
+  );
+
+  // Discrete grid edits (the width stepper) are their own undo step.
+  const commitGrid = useCallback(
+    (sectionId: string, nextGrid: LayoutGridItem[]) => {
+      const next = layoutWithGrid(sectionId, nextGrid);
+      if (next) commit(next);
+    },
+    [commit, layoutWithGrid],
   );
 
   const beginGridInteraction = useCallback(() => {
@@ -691,6 +737,8 @@ export function CreationStudio({
     setLayout(cloneLayout(next.layout));
     setConfig(cloneConfig(next.config));
   }, [config, future, layout]);
+
+  undoRef.current = undo;
 
   // Keyboard shortcuts: undo/redo history and escape to clear block selection.
   useEffect(() => {
@@ -759,11 +807,14 @@ export function CreationStudio({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [commit, duplicateBlock, layout, mode, redo, removeBlock, selectedBlockId, undo]);
 
-  // Restore a previously published version via the rollback RPC. The hook
-  // invalidates the page query so the restored layout reloads from Supabase.
+  // Replace the draft with a published version via the rollback RPC, then
+  // re-seed the editor from the restored row. Without the re-seed the canvas
+  // kept showing the old draft and the next autosave wrote it straight back.
+  // The pre-restore state stays one undo away.
   const rollback = useCallback(
     async (version: number) => {
       if (!page || saving) return;
+      const before = layout && config ? createHistoryEntry(layout, config) : undefined;
       setSaving(true);
       try {
         await rollbackPage.mutateAsync({
@@ -772,14 +823,20 @@ export function CreationStudio({
           ownerId: userId,
           ownerType: "profile",
         });
-        toast.success(`Restored to version ${version}`);
+        const { data: restored } = await pageQuery.refetch();
+        if (restored) seedFromPage(restored, before);
+        toast.success(`Draft replaced with version ${version}`, {
+          id: "studio-undoable",
+          description: "Visitors still see the live version until you publish.",
+          action: before ? { label: "Undo", onClick: () => undoRef.current() } : undefined,
+        });
       } catch {
         toast.error("Could not restore that version");
       } finally {
         setSaving(false);
       }
     },
-    [page, rollbackPage, saving, userId],
+    [config, layout, page, pageQuery, rollbackPage, saving, seedFromPage, userId],
   );
 
   // Writes the card-border preference to the member's appearance. Silent and
@@ -804,6 +861,30 @@ export function CreationStudio({
     void refreshMe();
   }, [cardBorderColor, cardBorders, me?.background, refreshMe, userId]);
 
+  /** Write a draft snapshot (layout + config) and the border preference. */
+  const persistDraft = useCallback(
+    async (snapshotLayout: PageLayout, snapshotConfig: GStudioConfig) => {
+      if (!page) return;
+      await applyComposition.mutateAsync({
+        pageId: page.id,
+        layoutId: page.layoutId,
+        // Sections the user never arranged on the grid are persisted without
+        // a `grid`, so the public page keeps their template-based layout.
+        layout: {
+          ...snapshotLayout,
+          sections: snapshotLayout.sections.map((section) =>
+            !touchedGridRef.current.has(section.id) ? { ...section, grid: undefined } : section,
+          ),
+        },
+        config: toTethyrConfig(snapshotConfig, page.config),
+        ownerId: userId,
+        ownerType: "profile",
+      });
+      await persistBorderPreference();
+    },
+    [applyComposition, page, persistBorderPreference, userId],
+  );
+
   const save = useCallback(
     async ({ announce = true }: { announce?: boolean } = {}) => {
       if (!page || !layout || !config || saving || !dirty) return;
@@ -811,22 +892,7 @@ export function CreationStudio({
       const snapshotConfig = { ...config };
       setSaving(true);
       try {
-        await applyComposition.mutateAsync({
-          pageId: page.id,
-          layoutId: page.layoutId,
-          // Sections the user never arranged on the grid are persisted without
-          // a `grid`, so the public page keeps their template-based layout.
-          layout: {
-            ...snapshotLayout,
-            sections: snapshotLayout.sections.map((section) =>
-              !touchedGridRef.current.has(section.id) ? { ...section, grid: undefined } : section,
-            ),
-          },
-          config: toTethyrConfig(snapshotConfig, page.config),
-          ownerId: userId,
-          ownerType: "profile",
-        });
-        await persistBorderPreference();
+        await persistDraft(snapshotLayout, snapshotConfig);
         // Do not mark newer edits as saved when they happened while this
         // request was in flight. The autosave effect will persist those next.
         if (
@@ -845,7 +911,7 @@ export function CreationStudio({
         setSaving(false);
       }
     },
-    [applyComposition, config, dirty, layout, page, persistBorderPreference, saving, userId],
+    [config, dirty, layout, page, persistDraft, saving],
   );
 
   // Persist the current draft after a short pause, rather than making every
@@ -885,14 +951,22 @@ export function CreationStudio({
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [dirty]);
 
-  const leave = useCallback(
-    (destination?: () => void) => {
-      if (!destination) return;
-      if (dirty && !window.confirm("You have unsaved Studio changes. Leave anyway?")) return;
-      destination();
-    },
-    [dirty],
-  );
+  // Leaving the editor by any route (sidebar, bottom nav, a link, the back
+  // arrow) unmounts it before the 1s autosave fires. Flush whatever is still
+  // unsaved on the way out instead of dropping it. The mutation outlives the
+  // component; only the toast reports a failure.
+  const flushRef = useRef<() => void>(() => {});
+  flushRef.current = () => {
+    if (!dirty || !layout || !config) return;
+    persistDraft(normalizeLayout(layout), { ...config }).catch(() =>
+      toast.error("Your last Studio change didn't save", {
+        description: "Open the Studio editor again to redo it.",
+      }),
+    );
+  };
+  useEffect(() => () => flushRef.current(), []);
+
+  const leave = useCallback((destination?: () => void) => destination?.(), []);
   const exit = useCallback(() => leave(onExit), [leave, onExit]);
   const completeProfile = useCallback(() => leave(onCompleteProfile), [leave, onCompleteProfile]);
 
@@ -903,20 +977,7 @@ export function CreationStudio({
       try {
         if (dirty) {
           const snapshotLayout = normalizeLayout(layout);
-          await applyComposition.mutateAsync({
-            pageId: page.id,
-            layoutId: page.layoutId,
-            layout: {
-              ...snapshotLayout,
-              sections: snapshotLayout.sections.map((section) =>
-                !touchedGridRef.current.has(section.id) ? { ...section, grid: undefined } : section,
-              ),
-            },
-            config: toTethyrConfig(config, page.config),
-            ownerId: userId,
-            ownerType: "profile",
-          });
-          await persistBorderPreference();
+          await persistDraft(snapshotLayout, config);
           setSavedLayout(cloneLayout(snapshotLayout));
           setSavedConfig(cloneConfig(config));
         }
@@ -935,17 +996,7 @@ export function CreationStudio({
         setSaving(false);
       }
     },
-    [
-      applyComposition,
-      config,
-      dirty,
-      layout,
-      page,
-      persistBorderPreference,
-      publishPage,
-      saving,
-      userId,
-    ],
+    [config, dirty, layout, page, persistDraft, publishPage, saving, userId],
   );
 
   const requestPublish = useCallback(() => {
@@ -1133,6 +1184,7 @@ export function CreationStudio({
         onDeviceChange={setDevice}
         onSelect={setSelectedBlockId}
         onGridChange={applyGrid}
+        onResizeBlock={commitGrid}
         onGridInteractionStart={beginGridInteraction}
         onGridInteractionEnd={endGridInteraction}
         onUpdateBlockConfig={updateBlockConfig}
@@ -1161,7 +1213,7 @@ export function CreationStudio({
         onCardBorderColorChange={setCardBorderColor}
         onSave={() => void save()}
         onPublish={requestPublish}
-        onRollback={rollback}
+        onRollback={setRestoreTarget}
         onUndo={undo}
         onRedo={redo}
         onCompleteProfile={onCompleteProfile ? completeProfile : undefined}
@@ -1184,6 +1236,15 @@ export function CreationStudio({
         open={resetConfirmOpen}
         onOpenChange={setResetConfirmOpen}
         onConfirm={resetStudio}
+      />
+      <StudioRestoreDialog
+        version={restoreTarget}
+        live={restoreTarget !== null && restoreTarget === page?.publishedVersion}
+        onOpenChange={(open) => !open && setRestoreTarget(null)}
+        onConfirm={() => {
+          if (restoreTarget !== null) void rollback(restoreTarget);
+          setRestoreTarget(null);
+        }}
       />
       <StudioPublishDialog
         open={publishConfirmOpen}
