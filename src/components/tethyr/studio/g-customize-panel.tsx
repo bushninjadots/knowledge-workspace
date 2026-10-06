@@ -26,7 +26,13 @@ import { DEFAULT_THEME_ID } from "@/lib/constants";
 import { getBlock } from "@/lib/block-registry";
 import type { LayoutBlockInstance, PageLayout } from "@/lib/page-blocks";
 import { cn } from "@/lib/utils";
-import { CARD_FILL_SWATCHES, RADIUS_MAX, RADIUS_MIN } from "@/lib/studio-config";
+import {
+  CARD_FILL_SWATCHES,
+  RADIUS_MAX,
+  RADIUS_MIN,
+  personalityPatch,
+  type PersonalityId,
+} from "@/lib/studio-config";
 import { FONT_OPTIONS } from "@/lib/fonts";
 import { sectionLabel } from "@/lib/studio-grid";
 import { IconButton, Choice } from "./studio-controls";
@@ -141,6 +147,60 @@ function ThemePick({
   );
 }
 
+// Typeface choices: "" keeps the theme's own face; the rest are the shared
+// font catalog the published page loads.
+const FONT_CHOICES: Array<[string, string]> = [
+  ["", "Theme’s face"],
+  ...FONT_OPTIONS.map((option) => [option.id, option.label] as [string, string]),
+];
+
+/** Every font decision in one place, shared by the desktop panel and the
+ *  mobile Style sheet. Personality sets the heading scale and fills in its
+ *  paired heading face; the Headings and Body pickers are what the page
+ *  actually renders, so there is nothing hidden to override. */
+export function TypeSection({
+  config,
+  onChange,
+}: {
+  config: GStudioConfig;
+  onChange: (patch: Partial<GStudioConfig>) => void;
+}) {
+  return (
+    <>
+      <Choice
+        label="Personality"
+        hint="Heading size and character. Picking one sets its heading face below: Editorial uses Space Grotesk, Technical uses JetBrains Mono, Modern uses the theme's."
+        value={config.personality}
+        options={[
+          ["modern", "Modern"],
+          ["editorial", "Editorial"],
+          ["technical", "Technical"],
+        ]}
+        onChange={(value) => onChange(personalityPatch(value as PersonalityId))}
+      />
+      <Choice
+        label="Heading font"
+        value={config.headingFont ?? ""}
+        options={FONT_CHOICES}
+        onChange={(value) =>
+          onChange({
+            headingFont: value ? (value as GStudioConfig["headingFont"]) : null,
+            fontModel: 2,
+          })
+        }
+      />
+      <Choice
+        label="Body font"
+        value={config.bodyFont ?? ""}
+        options={FONT_CHOICES}
+        onChange={(value) =>
+          onChange({ bodyFont: value ? (value as GStudioConfig["bodyFont"]) : null })
+        }
+      />
+    </>
+  );
+}
+
 /** Swatch for the "Default" tile: mirror the Tethyr Default theme's primary
  *  when present, else the neutral base. */
 function presetSwatchForDefault(presets: ThemePreset[]): string {
@@ -178,37 +238,8 @@ export function GCustomizeAdvanced({
   selectedBlockId: string | null;
   onOpenAppearance?: () => void;
 }) {
-  // "Automatic" keeps the face Personality (or, for Modern, the theme) sets;
-  // the rest are the shared font catalog and override it.
-  const fontChoices: Array<[string, string]> = [
-    ["", "Automatic"],
-    ...FONT_OPTIONS.map((option) => [option.id, option.label] as [string, string]),
-  ];
   return (
     <>
-      <div className="mb-4">
-        <p className="t-label mb-1.5">Typeface</p>
-        <p className="mb-1.5 text-2xs leading-snug text-muted-foreground-subtle">
-          Automatic follows Personality (Modern uses the theme&rsquo;s face). Pick a face to
-          override it; the published page renders the same ones.
-        </p>
-        <Choice
-          label="Headings"
-          value={config.headingFont ?? ""}
-          options={fontChoices}
-          onChange={(value) =>
-            onChange({ headingFont: value ? (value as GStudioConfig["headingFont"]) : null })
-          }
-        />
-        <Choice
-          label="Body"
-          value={config.bodyFont ?? ""}
-          options={fontChoices}
-          onChange={(value) =>
-            onChange({ bodyFont: value ? (value as GStudioConfig["bodyFont"]) : null })
-          }
-        />
-      </div>
       <Choice
         label="Density"
         hint="Spacing rhythm between blocks"
@@ -606,17 +637,7 @@ export function GCustomizePanel({
           ]}
           onChange={(value) => onChange({ structure: value as GStudioConfig["structure"] })}
         />
-        <Choice
-          label="Personality"
-          hint="Visual character and heading scale. Editorial sets Space Grotesk headings, Technical sets JetBrains Mono, Modern keeps the theme's face. Typeface under More options can override it."
-          value={config.personality}
-          options={[
-            ["modern", "Modern"],
-            ["editorial", "Editorial"],
-            ["technical", "Technical"],
-          ]}
-          onChange={(value) => onChange({ personality: value as GStudioConfig["personality"] })}
-        />
+        <TypeSection config={config} onChange={onChange} />
         <button
           type="button"
           onClick={toggleAdvanced}

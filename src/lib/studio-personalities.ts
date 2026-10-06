@@ -13,7 +13,7 @@ import type {
   PageLayout,
   ThemeTokens,
 } from "@/lib/page-blocks";
-import type { StudioConfig } from "@/lib/studio-config";
+import { personalityPatch, type StudioConfig } from "@/lib/studio-config";
 
 let _counter = 0;
 function nid(): string {
@@ -66,7 +66,7 @@ export function applyStudioPersonality(
     layout: currentLayout ? preserveStudioContent(currentLayout, presetLayout) : presetLayout,
     config: {
       structure: "wide", // Presets set structure via composition, not appearance
-      personality: personality.appearance.personality,
+      ...personalityPatch(personality.appearance.personality),
       density: personality.appearance.density,
       radius: personality.appearance.radius,
       accentMode: personality.appearance.accentMode,

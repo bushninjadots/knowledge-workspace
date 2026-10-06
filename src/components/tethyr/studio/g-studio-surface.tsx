@@ -97,7 +97,12 @@ import { BlockGlyph } from "./block-glyph";
 import { useCardInk } from "@/hooks/use-card-ink";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { IconButton, Choice, WidthStepper } from "./studio-controls";
-import { ThemeSection, GCustomizeAdvanced, GCustomizePanel } from "./g-customize-panel";
+import {
+  ThemeSection,
+  TypeSection,
+  GCustomizeAdvanced,
+  GCustomizePanel,
+} from "./g-customize-panel";
 /** GStudioConfig keeps the legacy component-local name so callers don't churn. */
 export type GStudioConfig = StudioConfig;
 
@@ -2569,19 +2574,7 @@ function GMobileEditSheet(props: GStudioSurfaceProps) {
                 props.onCustomizeChange({ structure: value as GStudioConfig["structure"] })
               }
             />
-            <Choice
-              label="Personality"
-              hint="Typography and visual character — Editorial uses Space Grotesk, Technical uses JetBrains Mono"
-              value={props.config.personality}
-              options={[
-                ["modern", "Modern"],
-                ["editorial", "Editorial"],
-                ["technical", "Technical"],
-              ]}
-              onChange={(value) =>
-                props.onCustomizeChange({ personality: value as GStudioConfig["personality"] })
-              }
-            />
+            <TypeSection config={props.config} onChange={props.onCustomizeChange} />
             {/* Same list as the desktop panel's "More options" — one component,
                 so phone parity cannot drift again. */}
             <GCustomizeAdvanced

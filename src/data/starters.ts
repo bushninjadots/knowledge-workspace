@@ -20,7 +20,7 @@ import type {
   StructureId,
   StudioConfig,
 } from "@/lib/studio-config";
-import { DEFAULT_STUDIO_CONFIG } from "@/lib/studio-config";
+import { DEFAULT_STUDIO_CONFIG, personalityPatch } from "@/lib/studio-config";
 import type { LayoutSection, PageLayout, SectionLayoutType } from "@/lib/page-blocks";
 
 /** Semantic identity of a profile section, derived from the block types it holds. */
@@ -320,6 +320,9 @@ export function starterConfig(starter: Starter, current: StudioConfig): StudioCo
   return {
     ...current,
     ...starter.config,
+    // The starter's personality brings its paired heading face; the member's
+    // body face is theirs and stays.
+    ...personalityPatch(starter.config.personality),
     starterId: starter.id,
   };
 }
@@ -383,6 +386,7 @@ export function starterPreviewConfig(starter: Starter): StudioConfig {
   return {
     ...DEFAULT_STUDIO_CONFIG,
     ...starter.config,
+    ...personalityPatch(starter.config.personality),
     starterId: starter.id,
   };
 }

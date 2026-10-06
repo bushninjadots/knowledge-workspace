@@ -6,6 +6,7 @@ import {
   BLOCK_INSET_DEFAULT_PX,
   DEFAULT_STUDIO_CONFIG,
   normalizeStudioConfig,
+  personalityPatch,
   studioConfigToStyle,
   studioConfigToThemeTokens,
   studioBackgroundVars,
@@ -44,6 +45,8 @@ describe("normalizeStudioConfig", () => {
     };
     expect(normalizeStudioConfig(raw)).toEqual({
       ...raw,
+      headingFont: "space-grotesk",
+      fontModel: 2,
       radius: 12,
       cardBorderWidth: "thin",
       cardColor: "",
@@ -57,6 +60,42 @@ describe("normalizeStudioConfig", () => {
     expect(config.headingFont).toBeUndefined();
     expect(config.bodyFont).toBeUndefined();
     expect(normalizeStudioConfig({ headingFont: "fraunces" }).headingFont).toBe("fraunces");
+  });
+
+  it("gives a pre-split config the heading face its personality used to imply", () => {
+    expect(normalizeStudioConfig({ personality: "editorial" }).headingFont).toBe("space-grotesk");
+    expect(normalizeStudioConfig({ personality: "technical", headingFont: null }).headingFont).toBe(
+      "jetbrains-mono",
+    );
+    expect(normalizeStudioConfig({ typography: "classic" }).headingFont).toBe("jetbrains-mono");
+    expect(normalizeStudioConfig({ personality: "modern" }).headingFont).toBeUndefined();
+    // An explicit face always won, and still does.
+    expect(
+      normalizeStudioConfig({ personality: "editorial", headingFont: "fraunces" }).headingFont,
+    ).toBe("fraunces");
+  });
+
+  it("keeps the theme's face once the config is on the split model", () => {
+    const config = normalizeStudioConfig({
+      personality: "editorial",
+      headingFont: null,
+      fontModel: 2,
+    });
+    expect(config.headingFont).toBeUndefined();
+    expect(config.fontModel).toBe(2);
+    // Normalizing twice changes nothing.
+    expect(normalizeStudioConfig(normalizeStudioConfig({ personality: "technical" }))).toEqual(
+      normalizeStudioConfig({ personality: "technical" }),
+    );
+  });
+
+  it("personalityPatch writes the paired heading face", () => {
+    expect(personalityPatch("editorial")).toEqual({
+      personality: "editorial",
+      headingFont: "space-grotesk",
+      fontModel: 2,
+    });
+    expect(personalityPatch("modern").headingFont).toBeNull();
   });
 
   it("migrates legacy compositionId → structure, vibeId/personalityId → personality", () => {
@@ -140,7 +179,7 @@ describe("studioConfigToThemeTokens", () => {
   it("editorial enables the Space Grotesk display stack and display-scale heading", () => {
     const tokens = studioConfigToThemeTokens({
       ...DEFAULT_STUDIO_CONFIG,
-      personality: "editorial",
+      ...personalityPatch("editorial"),
     });
     expect(tokens.typography?.headingFont).toContain("Space Grotesk");
     expect(tokens.typography?.scale?.heading1).toEqual({
@@ -153,7 +192,7 @@ describe("studioConfigToThemeTokens", () => {
   it("technical uses the JetBrains Mono display stack and a smaller display scale", () => {
     const tokens = studioConfigToThemeTokens({
       ...DEFAULT_STUDIO_CONFIG,
-      personality: "technical",
+      ...personalityPatch("technical"),
     });
     expect(tokens.typography?.headingFont).toContain("JetBrains Mono");
     expect(tokens.typography?.scale?.heading1?.fontSize).toBe("clamp(1.875rem, 3.5vw, 2.5rem)");
@@ -165,7 +204,17 @@ describe("studioConfigToThemeTokens", () => {
     ).toBeUndefined();
   });
 
-  it("lets an explicit typeface override the personality's face", () => {
+  it("an editorial Studio set to the theme's face keeps the scale but no face", () => {
+    const tokens = studioConfigToThemeTokens({
+      ...DEFAULT_STUDIO_CONFIG,
+      personality: "editorial",
+      headingFont: null,
+    });
+    expect(tokens.typography?.headingFont).toBeUndefined();
+    expect(tokens.typography?.scale?.heading1?.fontSize).toBe("clamp(2.5rem, 5vw, 4.5rem)");
+  });
+
+  it("lets an explicit typeface replace the personality's face", () => {
     const tokens = studioConfigToThemeTokens({
       ...DEFAULT_STUDIO_CONFIG,
       personality: "editorial",

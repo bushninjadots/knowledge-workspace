@@ -1,7 +1,7 @@
 // ── Studio Config ─────────────────────────────────────────────────────────────
 // Five coherent decisions that drive the Studio's look-and-feel:
 //   STRUCTURE  — how the Studio is arranged (single column, balanced, wide)
-//   PERSONALITY — typography + visual character (editorial, modern, technical)
+//   PERSONALITY — heading scale + visual character (editorial, modern, technical)
 //   DENSITY    — spacing rhythm (compact, comfortable, spacious)
 //   RADIUS     — corner roundness in pixels (0–24, exposed as a slider)
 //   ACCENT     — user identity colour (pick, banner + pick, none)
@@ -14,9 +14,13 @@
 //     Studio-owned --card-border-width). Card border *colour* is the member's
 //     appearance (ProfileBackground.cardBorders), not a Studio decision.
 //
-// Heading/body typefaces are optional ids from src/lib/fonts.ts: leaving them
-// unset keeps the personality's own stack, so a Studio that never touches them
-// renders exactly as before.
+// Typeface is the only font control. Heading/body faces are optional ids from
+// src/lib/fonts.ts; unset means "the theme's own face". Personality no longer
+// implies a face at render time: choosing one writes its paired heading face
+// into `headingFont` (personalityPatch), which the member can then change.
+// Configs saved before that split (no `fontModel`) are migrated on read by
+// giving them the face their personality used to imply, so they render as
+// they always did.
 //
 // Legacy fields (compositionId, vibeId, personalityId, typography) are accepted
 // on read via normalizeStudioConfig and silently migrated. New writes never
@@ -154,12 +158,15 @@ export interface StudioConfig {
   starterId: StarterId | null;
   /** How the Studio is arranged. */
   structure: StructureId;
-  /** Typography + visual character. */
+  /** Heading scale + visual character. Sets no face by itself. */
   personality: PersonalityId;
-  /** Heading typeface id from FONT_OPTIONS. Unset = the personality's stack. */
+  /** Heading typeface id from FONT_OPTIONS. Unset = the theme's own face. */
   headingFont?: FontId | null;
   /** Body typeface id from FONT_OPTIONS. Unset = the theme's own face. */
   bodyFont?: FontId | null;
+  /** 2 = headingFont is authoritative. Absent on configs saved while the
+   *  personality still implied a face; normalizeStudioConfig migrates those. */
+  fontModel?: 2;
   /** Spacing rhythm. */
   density: DensityId;
   /** Corner roundness in px (0 = sharp, 24 = very soft). */
@@ -196,6 +203,7 @@ export const DEFAULT_STUDIO_CONFIG: Readonly<StudioConfig> = {
   starterId: null,
   structure: "wide",
   personality: "modern",
+  fontModel: 2,
   density: "comfortable",
   radius: DEFAULT_RADIUS,
   accentMode: "custom",
@@ -316,6 +324,11 @@ export function normalizeStudioConfig(raw: unknown): StudioConfig {
 
   const value = raw as Record<string, unknown>;
   const legacy = migrateLegacy(value);
+  const personality =
+    legacy.personality ??
+    (isOneOf(PERSONALITY_VALUES)(value.personality)
+      ? value.personality
+      : DEFAULT_STUDIO_CONFIG.personality);
 
   return {
     starterId:
@@ -327,13 +340,14 @@ export function normalizeStudioConfig(raw: unknown): StudioConfig {
       (isOneOf(STRUCTURE_VALUES)(value.structure)
         ? value.structure
         : DEFAULT_STUDIO_CONFIG.structure),
-    personality:
-      legacy.personality ??
-      (isOneOf(PERSONALITY_VALUES)(value.personality)
-        ? value.personality
-        : DEFAULT_STUDIO_CONFIG.personality),
-    headingFont: isFontId(value.headingFont) ? value.headingFont : undefined,
+    personality,
+    headingFont: isFontId(value.headingFont)
+      ? value.headingFont
+      : value.fontModel === 2
+        ? undefined
+        : (PERSONALITY_HEADING_FONT[personality] ?? undefined),
     bodyFont: isFontId(value.bodyFont) ? value.bodyFont : undefined,
+    fontModel: 2,
     density: isOneOf(DENSITY_VALUES)(value.density) ? value.density : DEFAULT_STUDIO_CONFIG.density,
     radius: normalizeRadius(value.radius),
     accentMode:
@@ -438,8 +452,21 @@ function radiusScale(radius: number): Record<string, string> {
   };
 }
 
-const EDITORIAL_HEADING_FONT = "Space Grotesk, ui-sans-serif, system-ui, sans-serif";
-const TECHNICAL_HEADING_FONT = "JetBrains Mono, ui-monospace, SFMono-Regular, Consolas, monospace";
+/** The heading face each personality pairs with. Modern has none: it keeps
+ *  the theme's own face. */
+export const PERSONALITY_HEADING_FONT: Readonly<Record<PersonalityId, FontId | null>> = {
+  editorial: "space-grotesk",
+  modern: null,
+  technical: "jetbrains-mono",
+};
+
+/** The config patch for choosing a personality: its heading scale plus its
+ *  paired heading face, written into Typeface where the member can change it. */
+export function personalityPatch(
+  personality: PersonalityId,
+): Pick<StudioConfig, "personality" | "headingFont" | "fontModel"> {
+  return { personality, headingFont: PERSONALITY_HEADING_FONT[personality], fontModel: 2 };
+}
 
 const DENSITY_SECTION: Record<DensityId, string> = {
   compact: "2.5rem",
@@ -448,17 +475,14 @@ const DENSITY_SECTION: Record<DensityId, string> = {
 };
 
 /**
- * The display face a config resolves to: an explicit typeface choice wins over
- * the personality's own stack, and "modern" keeps whatever the theme sets.
- * Shared by the theme tokens and the Studio surface style so a canvas and the
- * published page can never render different faces.
+ * The display face a config resolves to: the chosen heading typeface, or null
+ * to keep whatever the theme sets. Shared by the theme tokens and the Studio
+ * surface style so a canvas and the published page can never render different
+ * faces. Callers pass a normalized config, so pre-split saves already carry
+ * the face their personality implied.
  */
 function resolvedHeadingFont(config: StudioConfig): string | null {
-  const chosen = fontStack(config.headingFont);
-  if (chosen) return chosen;
-  if (config.personality === "editorial") return EDITORIAL_HEADING_FONT;
-  if (config.personality === "technical") return TECHNICAL_HEADING_FONT;
-  return null;
+  return fontStack(config.headingFont);
 }
 
 /**
@@ -466,10 +490,9 @@ function resolvedHeadingFont(config: StudioConfig): string | null {
  * deep-merged over the page theme. This keeps radius, typography, and section
  * rhythm in the same pipeline as every other theme token.
  *
- * The personality supplies the display face and the heading scale; an explicit
- * typeface choice overrides the face (never the scale), and a chosen body face
- * drives --font-sans. A modern Studio that chooses nothing leaves typography
- * untouched, exactly as before.
+ * The personality supplies the heading scale; the chosen heading face drives
+ * the display face and a chosen body face drives --font-sans. A modern Studio
+ * that chooses no face leaves typography untouched.
  */
 export function studioConfigToThemeTokens(config: StudioConfig): ThemeTokens {
   const tokens: ThemeTokens = {
@@ -605,11 +628,12 @@ export function studioSurfaceStyle(
 ): React.CSSProperties {
   const style = studioConfigToStyle(config, secondaryColor) as React.CSSProperties &
     Record<string, string>;
-  style["--studio-label-font"] = config.personality === "technical" ? "JetBrains Mono" : "Inter";
+  // Labels go monospace alongside monospace headings (Technical's pairing).
+  style["--studio-label-font"] =
+    config.headingFont === "jetbrains-mono" ? "JetBrains Mono" : "Inter";
   // Match the public page's font mapping (studioConfigToThemeTokens) exactly:
-  // the personality flips --font-display/title, a chosen typeface overrides it,
-  // and a chosen body face drives --font-sans — so every canvas renders the
-  // face the published page will.
+  // the chosen heading face drives --font-display/title and a chosen body face
+  // drives --font-sans, so every canvas renders the face the published page will.
   const headingFont = resolvedHeadingFont(config);
   if (headingFont) {
     style["--font-display"] = headingFont;
