@@ -309,3 +309,21 @@ export function withFittedGrid(
   });
   return changed ? { sections } : null;
 }
+
+/**
+ * What a layout looks like to the public page, as a comparable string. The
+ * public page places a block by its column (`x`) and width (`w`) and orders
+ * blocks by `position`; row heights and vertical offsets are editor-only
+ * measurements (content auto-fit), so they are left out. Used to tell whether
+ * the draft differs from what is published without auto-fit noise.
+ */
+export function publicLayoutSignature(layout: PageLayout): string {
+  const normalized = normalizeLayout(layout);
+  return JSON.stringify(
+    normalized.sections.map((section) => ({
+      ...section,
+      grid: (section.grid ?? []).map(({ i, x, w }) => ({ i, x, w })),
+      blocks: section.blocks.map(({ height: _height, ...block }) => block),
+    })),
+  );
+}

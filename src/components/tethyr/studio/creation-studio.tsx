@@ -60,6 +60,7 @@ import {
   preferredGridWidth,
   seedGridFromLayout,
   withFittedGrid,
+  publicLayoutSignature,
   type HistoryEntry,
 } from "@/lib/studio-layout";
 import {
@@ -353,8 +354,10 @@ export function CreationStudio({
       !latestPublishedLayout ||
       themeChanged ||
       appearanceChanged ||
-      JSON.stringify(layout ? normalizeLayout(layout) : null) !==
-        JSON.stringify(normalizeLayout(latestPublishedLayout)),
+      // Compared as the public page sees it: auto-fit heights would otherwise
+      // flag every area the creator never arranged by hand.
+      !layout ||
+      publicLayoutSignature(layout) !== publicLayoutSignature(latestPublishedLayout),
     [appearanceChanged, latestPublishedLayout, layout, themeChanged],
   );
 
@@ -1127,7 +1130,7 @@ export function CreationStudio({
 
   const doPublish = useCallback(
     async (note?: string) => {
-      if (!page || !layout || !config || saving) return;
+      if (!page || !layout || !config) return;
       setSaving(true);
       try {
         if (dirty) {
@@ -1151,14 +1154,16 @@ export function CreationStudio({
         setSaving(false);
       }
     },
-    [config, dirty, layout, page, persistDraft, publishPage, saving, serialWrite, userId],
+    [config, dirty, layout, page, persistDraft, publishPage, serialWrite, userId],
   );
 
+  // Publishing is allowed mid-autosave: writes queue behind each other, so
+  // the click is never swallowed (it used to do nothing while a save ran).
   const requestPublish = useCallback(() => {
-    if (!page || !layout || !config || saving) return;
+    if (!page || !layout || !config) return;
     setPublishNote("");
     setPublishConfirmOpen(true);
-  }, [config, layout, page, saving]);
+  }, [config, layout, page]);
 
   /** What will change for visitors when this draft goes live — shown in the
    *  publish dialog so publishing is deliberate, not blind. */

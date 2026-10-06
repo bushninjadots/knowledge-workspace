@@ -4,6 +4,7 @@ import {
   insertDuplicateGridItem,
   normalizedSectionGrid,
   normalizeGridItem,
+  publicLayoutSignature,
   seedGridFromLayout,
 } from "@/lib/studio-layout";
 import { snapGridPlacement } from "@/lib/studio-grid";
@@ -207,5 +208,34 @@ describe("Creation Studio layout seeding", () => {
       { i: "b", x: 4, y: 0, w: 4 },
       { i: "c", x: 8, y: 0, w: 4 },
     ]);
+  });
+});
+
+describe("publicLayoutSignature", () => {
+  it("ignores auto-fit heights and vertical offsets", () => {
+    const fitted = makeSection({
+      grid: [
+        { i: "a", x: 0, y: 0, w: 6, h: 9 },
+        { i: "b", x: 6, y: 0, w: 6, h: 2 },
+      ],
+    });
+    const seeded = makeSection({
+      grid: [
+        { i: "a", x: 0, y: 4, w: 6, h: 3 },
+        { i: "b", x: 6, y: 0, w: 6, h: 3 },
+      ],
+    });
+    expect(publicLayoutSignature({ sections: [fitted] })).toBe(
+      publicLayoutSignature({ sections: [seeded] }),
+    );
+  });
+
+  it("notices a change visitors would see", () => {
+    const before = makeSection({ grid: [{ i: "a", x: 0, y: 0, w: 6, h: 3 }] });
+    const wider = makeSection({ grid: [{ i: "a", x: 0, y: 0, w: 8, h: 3 }] });
+    const hidden = makeSection({ visible: false, grid: before.grid });
+    const sig = publicLayoutSignature({ sections: [before] });
+    expect(publicLayoutSignature({ sections: [wider] })).not.toBe(sig);
+    expect(publicLayoutSignature({ sections: [hidden] })).not.toBe(sig);
   });
 });
