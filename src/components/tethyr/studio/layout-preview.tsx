@@ -20,7 +20,12 @@ import {
 import { themeTokensToStyle } from "@/lib/theme-tokens";
 import { useTheme as useAppTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
-import { AreaTitle, areaSurfaceClass, areaSurfaceStyle } from "@/components/tethyr/page/area-frame";
+import {
+  AreaTitle,
+  areaSurfaceClass,
+  areaSurfaceStyle,
+  areaWidthStyle,
+} from "@/components/tethyr/page/area-frame";
 import { lookCanvasAttributes } from "@/components/tethyr/page/look-canvas";
 
 const MEDIA = new Set(["profile-gallery", "profile-projects", "profile-currently-building"]);
@@ -143,14 +148,7 @@ export function LayoutPreview({
                   style={areaSurfaceStyle(section)}
                 >
                   <AreaTitle section={section} />
-                  <div
-                    className="grid grid-cols-12 gap-4"
-                    style={
-                      section.appearance?.width === "narrow"
-                        ? { maxWidth: "46rem", marginInline: "auto" }
-                        : undefined
-                    }
-                  >
+                  <div className="grid grid-cols-12 gap-4" style={areaWidthStyle(section)}>
                     {blocks.map((block) => {
                       const item = grid.get(block.id)!;
                       return (

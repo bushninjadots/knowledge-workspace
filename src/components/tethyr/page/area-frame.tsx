@@ -81,11 +81,18 @@ export function areaGridStyle(
     style.gap = appearance.gap === "tight" ? "0.75rem" : "3rem";
   }
   if (appearance.align) style.alignItems = appearance.align;
-  if (appearance.width === "narrow") {
-    style.maxWidth = "min(100%, 46rem)";
-    style.marginInline = "auto";
-  }
+  Object.assign(style, areaWidthStyle(section) ?? {});
   return Object.keys(style).length > 0 ? style : undefined;
+}
+
+/** An area's own width: Narrow for a tighter column, Reading for a
+ *  comfortable line length on long text. Centred in the page. Shared by the
+ *  editor, the page and layout previews so they can't disagree. */
+export function areaWidthStyle(section: LayoutSection): CSSProperties | undefined {
+  const width = section.appearance?.width;
+  if (width === "narrow") return { maxWidth: "min(100%, 46rem)", marginInline: "auto" };
+  if (width === "reading") return { maxWidth: "min(100%, 38rem)", marginInline: "auto" };
+  return undefined;
 }
 
 /** The divider an area draws after itself, if any. */

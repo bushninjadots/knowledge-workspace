@@ -201,6 +201,121 @@ function StyleClipboard({ block, ...props }: GStudioSurfaceProps & { block: Layo
   );
 }
 
+/** A block's surface as one choice. Each role sets the block's own fill,
+ *  outline, shadow and inner spacing together; "Profile style" clears them so
+ *  the block follows the page's Surfaces and Borders again. */
+const SURFACE_ROLES: Array<{
+  id: string;
+  label: string;
+  patch: Pick<LayoutBlockInstance, "frameFill" | "frameBorder" | "frameShadow" | "frameInset">;
+}> = [
+  {
+    id: "profile",
+    label: "Profile style",
+    patch: {
+      frameFill: undefined,
+      frameBorder: undefined,
+      frameShadow: undefined,
+      frameInset: undefined,
+    },
+  },
+  {
+    id: "open",
+    label: "Open",
+    patch: { frameFill: "none", frameBorder: "none", frameShadow: undefined, frameInset: 0 },
+  },
+  {
+    id: "minimal",
+    label: "Minimal",
+    patch: { frameFill: "none", frameBorder: "none", frameShadow: undefined, frameInset: 10 },
+  },
+  {
+    id: "framed",
+    label: "Framed",
+    patch: {
+      frameFill: undefined,
+      frameBorder: "frame",
+      frameShadow: "none",
+      frameInset: undefined,
+    },
+  },
+  {
+    id: "raised",
+    label: "Raised",
+    patch: {
+      frameFill: undefined,
+      frameBorder: "none",
+      frameShadow: "lifted",
+      frameInset: undefined,
+    },
+  },
+  {
+    id: "inset",
+    label: "Inset",
+    patch: { frameFill: "tint", frameBorder: "none", frameShadow: "none", frameInset: undefined },
+  },
+  {
+    id: "accent",
+    label: "Accent",
+    patch: {
+      frameFill: "accent",
+      frameBorder: "none",
+      frameShadow: undefined,
+      frameInset: undefined,
+    },
+  },
+  {
+    id: "feature",
+    label: "Feature",
+    patch: { frameFill: "gradient", frameBorder: "none", frameShadow: "soft", frameInset: 28 },
+  },
+];
+
+function surfaceRole(block: LayoutBlockInstance): string {
+  const same = (patch: (typeof SURFACE_ROLES)[number]["patch"]) =>
+    (Object.keys(patch) as Array<keyof typeof patch>).every(
+      (key) => (block[key] ?? undefined) === (patch[key] ?? undefined),
+    );
+  return SURFACE_ROLES.find((role) => same(role.patch))?.id ?? "custom";
+}
+
+function SurfaceRoles({ block, ...props }: GStudioSurfaceProps & { block: LayoutBlockInstance }) {
+  const current = surfaceRole(block);
+  return (
+    <div className="mb-4">
+      <div className="mb-1 flex items-baseline justify-between gap-2">
+        <p className="t-label">Surface</p>
+        <span className="text-2xs text-muted-foreground" aria-live="polite">
+          {current === "profile"
+            ? "Using profile style"
+            : current === "custom"
+              ? "Customized below"
+              : "This block only"}
+        </span>
+      </div>
+      <div role="radiogroup" aria-label="Block surface" className="grid grid-cols-4 gap-1">
+        {SURFACE_ROLES.map((role) => (
+          <button
+            key={role.id}
+            type="button"
+            role="radio"
+            aria-checked={current === role.id}
+            onClick={() => props.onBlockAction(block.id, role.patch)}
+            className={cn(
+              "rounded-sm border px-1 py-1.5 text-2xs outline-none focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))]",
+              current === role.id
+                ? "border-[var(--user-accent-border)] bg-[var(--user-accent-subtle)] text-foreground"
+                : "border-border text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {role.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function BlockFrameSection({
   block,
   ...props
@@ -227,6 +342,7 @@ function BlockFrameSection({
         </div>
       </div>
       <StyleClipboard block={block} {...props} />
+      {!flush && <SurfaceRoles block={block} {...props} />}
       <p className="t-label mb-1">Shape</p>
       <p className="mb-2 text-2xs leading-snug text-muted-foreground-subtle">
         Choose the silhouette of this block&apos;s surface. Curved shapes move the content in so it

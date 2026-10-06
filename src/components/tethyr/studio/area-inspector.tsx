@@ -183,6 +183,7 @@ export function AreaInspector({
           options={[
             ["full", "Full"],
             ["narrow", "Narrow"],
+            ["reading", "Reading"],
           ]}
           onChange={(value) => onChange({ width: value as AreaAppearance["width"] })}
         />

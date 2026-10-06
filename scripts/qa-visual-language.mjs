@@ -349,6 +349,35 @@ try {
     `${before.join(",")} → ${after.join(",")}`,
   );
 
+  // ── Block surface roles: one choice, and back to the profile style ───────
+  await page
+    .locator(".react-grid-item")
+    .nth(1)
+    .click({ position: { x: 4, y: 30 } });
+  await page.waitForTimeout(400);
+  const surfaces = rail(page).getByRole("radiogroup", { name: "Block surface" });
+  const shadowOf = () =>
+    page
+      .locator(".react-grid-item .studio-block")
+      .nth(1)
+      .evaluate((el) => getComputedStyle(el).boxShadow);
+  await surfaces.getByRole("radio", { name: "Raised" }).click();
+  await page.waitForTimeout(400);
+  const raised = await shadowOf();
+  const scoped = await rail(page).getByText("This block only", { exact: true }).first().isVisible();
+  await surfaces.getByRole("radio", { name: "Profile style" }).click();
+  await page.waitForTimeout(400);
+  const following = await rail(page)
+    .getByText("Using profile style", { exact: true })
+    .first()
+    .isVisible();
+  log(
+    "a block surface role applies, and Profile style hands it back",
+    raised !== "none" && scoped && following,
+    `raised shadow: ${raised.slice(0, 40)}`,
+  );
+  await page.keyboard.press("Escape");
+
   // ── Flow 5 ────────────────────────────────────────────────────────────────
   // As the owner: some of a new account's areas are private to visitors.
   const phone = await browser.newContext({

@@ -31,6 +31,7 @@ import type { AreaAppearance } from "@/lib/page-blocks";
 import {
   AreaDivider,
   AreaTitle,
+  areaWidthStyle,
   areaGapScale,
   areaSurfaceClass,
   areaSurfaceStyle,
@@ -1156,11 +1157,7 @@ function GSectionBand({
           data-row-height={rowHeight}
           data-margin={margin}
           className="relative"
-          style={
-            section.appearance?.width === "narrow"
-              ? { maxWidth: "min(100%, 46rem)", marginInline: "auto" }
-              : undefined
-          }
+          style={areaWidthStyle(section)}
         >
           <GridOverlay
             layer="columns"

@@ -94,7 +94,7 @@ export function sectionMarker(section: LayoutSection): SectionMarker | null {
 
 // ── Layouts ───────────────────────────────────────────────────────────────────
 
-const READING: AreaAppearance = { width: "narrow" };
+const READING: AreaAppearance = { width: "reading" };
 
 export const STARTERS: Starter[] = [
   {

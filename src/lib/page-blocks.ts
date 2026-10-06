@@ -319,7 +319,7 @@ export interface AreaAppearance {
   /** How blocks of different heights sit in a row. */
   align?: "start" | "center" | "stretch";
   /** Narrow keeps the area's blocks in a centred, narrower column. */
-  width?: "full" | "narrow";
+  width?: "full" | "narrow" | "reading";
   /** A line, dots or a fade after the area. */
   divider?: "none" | "line" | "dots" | "fade";
   /** This area's own accent colour (#rrggbb). */
