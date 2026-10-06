@@ -16,6 +16,7 @@ import {
 import { useTheme } from "@/hooks/use-theme";
 import { useTheme as useAppTheme } from "@/lib/theme";
 import { themeTokensToStyle, deepMergeTokens } from "@/lib/theme-tokens";
+import { LookFilters, lookCanvasAttributes } from "./look-canvas";
 import {
   CARD_SURFACE_STYLE,
   cardFillStyle,
@@ -361,7 +362,8 @@ export function PageShell({
         data-studio-workspace={isPreviewing ? "preview" : isEditing ? "editor" : "view"}
       >
         <div
-          className={`${canvasFrameClass} relative isolate bg-[var(--studio-bg,var(--background))] bg-noise font-sans text-foreground`}
+          className={`${canvasFrameClass} studio-canvas relative isolate bg-[var(--studio-bg,var(--background))] bg-noise font-sans text-foreground`}
+          {...(page && ownerType === "profile" ? lookCanvasAttributes(page.config) : {})}
           style={
             ownerType === "profile" && structureWidth && !isPreviewing && !isEditing
               ? {
@@ -380,6 +382,7 @@ export function PageShell({
           aria-label={`${ownerType} page`}
         >
           {backgroundSlot}
+          {ownerType === "profile" && <LookFilters />}
           {previewMode && showPreviewBanner && (
             <div className="mx-auto flex max-w-7xl items-center justify-between border-b border-border/60 px-4 py-3 sm:px-8">
               <div>

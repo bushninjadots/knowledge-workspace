@@ -15,14 +15,10 @@ import { DEFAULT_THEME_ID } from "@/lib/constants";
 import { getBlock } from "@/lib/block-registry";
 import type { LayoutBlockInstance, PageLayout } from "@/lib/page-blocks";
 import { cn } from "@/lib/utils";
-import {
-  CARD_FILL_SWATCHES,
-  RADIUS_MAX,
-  RADIUS_MIN,
-  personalityPatch,
-  type PersonalityId,
-} from "@/lib/studio-config";
+import { CARD_FILL_SWATCHES, RADIUS_MAX, RADIUS_MIN } from "@/lib/studio-config";
 import { FONT_OPTIONS } from "@/lib/fonts";
+import { resolveTitles } from "@/lib/visual-language";
+import { FineTune, GroupHeading, LanguagePicker, LookOptions } from "./look-controls";
 import { sectionLabel } from "@/lib/studio-grid";
 import { IconButton, Choice } from "./studio-controls";
 import type { GStudioConfig } from "./g-studio-surface";
@@ -141,10 +137,8 @@ const FONT_CHOICES: Array<[string, string]> = [
   ...FONT_OPTIONS.map((option) => [option.id, option.label] as [string, string]),
 ];
 
-/** Every font decision in one place, shared by the desktop panel and the
- *  mobile Style sheet. Personality sets the heading scale and fills in its
- *  paired heading face; the Headings and Body pickers are what the page
- *  actually renders, so there is nothing hidden to override. */
+/** Hand-picked faces: fine-tuning under Typography. A type pairing sets
+ *  these; picking one here overrides the pairing for that role only. */
 export function TypeSection({
   config,
   onChange,
@@ -155,20 +149,9 @@ export function TypeSection({
   return (
     <>
       <Choice
-        label="Personality"
-        hint="Heading size and character. Picking one sets its heading face below: Editorial uses Space Grotesk, Technical uses JetBrains Mono, Modern uses the theme's."
-        value={config.personality}
-        options={[
-          ["modern", "Modern"],
-          ["editorial", "Editorial"],
-          ["technical", "Technical"],
-        ]}
-        onChange={(value) => onChange(personalityPatch(value as PersonalityId))}
-      />
-      <Choice
         label="Heading font"
         value={config.headingFont ?? ""}
-        options={FONT_CHOICES}
+        options={[["", "Pairing’s"], ...FONT_CHOICES.slice(1)]}
         onChange={(value) =>
           onChange({
             headingFont: value ? (value as GStudioConfig["headingFont"]) : null,
@@ -179,7 +162,7 @@ export function TypeSection({
       <Choice
         label="Body font"
         value={config.bodyFont ?? ""}
-        options={FONT_CHOICES}
+        options={[["", "Pairing’s"], ...FONT_CHOICES.slice(1)]}
         onChange={(value) =>
           onChange({ bodyFont: value ? (value as GStudioConfig["bodyFont"]) : null })
         }
@@ -218,21 +201,21 @@ export type StyleSectionProps = {
 };
 
 const STYLE_TABS = [
-  ["look", "Look"],
-  ["type", "Type"],
+  ["identity", "Identity"],
+  ["style", "Look"],
   ["layout", "Layout"],
-  ["cards", "Cards"],
   ["outline", "Outline"],
 ] as const;
 type StyleTab = (typeof STYLE_TABS)[number][0];
 const STUDIO_STYLE_TAB_KEY = "studio-style-tab";
 
 /**
- * The Studio's style settings, in five small groups instead of one long
- * scroll: Look (theme, accent, background), Type (personality, faces, block
- * titles), Layout (width, spacing, corners), Cards (outlines and fill) and
- * Outline (every area and block). Shared by the desktop rail and the phone
- * sheet, so both always offer the same settings.
+ * The Studio's style settings in four layers: Identity (what the space feels
+ * like: visual language, header, typography, colour, background), Look (how
+ * that looks: surfaces, borders, dividers, grid, shapes, images, rhythm,
+ * details, motion), Layout (width and density) and Outline (every area and
+ * block). Lower-level controls sit under each group's "Fine tune". Shared by
+ * the desktop rail and the phone sheet, so both always offer the same settings.
  */
 export function GStyleSections({
   config,
@@ -250,11 +233,14 @@ export function GStyleSections({
   selectedBlockId,
   onOpenAppearance,
 }: StyleSectionProps) {
-  const [tab, setTab] = useState<StyleTab>("look");
+  const [tab, setTab] = useState<StyleTab>("identity");
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem(STUDIO_STYLE_TAB_KEY);
       if (STYLE_TABS.some(([value]) => value === saved)) setTab(saved as StyleTab);
+      // Tabs from before the visual language: Look/Type → Identity, Cards → Style.
+      else if (saved === "look" || saved === "type") setTab("identity");
+      else if (saved === "cards") setTab("style");
     } catch {
       // Storage unavailable: start on Look.
     }
@@ -267,6 +253,118 @@ export function GStyleSections({
       // Storage unavailable: the choice lasts for this visit.
     }
   };
+  // The shared card outline (member appearance) and card fill: fine-tuning
+  // under Borders and Surfaces.
+  const CARD_OUTLINE_CONTROLS = (
+    <div className="mb-4">
+      <div className="mb-2 flex items-start gap-2">
+        <Frame className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--user-accent-text)]" aria-hidden />
+        <div>
+          <p className="text-xs font-medium text-foreground">Card outlines</p>
+          <p className="mt-0.5 text-2xs leading-snug text-muted-foreground">
+            One default for every card and panel. Per-block overrides live in the block inspector
+            and are optional.
+          </p>
+        </div>
+      </div>
+      <Choice
+        label="Outline style"
+        hint="Theme is quiet · Accent follows your Studio accent · Colour pins one · None hides outlines. Part of your profile, so visitors see a change as soon as it saves, without publishing."
+        value={cardBorders}
+        options={CARD_BORDER_OPTIONS.map((option) => [option.id, option.label])}
+        onChange={(value) => {
+          const next = value as CardBorderPreference;
+          onCardBordersChange(next);
+          // Picking "Colour" must show a colour straight away — with none set
+          // the resolver falls back to the accent and the choice reads broken.
+          if (next === "custom" && !cardBorderColor) onCardBorderColorChange(BORDER_SWATCHES[0]);
+        }}
+      />
+      <Choice
+        label="Line weight"
+        hint="How strong the shared outline appears"
+        value={config.cardBorderWidth ?? "thin"}
+        options={[
+          ["thin", "Thin"],
+          ["medium", "Medium"],
+          ["thick", "Thick"],
+        ]}
+        onChange={(value) =>
+          onChange({ cardBorderWidth: value as GStudioConfig["cardBorderWidth"] })
+        }
+      />
+      {cardBorders === "custom" && (
+        <div className="mb-1" role="group" aria-label="Card outline colour">
+          <p className="t-label mb-1.5">Outline colour</p>
+          <div className="flex flex-wrap gap-1.5">
+            {BORDER_SWATCHES.map((swatch) => (
+              <button
+                key={swatch}
+                type="button"
+                aria-label={`Card border ${swatch}`}
+                aria-pressed={cardBorderColor.toLowerCase() === swatch}
+                onClick={() => onCardBorderColorChange(swatch)}
+                className={cn(
+                  "h-6 w-6 rounded-sm border-2",
+                  cardBorderColor.toLowerCase() === swatch ? "border-foreground" : "border-border",
+                )}
+                style={{ backgroundColor: swatch }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+  const CARD_FILL_CONTROLS = (
+    <div className="mb-4">
+      <p className="t-label mb-1.5">Card fill</p>
+      <p className="mb-1.5 text-2xs leading-snug text-muted-foreground-subtle">
+        Colour and translucency of every block surface
+      </p>
+      <div className="flex flex-wrap gap-1.5">
+        {CARD_FILL_SWATCHES.map((swatch) => (
+          <button
+            key={swatch.value || "auto"}
+            type="button"
+            title={swatch.label}
+            aria-label={`Card fill ${swatch.label}`}
+            aria-pressed={(config.cardColor ?? "").toLowerCase() === swatch.value}
+            onClick={() => onChange({ cardColor: swatch.value })}
+            className={cn(
+              "h-6 w-6 rounded-sm border-2 text-3xs",
+              (config.cardColor ?? "").toLowerCase() === swatch.value
+                ? "border-foreground"
+                : "border-border",
+            )}
+            style={
+              swatch.value
+                ? { backgroundColor: swatch.value }
+                : { backgroundColor: "var(--surface-elevated)" }
+            }
+          >
+            {swatch.value ? "" : "A"}
+          </button>
+        ))}
+      </div>
+      <label className="mt-2 block">
+        <span className="mb-1 flex items-center justify-between">
+          <span className="t-label">Opacity</span>
+          <span className="t-label tabular-nums">{config.cardOpacity}%</span>
+        </span>
+        <input
+          type="range"
+          min={0}
+          max={100}
+          step={5}
+          value={config.cardOpacity}
+          onChange={(event) => onChange({ cardOpacity: Number(event.target.value) })}
+          aria-label="Card fill opacity"
+          className="studio-slider w-full"
+        />
+      </label>
+    </div>
+  );
   return (
     // The group tabs sit above the scrolling settings (not inside them), so
     // nothing ever scrolls underneath them.
@@ -299,21 +397,69 @@ export function GStyleSections({
         aria-label={STYLE_TABS.find(([v]) => v === tab)?.[1]}
         className="min-h-0 flex-1 overflow-y-auto px-3 py-3"
       >
-        {tab === "look" && (
+        {tab === "identity" && (
           <>
-            <ThemeSection themeId={themeId} onThemeChange={onThemeChange} />
-            <Choice
-              label="Motion"
-              hint="Blocks rise gently into place as visitors scroll. Off for anyone who prefers reduced motion."
-              value={config.motion ?? "none"}
-              options={[
-                ["none", "Still"],
-                ["rise", "Rise in"],
-              ]}
-              onChange={(value) => onChange({ motion: value === "rise" ? "rise" : "none" })}
+            <LanguagePicker config={config} onChange={onChange} />
+            <GroupHeading
+              config={config}
+              group="header"
+              onChange={onChange}
+              hint="How your name, photo and banner meet visitors."
+            />
+            <LookOptions config={config} setting="header" onChange={onChange} label="Header" />
+            <GroupHeading config={config} group="typography" onChange={onChange} />
+            <LookOptions
+              config={config}
+              setting="typePairing"
+              onChange={onChange}
+              label="Type pairing"
+              columns={4}
+            />
+            <p className="t-label mb-1.5">Scale</p>
+            <LookOptions
+              config={config}
+              setting="typeScale"
+              onChange={onChange}
+              label="Type scale"
+              columns={4}
+            />
+            <FineTune>
+              <TypeSection config={config} onChange={onChange} />
+              <Choice
+                label="Block titles"
+                hint="How every block's title is set. Rename or hide one in its own settings."
+                value={resolveTitles(config)}
+                options={[
+                  ["label", "Label"],
+                  ["heading", "Heading"],
+                  ["hidden", "Hidden"],
+                ]}
+                onChange={(value) =>
+                  onChange({ blockTitles: value as GStudioConfig["blockTitles"] })
+                }
+              />
+            </FineTune>
+            <GroupHeading
+              config={config}
+              group="colour"
+              onChange={onChange}
+              hint="The atmosphere sets the page's light, ink and surfaces; accent sets where your colour shows."
+            />
+            <LookOptions
+              config={config}
+              setting="atmosphere"
+              onChange={onChange}
+              label="Atmosphere"
+            />
+            <p className="t-label mb-1.5">Accent</p>
+            <LookOptions
+              config={config}
+              setting="accent"
+              onChange={onChange}
+              label="Accent behaviour"
             />
             <Choice
-              label="Accent"
+              label="Accent colour"
               hint={
                 config.accentMode === "dual"
                   ? "Pick an interactive colour; the banner colour tints the background"
@@ -394,22 +540,114 @@ export function GStyleSections({
                 </button>
               ) : null}
             </div>
+            <ThemeSection themeId={themeId} onThemeChange={onThemeChange} />
           </>
         )}
-        {tab === "type" && (
+        {tab === "style" && (
           <>
-            <TypeSection config={config} onChange={onChange} />
-            <Choice
-              label="Block titles"
-              hint="How every block's title is set. Rename or hide one in its own settings."
-              value={config.blockTitles ?? "label"}
-              options={[
-                ["label", "Label"],
-                ["heading", "Heading"],
-                ["hidden", "Hidden"],
-              ]}
-              onChange={(value) => onChange({ blockTitles: value as GStudioConfig["blockTitles"] })}
+            <GroupHeading
+              config={config}
+              group="surfaces"
+              onChange={onChange}
+              hint="What blocks sit on — a card, or straight on the page."
             />
+            <LookOptions config={config} setting="surface" onChange={onChange} label="Surfaces" />
+            <FineTune>
+              <Choice
+                label="Shadow"
+                hint="Depth under every block. A block can choose its own in its settings."
+                value={config.cardShadow ?? "none"}
+                options={[
+                  ["none", "Flat"],
+                  ["soft", "Soft"],
+                  ["lifted", "Lifted"],
+                ]}
+                onChange={(value) => onChange({ cardShadow: value as GStudioConfig["cardShadow"] })}
+              />
+              {CARD_FILL_CONTROLS}
+            </FineTune>
+            <GroupHeading
+              config={config}
+              group="borders"
+              onChange={onChange}
+              hint="The line around blocks. A block can pick its own in its settings."
+            />
+            <LookOptions
+              config={config}
+              setting="borders"
+              onChange={onChange}
+              label="Borders"
+              columns={4}
+            />
+            <FineTune>{CARD_OUTLINE_CONTROLS}</FineTune>
+            <GroupHeading
+              config={config}
+              group="dividers"
+              onChange={onChange}
+              hint="Between areas. An area's own divider (Area settings) replaces this one."
+            />
+            <LookOptions config={config} setting="dividers" onChange={onChange} label="Dividers" />
+            <p className="t-label mb-1.5">Between areas</p>
+            <LookOptions
+              config={config}
+              setting="transitions"
+              onChange={onChange}
+              label="Between areas"
+            />
+            <GroupHeading
+              config={config}
+              group="grid"
+              onChange={onChange}
+              hint="A visible structure behind the page. The editor's own guides are separate."
+            />
+            <LookOptions config={config} setting="grid" onChange={onChange} label="Grid" />
+            <GroupHeading config={config} group="shapes" onChange={onChange} />
+            <LookOptions
+              config={config}
+              setting="shapes"
+              onChange={onChange}
+              label="Shapes"
+              columns={4}
+            />
+            <FineTune>
+              <div className="mb-1.5 flex items-center justify-between">
+                <p className="t-label">Corners</p>
+                <span className="t-label tabular-nums">{config.radius}px</span>
+              </div>
+              <input
+                type="range"
+                min={RADIUS_MIN}
+                max={RADIUS_MAX}
+                step={1}
+                value={config.radius}
+                aria-label="Corner radius in pixels"
+                onChange={(event) => onChange({ radius: Number(event.target.value) })}
+                className="studio-slider w-full"
+              />
+            </FineTune>
+            <GroupHeading config={config} group="images" onChange={onChange} />
+            <LookOptions config={config} setting="images" onChange={onChange} label="Images" />
+            <GroupHeading
+              config={config}
+              group="rhythm"
+              onChange={onChange}
+              hint="The room between areas. Density (Layout) sets the room between blocks."
+            />
+            <LookOptions config={config} setting="rhythm" onChange={onChange} label="Rhythm" />
+            <GroupHeading
+              config={config}
+              group="details"
+              onChange={onChange}
+              hint="Section numbers and small marks."
+            />
+            <LookOptions config={config} setting="details" onChange={onChange} label="Details" />
+            <GroupHeading
+              config={config}
+              group="motion"
+              onChange={onChange}
+              hint="How blocks arrive as visitors scroll. Off for anyone who prefers reduced motion."
+            />
+            <LookOptions config={config} setting="motion" onChange={onChange} label="Motion" />
           </>
         )}
         {tab === "layout" && (
@@ -436,152 +674,6 @@ export function GStyleSections({
               ]}
               onChange={(value) => onChange({ density: value as GStudioConfig["density"] })}
             />
-            <div className="mb-4">
-              <div className="mb-1.5 flex items-center justify-between">
-                <p className="t-label">Corners</p>
-                <span className="t-label tabular-nums">{config.radius}px</span>
-              </div>
-              <p className="mb-1.5 text-2xs leading-snug text-muted-foreground">
-                Roundness of card corners, from sharp to generously soft.
-              </p>
-              <input
-                type="range"
-                min={RADIUS_MIN}
-                max={RADIUS_MAX}
-                step={1}
-                value={config.radius}
-                aria-label="Corner radius in pixels"
-                onChange={(event) => onChange({ radius: Number(event.target.value) })}
-                className="studio-slider w-full"
-              />
-            </div>
-          </>
-        )}
-        {tab === "cards" && (
-          <>
-            <Choice
-              label="Shadow"
-              hint="Depth under every block. A block can choose its own in its settings."
-              value={config.cardShadow ?? "none"}
-              options={[
-                ["none", "Flat"],
-                ["soft", "Soft"],
-                ["lifted", "Lifted"],
-              ]}
-              onChange={(value) => onChange({ cardShadow: value as GStudioConfig["cardShadow"] })}
-            />
-            <div className="mb-4">
-              <div className="mb-2 flex items-start gap-2">
-                <Frame
-                  className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--user-accent-text)]"
-                  aria-hidden
-                />
-                <div>
-                  <p className="text-xs font-medium text-foreground">Card outlines</p>
-                  <p className="mt-0.5 text-2xs leading-snug text-muted-foreground">
-                    One default for every card and panel. Per-block overrides live in the block
-                    inspector and are optional.
-                  </p>
-                </div>
-              </div>
-              <Choice
-                label="Outline style"
-                hint="Theme is quiet · Accent follows your Studio accent · Colour pins one · None hides outlines. Part of your profile, so visitors see a change as soon as it saves, without publishing."
-                value={cardBorders}
-                options={CARD_BORDER_OPTIONS.map((option) => [option.id, option.label])}
-                onChange={(value) => {
-                  const next = value as CardBorderPreference;
-                  onCardBordersChange(next);
-                  // Picking "Colour" must show a colour straight away — with none set
-                  // the resolver falls back to the accent and the choice reads broken.
-                  if (next === "custom" && !cardBorderColor)
-                    onCardBorderColorChange(BORDER_SWATCHES[0]);
-                }}
-              />
-              <Choice
-                label="Line weight"
-                hint="How strong the shared outline appears"
-                value={config.cardBorderWidth ?? "thin"}
-                options={[
-                  ["thin", "Thin"],
-                  ["medium", "Medium"],
-                  ["thick", "Thick"],
-                ]}
-                onChange={(value) =>
-                  onChange({ cardBorderWidth: value as GStudioConfig["cardBorderWidth"] })
-                }
-              />
-              {cardBorders === "custom" && (
-                <div className="mb-1" role="group" aria-label="Card outline colour">
-                  <p className="t-label mb-1.5">Outline colour</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {BORDER_SWATCHES.map((swatch) => (
-                      <button
-                        key={swatch}
-                        type="button"
-                        aria-label={`Card border ${swatch}`}
-                        aria-pressed={cardBorderColor.toLowerCase() === swatch}
-                        onClick={() => onCardBorderColorChange(swatch)}
-                        className={cn(
-                          "h-6 w-6 rounded-sm border-2",
-                          cardBorderColor.toLowerCase() === swatch
-                            ? "border-foreground"
-                            : "border-border",
-                        )}
-                        style={{ backgroundColor: swatch }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className="mb-4">
-              <p className="t-label mb-1.5">Card fill</p>
-              <p className="mb-1.5 text-2xs leading-snug text-muted-foreground-subtle">
-                Colour and translucency of every block surface
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {CARD_FILL_SWATCHES.map((swatch) => (
-                  <button
-                    key={swatch.value || "auto"}
-                    type="button"
-                    title={swatch.label}
-                    aria-label={`Card fill ${swatch.label}`}
-                    aria-pressed={(config.cardColor ?? "").toLowerCase() === swatch.value}
-                    onClick={() => onChange({ cardColor: swatch.value })}
-                    className={cn(
-                      "h-6 w-6 rounded-sm border-2 text-3xs",
-                      (config.cardColor ?? "").toLowerCase() === swatch.value
-                        ? "border-foreground"
-                        : "border-border",
-                    )}
-                    style={
-                      swatch.value
-                        ? { backgroundColor: swatch.value }
-                        : { backgroundColor: "var(--surface-elevated)" }
-                    }
-                  >
-                    {swatch.value ? "" : "A"}
-                  </button>
-                ))}
-              </div>
-              <label className="mt-2 block">
-                <span className="mb-1 flex items-center justify-between">
-                  <span className="t-label">Opacity</span>
-                  <span className="t-label tabular-nums">{config.cardOpacity}%</span>
-                </span>
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  step={5}
-                  value={config.cardOpacity}
-                  onChange={(event) => onChange({ cardOpacity: Number(event.target.value) })}
-                  aria-label="Card fill opacity"
-                  className="studio-slider w-full"
-                />
-              </label>
-            </div>
           </>
         )}
         {tab === "outline" && (

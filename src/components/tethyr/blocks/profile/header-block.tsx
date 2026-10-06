@@ -177,7 +177,7 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
     .join(" ");
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-border/50 bg-surface">
+    <div className="studio-header relative overflow-hidden rounded-xl border border-border/50 bg-surface">
       {canEdit && (
         <HeroEditControls
           userId={data.id}
@@ -218,10 +218,10 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
             />
           );
         })()}
-      <div className="relative px-5 pb-6 sm:px-8 sm:pb-8">
-        <div className={rowClass}>
+      <div className="studio-header-body relative px-5 pb-6 sm:px-8 sm:pb-8">
+        <div className={`studio-header-row ${rowClass}`}>
           {/* Avatar */}
-          <div className="shrink-0">
+          <div className="studio-header-avatar shrink-0">
             <Avatar
               className={`h-24 w-24 sm:h-32 sm:w-32 ${hasRing ? "" : "ring-4 ring-surface"}`}
               style={
@@ -237,7 +237,7 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
 
           {/* Identity */}
           <div className={infoClass}>
-            <h1 className="font-display text-2xl font-semibold text-foreground sm:text-4xl">
+            <h1 className="studio-name font-display text-2xl font-semibold text-foreground sm:text-4xl">
               {data.display_name || "Untitled"}
             </h1>
             {showTitle && data.creator_title && (
@@ -263,7 +263,7 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
 
             {/* Metadata chips */}
             <div
-              className={`mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground${isCentered ? " justify-center" : ""}`}
+              className={`studio-header-meta mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground${isCentered ? " justify-center" : ""}`}
             >
               {data.category && (
                 <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-primary">

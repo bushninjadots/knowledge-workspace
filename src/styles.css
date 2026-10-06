@@ -523,18 +523,18 @@
   /* Per-block shadow, else the Studio's card shadow. */
   box-shadow: var(--studio-block-shadow, var(--studio-card-shadow, none));
   text-align: var(--studio-block-align, start);
-  /* Per-block override (blockFrameStyle) wins; default follows the member's
-     card-border appearance exactly as before. */
-  border: var(
-    --studio-block-border,
-    var(--card-border-width, 1px) solid var(--card-border-color, var(--border))
-  );
+  /* Outline: a block's own override (--sb-border-*, blockFrameStyle) wins,
+     then the page's Borders setting (--vl-border-*, data-vl-border), then
+     the member's card-border appearance exactly as before. */
+  border-style: var(--sb-border-style, var(--vl-border-style, solid));
+  border-width: var(--sb-border-width, var(--vl-border-width, var(--card-border-width, 1px)));
+  border-color: var(--sb-border-color, var(--card-border-color, var(--border)));
   /* Per-block shape (frameShape) wins; then the global studio radius; then
      the design-system default. The transition makes shape changes fluid. */
   border-radius: var(--studio-block-radius, var(--studio-radius, var(--radius-lg)));
   /* Shaped frames (pill, organic, blob, leaf) supply their own padding so
      content moves in with the curve; see shapePadding(). */
-  padding: var(--studio-block-padding, var(--studio-block-inset, 1rem));
+  padding: var(--studio-block-padding, var(--studio-block-inset, var(--vl-block-inset, 1rem)));
   transition:
     border-radius 220ms ease,
     padding 220ms ease;
@@ -1401,4 +1401,566 @@
   .studio-block {
     animation: none !important;
   }
+}
+
+/* ── Visual language ───────────────────────────────────────────────────────
+   The page-wide look (src/lib/visual-language.ts), read from data-vl-*
+   attributes on `.studio-canvas`: the editor canvas, the owner's Studio view
+   and the public page all carry them, so they render one look. Every
+   setting's "Original" value has no rules here, which is what keeps Studios
+   that never chose a direction exactly as they were. A block's own settings
+   (inline --sb-* / --studio-block-* properties) always win. */
+
+/* Motion personalities (Reveal is studio-rise above). */
+@keyframes studio-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes studio-slide {
+  from {
+    opacity: 0;
+    clip-path: inset(0 0 100% 0);
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+    transform: none;
+  }
+}
+@keyframes studio-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97) rotate(-0.6deg);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.005);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Surfaces: fill and depth (the shadow comes from studioSurfaceStyle). */
+[data-vl-surface="inset"] {
+  --studio-block-bg: color-mix(in oklab, var(--foreground) 4%, var(--background));
+}
+[data-vl-surface="outline"],
+[data-vl-surface="open"] {
+  --studio-block-bg: transparent;
+}
+/* Open: content sits on the page, aligned to the column, with no card. */
+[data-vl-surface="open"] {
+  --vl-block-inset: 0.25rem 0;
+}
+/* An outline surface always draws one, even with Borders set to None. */
+[data-vl-surface="outline"][data-vl-border="none"] {
+  --vl-border-style: solid;
+}
+/* No card behind the text: take the page's ink, not the card ink. */
+[data-vl-surface="outline"] .studio-block,
+[data-vl-surface="open"] .studio-block {
+  --foreground: inherit;
+  --card-foreground: inherit;
+  --muted-foreground: inherit;
+  --muted-foreground-subtle: inherit;
+  --border: inherit;
+  color: inherit;
+}
+
+/* Borders: one personality, width and colour derived. */
+[data-vl-border="none"] {
+  --vl-border-style: none;
+}
+[data-vl-border="dashed"] {
+  --vl-border-style: dashed;
+}
+[data-vl-border="dotted"] {
+  --vl-border-style: dotted;
+  --vl-border-width: max(1.5px, var(--card-border-width, 1px));
+}
+[data-vl-border="double"] {
+  --vl-border-style: double;
+  --vl-border-width: 3px;
+}
+[data-vl-border="underline"] {
+  --vl-border-width: 0 0 var(--card-border-width, 1px) 0;
+}
+[data-vl-border="underline"] .studio-block {
+  border-radius: var(--studio-block-radius, 0);
+}
+[data-vl-border="offset"] .studio-block {
+  box-shadow: var(
+    --studio-block-shadow,
+    4px 4px 0 var(--sb-border-color, var(--card-border-color, var(--border)))
+  );
+}
+[data-vl-border="corners"] {
+  --vl-border-style: none;
+}
+[data-vl-border="corners"] .studio-block {
+  position: relative;
+}
+[data-vl-border="corners"] .studio-block::after {
+  --c: var(--card-border-color, var(--border-strong));
+  content: "";
+  display: var(--sb-corners, block);
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(var(--c), var(--c)) top left / 12px 1.5px,
+    linear-gradient(var(--c), var(--c)) top left / 1.5px 12px,
+    linear-gradient(var(--c), var(--c)) top right / 12px 1.5px,
+    linear-gradient(var(--c), var(--c)) top right / 1.5px 12px,
+    linear-gradient(var(--c), var(--c)) bottom left / 12px 1.5px,
+    linear-gradient(var(--c), var(--c)) bottom left / 1.5px 12px,
+    linear-gradient(var(--c), var(--c)) bottom right / 12px 1.5px,
+    linear-gradient(var(--c), var(--c)) bottom right / 1.5px 12px;
+  background-repeat: no-repeat;
+}
+
+/* Accent behaviour: where the member's colour shows up (Monochrome is set
+   in studioSurfaceStyle, which recolours the accent itself). */
+[data-vl-accent="minimal"] {
+  --vl-mark: var(--border-strong);
+  --vl-mark-text: var(--muted-foreground);
+}
+[data-vl-accent="structural"] {
+  --vl-rule: var(--user-accent-border);
+  --vl-mark: var(--user-accent);
+}
+[data-vl-accent="structural"] .studio-area-head .t-rule {
+  background: var(--user-accent-border);
+}
+[data-vl-accent="bold"] {
+  --vl-rule: var(--user-accent);
+  --vl-mark: var(--user-accent);
+}
+[data-vl-accent="bold"] :is(.studio-name, .studio-area-title, .block-title) {
+  color: var(--user-accent-text);
+}
+[data-vl-accent="bold"] .studio-area-tick {
+  width: 4px;
+  height: 1rem;
+}
+.block-title > svg {
+  color: var(--vl-mark-text, var(--user-accent-text, var(--primary)));
+}
+
+/* Type scale: a hierarchy, not one multiplier. Standard is the original. */
+[data-vl-scale="compact"] .studio-name {
+  font-size: clamp(1.5rem, 3vw, 1.875rem);
+  letter-spacing: -0.01em;
+}
+[data-vl-scale="expressive"] .studio-name {
+  font-size: clamp(2.25rem, 5vw, 3.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+}
+[data-vl-scale="display"] .studio-name {
+  font-size: clamp(2.75rem, 7.5vw, 5.25rem);
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+}
+[data-vl-scale="expressive"] .studio-area-title,
+[data-vl-scale="display"] .studio-area-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: -0.015em;
+  color: var(--foreground);
+}
+[data-vl-scale="expressive"] .studio-area-title {
+  font-size: 1.375rem;
+}
+[data-vl-scale="display"] .studio-area-title {
+  font-size: clamp(1.625rem, 3.5vw, 2.25rem);
+}
+[data-vl-scale="expressive"] .studio-area-head,
+[data-vl-scale="display"] .studio-area-head {
+  margin-bottom: 1.125rem;
+}
+[data-vl-scale="compact"] .studio-block {
+  line-height: 1.45;
+}
+
+/* Shapes: geometric squares off the small rounded things (chips, tags,
+   dots); organic and mixed give media soft, slightly irregular corners. */
+[data-vl-shapes="geometric"]
+  .studio-block
+  :is(
+    .rounded,
+    .rounded-sm,
+    .rounded-md,
+    .rounded-lg,
+    .rounded-xl,
+    .rounded-2xl,
+    .rounded-full
+  ):not([data-avatar], [data-avatar] *) {
+  border-radius: 1px;
+}
+[data-vl-shapes="organic"] .studio-block img:not([data-avatar] img) {
+  border-radius: 1.75rem 0.875rem 1.5rem 1.125rem / 1.25rem 1.5rem 1rem 1.75rem;
+}
+[data-vl-shapes="mixed"] .studio-block img:not([data-avatar] img) {
+  border-radius: 1rem;
+}
+
+/* Images: shape, crop and finish. Avatars keep their own shape. */
+[data-vl-images="square"] .studio-block img:not([data-avatar] img) {
+  border-radius: 0;
+}
+[data-vl-images="soft"] .studio-block img:not([data-avatar] img) {
+  border-radius: 6px;
+}
+[data-vl-images="rounded"] .studio-block img:not([data-avatar] img) {
+  border-radius: 1rem;
+}
+[data-vl-images="crop"] .studio-block img:not([data-avatar] img, [data-banner] img) {
+  border-radius: 0;
+  object-fit: cover;
+  object-position: center 30%;
+  aspect-ratio: 4 / 3;
+}
+[data-vl-images="monochrome"] .studio-block img:not([data-avatar] img) {
+  filter: grayscale(1) contrast(1.06);
+}
+[data-vl-images="duotone"] .studio-block img:not([data-avatar] img) {
+  filter: url(#vl-duotone);
+}
+[data-vl-images="contrast"] .studio-block img:not([data-avatar] img) {
+  filter: contrast(1.22) saturate(1.12);
+}
+[data-vl-images="faded"] .studio-block img:not([data-avatar] img) {
+  filter: saturate(0.6) contrast(0.9) brightness(1.06);
+}
+[data-vl-images="grain"] .studio-block img:not([data-avatar] img) {
+  filter: url(#vl-grain) contrast(1.04);
+}
+
+/* Section numbers, shared by numbered dividers and decorative details. */
+.studio-canvas {
+  counter-reset: vl-area;
+}
+.studio-area {
+  counter-increment: vl-area;
+}
+
+/* Dividers: drawn at the top of every area after the first, unless the
+   area before set its own divider (Area settings). */
+.studio-area:first-of-type::before {
+  display: none !important;
+}
+:is(
+    [data-vl-divider="line"],
+    [data-vl-divider="double"],
+    [data-vl-divider="dotted"],
+    [data-vl-divider="dashed"],
+    [data-vl-divider="fade"],
+    [data-vl-divider="short"],
+    [data-vl-divider="numbered"],
+    [data-vl-divider="crosshair"],
+    [data-vl-divider="marker"]
+  )
+  .studio-area:not(:first-of-type):not(.studio-area-own-divider + .studio-area)::before {
+  --r: var(--vl-rule, var(--border));
+  content: "";
+  display: block;
+  height: 1px;
+  margin-bottom: 1.75rem;
+  background: var(--r);
+}
+[data-vl-divider="double"] .studio-area::before {
+  height: 4px !important;
+  background: none !important;
+  border-block: 1px solid var(--r);
+}
+[data-vl-divider="dotted"] .studio-area::before,
+[data-vl-divider="dashed"] .studio-area::before {
+  height: 0 !important;
+  background: none !important;
+  border-top: 1.5px dotted var(--r);
+}
+[data-vl-divider="dashed"] .studio-area::before {
+  border-top-style: dashed;
+}
+[data-vl-divider="fade"] .studio-area::before {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--r) 20%,
+    var(--r) 80%,
+    transparent
+  ) !important;
+}
+[data-vl-divider="short"] .studio-area::before {
+  width: 3rem;
+  height: 2px !important;
+  background: var(--vl-mark, var(--user-accent, var(--r))) !important;
+}
+[data-vl-divider="numbered"] .studio-area::before {
+  content: counter(vl-area, decimal-leading-zero) !important;
+  height: auto !important;
+  font-family: var(--studio-label-font, var(--font-mono));
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  color: var(--vl-mark, var(--muted-foreground));
+  background: linear-gradient(var(--r), var(--r)) no-repeat right center / calc(100% - 2.25rem) 1px !important;
+}
+/* Section numbers already shown by Details: the divider keeps only its rule. */
+[data-vl-divider="numbered"]:not([data-vl-details="none"]) .studio-area::before {
+  content: "" !important;
+  height: 1px !important;
+  background: var(--r) !important;
+}
+[data-vl-divider="crosshair"] .studio-area::before {
+  --p: var(--vl-mark, var(--muted-foreground));
+  height: 11px !important;
+  background:
+    linear-gradient(var(--p), var(--p)) left center / 11px 1px no-repeat,
+    linear-gradient(var(--p), var(--p)) 5px center / 1px 11px no-repeat,
+    linear-gradient(var(--p), var(--p)) right center / 11px 1px no-repeat,
+    linear-gradient(var(--p), var(--p)) calc(100% - 5px) center / 1px 11px no-repeat,
+    linear-gradient(var(--r), var(--r)) center / calc(100% - 2.5rem) 1px no-repeat !important;
+}
+[data-vl-divider="marker"] .studio-area::before {
+  content: "§" !important;
+  height: auto !important;
+  font-size: 0.875rem;
+  line-height: 1;
+  color: var(--vl-mark, var(--user-accent, var(--muted-foreground)));
+  background: linear-gradient(var(--r), var(--r)) no-repeat right center / calc(100% - 1.5rem) 1px !important;
+}
+
+/* Rhythm and transitions: the room between areas (added to the page's own
+   spacing; areas keep their Area-settings spacing too). */
+[data-vl-rhythm="editorial"] {
+  --vl-rhythm-space: 1.5rem;
+}
+[data-vl-rhythm="breathing"] {
+  --vl-rhythm-space: 3rem;
+}
+[data-vl-rhythm="compressed"] {
+  --vl-rhythm-space: -0.75rem;
+}
+[data-vl-transition="space"] {
+  --vl-transition-space: 2rem;
+}
+.studio-area ~ .studio-area {
+  margin-top: calc(var(--vl-rhythm-space, 0px) + var(--vl-transition-space, 0px));
+}
+[data-vl-rhythm="editorial"] .studio-area-head {
+  margin-bottom: 1.25rem;
+}
+/* Asymmetric: areas lean alternately left and right on wide screens. */
+@media (min-width: 1024px) {
+  [data-vl-rhythm="asymmetric"] .studio-area:not(:first-of-type):nth-of-type(even) {
+    padding-inline-end: 9%;
+  }
+  [data-vl-rhythm="asymmetric"] .studio-area:not(:first-of-type):nth-of-type(odd) {
+    padding-inline-start: 9%;
+  }
+}
+/* Bands: every other area sits on a quiet full-width band of colour. */
+[data-vl-transition="band"] .studio-area:nth-of-type(even):not(.studio-area-surface) {
+  margin-inline: -1rem;
+  padding: 1.75rem 1rem;
+  background: color-mix(in oklab, var(--user-accent, var(--primary)) 7%, transparent);
+}
+
+/* Grid: a visible structure behind the page (never the editor's guides). */
+.studio-canvas::after {
+  content: none;
+}
+:is(
+    [data-vl-grid="subtle"],
+    [data-vl-grid="editorial"],
+    [data-vl-grid="technical"],
+    [data-vl-grid="modular"],
+    [data-vl-grid="baseline"]
+  ).studio-canvas::after {
+  --g: color-mix(in oklab, var(--foreground) 6%, transparent);
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+[data-vl-grid="subtle"].studio-canvas::after {
+  background: linear-gradient(90deg, var(--g) 1px, transparent 1px) 0 0 / calc(100% / 12) 100%;
+  opacity: 0.6;
+}
+[data-vl-grid="editorial"].studio-canvas::after {
+  background:
+    linear-gradient(90deg, var(--g) 1px, transparent 1px) 0 0 / calc(100% / 4) 100%,
+    linear-gradient(90deg, transparent calc(100% - 1px), var(--g) 0) 0 0 / 100% 100%;
+}
+[data-vl-grid="technical"].studio-canvas::after {
+  --g: color-mix(in oklab, var(--foreground) 7%, transparent);
+  background:
+    linear-gradient(90deg, var(--g) 1px, transparent 1px) 0 0 / calc(100% / 12) 100%,
+    linear-gradient(var(--g) 1px, transparent 1px) 0 0 / 100% 24px;
+  mask-image: linear-gradient(transparent, #000 4rem, #000 calc(100% - 4rem), transparent);
+}
+[data-vl-grid="modular"].studio-canvas::after {
+  background:
+    linear-gradient(90deg, var(--g) 1px, transparent 1px) 0 0 / 48px 48px,
+    linear-gradient(var(--g) 1px, transparent 1px) 0 0 / 48px 48px;
+}
+[data-vl-grid="baseline"].studio-canvas::after {
+  background: linear-gradient(var(--g) 1px, transparent 1px) 0 0 / 100% 8px;
+  opacity: 0.7;
+}
+
+/* Header treatments, on the profile header block. */
+[data-vl-header="editorial"] .studio-header,
+[data-vl-header="minimal"] .studio-header {
+  border-color: transparent;
+  background: transparent;
+}
+[data-vl-header="editorial"] .studio-name {
+  font-size: clamp(2.5rem, 6.5vw, 4.5rem);
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+}
+[data-vl-header="editorial"] .studio-header-avatar [data-avatar] {
+  width: 4.5rem;
+  height: 4.5rem;
+}
+[data-vl-header="editorial"] .studio-header-meta,
+[data-vl-header="split"] .studio-header-meta {
+  font-family: var(--studio-label-font, var(--font-sans));
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+[data-vl-header="signature"] .studio-header {
+  border-color: var(--user-accent-border);
+  background: linear-gradient(
+    150deg,
+    color-mix(in oklab, var(--user-accent, var(--primary)) 16%, var(--surface)),
+    var(--surface) 62%
+  );
+}
+[data-vl-header="signature"] .studio-name {
+  color: var(--user-accent-text);
+}
+[data-vl-header="signature"] .studio-header-avatar [data-avatar] {
+  box-shadow:
+    0 0 0 3px var(--surface),
+    0 0 0 6px var(--user-accent, var(--primary));
+}
+[data-vl-header="minimal"] [data-banner] {
+  display: none;
+}
+[data-vl-header="minimal"] .studio-header-row {
+  margin-top: 0 !important;
+  padding-top: 0.5rem;
+}
+[data-vl-header="minimal"] .studio-header-avatar [data-avatar] {
+  width: 3.5rem;
+  height: 3.5rem;
+}
+[data-vl-header="minimal"] .studio-name {
+  font-size: 1.75rem;
+}
+[data-vl-header="poster"] [data-banner] {
+  height: clamp(15rem, 40vw, 26rem);
+}
+[data-vl-header="poster"] .studio-name {
+  font-size: clamp(2.75rem, 7vw, 5rem);
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+}
+/* Split: banner one side, identity the other, on wider screens. */
+@media (min-width: 768px) {
+  [data-vl-header="split"] .studio-header:has([data-banner]) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    align-items: stretch;
+  }
+  [data-vl-header="split"] .studio-header [data-banner] {
+    height: auto;
+    min-height: 17rem;
+    margin: 0;
+    border-radius: 0;
+    border: 0;
+  }
+  [data-vl-header="split"] .studio-header:has([data-banner]) .studio-header-row {
+    margin-top: 0 !important;
+    padding-top: 2rem;
+  }
+}
+
+/* Decorative details: section numbers and small marks, never on every
+   element. Numbers follow area order (counted on .studio-area). */
+:is(
+    [data-vl-details="minimal"],
+    [data-vl-details="editorial"],
+    [data-vl-details="technical"],
+    [data-vl-details="expressive"]
+  )
+  .studio-area-title::before {
+  content: counter(vl-area, decimal-leading-zero);
+  margin-right: 0.625rem;
+  font-family: var(--studio-label-font, var(--font-mono));
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--vl-mark-text, var(--muted-foreground));
+  vertical-align: 0.2em;
+}
+[data-vl-details="editorial"] .studio-area-title::before {
+  font-family: var(--font-display);
+  font-size: 1.15em;
+  font-style: italic;
+  font-weight: 400;
+  vertical-align: baseline;
+  color: var(--user-accent-text, var(--muted-foreground));
+}
+[data-vl-details="technical"] .studio-area-title::before {
+  content: "[" counter(vl-area, decimal-leading-zero) "]";
+  font-family: var(--font-mono);
+}
+[data-vl-details="expressive"] .studio-area-title::before {
+  content: "→ " counter(vl-area, decimal-leading-zero);
+  color: var(--user-accent-text, var(--muted-foreground));
+}
+[data-vl-details="minimal"] .studio-area-tick,
+[data-vl-details="technical"] .studio-area-tick {
+  display: none;
+}
+/* Technical: a small registration mark on each block's corner. */
+[data-vl-details="technical"] .studio-block {
+  position: relative;
+}
+[data-vl-details="technical"] .studio-block::before {
+  content: "+";
+  position: absolute;
+  top: -0.6rem;
+  left: -0.3rem;
+  font: 400 0.75rem/1 var(--font-mono);
+  color: var(--vl-mark, var(--muted-foreground));
+  pointer-events: none;
+  z-index: 1;
+}
+/* Expressive: a caption-like dot after each area title. */
+[data-vl-details="expressive"] .studio-area-title::after {
+  content: "";
+  display: inline-block;
+  width: 0.375rem;
+  height: 0.375rem;
+  margin-left: 0.5rem;
+  border-radius: 9999px;
+  background: var(--user-accent, var(--primary));
+  vertical-align: 0.15em;
 }

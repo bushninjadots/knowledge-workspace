@@ -52,6 +52,8 @@ describe("normalizeStudioConfig", () => {
       cardColor: "",
       cardOpacity: 30,
       starterId: "focused",
+      visualLanguage: null,
+      look: {},
     });
   });
 
@@ -176,26 +178,22 @@ describe("studioConfigToThemeTokens", () => {
     ).toEqual({ section: "2.5rem" });
   });
 
-  it("editorial enables the Space Grotesk display stack and display-scale heading", () => {
+  it("editorial enables the Space Grotesk display stack", () => {
     const tokens = studioConfigToThemeTokens({
       ...DEFAULT_STUDIO_CONFIG,
       ...personalityPatch("editorial"),
     });
     expect(tokens.typography?.headingFont).toContain("Space Grotesk");
-    expect(tokens.typography?.scale?.heading1).toEqual({
-      fontSize: "clamp(2.5rem, 5vw, 4.5rem)",
-      lineHeight: "1.05",
-      fontWeight: "600",
-    });
+    // Size and hierarchy come from the look's type scale (CSS), not tokens.
+    expect(tokens.typography?.scale).toBeUndefined();
   });
 
-  it("technical uses the JetBrains Mono display stack and a smaller display scale", () => {
+  it("technical uses the JetBrains Mono display stack", () => {
     const tokens = studioConfigToThemeTokens({
       ...DEFAULT_STUDIO_CONFIG,
       ...personalityPatch("technical"),
     });
     expect(tokens.typography?.headingFont).toContain("JetBrains Mono");
-    expect(tokens.typography?.scale?.heading1?.fontSize).toBe("clamp(1.875rem, 3.5vw, 2.5rem)");
   });
 
   it("modern leaves typography untouched", () => {
@@ -204,14 +202,13 @@ describe("studioConfigToThemeTokens", () => {
     ).toBeUndefined();
   });
 
-  it("an editorial Studio set to the theme's face keeps the scale but no face", () => {
+  it("an editorial Studio set to the theme's face sets no face", () => {
     const tokens = studioConfigToThemeTokens({
       ...DEFAULT_STUDIO_CONFIG,
       personality: "editorial",
       headingFont: null,
     });
-    expect(tokens.typography?.headingFont).toBeUndefined();
-    expect(tokens.typography?.scale?.heading1?.fontSize).toBe("clamp(2.5rem, 5vw, 4.5rem)");
+    expect(tokens.typography).toBeUndefined();
   });
 
   it("lets an explicit typeface replace the personality's face", () => {
@@ -223,8 +220,6 @@ describe("studioConfigToThemeTokens", () => {
     });
     expect(tokens.typography?.headingFont).toContain("Fraunces");
     expect(tokens.typography?.bodyFont).toContain("Manrope");
-    // The personality still owns the heading scale.
-    expect(tokens.typography?.scale?.heading1?.fontSize).toBe("clamp(2.5rem, 5vw, 4.5rem)");
   });
 
   it("keeps a modern Studio's chosen body face without inventing a display one", () => {
@@ -425,14 +420,18 @@ describe("blockFrameStyle", () => {
 
   it("emits the per-block border override", () => {
     const none = blockFrameStyle({ frameBorder: "none" }) as Record<string, string>;
-    expect(none["--studio-block-border"]).toBe("none");
+    expect(none["--sb-border-style"]).toBe("none");
+    expect(none["--sb-corners"]).toBe("none");
 
     const forced = blockFrameStyle({ frameBorder: "frame" }) as Record<string, string>;
     // Force-on paints the member's own card-border colour, so a forced block
     // can never disagree with the Card borders setting.
-    expect(forced["--studio-block-border"]).toBe(
-      "var(--card-border-width, 1px) solid var(--card-border-force-color, var(--border))",
-    );
+    expect(forced["--sb-border-style"]).toBe("solid");
+    expect(forced["--sb-border-width"]).toBe("var(--card-border-width, 1px)");
+    expect(forced["--sb-border-color"]).toBe("var(--card-border-force-color, var(--border))");
+
+    const dashed = blockFrameStyle({ frameBorder: "dashed" }) as Record<string, string>;
+    expect(dashed["--sb-border-style"]).toBe("dashed");
   });
 
   it("emits the per-block inset override in px", () => {

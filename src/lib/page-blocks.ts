@@ -225,7 +225,7 @@ export interface LayoutBlockInstance {
   freeform?: boolean;
   /** Per-block frame border: follow the appearance (default), force the
    *  outline on, or remove it. Rendered by the shared `.studio-block` frame. */
-  frameBorder?: "default" | "frame" | "none";
+  frameBorder?: "default" | "frame" | "none" | "dashed" | "dotted" | "double";
   /** Per-block inner spacing in px (0 = content flush to the frame edge).
    *  Omitted = the global frame inset. */
   frameInset?: number;

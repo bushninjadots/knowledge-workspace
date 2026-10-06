@@ -127,13 +127,22 @@ async function ensureCustomizeOpen(page) {
     .catch(() => false);
 }
 
-/** The Style tab groups settings into sub-tabs (Look, Type, Layout, Cards,
- *  Outline); open the one a check needs. */
+/** The Style tab groups settings into sub-tabs (Identity, Look, Layout,
+ *  Outline); open the one a check needs, with its "Fine tune" controls shown
+ *  so every setting is on screen to check. */
 async function openStyleTab(page, name) {
   const tab = page.getByRole("tab", { name, exact: true }).first();
   if (!(await tab.isVisible().catch(() => false))) return false;
   await tab.click({ timeout: 6000 }).catch(() => {});
   await page.waitForTimeout(300);
+  const closed = page.getByRole("button", { name: "Fine tune", expanded: false });
+  for (let i = await closed.count(); i > 0; i--) {
+    await closed
+      .first()
+      .click()
+      .catch(() => {});
+  }
+  await page.waitForTimeout(200);
   return true;
 }
 
@@ -366,6 +375,14 @@ const SNAP = () => {
       bcs.paddingLeft,
     ].join("|");
   });
+  // Type scale and header treatments repaint text, not block boxes.
+  for (const selector of [".studio-name", ".studio-area-title"]) {
+    const el = root.querySelector(selector);
+    if (el) {
+      const tcs = getComputedStyle(el);
+      styles.push(`${selector}|${tcs.fontSize}|${tcs.fontFamily}|${tcs.letterSpacing}`);
+    }
+  }
   return {
     vars,
     styles,
@@ -815,15 +832,20 @@ try {
     await expandMoreOptions(page);
     const probes = [
       ["Structure", ["Column", "Balanced", "Wide"], "Layout"],
-      ["Personality", ["Editorial", "Technical", "Modern"], "Type"],
+      ["Type scale", ["Expressive", "Display", "Standard"], "Identity", "radio"],
       ["Density", ["Compact", "Spacious"], "Layout"],
-      ["Border weight", ["Medium", "Thick", "Thin"], "Cards"],
+      ["Line weight", ["Medium", "Thick", "Thin"], "Look"],
     ];
     const function_ = [];
-    for (const [group, options, styleTab] of probes) {
+    for (const [group, options, styleTab, kind] of probes) {
       await openStyleTab(page, styleTab);
       for (const option of options) {
-        const btn = page.getByRole("button", { name: new RegExp(`^${option}$`, "i") }).first();
+        const btn =
+          kind === "radio"
+            ? page
+                .getByRole("radiogroup", { name: group, exact: true })
+                .getByRole("radio", { name: option, exact: true })
+            : page.getByRole("button", { name: new RegExp(`^${option}$`, "i") }).first();
         if (!(await btn.isVisible().catch(() => false))) {
           function_.push({ group, option, found: false });
           continue;
@@ -834,7 +856,10 @@ try {
         // An option that is already the active one is a no-op by definition, so
         // a forced click on it proves nothing either way. The Studio config
         // persists between runs, so which option that is depends on history.
-        const alreadyActive = (await btn.getAttribute("aria-pressed").catch(() => null)) === "true";
+        const alreadyActive =
+          (await btn
+            .getAttribute(kind === "radio" ? "aria-checked" : "aria-pressed")
+            .catch(() => null)) === "true";
         const before = await page.evaluate(SNAP);
         const clicked = await btn
           .click({ timeout: 6000 })
@@ -943,8 +968,8 @@ try {
     // sliders
     const sliders = [];
     for (const [label, styleTab] of [
-      [/corner radius in pixels/i, "Layout"],
-      [/opacity/i, "Cards"],
+      [/corner radius in pixels/i, "Look"],
+      [/opacity/i, "Look"],
     ]) {
       await openStyleTab(page, styleTab);
       const el = page.getByLabel(label).first();
@@ -984,7 +1009,7 @@ try {
     );
 
     // 6 ─ theme tiles
-    await openStyleTab(page, "Look");
+    await openStyleTab(page, "Identity");
     const tiles = await page.evaluate(THEME_TILES);
     report.sections.themeTiles = tiles;
     const pressed = tiles.filter((t) => t.pressed);
@@ -1003,9 +1028,15 @@ try {
     await openStudio(page);
     await ensureCustomizeOpen(page);
     const perPersonality = {};
-    await openStyleTab(page, "Type");
+    // Type pairings now carry the faces the old personalities implied:
+    // Contemporary (Space Grotesk headings, Inter labels) stands in for
+    // Editorial, Technical adds JetBrains Mono labels, Theme for Modern.
+    await openStyleTab(page, "Identity");
+    const PAIRING = { Editorial: "Contemporary", Technical: "Technical", Modern: "Theme" };
     for (const personality of ["Editorial", "Technical", "Modern"]) {
-      const btn = page.getByRole("button", { name: new RegExp(`^${personality}$`, "i") }).first();
+      const btn = page
+        .getByRole("radiogroup", { name: "Type pairing", exact: true })
+        .getByRole("radio", { name: PAIRING[personality], exact: true });
       await btn.evaluate((el) => el.scrollIntoView({ block: "center" })).catch(() => {});
       await btn.click({ timeout: 6000 }).catch(() => {});
       await page.waitForTimeout(800);
@@ -1025,7 +1056,7 @@ try {
       );
       const off = micro.filter((r) => r.family !== want);
       const headings = rows.filter((r) => /^h[123]$/.test(r.tag) && !r.bodyFace);
-      const titleWant = personality === "Technical" ? "JetBrains Mono" : "Space Grotesk";
+      const titleWant = "Space Grotesk";
       const headingsOff = headings.filter((r) => r.family !== titleWant);
       log(
         `${personality} reaches the micro-labels it promises`,

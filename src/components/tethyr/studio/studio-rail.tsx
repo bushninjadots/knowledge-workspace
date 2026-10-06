@@ -507,8 +507,8 @@ function BlockFrameSection({
         <div>
           <p className="text-xs font-medium text-foreground">Outline for this block</p>
           <p className="mt-0.5 text-2xs leading-snug text-muted-foreground-subtle">
-            Theme uses the single global Card outline setting. Choose On or Off only to make this
-            block different.
+            Follow uses the page&rsquo;s Borders setting. Pick another only to make this block
+            different.
           </p>
         </div>
       </div>
@@ -520,8 +520,11 @@ function BlockFrameSection({
         {(
           [
             ["default", "Follow"],
-            ["frame", "On"],
-            ["none", "Off"],
+            ["frame", "Solid"],
+            ["none", "None"],
+            ["dashed", "Dashed"],
+            ["dotted", "Dotted"],
+            ["double", "Double"],
           ] as Array<[BlockFrameBorder, string]>
         ).map(([option, text]) => (
           <button

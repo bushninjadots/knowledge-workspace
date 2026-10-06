@@ -28,6 +28,11 @@ export function areaSurfaceClass(section: LayoutSection): string {
   const background = appearance.background ?? "none";
   const hasSurface = background !== "none";
   return cn(
+    // Hooks for the visual language (styles.css): rhythm, transitions,
+    // the page-wide divider and section numbers key off these.
+    "studio-area",
+    hasSurface && "studio-area-surface",
+    (appearance.divider ?? "none") !== "none" && "studio-area-own-divider",
     hasSurface &&
       (appearance.bleed
         ? // Edge to edge across the Studio column, flush corners.
@@ -117,15 +122,15 @@ export function AreaTitle({ section, action }: { section: LayoutSection; action?
   const title = areaTitle(section);
   if (!title && !action) return null;
   return (
-    <header className="mb-3 flex items-center gap-2">
+    <header className="studio-area-head mb-3 flex items-center gap-2">
       {title && (
         <>
           <span
             aria-hidden
-            className="h-3 w-0.5 shrink-0 rounded-full"
-            style={{ backgroundColor: "var(--user-accent, var(--trust))" }}
+            className="studio-area-tick h-3 w-0.5 shrink-0 rounded-full"
+            style={{ backgroundColor: "var(--vl-mark, var(--user-accent, var(--trust)))" }}
           />
-          <h2 className="t-label">{title}</h2>
+          <h2 className="studio-area-title t-label">{title}</h2>
         </>
       )}
       <span aria-hidden className="t-rule flex-1" />

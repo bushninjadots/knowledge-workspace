@@ -12,6 +12,7 @@ const Avatar = React.forwardRef<
   <AvatarPrimitive.Root
     ref={ref}
     style={style}
+    data-avatar=""
     className={cn(
       "relative flex h-10 w-10 shrink-0 overflow-hidden rounded-[var(--avatar-radius,9999px)] [clip-path:var(--avatar-clip)]",
       className,

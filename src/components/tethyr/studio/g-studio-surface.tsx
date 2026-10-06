@@ -90,6 +90,7 @@ import {
 import { useCardInk } from "@/hooks/use-card-ink";
 import { useIsMobile, useMediaQuery } from "@/hooks/use-mobile";
 import { IconButton } from "./studio-controls";
+import { LookFilters, lookCanvasAttributes } from "@/components/tethyr/page/look-canvas";
 import { GStudioPreviewFrame } from "./studio-preview-frame";
 import { GStudioTopBar } from "./studio-top-bar";
 import { GStudioRail, type RailTab } from "./studio-rail";
@@ -574,13 +575,18 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
               ref={cardInk.ref}
               data-card-ink={cardInk.active ? "" : undefined}
               // Bottom room for the docked phone editor bar so it never covers a block.
-              className={cn("mx-auto w-full", editing && compact && "pb-36")}
+              className={cn(
+                "studio-canvas relative isolate mx-auto w-full",
+                editing && compact && "pb-36",
+              )}
+              {...lookCanvasAttributes(props.config)}
               style={{
                 ...CARD_SURFACE_STYLE,
                 ...cardInk.style,
                 maxWidth,
               }}
             >
+              <LookFilters />
               <GStudioCanvas
                 {...props}
                 sections={sections}

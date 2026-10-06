@@ -4,6 +4,7 @@
 // controls (banner, profile photo, caption, identity, appearance) available
 // without opening the full block editor. "Open editor" launches the builder.
 
+import { LookFilters, lookCanvasAttributes } from "@/components/tethyr/page/look-canvas";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
@@ -311,7 +312,12 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
           </div>
         ) : (
           <div className="mx-auto flex w-full items-start justify-center gap-6 px-4 pb-24 pt-6 sm:px-6">
-            <div className="w-full min-w-0" style={{ maxWidth }}>
+            <div
+              className="studio-canvas relative isolate w-full min-w-0"
+              style={{ maxWidth }}
+              {...lookCanvasAttributes(config)}
+            >
+              <LookFilters />
               <StudioOnboardingChecklist
                 ready={!!me}
                 starterChosen={

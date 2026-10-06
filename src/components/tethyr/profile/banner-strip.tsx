@@ -121,6 +121,7 @@ export function BannerStrip({
 
   const banner = (
     <div
+      data-banner=""
       className="group relative -m-6 mb-6 h-48 overflow-hidden rounded-t-xl border border-b-0 bg-surface-sunken transition-colors duration-150 sm:-m-8 sm:mb-8 sm:h-72"
       style={{ borderColor: accentColor ?? "transparent" }}
     >
