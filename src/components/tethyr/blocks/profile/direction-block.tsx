@@ -67,7 +67,7 @@ function ProfileDirectionBlock({ config, context }: BlockProps) {
       (config.showAvailability !== false && !!data.availability) ||
       (config.showGoals !== false && !!data.learning_goals));
   useEffect(() => {
-    if (isLoading || isEditing || !blockId) return;
+    if (isLoading || !blockId) return;
     onBlockEmptyChange?.(blockId, !hasContent);
   }, [blockId, hasContent, isEditing, isLoading, onBlockEmptyChange]);
 

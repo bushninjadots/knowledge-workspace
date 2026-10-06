@@ -68,7 +68,7 @@ function ProfileCollaboratorsBlock({ context }: BlockProps) {
   });
 
   useEffect(() => {
-    if (isLoading || isEditing || !blockId) return;
+    if (isLoading || !blockId) return;
     onBlockEmptyChange?.(blockId, !data || data.length === 0);
   }, [blockId, data, isEditing, isLoading, onBlockEmptyChange]);
 

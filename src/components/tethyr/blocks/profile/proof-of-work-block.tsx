@@ -162,7 +162,7 @@ function ProfileProofOfWorkBlock({ config, context }: BlockProps) {
 
   const hasContent = items.length > 0;
   useEffect(() => {
-    if (isLoading || isEditing || !blockId) return;
+    if (isLoading || !blockId) return;
     onBlockEmptyChange?.(blockId, !hasContent);
   }, [blockId, hasContent, isEditing, isLoading, onBlockEmptyChange]);
 

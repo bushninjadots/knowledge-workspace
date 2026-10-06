@@ -79,7 +79,7 @@ function ProjectAboutBlock({ config, context }: BlockProps) {
 
   // Report emptiness so the public Studio collapses the band until it's written.
   useEffect(() => {
-    if (isProject || profileQuery.isLoading || isEditing || !blockId) return;
+    if (isProject || profileQuery.isLoading || !blockId) return;
     onBlockEmptyChange?.(blockId, !hasReadme);
   }, [blockId, hasReadme, isEditing, isProject, onBlockEmptyChange, profileQuery.isLoading]);
 

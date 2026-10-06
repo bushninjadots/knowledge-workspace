@@ -77,7 +77,7 @@ function ProfileActivityHeatmapBlock({ config, context }: BlockProps) {
 
   const hasContent = total > 0;
   useEffect(() => {
-    if (isLoading || isEditing || !blockId) return;
+    if (isLoading || !blockId) return;
     onBlockEmptyChange?.(blockId, !hasContent);
   }, [blockId, hasContent, isEditing, isLoading, onBlockEmptyChange]);
 

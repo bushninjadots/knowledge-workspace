@@ -59,6 +59,7 @@ import {
   toTethyrConfig,
   preferredGridWidth,
   seedGridFromLayout,
+  withFittedGrid,
   type HistoryEntry,
 } from "@/lib/studio-layout";
 import {
@@ -699,6 +700,16 @@ export function CreationStudio({
     [layoutWithGrid],
   );
 
+  // Content auto-fit: patch the working layout and the saved baseline alike,
+  // so measuring heights never marks the draft dirty, autosaves, or marks an
+  // area as hand-arranged (which would change how the public page lays it out).
+  const fitGrid = useCallback((sectionId: string, fitted: LayoutGridItem[]) => {
+    const patch = (source: PageLayout | null) =>
+      source ? (withFittedGrid(source, sectionId, fitted) ?? source) : source;
+    setLayout(patch);
+    setSavedLayout(patch);
+  }, []);
+
   // Discrete grid edits (the width stepper) are their own undo step.
   const commitGrid = useCallback(
     (sectionId: string, nextGrid: LayoutGridItem[]) => {
@@ -1180,11 +1191,16 @@ export function CreationStudio({
         canRedo={future.length > 0}
         profile={profile}
         userId={userId}
-        onModeChange={setMode}
+        onModeChange={(next) => {
+          setMode(next);
+          // The preview frames the saved draft, so save pending edits first.
+          if (next === "preview" && dirty) void save({ announce: false });
+        }}
         onDeviceChange={setDevice}
         onSelect={setSelectedBlockId}
         onGridChange={applyGrid}
         onResizeBlock={commitGrid}
+        onGridFit={fitGrid}
         onGridInteractionStart={beginGridInteraction}
         onGridInteractionEnd={endGridInteraction}
         onUpdateBlockConfig={updateBlockConfig}

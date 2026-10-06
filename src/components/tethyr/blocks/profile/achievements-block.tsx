@@ -48,7 +48,7 @@ function ProfileAchievementsBlock({ config, context }: BlockProps) {
   const achievements = data ?? [];
   const hasContent = achievements.length > 0;
   useEffect(() => {
-    if (isLoading || isEditing || !blockId) return;
+    if (isLoading || !blockId) return;
     onBlockEmptyChange?.(blockId, !hasContent);
   }, [blockId, hasContent, isEditing, isLoading, onBlockEmptyChange]);
 

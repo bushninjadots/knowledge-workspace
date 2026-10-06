@@ -42,6 +42,9 @@ interface PageShellProps {
   previewTheme?: import("@/lib/page-blocks").ThemeTokens;
   previewData?: Record<string, unknown>;
   previewMode?: "private" | "public";
+  /** The "Public preview · Back to Studio" strip. Off when the page is framed
+   *  inside the editor's device preview, which has its own chrome. */
+  showPreviewBanner?: boolean;
   onBackToStudio?: () => void;
   profileMedia?: { avatarUrl: string | null; bannerUrl: string | null };
   onProfileMediaSaved?: () => void;
@@ -69,6 +72,7 @@ export function PageShell({
   previewTheme,
   previewData,
   previewMode,
+  showPreviewBanner = true,
   onBackToStudio,
   profileMedia,
   onProfileMediaSaved,
@@ -370,7 +374,7 @@ export function PageShell({
           aria-label={`${ownerType} page`}
         >
           {backgroundSlot}
-          {previewMode && (
+          {previewMode && showPreviewBanner && (
             <div className="mx-auto flex max-w-7xl items-center justify-between border-b border-border/60 px-4 py-3 sm:px-8">
               <div>
                 <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">

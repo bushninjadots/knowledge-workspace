@@ -34,7 +34,7 @@ function ProfileBioBlock({ config, context }: BlockProps) {
 
   const hasBio = !!data?.bio?.trim() && config.showAbout !== false;
   useEffect(() => {
-    if (isLoading || isEditing || !blockId) return;
+    if (isLoading || !blockId) return;
     onBlockEmptyChange?.(blockId, !hasBio);
   }, [blockId, hasBio, isEditing, isLoading, onBlockEmptyChange]);
 

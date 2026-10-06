@@ -102,7 +102,7 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
     projects.length > 0 ? projects.map((p) => p.project.id) : null,
   );
   useEffect(() => {
-    if (isLoading || isEditing || !blockId) return;
+    if (isLoading || !blockId) return;
     onBlockEmptyChange?.(blockId, projects.length === 0);
   }, [blockId, isEditing, isLoading, onBlockEmptyChange, projects.length]);
 

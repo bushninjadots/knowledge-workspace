@@ -56,7 +56,7 @@ function ProfileReadmeBlock({ config, context }: BlockProps) {
 
   // Report emptiness so the public Studio collapses the band until it's written.
   useEffect(() => {
-    if (isLoading || isEditing || !blockId) return;
+    if (isLoading || !blockId) return;
     onBlockEmptyChange?.(blockId, !hasReadme);
   }, [blockId, hasReadme, isEditing, isLoading, onBlockEmptyChange]);
 

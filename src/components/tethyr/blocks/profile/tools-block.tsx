@@ -31,7 +31,7 @@ function ProfileToolsBlock({ config, context }: BlockProps) {
   const stack = data && config.showStack !== false ? (data.software_stack ?? []) : [];
   const hasContent = tools.length > 0 || stack.length > 0;
   useEffect(() => {
-    if (isLoading || isEditing || !blockId) return;
+    if (isLoading || !blockId) return;
     onBlockEmptyChange?.(blockId, !hasContent);
   }, [blockId, hasContent, isEditing, isLoading, onBlockEmptyChange]);
 

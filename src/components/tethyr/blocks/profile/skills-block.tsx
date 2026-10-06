@@ -59,7 +59,7 @@ function ProfileSkillsBlock({ context, config }: BlockProps) {
   const teach = data?.teach ?? [];
   const learn = data?.learn ?? [];
   useEffect(() => {
-    if (isLoading || isEditing || !blockId) return;
+    if (isLoading || !blockId) return;
     onBlockEmptyChange?.(blockId, teach.length === 0 && learn.length === 0);
   }, [blockId, isEditing, isLoading, learn.length, onBlockEmptyChange, teach.length]);
 

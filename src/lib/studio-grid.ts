@@ -164,10 +164,11 @@ function minRowsForContent(
   return Math.max(minRows, Math.ceil((contentPx + marginY) / (rowHeight + marginY)));
 }
 
-/** Grow a block's rows to fit its measured content, pushing any neighbours it
- *  would now overlap downward so the grid never ends up with overlapping
- *  blocks. Returns the updated grid or null when no change is needed. */
-export function growGridItemToContent(
+/** Size a block's rows to its measured content (growing or shrinking),
+ *  pushing any neighbours it would now overlap downward so the grid never ends
+ *  up with overlapping blocks. Returns the updated grid or null when no change
+ *  is needed. */
+export function fitGridItemToContent(
   grid: LayoutGridItem[],
   blockId: string,
   contentPx: number,
@@ -176,8 +177,10 @@ export function growGridItemToContent(
 ): LayoutGridItem[] | null {
   const item = grid.find((candidate) => candidate.i === blockId);
   if (!item) return null;
+  // Fit both ways: the public page sizes rows to content and ignores `h`,
+  // so a frame taller than its content only ever misled the editor.
   const rows = minRowsForContent(contentPx, rowHeight, marginY, item.minH ?? 1);
-  if (rows <= item.h) return null;
+  if (rows === item.h) return null;
   const grown = { ...item, h: rows };
   const updated = grid.map((candidate) => (candidate.i === blockId ? grown : candidate));
   return pushDownOverlaps(updated);

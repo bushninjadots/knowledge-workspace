@@ -48,6 +48,15 @@ export const Route = createFileRoute("/u/$handle")({
       .transform((v) => v === true || v === "true")
       .optional()
       .catch(undefined),
+    // Owner-only: render the saved draft instead of the published version.
+    // The Studio editor's device preview frames `?embed=true&draft=true` so
+    // its phone/tablet preview uses the real page at a real viewport width.
+    // Ignored for anyone but the owner.
+    draft: z
+      .union([z.boolean(), z.literal("true"), z.literal("false")])
+      .transform((v) => v === true || v === "true")
+      .optional()
+      .catch(undefined),
   }),
   head: ({ loaderData, params }) => {
     // loaderData is the same object fetchPublicProfile resolves to (or null).

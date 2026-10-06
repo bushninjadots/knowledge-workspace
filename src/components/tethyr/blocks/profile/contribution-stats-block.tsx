@@ -28,7 +28,7 @@ function ProfileContributionStatsBlock({ config, context }: BlockProps) {
   const isEmpty = stats.every((stat) => stat.value === 0);
 
   useEffect(() => {
-    if (isLoading || isEditing || !blockId) return;
+    if (isLoading || !blockId) return;
     onBlockEmptyChange?.(blockId, isEmpty);
   }, [blockId, isEmpty, isEditing, isLoading, onBlockEmptyChange]);
 

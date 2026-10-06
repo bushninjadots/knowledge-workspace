@@ -264,3 +264,40 @@ export function seedGridFromLayout(
   });
   return grid;
 }
+
+/**
+ * Apply content auto-fit (new `y`/`h` for an area's grid items) to a layout.
+ * Only rows move; widths, order and everything else stay. The editor applies
+ * this to both the working layout and the saved baseline: heights are an
+ * editor-only measurement (the public page sizes rows to content), so a fit
+ * must never count as an unsaved edit or trigger a save on its own.
+ */
+export function withFittedGrid(
+  layout: PageLayout,
+  sectionId: string,
+  fitted: LayoutGridItem[],
+): PageLayout | null {
+  const byId = new Map(fitted.map((item) => [item.i, item]));
+  let changed = false;
+  const sections = layout.sections.map((section) => {
+    if (section.id !== sectionId || !section.grid) return section;
+    let sectionChanged = false;
+    const grid = section.grid.map((item) => {
+      const fit = byId.get(item.i);
+      if (!fit || (fit.y === item.y && fit.h === item.h)) return item;
+      sectionChanged = true;
+      return { ...item, y: fit.y, h: fit.h };
+    });
+    if (!sectionChanged) return section;
+    changed = true;
+    const heights = new Map(grid.map((item) => [item.i, item.h]));
+    return {
+      ...section,
+      grid,
+      blocks: section.blocks.map((block) =>
+        heights.has(block.id) ? { ...block, height: heights.get(block.id) } : block,
+      ),
+    };
+  });
+  return changed ? { sections } : null;
+}

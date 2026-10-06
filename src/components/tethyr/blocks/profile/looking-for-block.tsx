@@ -23,7 +23,7 @@ function ProfileLookingForBlock({ config, onChange, context }: BlockProps) {
   const { blockId, onBlockEmptyChange } = context;
 
   useEffect(() => {
-    if (context.isEditing || !blockId) return;
+    if (!blockId) return;
     onBlockEmptyChange?.(blockId, hidden);
   }, [blockId, context.isEditing, hidden, onBlockEmptyChange]);
 

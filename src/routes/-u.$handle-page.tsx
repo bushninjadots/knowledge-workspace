@@ -40,7 +40,8 @@ export function PublicProfileRoute() {
   const { handle } = useParams({ from: "/u/$handle" });
   // embed is optional in the search schema (see the route file: a default
   // would force a 307 on every param-less visit), so undefined means false.
-  const { embed = false } = useSearch({ from: "/u/$handle" });
+  const { embed = false, draft = false } = useSearch({ from: "/u/$handle" });
+  const { data: me } = useCurrentUser();
   const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery({
@@ -75,9 +76,13 @@ export function PublicProfileRoute() {
   // Public parity: this query stays published-only. The owner builder (and the
   // owner's Studio view at /profile) provisions its draft itself — letting the
   // public route create pages would race the owner's own provisioning.
+  // The owner's draft preview (the editor's device frames) reads the draft;
+  // everyone else, and the owner without ?draft, gets the published page.
+  const previewDraft = draft && !!me?.userId && me.userId === data?.profile?.id;
   const profilePageQuery = useProfilePage({
     profileId: data?.profile?.id ?? "",
     isOwner: false,
+    previewDraft,
   });
   const { page: profilePage } = profilePageQuery;
 
@@ -135,7 +140,12 @@ export function PublicProfileRoute() {
           <PageShell
             ownerId={profile.id}
             ownerType="profile"
-            isOwner={false}
+            // A draft preview needs owner access to read the draft, but renders
+            // exactly as visitors will see it (previewMode="public").
+            isOwner={previewDraft}
+            previewDraft={previewDraft}
+            previewMode={previewDraft ? "public" : undefined}
+            showPreviewBanner={!embed}
             pageCreationAction={profilePageQuery.createPage}
             pageCreationError={profilePageQuery.pageCreationError}
             pageCreationPending={profilePageQuery.pageCreationPending}

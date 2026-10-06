@@ -87,7 +87,7 @@ import type { BlockShape } from "@/lib/page-blocks";
 import {
   COLS,
   findSection,
-  growGridItemToContent,
+  fitGridItemToContent,
   sectionGrid,
   sectionLabel,
   settleGridSnap,
@@ -149,6 +149,8 @@ interface GStudioSurfaceProps {
   onSelect: (id: string | null) => void;
   /** Live grid updates (drag/resize frames, auto-fit) — not undo steps. */
   onGridChange: (sectionId: string, grid: LayoutGridItem[]) => void;
+  /** Content auto-fit of row heights — never an edit, never saved alone. */
+  onGridFit: (sectionId: string, grid: LayoutGridItem[]) => void;
   /** A discrete grid edit (the width stepper), recorded as one undo step. */
   onResizeBlock: (sectionId: string, grid: LayoutGridItem[]) => void;
   onGridInteractionStart: () => void;
@@ -218,11 +220,11 @@ interface GStudioSurfaceProps {
 }
 
 const EditorGrid = WidthProvider(LegacyGridLayout);
+/** Preview frame widths. The preview is the real public page in an iframe,
+ *  so these are true viewport widths and every breakpoint applies. */
 const DEVICE_WIDTHS: Record<GStudioDevice, number | undefined> = {
   desktop: undefined,
-  // Public CSS grids use `md` = 996px, so the tablet frame lands on the same
-  // 12-column grid instead of the editor-only 8-column `sm` layout.
-  tablet: 996,
+  tablet: 834,
   mobile: 390,
 };
 const BLOCK_CATEGORY_ORDER: BlockCategory[] = [
@@ -501,63 +503,132 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
       />
       {editing && props.starterPrompt && <GStarterStrip {...props.starterPrompt} />}
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        <main
-          className="relative min-w-0 flex-1 overflow-y-auto bg-[var(--studio-bg,var(--background))] bg-noise text-foreground"
-          aria-label="Studio canvas"
-          data-personality={props.config.personality}
-          style={surfaceStyle}
-        >
-          <BackgroundLayer
-            background={me?.background}
-            imageUrl={me?.backgroundImageUrl}
-            bannerColor={palette?.dominant ?? null}
+        {props.mode === "preview" ? (
+          <GStudioPreviewFrame
+            handle={props.profile?.handle ?? null}
+            width={deviceWidth}
+            saving={props.saving}
+            reloadKey={props.lastSavedAt ?? 0}
           />
-          {/* Card surfaces nest under the theme tokens they derive from. */}
-          <div
-            ref={cardInk.ref}
-            data-card-ink={cardInk.active ? "" : undefined}
-            // Bottom room for the docked phone editor bar so it never covers a block.
-            className={cn("mx-auto w-full", editing && compact && "pb-36")}
-            style={{
-              ...CARD_SURFACE_STYLE,
-              ...cardInk.style,
-              // Desktop preview is full-bleed like the public page; edit and
-              // tablet/mobile preview stay capped (structure or device width).
-              maxWidth: deviceWidth ?? (props.mode === "preview" ? undefined : maxWidth),
-            }}
+        ) : (
+          <main
+            className="relative isolate min-w-0 flex-1 overflow-y-auto bg-[var(--studio-bg,var(--background))] bg-noise text-foreground"
+            aria-label="Studio canvas"
+            data-personality={props.config.personality}
+            style={surfaceStyle}
           >
-            {deviceWidth !== undefined && (
-              <div
-                className="pointer-events-none sticky top-0 z-10 flex justify-end px-2 py-1"
-                aria-hidden
-              >
-                <span className="rounded-full border border-border bg-[var(--surface-elevated)] px-2 py-0.5 font-mono text-2xs text-muted-foreground">
-                  {deviceWidth}px
-                </span>
+            {/* Pinned to the visible canvas: absolute inside this scroll box,
+                the backdrop scrolled away after the first screen. */}
+            <div aria-hidden className="pointer-events-none sticky top-0 -z-10 h-0">
+              <div className="relative h-[calc(100dvh-3rem)]">
+                <BackgroundLayer
+                  background={me?.background}
+                  imageUrl={me?.backgroundImageUrl}
+                  bannerColor={palette?.dominant ?? null}
+                />
               </div>
-            )}
-            <GStudioCanvas
-              {...props}
-              sections={sections}
-              editing={editing}
-              directManipulation={directManipulation}
-              touchDrag={touch}
-              frameWidth={deviceWidth}
-              onBlockEmptyChange={handleBlockEmpty}
-              emptyBlockIds={emptyBlocks}
-              snapToBlocks={snapToBlocks}
-              onGridChange={props.onGridChange}
-              onRequestPalette={(sectionId) => {
-                props.onPaletteTargetChange(sectionId);
-                setRailTab("add");
+            </div>
+            {/* Card surfaces nest under the theme tokens they derive from. */}
+            <div
+              ref={cardInk.ref}
+              data-card-ink={cardInk.active ? "" : undefined}
+              // Bottom room for the docked phone editor bar so it never covers a block.
+              className={cn("mx-auto w-full", editing && compact && "pb-36")}
+              style={{
+                ...CARD_SURFACE_STYLE,
+                ...cardInk.style,
+                maxWidth,
               }}
-            />
-          </div>
-        </main>
+            >
+              <GStudioCanvas
+                {...props}
+                sections={sections}
+                editing={editing}
+                directManipulation={directManipulation}
+                touchDrag={touch}
+                onBlockEmptyChange={handleBlockEmpty}
+                emptyBlockIds={emptyBlocks}
+                snapToBlocks={snapToBlocks}
+                onGridChange={props.onGridChange}
+                onRequestPalette={(sectionId) => {
+                  props.onPaletteTargetChange(sectionId);
+                  setRailTab("add");
+                }}
+              />
+            </div>
+          </main>
+        )}
         {editing && railTab && <GStudioRail {...props} tab={railTab} onTabChange={setRailTab} />}
         {editing && compact && <GMobileEditSheet {...props} />}
       </div>
     </div>
+  );
+}
+
+/**
+ * Preview = the real public page, rendering the saved draft, in an iframe at
+ * a true device width. The editor canvas can't stand in for it: its frame
+ * narrows a box, but breakpoints follow the window, so a "phone" preview used
+ * to show the desktop grid. Waits for an in-flight save so it never shows a
+ * draft older than the canvas; a new save reloads it.
+ */
+function GStudioPreviewFrame({
+  handle,
+  width,
+  saving,
+  reloadKey,
+}: {
+  handle: string | null;
+  width: number | undefined;
+  saving: boolean;
+  reloadKey: number;
+}) {
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => setLoaded(false), [reloadKey]);
+  return (
+    <section
+      aria-label="Preview"
+      className="relative flex min-h-0 min-w-0 flex-1 justify-center overflow-hidden bg-[var(--surface-sunken)] sm:px-4 sm:pt-3"
+    >
+      {!handle ? (
+        <p className="m-auto max-w-xs text-center text-sm text-muted-foreground">
+          Choose a handle in Settings to preview your public page.
+        </p>
+      ) : saving ? (
+        <p className="m-auto text-sm text-muted-foreground" role="status">
+          Saving your draft…
+        </p>
+      ) : (
+        <div
+          className="relative flex h-full w-full flex-col"
+          style={{ maxWidth: width !== undefined ? width + 2 : undefined }}
+        >
+          {width !== undefined && (
+            <span className="mb-1 self-end font-mono text-2xs text-muted-foreground">
+              {width}px
+            </span>
+          )}
+          {!loaded && (
+            <p
+              role="status"
+              className="absolute inset-x-0 top-1/3 text-center text-sm text-muted-foreground"
+            >
+              Loading preview…
+            </p>
+          )}
+          <iframe
+            key={reloadKey}
+            src={`/u/${encodeURIComponent(handle)}?embed=true&draft=true`}
+            title="Your Studio as visitors will see it after you publish"
+            onLoad={() => setLoaded(true)}
+            className={cn(
+              "min-h-0 w-full flex-1 bg-background sm:rounded-t-md sm:border sm:border-b-0 sm:border-border",
+              !loaded && "opacity-0",
+            )}
+          />
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -875,8 +946,8 @@ function GStudioTopBar({
         <div className="flex min-h-5 items-center gap-2 border-t border-border bg-[var(--surface)] px-3 py-0.5">
           <span className="t-label">Editing</span>
           <span className="truncate text-2xs text-muted-foreground-subtle pointer-coarse:hidden">
-            Drag blocks between areas · pull an edge or corner to resize · arrow keys nudge · Del
-            removes · Ctrl/⌘D duplicates · click a block for border and spacing options
+            Drag blocks between areas · pull a block's right edge to change its width · arrow keys
+            nudge · Del removes · Ctrl/⌘D duplicates · click a block for its settings
           </span>
           <span className="hidden truncate text-2xs text-muted-foreground-subtle pointer-coarse:inline">
             Tap a block to edit it · use Edit Studio below to arrange and add
@@ -992,7 +1063,6 @@ function GStudioCanvas({
   editing,
   directManipulation,
   touchDrag,
-  frameWidth,
   snapToBlocks,
   onRequestPalette,
   ...props
@@ -1001,20 +1071,12 @@ function GStudioCanvas({
   editing: boolean;
   directManipulation: boolean;
   touchDrag: boolean;
-  frameWidth?: number;
   snapToBlocks: boolean;
   onRequestPalette: (id: string) => void;
 }) {
   return (
     <div
-      className={cn(
-        "mx-auto w-full px-4 pb-24 pt-5 sm:px-6",
-        // A device frame gets a hairline bezel so the simulated viewport reads
-        // as a viewport, not as the canvas shrinking.
-        frameWidth !== undefined &&
-          "border-x border-border bg-[var(--surface-sunken)] shadow-[0_0_0_1px_var(--background)]",
-      )}
-      style={{ maxWidth: frameWidth ?? undefined }}
+      className="mx-auto w-full px-4 pb-24 pt-5 sm:px-6"
       onClick={() => editing && props.onSelect(null)}
     >
       <div className="flex flex-col" style={{ gap: "calc(var(--studio-gap, 14px) * 1.6)" }}>
@@ -1179,10 +1241,14 @@ function GSectionBand({
   marginRef.current = margin;
   const editingRef = useRef(editing);
   editingRef.current = editing;
-  const onGridChangeRef = useRef(props.onGridChange);
-  onGridChangeRef.current = props.onGridChange;
+  const onGridFitRef = useRef(props.onGridFit);
+  onGridFitRef.current = props.onGridFit;
   const sectionIdRef = useRef(section.id);
   sectionIdRef.current = section.id;
+  // True between a drag/resize start and its stop. The grid library also
+  // reports layout changes on its own (echoing a stale layout after a prop
+  // change), which fought content auto-fit in a loop; only a gesture is an edit.
+  const gestureRef = useRef(false);
   const pendingFitRef = useRef<Map<string, number>>(new Map());
   const fitTimerRef = useRef<number | null>(null);
   const fitBlock = useCallback((blockId: string, contentPx: number) => {
@@ -1209,7 +1275,7 @@ function GSectionBand({
       let current = gridRef.current;
       let changed = false;
       for (const [blockId, px] of pendingFitRef.current) {
-        const updated = growGridItemToContent(
+        const updated = fitGridItemToContent(
           current,
           blockId,
           px,
@@ -1222,7 +1288,7 @@ function GSectionBand({
         }
       }
       pendingFitRef.current.clear();
-      if (changed) onGridChangeRef.current(sectionIdRef.current, current);
+      if (changed) onGridFitRef.current(sectionIdRef.current, current);
     };
     fitTimerRef.current = window.setTimeout(run, 0);
   }, []);
@@ -1376,7 +1442,8 @@ function GSectionBand({
             droppingItem={dropItem}
             draggableCancel={BLOCK_DRAG_CANCEL}
             draggableHandle={touchDrag ? ".studio-drag-handle" : undefined}
-            resizeHandles={["se", "e", "s"]}
+            // Width only: heights follow content (the public page ignores them).
+            resizeHandles={["e"]}
             resizeHandle={ResizeHandle}
             useCSSTransforms
             compactType={null}
@@ -1384,9 +1451,17 @@ function GSectionBand({
             // parks at the last free spot instead of shoving everything away.
             preventCollision
 
-            onDragStart={() => props.onGridInteractionStart()}
-            onResizeStart={() => props.onGridInteractionStart()}
+            onDragStart={() => {
+              gestureRef.current = true;
+              props.onGridInteractionStart();
+            }}
+            onResizeStart={() => {
+              gestureRef.current = true;
+              props.onGridInteractionStart();
+            }}
             onDragStop={(current, _oldItem, newItem, _placeholder, event) => {
+              // The final onLayoutChange lands after this callback.
+              window.setTimeout(() => (gestureRef.current = false), 0);
               props.onGridInteractionEnd();
               if (!editing || !directManipulation || !newItem) return;
               const blockId = String(newItem.i);
@@ -1422,7 +1497,10 @@ function GSectionBand({
                 window.setTimeout(() => props.onGridChange(section.id, settled), 0);
               }
             }}
-            onResizeStop={() => props.onGridInteractionEnd()}
+            onResizeStop={() => {
+              window.setTimeout(() => (gestureRef.current = false), 0);
+              props.onGridInteractionEnd();
+            }}
             onDrop={(_layout, item, event) => {
               const type =
                 props.dragType ?? (event as DragEvent).dataTransfer?.getData("text/plain");
@@ -1432,7 +1510,7 @@ function GSectionBand({
               }
             }}
             onLayoutChange={(next) => {
-              if (!editing) return;
+              if (!editing || !gestureRef.current) return;
               props.onGridChange(
                 section.id,
                 next.map((item) => ({
@@ -1561,6 +1639,7 @@ const GBlockFrame = forwardRef<
 ) {
   const def = getBlock(block.type);
   const contentRef = useRef<HTMLDivElement | null>(null);
+  const innerRef = useRef<HTMLDivElement | null>(null);
   const blockContext = {
     ownerId: props.userId,
     ownerType: "profile" as const,
@@ -1569,7 +1648,8 @@ const GBlockFrame = forwardRef<
     isEditing: editing,
     isOwner: true,
     data: props.profile ? { profile: props.profile } : undefined,
-    onBlockEmptyChange: editing ? undefined : props.onBlockEmptyChange,
+    // Reported while editing too: the frame flags blocks visitors won't see.
+    onBlockEmptyChange: props.onBlockEmptyChange,
     onCompleteProfile: props.onCompleteProfile,
     onAddProject: props.onAddProject,
   } as BlockContext;
@@ -1578,17 +1658,23 @@ const GBlockFrame = forwardRef<
   useEffect(() => {
     if (!editing || fluid || !reportContentHeight) return;
     const node = contentRef.current;
-    if (!node) return;
+    const inner = innerRef.current;
+    if (!node || !inner) return;
     let frame = 0;
+    // Natural height = the content's own height plus the frame's padding. The
+    // frame's scrollHeight can't shrink below the frame, so it only grew.
     const report = () => {
       window.cancelAnimationFrame(frame);
       frame = window.requestAnimationFrame(() => {
-        reportContentHeight(block.id, node.scrollHeight);
+        const box = getComputedStyle(node);
+        const padding = parseFloat(box.paddingTop) + parseFloat(box.paddingBottom);
+        reportContentHeight(block.id, Math.ceil(inner.offsetHeight + padding));
       });
     };
     report();
     const observer = new ResizeObserver(report);
     observer.observe(node);
+    observer.observe(inner);
     return () => {
       observer.disconnect();
       window.cancelAnimationFrame(frame);
@@ -1661,7 +1747,7 @@ const GBlockFrame = forwardRef<
           !fluid && "h-full min-h-0 overflow-y-auto",
         )}
       >
-        <div className={cn("flex [&>*]:min-w-0 [&>*]:flex-1", !fluid && "min-h-full")}>
+        <div ref={innerRef} className="flex [&>*]:min-w-0 [&>*]:flex-1">
           <BlockRenderer
             type={block.type}
             config={block.config}
@@ -1670,6 +1756,16 @@ const GBlockFrame = forwardRef<
           />
         </div>
       </div>
+      {editing && props.emptyBlockIds?.has(block.id) && block.visible !== false && (
+        <span
+          title="Visitors won't see this block until it has content"
+          className="absolute bottom-1.5 left-1.5 z-20 inline-flex items-center gap-1 whitespace-nowrap rounded-sm border border-border bg-[var(--surface-elevated)] px-1.5 py-0.5 text-2xs text-muted-foreground shadow-sm"
+        >
+          <EyeOff className="h-3 w-3" aria-hidden />
+          Hidden: empty
+          <span className="sr-only"> — visitors won't see this block until it has content</span>
+        </span>
+      )}
       {editing && (
         <>
           <span

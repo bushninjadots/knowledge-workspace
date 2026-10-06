@@ -102,7 +102,7 @@ function ProfileGalleryBlock({ config, context }: BlockProps) {
   // mode. Never report while loading — a premature "empty" gets the block
   // unmounted by the renderer before the query resolves.
   useEffect(() => {
-    if (isLoading || isEditing || !blockId) return;
+    if (isLoading || !blockId) return;
     onBlockEmptyChange?.(blockId, !hasContent);
   }, [isLoading, isEditing, blockId, onBlockEmptyChange, hasContent]);
 

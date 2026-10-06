@@ -18,7 +18,7 @@ function ProfileCollaborationNetworkBlock({ config, context }: BlockProps) {
   const showShared = config.showSharedProjects !== false;
 
   useEffect(() => {
-    if (isLoading || isEditing || !blockId) return;
+    if (isLoading || !blockId) return;
     onBlockEmptyChange?.(blockId, people.length === 0);
   }, [blockId, people.length, isEditing, isLoading, onBlockEmptyChange]);
 

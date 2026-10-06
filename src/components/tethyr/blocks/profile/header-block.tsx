@@ -115,7 +115,7 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
   // Report emptiness so the public Studio collapses the band when the
   // profile has no identity data to show.
   useEffect(() => {
-    if (isLoading || isEditing || !blockId || ownerType !== "profile") return;
+    if (isLoading || !blockId || ownerType !== "profile") return;
     onBlockEmptyChange?.(blockId, !data);
   }, [blockId, data, isEditing, isLoading, onBlockEmptyChange, ownerType]);
 
