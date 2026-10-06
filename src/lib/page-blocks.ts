@@ -245,6 +245,14 @@ export interface LayoutBlockInstance {
   frameAlign?: "start" | "center";
   /** Where the block appears. Omitted = everywhere. */
   showOn?: "all" | "desktop" | "mobile";
+  /** The block's title treatment, overriding the Studio's "Block titles". */
+  titleStyle?: "label" | "heading" | "display";
+  /** Locked blocks can't be dragged, resized or deleted by accident. */
+  locked?: boolean;
+  /** On phones: the full width (default) or half, beside another half. */
+  phoneWidth?: "full" | "half";
+  /** On phones: keep the desktop order (default) or move first / last. */
+  phoneOrder?: "first" | "last";
 }
 
 /** Per-block corner shape presets. Percentage-based shapes ("organic", "blob",

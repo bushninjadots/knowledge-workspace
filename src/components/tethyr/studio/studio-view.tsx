@@ -45,7 +45,12 @@ import { blockFrameStyle, normalizeStudioConfig } from "@/lib/studio-config";
 import { useCreatePage, usePublishPage } from "@/hooks/use-page-editor";
 import { shouldRenderSectionInView } from "@/lib/studio-visibility";
 import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
-import { SECTION_GRID, colStartClass, spanClass } from "@/components/tethyr/page/page-layout";
+import {
+  SECTION_GRID,
+  colStartClass,
+  phoneClasses,
+  spanClass,
+} from "@/components/tethyr/page/page-layout";
 import { Button } from "@/components/ui/button";
 import { useCardInk } from "@/hooks/use-card-ink";
 import {
@@ -610,7 +615,7 @@ function StudioViewSection({
       <div
         className={
           hasGrid
-            ? "grid grid-cols-1 gap-8 content-safe md:grid-cols-12"
+            ? "grid grid-cols-2 gap-8 content-safe md:grid-cols-12"
             : `${gridClass} content-safe`
         }
         style={areaGridStyle(
@@ -661,8 +666,8 @@ function StudioViewBlock({
       className={cn(
         hasGrid
           ? gridItem
-            ? `relative min-w-0 ${colStartClass(gridItem.x + 1)} ${spanClass(span)}`
-            : "relative min-w-0"
+            ? `relative min-w-0 ${colStartClass(gridItem.x + 1)} ${spanClass(span)} ${phoneClasses(block)}`
+            : "relative min-w-0 col-span-2"
           : gridClass
             ? `min-w-0 ${spanClass(span)}`
             : "min-w-0",

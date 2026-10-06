@@ -110,6 +110,11 @@ export function blockFillVars(fill: string | undefined): Record<string, string> 
     };
   if (fill === "tint")
     return { "--studio-block-bg": "color-mix(in oklab, var(--foreground) 5%, var(--surface))" };
+  if (fill === "gradient")
+    return {
+      "--studio-block-bg":
+        "linear-gradient(135deg, color-mix(in oklab, var(--user-accent, var(--primary)) 28%, var(--surface)), var(--surface) 75%)",
+    };
   if (fill === "accent")
     return {
       "--studio-block-bg":
@@ -179,6 +184,7 @@ export function blockFrameStyle(
     | "frameFill"
     | "frameShadow"
     | "frameAlign"
+    | "titleStyle"
   >,
 ): React.CSSProperties {
   const style = {} as React.CSSProperties & Record<string, string>;
@@ -210,6 +216,7 @@ export function blockFrameStyle(
   if (padding) style["--studio-block-padding"] = padding;
   Object.assign(style, blockFillVars(block.frameFill));
   if (block.frameShadow) style["--studio-block-shadow"] = SHADOWS[block.frameShadow];
+  if (block.titleStyle) Object.assign(style, blockTitleOverride(block.titleStyle));
   if (block.frameAlign === "center") {
     style["--studio-block-align"] = "center";
     style["--studio-block-justify"] = "center";
@@ -795,6 +802,27 @@ export function blockTitleVars(style: BlockTitleStyle): Record<string, string> {
     return { "--bt-height": "0px", "--bt-gap": "0px", "--bt-size": "0px" };
   }
   return {};
+}
+
+/** One block's own title treatment (overrides the Studio-wide setting). */
+export function blockTitleOverride(style: "label" | "heading" | "display"): Record<string, string> {
+  if (style === "label")
+    return {
+      "--bt-size": "0.6875rem",
+      "--bt-weight": "600",
+      "--bt-transform": "uppercase",
+      "--bt-tracking": "0.08em",
+      "--bt-strength": "0%",
+      "--bt-family": "var(--studio-label-font, var(--font-sans))",
+      "--bt-height": "auto",
+      "--bt-gap": "0.625rem",
+    };
+  return {
+    ...blockTitleVars("heading"),
+    ...(style === "display"
+      ? { "--bt-size": "1.5rem", "--bt-tracking": "-0.02em", "--bt-gap": "1rem" }
+      : {}),
+  };
 }
 
 /** Card fill swatches; "" means "follow the page surface". */

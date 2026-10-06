@@ -14,6 +14,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import { toast } from "sonner";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { Button } from "@/components/ui/button";
 import { getAllBlocks, getBlock } from "@/lib/block-registry";
@@ -30,7 +31,7 @@ import {
 import type { BlockShape } from "@/lib/page-blocks";
 import { findSection, sectionLabel } from "@/lib/studio-grid";
 import { ProfileMediaControls } from "./profile-media-controls";
-import { BlockFields } from "./block-fields";
+import { BlockFields, Switch } from "./block-fields";
 import { AreaInspector } from "./area-inspector";
 import { BlockIcon } from "./block-icon";
 import { suggestBlocks } from "@/lib/block-suggestions";
@@ -106,6 +107,95 @@ function ShapeThumbnail({ radius, active }: { radius: string; active: boolean })
  *  `frameBorder`/`frameInset`/`frameShape`/`frameRadius` fields; the shared
  *  `.studio-block` utility renders them on every surface (editor, owner view,
  *  public page). */
+/** The look a block carries (not its content or place). */
+const STYLE_KEYS = [
+  "frameBorder",
+  "frameInset",
+  "frameShape",
+  "frameRadius",
+  "frameFill",
+  "frameShadow",
+  "frameAlign",
+  "titleStyle",
+] as const;
+const STYLE_CLIPBOARD_KEY = "studio-block-style";
+
+function readStyleClipboard(): Partial<LayoutBlockInstance> | null {
+  try {
+    const raw = window.localStorage.getItem(STYLE_CLIPBOARD_KEY);
+    return raw ? (JSON.parse(raw) as Partial<LayoutBlockInstance>) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Copy a block's look and paste it onto others, or make a whole area (or
+ *  the whole Studio) match it in one step. */
+function StyleClipboard({ block, ...props }: GStudioSurfaceProps & { block: LayoutBlockInstance }) {
+  const [copied, setCopied] = useState<Partial<LayoutBlockInstance> | null>(readStyleClipboard);
+  const style = () =>
+    Object.fromEntries(STYLE_KEYS.map((key) => [key, block[key]])) as Partial<LayoutBlockInstance>;
+  const area = findSection(props.layout, block.id);
+  const button =
+    "rounded-sm border border-border px-2 py-1 text-2xs text-foreground outline-none hover:border-[var(--user-accent-border)] hover:bg-[var(--surface-sunken)] focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] disabled:opacity-50";
+  return (
+    <div className="mb-4 flex flex-wrap gap-1.5">
+      <button
+        type="button"
+        className={button}
+        onClick={() => {
+          const next = style();
+          setCopied(next);
+          try {
+            window.localStorage.setItem(STYLE_CLIPBOARD_KEY, JSON.stringify(next));
+          } catch {
+            // Storage unavailable: the copy lasts this visit.
+          }
+          toast("Style copied — select another block and paste it.");
+        }}
+      >
+        Copy style
+      </button>
+      <button
+        type="button"
+        className={button}
+        disabled={!copied}
+        onClick={() => copied && props.onApplyBlockStyle([block.id], copied)}
+      >
+        Paste style
+      </button>
+      <button
+        type="button"
+        className={button}
+        disabled={!area || area.blocks.length < 2}
+        onClick={() =>
+          area &&
+          props.onApplyBlockStyle(
+            area.blocks.map((b) => b.id),
+            style(),
+          )
+        }
+      >
+        Match this area
+      </button>
+      <button
+        type="button"
+        className={button}
+        onClick={() =>
+          props.onApplyBlockStyle(
+            props.layout.sections.flatMap((section) =>
+              section.blocks.filter((b) => b.type !== "profile-header").map((b) => b.id),
+            ),
+            style(),
+          )
+        }
+      >
+        Match all blocks
+      </button>
+    </div>
+  );
+}
+
 function BlockFrameSection({
   block,
   ...props
@@ -131,6 +221,7 @@ function BlockFrameSection({
           </p>
         </div>
       </div>
+      <StyleClipboard block={block} {...props} />
       <p className="t-label mb-1">Shape</p>
       <p className="mb-2 text-2xs leading-snug text-muted-foreground-subtle">
         Choose the silhouette of this block&apos;s surface. Curved shapes move the content in so it
@@ -240,6 +331,11 @@ function BlockFrameSection({
                 "Accent",
                 "color-mix(in oklab, var(--user-accent) 22%, var(--surface-elevated))",
               ],
+              [
+                "gradient",
+                "Gradient",
+                "linear-gradient(135deg, color-mix(in oklab, var(--user-accent) 45%, var(--surface-elevated)), var(--surface-elevated))",
+              ],
             ] as Array<[string, string, string]>
           ).map(([value, label, swatch]) => {
             const active = (block.frameFill ?? "") === value;
@@ -329,6 +425,24 @@ function BlockFrameSection({
               })
             }
           />
+          {def?.title && (
+            <Choice
+              label="Title style"
+              value={block.titleStyle ?? "studio"}
+              options={[
+                ["studio", "Studio"],
+                ["label", "Label"],
+                ["heading", "Heading"],
+                ["display", "Display"],
+              ]}
+              onChange={(value) =>
+                props.onBlockAction(block.id, {
+                  titleStyle:
+                    value === "studio" ? undefined : (value as "label" | "heading" | "display"),
+                })
+              }
+            />
+          )}
           <Choice
             label="Show on"
             hint="Hide a block on phones or on bigger screens. The editor always shows it."
@@ -344,6 +458,42 @@ function BlockFrameSection({
               })
             }
           />
+          <Choice
+            label="On phones"
+            hint="Two half-width blocks sit side by side on a phone."
+            value={block.phoneWidth ?? "full"}
+            options={[
+              ["full", "Full width"],
+              ["half", "Half width"],
+            ]}
+            onChange={(value) =>
+              props.onBlockAction(block.id, { phoneWidth: value === "half" ? "half" : undefined })
+            }
+          />
+          <Choice
+            label="Phone position"
+            value={block.phoneOrder ?? "placed"}
+            options={[
+              ["placed", "As placed"],
+              ["first", "First"],
+              ["last", "Last"],
+            ]}
+            onChange={(value) =>
+              props.onBlockAction(block.id, {
+                phoneOrder: value === "placed" ? undefined : (value as "first" | "last"),
+              })
+            }
+          />
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <span className="text-xs text-foreground">Lock in place</span>
+            <Switch
+              label="Lock this block in place"
+              checked={block.locked === true}
+              onChange={(checked) =>
+                props.onBlockAction(block.id, { locked: checked || undefined })
+              }
+            />
+          </div>
         </div>
       </div>
 

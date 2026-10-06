@@ -584,7 +584,7 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
                 <div
                   className={`${
                     hasGrid
-                      ? "grid grid-cols-1 gap-8 md:grid-cols-12 content-safe"
+                      ? "grid grid-cols-2 gap-8 md:grid-cols-12 content-safe"
                       : `${gridClass} content-safe ${context.isEditing ? "transition-colors" : ""}`
                   }`}
                   style={areaGridStyle(
@@ -622,8 +622,8 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
                             ? "relative rounded-md border border-transparent p-1 transition-colors hover:border-card-border hover:bg-surface/20"
                             : hasGrid
                               ? gridItem
-                                ? `relative min-w-0 ${colStartClass(gridItem.x + 1)} ${spanClass(gridItem.w)}`
-                                : "relative min-w-0"
+                                ? `relative min-w-0 ${colStartClass(gridItem.x + 1)} ${spanClass(gridItem.w)} ${phoneClasses(block)}`
+                                : "relative min-w-0 max-md:col-span-2"
                               : // Template sections (no persisted grid): the wrapper is
                                 // the grid item — same span boxes the owner view uses —
                                 // instead of display:contents auto-flow, which laid the
@@ -986,6 +986,21 @@ function SectionLayoutPanel({
       </div>
     </Card>
   );
+}
+
+/** Phone placement for a block in a grid area: phones get a two-column
+ *  grid, where a block spans both (default) or one ("half"), and can move to
+ *  the start or end of its area. Desktop placement is untouched. */
+export function phoneClasses(
+  block: Pick<LayoutBlockInstance, "phoneWidth" | "phoneOrder">,
+): string {
+  return [
+    block.phoneWidth === "half" ? "max-md:col-span-1" : "max-md:col-span-2",
+    block.phoneOrder === "first" ? "max-md:order-first" : "",
+    block.phoneOrder === "last" ? "max-md:order-last" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 }
 
 export function spanClass(span: number): string {

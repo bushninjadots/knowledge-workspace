@@ -406,6 +406,12 @@ export function CreationStudio({
     [config, layout, pushHistory],
   );
 
+  const findBlock = useCallback(
+    (blockId: string) =>
+      layout?.sections.flatMap((section) => section.blocks).find((block) => block.id === blockId),
+    [layout],
+  );
+
   // Toast actions outlive the render that created them, so they call the
   // latest undo through a ref (assigned once `undo` is defined below).
   const undoRef = useRef<() => void>(() => {});
@@ -416,6 +422,24 @@ export function CreationStudio({
       action: { label: "Undo", onClick: () => undoRef.current() },
     });
   }, []);
+
+  /** One style patch on several blocks, as a single undo step. */
+  const applyBlockStyle = useCallback(
+    (blockIds: string[], patch: Partial<LayoutBlockInstance>) => {
+      if (!layout || blockIds.length === 0) return;
+      const ids = new Set(blockIds);
+      commit({
+        sections: layout.sections.map((section) => ({
+          ...section,
+          blocks: section.blocks.map((block) =>
+            ids.has(block.id) ? { ...block, ...patch } : block,
+          ),
+        })),
+      });
+      if (blockIds.length > 1) toastUndoable(`Style applied to ${blockIds.length} blocks`);
+    },
+    [commit, layout, toastUndoable],
+  );
 
   const updateBlock = useCallback(
     (blockId: string, patch: Partial<LayoutBlockInstance>) => {
@@ -946,6 +970,8 @@ export function CreationStudio({
         (event.key === "Delete" || event.key === "Backspace")
       ) {
         event.preventDefault();
+        // Locked blocks ignore the keyboard's destructive and moving keys.
+        if (findBlock(selectedBlockId)?.locked) return;
         removeBlock(selectedBlockId);
       } else if (
         !mod &&
@@ -958,7 +984,7 @@ export function CreationStudio({
           candidate.blocks.some((block) => block.id === selectedBlockId),
         );
         const item = section?.grid?.find((gridItem) => gridItem.i === selectedBlockId);
-        if (!section || !item) return;
+        if (!section || !item || findBlock(selectedBlockId)?.locked) return;
         event.preventDefault();
         const dx = event.key === "ArrowLeft" ? -1 : event.key === "ArrowRight" ? 1 : 0;
         const dy = event.key === "ArrowUp" ? -1 : event.key === "ArrowDown" ? 1 : 0;
@@ -980,7 +1006,7 @@ export function CreationStudio({
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [commit, duplicateBlock, layout, mode, redo, removeBlock, selectedBlockId, undo]);
+  }, [commit, duplicateBlock, findBlock, layout, mode, redo, removeBlock, selectedBlockId, undo]);
 
   // Replace the draft with a published version via the rollback RPC, then
   // re-seed the editor from the restored row. Without the re-seed the canvas
@@ -1418,6 +1444,7 @@ export function CreationStudio({
         onRenameSection={renameSection}
         onSectionLayoutChange={setSectionLayout}
         onSectionAppearanceChange={setSectionAppearance}
+        onApplyBlockStyle={applyBlockStyle}
         onAddSection={addSection}
         onMoveToSection={moveToSection}
         onAdd={addBlock}

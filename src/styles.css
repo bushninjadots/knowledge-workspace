@@ -519,7 +519,7 @@
    text never starts on the border. Full-bleed blocks opt out. */
 @utility studio-block {
   /* Per-block fill (blockFillVars) wins over the Studio's card fill. */
-  background-color: var(--studio-block-bg, var(--surface));
+  background: var(--studio-block-bg, var(--surface));
   /* Per-block shadow, else the Studio's card shadow. */
   box-shadow: var(--studio-block-shadow, var(--studio-card-shadow, none));
   text-align: var(--studio-block-align, start);

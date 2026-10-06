@@ -19,6 +19,8 @@ import {
   Plus,
   Trash2,
   X,
+  Lock,
+  LockOpen,
   Monitor,
   SlidersHorizontal,
   Smartphone,
@@ -155,6 +157,8 @@ export interface GStudioSurfaceProps {
   onToggleSection: (id: string) => void;
   onRenameSection: (id: string, title: string) => void;
   onSectionLayoutChange: (sectionId: string, layout: LayoutSection["layout"]) => void;
+  /** Apply one style patch to several blocks as a single undo step. */
+  onApplyBlockStyle: (blockIds: string[], patch: Partial<LayoutBlockInstance>) => void;
   /** Open an area's settings in the rail (set by the surface itself). */
   onEditArea?: (sectionId: string) => void;
   /** The area whose settings the rail shows. */
@@ -879,7 +883,15 @@ function GSectionBand({
         .filter((block) => editing || block.visible !== false),
     [editing, section.blocks],
   );
-  const grid = useMemo(() => sectionGrid(section, blocks), [section, blocks]);
+  // Locked blocks are static: they can't be dragged or resized, and others
+  // flow around them instead of over them.
+  const grid = useMemo(
+    () =>
+      sectionGrid(section, blocks).map((item) =>
+        blocks.find((block) => block.id === item.i)?.locked ? { ...item, static: true } : item,
+      ),
+    [section, blocks],
+  );
   const rowHeight =
     props.config.density === "compact" ? 20 : props.config.density === "spacious" ? 28 : 24;
   const margin = Math.round(
@@ -1499,6 +1511,15 @@ const GBlockFrame = forwardRef<
           />
         </div>
       </div>
+      {editing && block.locked && (
+        <span
+          title="Locked in place"
+          className="absolute left-1.5 top-1.5 z-20 inline-flex h-5 w-5 items-center justify-center rounded-sm border border-border bg-[var(--surface-elevated)] text-muted-foreground shadow-sm"
+        >
+          <Lock className="h-3 w-3" aria-hidden />
+          <span className="sr-only">Locked</span>
+        </span>
+      )}
       {editing && block.showOn && block.showOn !== "all" && (
         <span className="absolute right-1.5 top-1.5 z-20 inline-flex items-center gap-1 rounded-sm border border-border bg-[var(--surface-elevated)] px-1.5 py-0.5 text-2xs text-muted-foreground shadow-sm">
           {block.showOn === "desktop" ? (
@@ -1557,10 +1578,25 @@ const GBlockFrame = forwardRef<
                   <EyeOff className="h-3.5 w-3.5" />
                 )}
               </IconButton>
+              <IconButton
+                label={block.locked ? "Unlock block" : "Lock block in place"}
+                active={block.locked === true}
+                onClick={() => props.onBlockAction(block.id, { locked: !block.locked })}
+              >
+                {block.locked ? (
+                  <Lock className="h-3.5 w-3.5" />
+                ) : (
+                  <LockOpen className="h-3.5 w-3.5" />
+                )}
+              </IconButton>
               <IconButton label="Duplicate block" onClick={() => props.onDuplicate(block.id)}>
                 <Copy className="h-3.5 w-3.5" />
               </IconButton>
-              <IconButton label="Remove block" onClick={() => props.onRemove(block.id)}>
+              <IconButton
+                label={block.locked ? "Unlock to remove" : "Remove block"}
+                disabled={block.locked === true}
+                onClick={() => props.onRemove(block.id)}
+              >
                 <Trash2 className="h-3.5 w-3.5" />
               </IconButton>
             </div>
