@@ -244,7 +244,9 @@ const REACH = (scrollTop) => {
     if (r.top < pr.top - 1 || r.bottom > pr.bottom + 1) continue; // off-panel, not an occlusion
     // A control clipped by the scroll owner is out of view, not occluded —
     // scrolling to it is exactly what the scrolled snapshots assert.
-    if (scrollOwner !== panel && (r.bottom > or.bottom + 1 || r.top < or.top - 1)) continue;
+    // (Any part past the owner's edge counts: a control straddling the edge
+    // is half scrolled into view, which is scrolling, not a defect.)
+    if (scrollOwner !== panel && (r.bottom > or.bottom || r.top < or.top)) continue;
     const name = (el.getAttribute("aria-label") || el.textContent || el.title || el.value || "")
       .replace(/\s+/g, " ")
       .trim()

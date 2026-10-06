@@ -7,6 +7,13 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import {
+  DEFAULT_SITE_APPEARANCE,
+  SITE_APPEARANCE_STORAGE_KEY,
+  normalizeSiteAppearance,
+  siteAppearanceVars,
+  type SiteAppearance,
+} from "@/lib/site-appearance";
 
 export type Theme = "light" | "dark" | "system";
 type ResolvedTheme = "light" | "dark";
@@ -28,7 +35,9 @@ export const themeInitScript = `(function(){try{var k=${JSON.stringify(
   THEME_STORAGE_KEY,
 )};var pk=${JSON.stringify(THEME_PRESET_STORAGE_KEY)};var pv=${JSON.stringify(
   THEME_PRESET_VARS_STORAGE_KEY,
-)};var s=localStorage.getItem(k);var m=window.matchMedia("(prefers-color-scheme: dark)").matches;var d=s==="dark"||((!s||s==="system")&&m);var e=document.documentElement;e.classList.toggle("dark",d);e.style.colorScheme=d?"dark":"light";var p=localStorage.getItem(pk);if(p){var c=JSON.parse(localStorage.getItem(pv)||"null");if(c&&c.preset===p&&c.scheme===(d?"dark":"light")){for(var v in c.vars){e.style.setProperty(v,c.vars[v]);}}}}catch(e){}})();`;
+)};var s=localStorage.getItem(k);var m=window.matchMedia("(prefers-color-scheme: dark)").matches;var d=s==="dark"||((!s||s==="system")&&m);var e=document.documentElement;e.classList.toggle("dark",d);e.style.colorScheme=d?"dark":"light";var p=localStorage.getItem(pk);if(p){var c=JSON.parse(localStorage.getItem(pv)||"null");if(c&&c.preset===p&&c.scheme===(d?"dark":"light")){for(var v in c.vars){e.style.setProperty(v,c.vars[v]);}}}var a=JSON.parse(localStorage.getItem(${JSON.stringify(
+  SITE_APPEARANCE_STORAGE_KEY,
+)})||"null");if(a&&a.vars){for(var w in a.vars){e.style.setProperty(w,a.vars[w]);}if(a.motion==="reduced")e.setAttribute("data-site-motion","reduced");}}catch(e){}})();`;
 
 type ThemeContextValue = {
   theme: Theme;
@@ -37,6 +46,9 @@ type ThemeContextValue = {
   toggleTheme: () => void;
   themePreset: string | null;
   setThemePreset: (id: string | null) => void;
+  /** Density, shape, accent and motion of Tethyr itself, on this device. */
+  siteAppearance: SiteAppearance;
+  setSiteAppearance: (next: SiteAppearance) => void;
 };
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -63,6 +75,27 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("system");
   const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>("light");
   const [themePreset, setThemePresetState] = useState<string | null>(null);
+  const [siteAppearance, setSiteAppearanceState] = useState<SiteAppearance>({
+    ...DEFAULT_SITE_APPEARANCE,
+  });
+
+  // Site appearance: read after hydration, and follow other tabs.
+  useEffect(() => {
+    const read = () => {
+      try {
+        const raw = localStorage.getItem(SITE_APPEARANCE_STORAGE_KEY);
+        setSiteAppearanceState(normalizeSiteAppearance(raw ? JSON.parse(raw) : null));
+      } catch {
+        /* storage unavailable: defaults */
+      }
+    };
+    read();
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === SITE_APPEARANCE_STORAGE_KEY) read();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
 
   // Read the persisted preference after hydration.
   useEffect(() => {
@@ -159,9 +192,41 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const setSiteAppearance = useCallback((next: SiteAppearance) => {
+    const normalized = normalizeSiteAppearance(next);
+    setSiteAppearanceState(normalized);
+    try {
+      localStorage.setItem(
+        SITE_APPEARANCE_STORAGE_KEY,
+        // The vars ride along so the init script can paint them on first frame.
+        JSON.stringify({ ...normalized, vars: siteAppearanceVars(normalized) }),
+      );
+    } catch {
+      /* storage unavailable: this visit only */
+    }
+  }, []);
+
   const value = useMemo(
-    () => ({ theme, resolvedTheme, setTheme, toggleTheme, themePreset, setThemePreset }),
-    [theme, resolvedTheme, setTheme, toggleTheme, themePreset, setThemePreset],
+    () => ({
+      theme,
+      resolvedTheme,
+      setTheme,
+      toggleTheme,
+      themePreset,
+      setThemePreset,
+      siteAppearance,
+      setSiteAppearance,
+    }),
+    [
+      theme,
+      resolvedTheme,
+      setTheme,
+      toggleTheme,
+      themePreset,
+      setThemePreset,
+      siteAppearance,
+      setSiteAppearance,
+    ],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

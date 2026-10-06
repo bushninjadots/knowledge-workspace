@@ -26,8 +26,11 @@
  * =============================================================================
  */
 
-@theme inline {
-  /* --- Radius scale: tight, professional, not decorative ----------------- */
+/* Radius scale: tight, professional, not decorative. Kept out of `@theme
+ * inline` so `rounded-*` utilities read var(--radius-*) at runtime: a site
+ * theme's Shape and a Studio's corners then reach every rounded element,
+ * instead of being baked in as literal pixels at build time. */
+@theme {
   --radius-sm: 2px;
   --radius-md: 3px;
   --radius-lg: 4px;
@@ -36,13 +39,33 @@
   --radius-3xl: 6px;
   --radius-4xl: 8px; /* reserved: modals, images, hero sections */
 
-  /* --- Type -------------------------------------------------------------- */
+  /* Type: also runtime variables, so a site theme's faces and a Studio's type
+   * pairing reach `font-sans`/`font-mono` elements instead of literal Inter. */
   --font-sans: "Inter", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-display: "Inter", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   /* Expressive display face — post titles and section headers get personality. */
   --font-title: "Space Grotesk", "Inter", ui-sans-serif, system-ui, sans-serif;
+}
 
+/* A profile starts from Tethyr's own faces (a visitor's Site appearance may
+ * have changed the app's); its own theme and type pairing are inline on the
+ * same element and win. */
+[data-base-palette] {
+  --font-sans: "Inter", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: "Inter", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-title: "Space Grotesk", "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Text inherits a resolved family, so a Studio's body face must be declared
+ * where its --font-sans is set, not only on <body>. */
+.studio-canvas,
+[data-base-palette] {
+  font-family: var(--font-sans);
+}
+
+@theme inline {
   /* Micro-label scale — compact metadata above the default `--text-xs` step. */
   --text-2xs: 0.6875rem; /* 11px — dense UI labels */
   --text-3xs: 0.625rem; /* 10px — version chips, caption micro-labels */
@@ -96,6 +119,29 @@
   /* --- Elevation: structure over decoration ------------------------------ */
   /* Shadows are dialog-only: --shadow-lifted is the only elevation token. */
   --shadow-lifted: 0 1px 3px 0 var(--shadow-tint); /* dialogs only */
+  /* The shadow-* utilities read three semantic elevations a theme can set
+   * (tokens.shadows["elevation-1|2|3"]); the fallbacks are Tailwind's own
+   * values, so nothing changes until a theme asks for it. */
+  --shadow-sm: var(
+    --shadow-elevation-1,
+    0 1px 3px 0 rgb(0 0 0 / 0.1),
+    0 1px 2px -1px rgb(0 0 0 / 0.1)
+  );
+  --shadow-md: var(
+    --shadow-elevation-2,
+    0 4px 6px -1px rgb(0 0 0 / 0.1),
+    0 2px 4px -2px rgb(0 0 0 / 0.1)
+  );
+  --shadow-lg: var(
+    --shadow-elevation-3,
+    0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1)
+  );
+  --shadow-xl: var(
+    --shadow-elevation-3,
+    0 20px 25px -5px rgb(0 0 0 / 0.1),
+    0 8px 10px -6px rgb(0 0 0 / 0.1)
+  );
 }
 
 /* Display typeface must honour the runtime --font-display variable (personality
@@ -128,6 +174,16 @@
   transition-timing-function: ease-out;
 }
 
+/* Site appearance → Motion: Reduced does what the system setting does. */
+[data-site-motion="reduced"] *,
+[data-site-motion="reduced"] *::before,
+[data-site-motion="reduced"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  scroll-behavior: auto !important;
+  transition-duration: 0.01ms !important;
+}
+
 /* Keep interaction feedback useful without forcing motion on reduced-motion users. */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -142,8 +198,14 @@
 
 /* ---------------------------------------------------------------------------
  * Light theme — the default workspace
+ *
+ * Also applied to [data-base-palette]: a Studio canvas re-establishes
+ * Tethyr's own palette there, so a visitor's Site appearance (applied on
+ * <html>) never repaints somebody else's profile. The profile's own theme
+ * is inline on that element and still wins.
  * ------------------------------------------------------------------------ */
-:root {
+:root,
+[data-base-palette] {
   --radius: 4px;
 
   /* Warm editorial paper with cool ink and clear workspace layers */
@@ -230,7 +292,8 @@
 /* ---------------------------------------------------------------------------
  * Dark theme — GitHub dark dimmed / Linear register with richer layering.
  * ------------------------------------------------------------------------ */
-.dark {
+.dark,
+.dark [data-base-palette] {
   /* Base — deeper charcoal with a subtle blue cast */
   --background: oklch(0.152 0.006 260); /* deeper, cooler charcoal */
   --foreground: oklch(0.93 0.005 250);

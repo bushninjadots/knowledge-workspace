@@ -346,6 +346,9 @@ export function PageShell({
     <div
       ref={cardInk.ref}
       data-page-shell={`${ownerType}:${ownerId}`}
+      // A profile renders on Tethyr's own palette under its own theme, never
+      // the visitor's Site appearance (applied on <html>).
+      data-base-palette={ownerType === "profile" ? "" : undefined}
       data-card-ink={cardInk.active ? "" : undefined}
       style={
         page && ownerType === "profile"

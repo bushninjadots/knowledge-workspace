@@ -242,6 +242,9 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
       className="flex min-h-screen flex-col bg-background"
       data-studio-view
       data-card-ink={cardInk.active ? "" : undefined}
+      // A profile, so Tethyr's own palette under its theme — never the
+      // viewer's Site appearance.
+      data-base-palette=""
       style={{ ...surfaceStyle, ...cardInk.style }}
     >
       <StudioViewTopBar

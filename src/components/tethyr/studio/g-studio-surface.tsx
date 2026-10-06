@@ -557,6 +557,9 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
             className="relative isolate min-w-0 flex-1 overflow-y-auto outline-none bg-[var(--studio-bg,var(--background))] bg-noise text-foreground"
             aria-label="Studio canvas"
             data-personality={props.config.personality}
+            // The canvas is the member's profile: Tethyr's own palette under
+            // their theme, never the editor's Site appearance.
+            data-base-palette=""
             style={surfaceStyle}
           >
             {/* Pinned to the visible canvas: absolute inside this scroll box,

@@ -10,7 +10,6 @@ import {
   type CardBorderPreference,
 } from "@/lib/background-themes";
 import { useThemePresets, presetSwatch, type ThemePreset } from "@/hooks/use-theme";
-import { useTheme as useAppTheme } from "@/lib/theme";
 import { DEFAULT_THEME_ID } from "@/lib/constants";
 import { getBlock } from "@/lib/block-registry";
 import type { LayoutBlockInstance, PageLayout } from "@/lib/page-blocks";
@@ -45,15 +44,14 @@ export function ThemeSection({
   onThemeChange: (themeId: string | null) => void;
 }) {
   const { data: presets = [] } = useThemePresets();
-  const { themePreset: siteWidePreset, setThemePreset } = useAppTheme();
   const current = themeId && themeId.length > 0 ? themeId : DEFAULT_THEME_ID;
   const pick = (preset: ThemePreset | null) => onThemeChange(preset ? preset.id : null);
 
   return (
     <div className="mb-4 shrink-0">
-      <p className="t-label mb-1.5">Theme</p>
+      <p className="t-label mb-1.5">Profile theme</p>
       <p className="mb-1.5 text-2xs leading-snug text-muted-foreground-subtle">
-        A premade look — colours and type — applied across your Studio.
+        Palette, faces, corners and depth for your public profile.
       </p>
       <div className="grid grid-cols-2 gap-1.5">
         <ThemePick
@@ -74,27 +72,16 @@ export function ThemeSection({
             />
           ))}
       </div>
-      {/* Its own labelled group: this reaches beyond the Studio into the whole
-          app, so it must not read as part of the Studio-only tile grid. */}
-      <div className="mt-3 border-t border-border/60 pt-3">
-        <p className="t-label mb-1.5">App-wide</p>
-        <p className="mb-1.5 text-2xs leading-snug text-muted-foreground-subtle">
-          Apply this theme to every page of the app, including the navigation.
-        </p>
-        <button
-          type="button"
-          onClick={() => setThemePreset(current === DEFAULT_THEME_ID ? null : current)}
-          className={cn(
-            "flex w-full items-center justify-center gap-1.5 rounded-md border px-2 py-2 text-2xs transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1",
-            siteWidePreset && siteWidePreset === current
-              ? "border-[var(--user-accent-border)] bg-[var(--user-accent-subtle)] text-foreground"
-              : "border-border text-muted-foreground hover:text-foreground",
-          )}
+      <p className="mt-2 text-2xs leading-snug text-muted-foreground-subtle">
+        Tethyr&rsquo;s own look — for you, while you work — is{" "}
+        <a
+          href="/settings#site-appearance"
+          className="text-foreground underline-offset-4 hover:underline"
         >
-          <LayoutGrid className="h-3 w-3" aria-hidden />
-          {siteWidePreset && siteWidePreset === current ? "Applied site-wide" : "Apply site-wide"}
-        </button>
-      </div>
+          Site appearance in Settings
+        </a>
+        .
+      </p>
     </div>
   );
 }
@@ -374,6 +361,10 @@ export function GStyleSections({
     // The group tabs sit above the scrolling settings (not inside them), so
     // nothing ever scrolls underneath them.
     <div className="flex h-full min-h-0 flex-col">
+      <p className="shrink-0 border-b border-border bg-[var(--surface-elevated)] px-3 pt-2 text-2xs leading-snug text-muted-foreground">
+        <span className="font-medium text-foreground">Profile appearance</span> — applies only to
+        your public profile.
+      </p>
       <div
         role="tablist"
         aria-label="Style settings"

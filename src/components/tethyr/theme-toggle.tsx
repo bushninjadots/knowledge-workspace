@@ -88,7 +88,7 @@ export function ThemeToggle({
         <DropdownMenuSeparator />
         <DropdownMenuLabel className="flex items-center gap-1.5 text-[11px] text-muted-foreground-subtle">
           <Palette className="h-3 w-3" />
-          Style
+          Site theme — how Tethyr looks to you
         </DropdownMenuLabel>
         <DropdownMenuItem
           onSelect={() => setThemePreset(null)}
@@ -117,6 +117,10 @@ export function ThemeToggle({
             )}
           </DropdownMenuItem>
         ))}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild className="text-[12px] text-muted-foreground">
+          <a href="/settings#site-appearance">Density, shape, accent…</a>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

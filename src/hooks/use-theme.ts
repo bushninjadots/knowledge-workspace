@@ -19,6 +19,8 @@ interface ThemeRecord {
 export interface ThemePreset {
   id: string;
   name: string;
+  /** What the theme feels like, in a sentence. */
+  description?: string | null;
   tokens: ThemeTokens;
 }
 
@@ -33,13 +35,18 @@ export function useThemePresets() {
     queryFn: async (): Promise<ThemePreset[]> => {
       const { data, error } = await supabase
         .from("themes")
-        .select("id, name, tokens")
+        .select("id, name, description, tokens")
         .order("name", { ascending: true });
       if (error) throw error;
-      const rows = (data ?? []) as unknown as (ThemeRecord & { id: string; name: string })[];
+      const rows = (data ?? []) as unknown as (ThemeRecord & {
+        id: string;
+        name: string;
+        description?: string | null;
+      })[];
       const presets = rows.map((row) => ({
         id: row.id,
         name: row.name,
+        description: row.description ?? null,
         tokens: (row.tokens ?? {}) as Json as ThemeTokens,
       }));
 

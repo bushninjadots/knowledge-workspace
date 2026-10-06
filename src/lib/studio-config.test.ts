@@ -146,28 +146,28 @@ describe("studioConfigToThemeTokens", () => {
   it("maps every radius value to a proportional full radius scale", () => {
     expect(studioConfigToThemeTokens({ ...DEFAULT_STUDIO_CONFIG, radius: 6 }).borders?.radius)
       .toMatchInlineSnapshot(`
-      {
-        "2xl": "8px",
-        "3xl": "9px",
-        "4xl": "10px",
-        "lg": "6px",
-        "md": "3px",
-        "sm": "2px",
-        "xl": "7px",
-      }
-    `);
+        {
+          "2xl": "2.5px",
+          "3xl": "3px",
+          "4xl": "4px",
+          "lg": "2px",
+          "md": "1.5px",
+          "sm": "1px",
+          "xl": "2.5px",
+        }
+      `);
     expect(studioConfigToThemeTokens({ ...DEFAULT_STUDIO_CONFIG, radius: 12 }).borders?.radius)
       .toMatchInlineSnapshot(`
-      {
-        "2xl": "14px",
-        "3xl": "15px",
-        "4xl": "16px",
-        "lg": "12px",
-        "md": "5px",
-        "sm": "4px",
-        "xl": "13px",
-      }
-    `);
+        {
+          "2xl": "5px",
+          "3xl": "6px",
+          "4xl": "8px",
+          "lg": "4px",
+          "md": "3px",
+          "sm": "2px",
+          "xl": "5px",
+        }
+      `);
   });
 
   it("maps density to a section spacing token", () => {

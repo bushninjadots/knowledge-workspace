@@ -624,23 +624,30 @@ export function densityMetrics(density: DensityId): DensityMetrics {
 
 // ── Treatment → Theme Tokens ──────────────────────────────────────────────────
 
+/** The app's base radius scale (styles.css @theme), in px. */
+const BASE_RADII: Record<string, number> = {
+  sm: 2,
+  md: 3,
+  lg: 4,
+  xl: 5,
+  "2xl": 5,
+  "3xl": 6,
+  "4xl": 8,
+};
+
 /**
- * Derive the full --radius-* scale from the corner-roundness slider value so
- * the tile/card/panel systems stay coherent with the Studio block frames:
- * lg (the surface radius) matches the slider exactly; smaller elements scale
- * down proportionally, larger overlays grow a notch per step.
+ * The --radius-* scale inside a Studio, from its corner slider: the app's own
+ * scale at the default (12px), squarer below it, rounder above. These reach
+ * every `rounded-*` element in the Studio's blocks (chips, buttons, images),
+ * while the block frames themselves use the slider value directly
+ * (--studio-radius) — so a Studio's small parts stay in proportion to its
+ * cards and existing Studios at the default look exactly as before.
  */
 function radiusScale(radius: number): Record<string, string> {
-  const n = normalizeRadius(radius);
-  return {
-    sm: `${Math.round(n * 0.3)}px`,
-    md: `${Math.round(n * 0.45)}px`,
-    lg: `${n}px`,
-    xl: `${n + 1}px`,
-    "2xl": `${n + 2}px`,
-    "3xl": `${n + 3}px`,
-    "4xl": `${n + 4}px`,
-  };
+  const factor = normalizeRadius(radius) / DEFAULT_RADIUS;
+  return Object.fromEntries(
+    Object.entries(BASE_RADII).map(([key, px]) => [key, `${Math.round(px * factor * 10) / 10}px`]),
+  );
 }
 
 /** The heading face each personality pairs with. Modern has none: it keeps
@@ -740,6 +747,10 @@ export function studioConfigToStyle(
     config.density === "compact" ? "0.75rem" : config.density === "spacious" ? "1.5rem" : "1rem";
   style["--content-density-gap"] = densityGap;
   style["--content-density-padding"] = densityGap;
+
+  // A profile keeps its own spacing scale whatever density the viewer picked
+  // for Tethyr itself (Site appearance scales --spacing on <html>).
+  style["--spacing"] = "0.25rem";
 
   // Studio-specific tokens (used by g-studio-surface)
   style["--studio-radius"] = `${config.radius}px`;

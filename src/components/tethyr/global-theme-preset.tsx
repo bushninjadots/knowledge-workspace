@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useTheme as useAppTheme, THEME_PRESET_VARS_STORAGE_KEY } from "@/lib/theme";
 import { useTheme as useThemeQuery } from "@/hooks/use-theme";
+import { siteAppearanceVars } from "@/lib/site-appearance";
 
 /**
  * Applies a globally-selected theme preset (from the navbar theme dropdown) to
@@ -9,7 +10,7 @@ import { useTheme as useThemeQuery } from "@/hooks/use-theme";
  * script can paint the preset on the very first frame of the next visit.
  */
 export function GlobalThemePreset() {
-  const { themePreset, resolvedTheme } = useAppTheme();
+  const { themePreset, resolvedTheme, siteAppearance } = useAppTheme();
   const { data: vars } = useThemeQuery(themePreset);
   const lastApplied = useRef<{ preset: string; vars: Record<string, string> } | null>(null);
 
@@ -50,6 +51,22 @@ export function GlobalThemePreset() {
       /* storage unavailable */
     }
   }, [themePreset, resolvedTheme, vars]);
+
+  // Site appearance (density, shape, accent, motion) layers over the theme.
+  // Applied after the preset so its shape and accent win; previous values
+  // are removed first so switching back to the theme's own leaves nothing.
+  const lastSite = useRef<Record<string, string>>({});
+  useEffect(() => {
+    const el = document.documentElement;
+    const next = siteAppearanceVars(siteAppearance);
+    for (const name of Object.keys(lastSite.current)) {
+      if (!(name in next)) el.style.removeProperty(name);
+    }
+    for (const [name, value] of Object.entries(next)) el.style.setProperty(name, value);
+    lastSite.current = next;
+    if (siteAppearance.motion === "reduced") el.setAttribute("data-site-motion", "reduced");
+    else el.removeAttribute("data-site-motion");
+  }, [siteAppearance, vars]);
 
   return null;
 }

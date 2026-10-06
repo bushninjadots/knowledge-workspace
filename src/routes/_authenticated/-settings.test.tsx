@@ -65,6 +65,8 @@ vi.mock("@/lib/theme", () => ({
     toggleTheme: vi.fn(),
     themePreset: null,
     setThemePreset: vi.fn(),
+    siteAppearance: { density: "comfortable", shape: "theme", accent: "", motion: "standard" },
+    setSiteAppearance: vi.fn(),
   }),
 }));
 
@@ -83,6 +85,9 @@ describe("SettingsPage", () => {
     renderPage();
     expect(screen.getByRole("heading", { name: "Account & security" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Notifications" })).toBeInTheDocument();
+    // Scope is explicit: this section changes Tethyr, not the profile.
+    expect(screen.getByRole("heading", { name: "Site appearance" })).toBeInTheDocument();
+    expect(screen.getByText(/Changes how Tethyr itself looks to you/)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Delete account" })).toBeInTheDocument();
     expect(screen.getByText("test@tethyr.com")).toBeInTheDocument();
   });

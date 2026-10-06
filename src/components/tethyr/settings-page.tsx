@@ -1,3 +1,4 @@
+import { SiteAppearancePanel } from "./site-appearance-panel";
 import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
@@ -25,7 +26,6 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { ThemeToggle } from "@/components/tethyr/theme-toggle";
 import { BackgroundPickerDialog } from "@/components/tethyr/profile/background-picker-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthUser, useCurrentUser } from "@/hooks/use-current-user";
@@ -215,52 +215,26 @@ export function SettingsPage() {
             </div>
           </section>
 
-          {/* Appearance */}
-          <section className="rounded-lg border border-border bg-card p-5">
+          {/* Site appearance: Tethyr itself. Profile appearance lives in Studio. */}
+          <section id="site-appearance" className="rounded-lg border border-border bg-card p-5">
             <h2 className="flex items-center gap-2 text-sm font-semibold">
               <Paintbrush className="h-4 w-4 text-muted-foreground" />
-              App appearance
+              Site appearance
             </h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              How Tethyr looks to you while you work — theme, background, accent, and surfaces. Your
-              public Studio has its own look, set in{" "}
-              <Link
-                to="/studio"
-                className="font-medium text-foreground underline-offset-4 hover:underline"
-              >
-                Edit Studio
-              </Link>
-              .
+              Changes how Tethyr itself looks to you — its theme, colour, density and shape.
             </p>
 
             <div className="mt-4 space-y-4">
-              {/* Theme controls use the same shared state as the navbar and Studio. */}
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="font-medium">Theme mode</p>
-                    <p className="text-sm text-muted-foreground">Light, dark, or system</p>
-                  </div>
-                  <ThemeToggle variant="icon" />
-                </div>
-                <div className="flex items-center justify-between gap-4 border-t border-border/60 pt-3">
-                  <div>
-                    <p className="font-medium">Site-wide style preset</p>
-                    <p className="text-sm text-muted-foreground">
-                      Apply the same color, border, typography, and surface language across Tethyr.
-                    </p>
-                  </div>
-                  <ThemeToggle variant="row" className="w-auto shrink-0" />
-                </div>
-              </div>
-
+              <SiteAppearancePanel />
               <div className="border-t border-border/60 pt-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="font-medium">Background, accent &amp; surfaces</p>
+                    <p className="font-medium">Your background</p>
                     <p className="mt-0.5 text-sm text-muted-foreground">
-                      The same editor as your Studio — colour, pattern, gradient, image, density,
-                      and banner treatment. Changes apply everywhere instantly.
+                      Colour, pattern or image behind Tethyr and behind your public profile, plus
+                      your banner and avatar treatment. It&rsquo;s part of your profile, so visitors
+                      see it too.
                     </p>
                   </div>
                   <Button
