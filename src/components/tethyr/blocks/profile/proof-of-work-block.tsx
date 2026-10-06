@@ -186,7 +186,9 @@ function ProfileProofOfWorkBlock({ config, context }: BlockProps) {
 
   return (
     <div className="min-w-0">
-      <h4 className="mb-3 text-sm font-medium text-foreground">Proof of work</h4>
+      <h2 className="[font-family:inherit] mb-3 text-sm font-medium text-foreground">
+        Proof of work
+      </h2>
       <div className="space-y-4">
         {groups.map(([label, list]) => (
           <section key={label || "all"}>

@@ -120,9 +120,9 @@ function ProfileReadmeBlock({ config, context }: BlockProps) {
       {(showHeading || canEdit) && (
         <div className="flex flex-wrap items-center justify-between gap-2">
           {showHeading ? (
-            <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            <h2 className="[font-family:inherit] text-xs font-medium uppercase tracking-wider text-muted-foreground">
               README
-            </h4>
+            </h2>
           ) : (
             <span />
           )}

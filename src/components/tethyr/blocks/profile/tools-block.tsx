@@ -56,9 +56,9 @@ function ProfileToolsBlock({ config, context }: BlockProps) {
     <div className="space-y-3">
       {tools.length > 0 && (
         <div>
-          <h4 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+          <h2 className="[font-family:inherit] mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
             <Wrench className="h-3.5 w-3.5" /> favourite tools
-          </h4>
+          </h2>
           <div className="flex flex-wrap gap-1.5">
             {tools.map((t) => (
               <span
@@ -73,9 +73,9 @@ function ProfileToolsBlock({ config, context }: BlockProps) {
       )}
       {stack.length > 0 && (
         <div>
-          <h4 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+          <h2 className="[font-family:inherit] mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
             <Layers className="h-3.5 w-3.5" /> software stack
-          </h4>
+          </h2>
           <div className="flex flex-wrap gap-1.5">
             {stack.map((t) => (
               <span

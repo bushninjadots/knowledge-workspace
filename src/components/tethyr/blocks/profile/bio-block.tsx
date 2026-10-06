@@ -56,9 +56,9 @@ function ProfileBioBlock({ config, context }: BlockProps) {
 
   return (
     <div>
-      <h4 className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+      <h2 className="[font-family:inherit] mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
         About
-      </h4>
+      </h2>
       <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">{data.bio}</p>
     </div>
   );

@@ -220,7 +220,9 @@ function ProfileGalleryBlock({ config, context }: BlockProps) {
   return (
     <div>
       <div className="mb-3 flex items-center justify-between gap-2">
-        <h4 className="text-sm font-medium text-foreground">Gallery ({items.length})</h4>
+        <h2 className="[font-family:inherit] text-sm font-medium text-foreground">
+          Gallery ({items.length})
+        </h2>
         {isEditing && (
           <button
             type="button"

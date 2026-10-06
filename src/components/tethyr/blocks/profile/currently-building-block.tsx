@@ -101,7 +101,9 @@ function ProfileCurrentlyBuildingBlock({ config, context }: BlockProps) {
 
   return (
     <div className="min-w-0">
-      <h4 className="mb-3 text-sm font-medium text-foreground">Currently building</h4>
+      <h2 className="[font-family:inherit] mb-3 text-sm font-medium text-foreground">
+        Currently building
+      </h2>
       <ul className="divide-y divide-border">
         {data!.map((p) => (
           <li key={p.id} className="py-3 first:pt-0 last:pb-0">

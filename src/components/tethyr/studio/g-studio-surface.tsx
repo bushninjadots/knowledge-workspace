@@ -20,17 +20,18 @@ import {
   GripHorizontal,
   GripVertical,
   History,
+  Keyboard,
   LayoutTemplate,
-  Magnet,
   Monitor,
+  MoreHorizontal,
   Pencil,
   Plus,
   Redo2,
+  RotateCcw,
   Settings2,
   Sliders,
   Smartphone,
   Save,
-  SquareDashed,
   Tablet,
   Trash2,
   Undo2,
@@ -52,6 +53,15 @@ import { useTheme } from "@/hooks/use-theme";
 import { useTheme as useAppTheme } from "@/lib/theme";
 import { SECTION_GRID, colStartClass, spanClass } from "@/components/tethyr/page/page-layout";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { getAllBlocks, getBlock } from "@/lib/block-registry";
 import type {
   BlockCategory,
@@ -136,6 +146,8 @@ interface GStudioSurfaceProps {
   published: boolean;
   /** Working layout differs from the latest published snapshot. */
   hasUnpublishedChanges: boolean;
+  /** What will change for visitors on publish (shown on the status). */
+  unpublishedSummary?: string[];
   /** Published version snapshots, newest first. */
   versions: PageVersion[];
   /** Latest published version number, or null when never published. */
@@ -255,7 +267,7 @@ const SECTION_LAYOUT_OPTIONS: Array<{ value: LayoutSection["layout"]; label: str
 ];
 
 /** Tiny SVG wireframe showing a section's column arrangement. */
-function LayoutThumbnail({ layout }: { layout: LayoutSection["layout"] }) {
+function LayoutThumbnail({ layout, small }: { layout: LayoutSection["layout"]; small?: boolean }) {
   const w = 36;
   const h = 24;
   const p = 2;
@@ -308,7 +320,13 @@ function LayoutThumbnail({ layout }: { layout: LayoutSection["layout"] }) {
   }
 
   return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="shrink-0">
+    <svg
+      width={small ? 18 : w}
+      height={small ? 12 : h}
+      viewBox={`0 0 ${w} ${h}`}
+      className="shrink-0"
+      aria-hidden
+    >
       {rects.map((r, i) => (
         <rect
           key={i}
@@ -326,66 +344,53 @@ function LayoutThumbnail({ layout }: { layout: LayoutSection["layout"] }) {
   );
 }
 
-/** Popover grid of layout thumbnails replacing the native <select>. Shows tiny
- *  wireframe diagrams for each layout option so the creator sees what they're
- *  choosing instead of reading abstract labels. */
+/** Area layout menu: wireframe thumbnails so the creator sees what they're
+ *  choosing. A real menu (Escape, arrow keys, focus return), not a hand-rolled
+ *  popover. */
 function SectionLayoutPicker({
   value,
+  areaName,
   onChange,
 }: {
   value: LayoutSection["layout"];
+  areaName: string;
   onChange: (layout: LayoutSection["layout"]) => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const handler = (event: MouseEvent) => {
-      if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
   const current = SECTION_LAYOUT_OPTIONS.find((o) => o.value === value)?.label ?? value;
   return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        title="Change area layout"
-        className="h-6 pointer-coarse:h-10 max-w-[130px] rounded-sm border border-border bg-[var(--surface-sunken)] px-1 font-mono text-3xs uppercase tracking-widest text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:border-[var(--user-accent-border)] focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1"
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          aria-label={`Layout of ${areaName}: ${current}. Change layout`}
+          className="flex h-6 pointer-coarse:h-10 items-center gap-1 rounded-sm border border-border bg-[var(--surface-sunken)] px-1.5 text-2xs text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:border-[var(--user-accent-border)] focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1"
+        >
+          <LayoutThumbnail layout={value} small />
+          {current}
+          <ChevronDown className="h-3 w-3" aria-hidden />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="start"
+        className="studio-editor-chrome grid w-64 grid-cols-3 gap-1 p-2"
       >
-        {current}
-      </button>
-      {open && (
-        <div className="absolute right-0 top-full z-50 mt-1 w-52 rounded-lg border border-border bg-background p-2 shadow-lg">
-          <div className="grid grid-cols-4 gap-1.5">
-            {SECTION_LAYOUT_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => {
-                  onChange(option.value);
-                  setOpen(false);
-                }}
-                className={cn(
-                  "group flex flex-col items-center gap-1 rounded-md border p-1.5 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1",
-                  option.value === value
-                    ? "border-[var(--user-accent-border)] bg-[var(--user-accent-subtle)]"
-                    : "border-transparent hover:border-border hover:bg-surface/50",
-                )}
-                title={option.label}
-              >
-                <LayoutThumbnail layout={option.value} />
-                <span className="text-[9px] leading-none text-muted-foreground group-hover:text-foreground">
-                  {option.label}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
+        {SECTION_LAYOUT_OPTIONS.map((option) => (
+          <DropdownMenuItem
+            key={option.value}
+            onSelect={() => onChange(option.value)}
+            className={cn(
+              "flex flex-col items-center gap-1 rounded-md border p-1.5 text-center",
+              option.value === value
+                ? "border-[var(--user-accent-border)] bg-[var(--user-accent-subtle)]"
+                : "border-transparent",
+            )}
+          >
+            <LayoutThumbnail layout={option.value} />
+            <span className="text-2xs leading-tight text-muted-foreground">{option.label}</span>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -423,9 +428,10 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
   }, []);
   const compact = useMediaQuery("(max-width: 1023px)");
   const touch = useMediaQuery("(pointer: coarse)");
-  // Drag and resize wherever the grid is shown (lg and up), touch included:
-  // on touch screens a drag starts from the grip so the canvas still scrolls.
-  const directManipulation = !compact;
+  // Drag and resize wherever the grid is shown (phones get one stacked
+  // column instead), touch included: on touch screens a drag starts from the
+  // grip so the canvas still scrolls.
+  const directManipulation = !useMediaQuery("(max-width: 767px)");
   const editing = props.mode === "edit";
   const deviceWidth = props.mode === "preview" ? DEVICE_WIDTHS[props.device] : undefined;
   const maxWidth = structureMaxWidthCss(props.config);
@@ -465,9 +471,15 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
     // Editor chrome (top bar, panels, sheets) stays on the app's own tokens so
     // a low-contrast theme can't make the controls unreadable.
     <div
-      className="flex h-[calc(100dvh-3rem)] min-h-0 flex-col overflow-hidden bg-background"
+      className="relative flex h-[calc(100dvh-3rem)] min-h-0 flex-col overflow-hidden bg-background"
       data-studio-builder="g"
     >
+      <a
+        href="#studio-canvas"
+        className="sr-only z-50 bg-[var(--surface-elevated)] px-3 py-2 text-sm focus:not-sr-only focus:absolute focus:left-2 focus:top-2"
+      >
+        Skip to the canvas
+      </a>
       <GStudioTopBar
         mode={props.mode}
         device={props.device}
@@ -476,6 +488,7 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
         saving={props.saving}
         published={props.published}
         hasUnpublishedChanges={props.hasUnpublishedChanges}
+        unpublishedSummary={props.unpublishedSummary ?? []}
         publishedVersion={props.publishedVersion}
         lastSavedAt={props.lastSavedAt}
         canUndo={props.canUndo}
@@ -490,7 +503,11 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
         onUndo={props.onUndo}
         onRedo={props.onRedo}
         onCustomize={() => toggleTab("style")}
-        onPalette={() => toggleTab("add")}
+        onPalette={() => {
+          // From the top bar, add to the area in view, not a stale target.
+          props.onPaletteTargetChange("");
+          toggleTab("add");
+        }}
         onSave={props.onSave}
         onPublish={props.onPublish}
         customizeOpen={railTab === "style"}
@@ -498,6 +515,10 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
         onExit={props.onExit}
         profile={props.profile}
         onTemplates={props.onOpenTemplates}
+        onSaveAsTemplate={props.onSaveAsTemplate}
+        onReset={props.onReset}
+        // One shortcut sheet for the whole app (also on "?"), Studio included.
+        onShortcuts={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "?" }))}
         versions={props.versions}
         onRollback={props.onRollback}
       />
@@ -511,8 +532,11 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
             reloadKey={props.lastSavedAt ?? 0}
           />
         ) : (
-          <main
-            className="relative isolate min-w-0 flex-1 overflow-y-auto bg-[var(--studio-bg,var(--background))] bg-noise text-foreground"
+          <div
+            role="region"
+            id="studio-canvas"
+            tabIndex={-1}
+            className="relative isolate min-w-0 flex-1 overflow-y-auto outline-none bg-[var(--studio-bg,var(--background))] bg-noise text-foreground"
             aria-label="Studio canvas"
             data-personality={props.config.personality}
             style={surfaceStyle}
@@ -556,7 +580,7 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
                 }}
               />
             </div>
-          </main>
+          </div>
         )}
         {editing && railTab && <GStudioRail {...props} tab={railTab} onTabChange={setRailTab} />}
         {editing && compact && <GMobileEditSheet {...props} />}
@@ -668,6 +692,7 @@ function GStudioTopBar({
   saving,
   published,
   hasUnpublishedChanges,
+  unpublishedSummary,
   publishedVersion,
   lastSavedAt,
   canUndo,
@@ -692,6 +717,9 @@ function GStudioTopBar({
   paletteOpen,
   profile,
   onTemplates,
+  onSaveAsTemplate,
+  onReset,
+  onShortcuts,
 }: {
   mode: GStudioMode;
   device: GStudioDevice;
@@ -700,6 +728,7 @@ function GStudioTopBar({
   saving: boolean;
   published: boolean;
   hasUnpublishedChanges: boolean;
+  unpublishedSummary: string[];
   publishedVersion: number | null;
   lastSavedAt?: number | null;
   canUndo: boolean;
@@ -722,66 +751,74 @@ function GStudioTopBar({
   paletteOpen: boolean;
   profile: GStudioSurfaceProps["profile"];
   onTemplates?: () => void;
+  onSaveAsTemplate?: () => void;
+  onReset: () => void;
+  onShortcuts: () => void;
   versions: PageVersion[];
   onRollback: (version: number) => void;
 }) {
+  // Autosave runs a second after each edit, so the status is the save
+  // indicator; "Save now" lives in the menu for people who want to force it.
+  const status = saving
+    ? "Saving…"
+    : dirty
+      ? compact
+        ? "Unsaved"
+        : "Unsaved changes"
+      : hasUnpublishedChanges
+        ? published
+          ? compact
+            ? "Unpublished"
+            : "Unpublished changes"
+          : compact
+            ? "Draft"
+            : "Draft · not published"
+        : published
+          ? `Live · v${publishedVersion ?? 1}`
+          : "Draft";
+  const statusDetail = hasUnpublishedChanges
+    ? `Not live yet: ${unpublishedSummary.join(", ").toLowerCase() || "changes"}.`
+    : published
+      ? "Visitors see exactly this."
+      : undefined;
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-[var(--surface-elevated)]">
-      <div className="flex min-h-10 items-center gap-2 px-3 py-1.5">
-        <div className="flex min-w-0 items-center gap-2">
+      <div className="flex min-h-11 items-center gap-2 px-3 py-1.5">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           {onExit && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-1.5"
-              onClick={onExit}
-              title="Back to Studio view"
-            >
+            <IconButton label="Back to your Studio" onClick={onExit}>
               <ArrowLeft className="h-3.5 w-3.5" />
-            </Button>
+            </IconButton>
           )}
-          <span className="t-heading truncate text-[13px] font-semibold text-foreground">
-            Studio
-          </span>
-          <span className="text-muted-foreground-subtle" aria-hidden>
-            /
-          </span>
-          <span className="truncate text-[13px] text-muted-foreground">Customize</span>
           <span
             role="status"
+            title={statusDetail}
             className={cn(
               // Amber is too light to read as text, so caution states keep it
               // for the border and fill and set the label in the body colour.
-              "hidden shrink-0 whitespace-nowrap border px-1.5 py-0.5 font-mono text-2xs sm:inline",
+              "min-w-0 truncate whitespace-nowrap border px-1.5 py-0.5 font-mono text-2xs",
               saving || dirty || hasUnpublishedChanges
                 ? "border-caution bg-caution/10 text-foreground"
                 : "border-trust text-trust",
             )}
           >
-            {saving
-              ? "Saving"
-              : dirty
-                ? "Unsaved changes"
-                : hasUnpublishedChanges
-                  ? "Unpublished changes"
-                  : published
-                    ? `Live · v${publishedVersion ?? 1}`
-                    : "Draft"}
+            {status}
+            {statusDetail && <span className="sr-only"> — {statusDetail}</span>}
           </span>
           {lastSavedAt && !saving && !dirty && (
-            <span className="hidden font-mono text-2xs text-muted-foreground sm:inline">
+            <span className="hidden whitespace-nowrap font-mono text-2xs text-muted-foreground xl:inline">
               saved {timeAgo(new Date(lastSavedAt).toISOString())}
             </span>
           )}
         </div>
         <div
-          className="mx-auto flex rounded-sm border border-border bg-[var(--surface-sunken)] p-0.5"
+          className="flex shrink-0 rounded-sm border border-border bg-[var(--surface-sunken)] p-0.5"
           role="radiogroup"
           aria-label="Studio mode"
         >
           {(
             [
-              ["edit", "Editing"],
+              ["edit", "Edit"],
               ["preview", "Preview"],
             ] as Array<[GStudioMode, string]>
           ).map(([item, label]) => (
@@ -791,10 +828,10 @@ function GStudioTopBar({
               role="radio"
               aria-checked={mode === item}
               aria-label={label}
-              title={item === "preview" ? "See your page as visitors do" : "Edit your page"}
+              title={item === "preview" ? "See your page as visitors will" : "Edit your page"}
               onClick={() => onModeChange(item)}
               className={cn(
-                "flex h-6 pointer-coarse:h-10 items-center gap-1.5 rounded-sm px-2 text-xs",
+                "flex h-7 pointer-coarse:h-10 items-center gap-1.5 rounded-sm px-2 text-xs",
                 mode === item
                   ? "bg-[var(--surface-elevated)] text-foreground"
                   : "text-muted-foreground hover:text-foreground",
@@ -809,42 +846,16 @@ function GStudioTopBar({
             </button>
           ))}
         </div>
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex flex-1 shrink-0 items-center justify-end gap-1">
           {mode === "edit" && (
             <>
-              <IconButton label="Undo" disabled={!canUndo} onClick={onUndo}>
+              <IconButton label="Undo (Ctrl+Z)" disabled={!canUndo} onClick={onUndo}>
                 <Undo2 className="h-3.5 w-3.5" />
               </IconButton>
-              <IconButton label="Redo" disabled={!canRedo} onClick={onRedo}>
+              <IconButton label="Redo (Ctrl+Shift+Z)" disabled={!canRedo} onClick={onRedo}>
                 <Redo2 className="h-3.5 w-3.5" />
               </IconButton>
-              {compact ? (
-                <>
-                  {onTemplates && (
-                    <IconButton label="Templates" onClick={onTemplates}>
-                      <LayoutTemplate className="h-3.5 w-3.5" />
-                    </IconButton>
-                  )}
-                  <IconButton label="Customize Studio" active={customizeOpen} onClick={onCustomize}>
-                    <Sliders className="h-3.5 w-3.5" />
-                  </IconButton>
-                  <IconButton
-                    label={saving ? "Saving draft" : "Save draft"}
-                    disabled={!dirty || saving}
-                    onClick={onSave}
-                  >
-                    <Save className="h-3.5 w-3.5" />
-                  </IconButton>
-                  <IconButton
-                    label="Publish changes"
-                    active={hasUnpublishedChanges}
-                    disabled={!hasUnpublishedChanges || saving}
-                    onClick={onPublish}
-                  >
-                    <Upload className="h-3.5 w-3.5" />
-                  </IconButton>
-                </>
-              ) : (
+              {!compact && (
                 <>
                   {onTemplates && (
                     <Button variant="ghost" size="sm" onClick={onTemplates}>
@@ -854,47 +865,18 @@ function GStudioTopBar({
                   <Button
                     variant={customizeOpen ? "default" : "ghost"}
                     size="sm"
+                    aria-pressed={customizeOpen}
                     onClick={onCustomize}
                   >
-                    <Sliders className="h-3 w-3" /> Customize
-                  </Button>
-                  <Button
-                    variant={snapToBlocks ? "default" : "ghost"}
-                    size="sm"
-                    aria-pressed={snapToBlocks}
-                    onClick={() => onSnapToBlocksChange(!snapToBlocks)}
-                    title="Align dragged blocks to nearby block edges"
-                  >
-                    <Magnet className="h-3 w-3" /> Snap
+                    <Sliders className="h-3 w-3" /> Style
                   </Button>
                   <Button
                     variant={paletteOpen ? "default" : "secondary"}
                     size="sm"
+                    aria-pressed={paletteOpen}
                     onClick={onPalette}
                   >
                     <Plus className="h-3 w-3" /> Add block
-                  </Button>
-                  <Button
-                    variant={dirty ? "default" : "outline"}
-                    size="sm"
-                    busy={saving}
-                    disabled={!dirty || saving}
-                    onClick={onSave}
-                    title={saving ? "Saving draft" : "Save draft"}
-                    aria-label={saving ? "Saving draft" : "Save draft"}
-                  >
-                    <Save className="h-3 w-3" /> {saving ? "Saving" : "Save draft"}
-                  </Button>
-                  <Button
-                    variant={hasUnpublishedChanges ? "default" : "outline"}
-                    size="sm"
-                    busy={saving}
-                    disabled={!hasUnpublishedChanges || saving}
-                    onClick={onPublish}
-                    title="Publish changes"
-                    aria-label="Publish changes"
-                  >
-                    <Upload className="h-3 w-3" /> Publish
                   </Button>
                 </>
               )}
@@ -920,40 +902,70 @@ function GStudioTopBar({
               ))}
             </div>
           )}
-          <IconButton
-            label="Version history"
-            active={historyOpen}
-            data-version-history-trigger
-            onClick={onHistory}
+          <Button
+            variant={hasUnpublishedChanges ? "default" : "outline"}
+            size="sm"
+            disabled={!hasUnpublishedChanges}
+            onClick={onPublish}
+            title={hasUnpublishedChanges ? "Publish your changes" : "Nothing new to publish"}
+            aria-label="Publish changes"
           >
-            <History className="h-3.5 w-3.5" />
-          </IconButton>
-          {profile?.handle && (
-            <a
-              href={`/u/${profile.handle}`}
-              target="_blank"
-              rel="noreferrer"
-              className="flex h-7 w-7 items-center justify-center rounded-sm text-muted-foreground hover:bg-[var(--surface-sunken)] hover:text-foreground"
-              title="View public page"
-              aria-label="View public page"
-            >
-              <ExternalLink className="h-3.5 w-3.5" />
-            </a>
-          )}
+            <Upload className="h-3 w-3" />
+            {!compact && "Publish"}
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <IconButton label="More Studio actions" data-version-history-trigger>
+                <MoreHorizontal className="h-3.5 w-3.5" />
+              </IconButton>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="studio-editor-chrome w-56">
+              <DropdownMenuItem disabled={!dirty || saving} onSelect={onSave}>
+                <Save className="h-3.5 w-3.5" /> Save now
+                <DropdownMenuShortcut>Ctrl+S</DropdownMenuShortcut>
+              </DropdownMenuItem>
+              {compact && onTemplates && (
+                <DropdownMenuItem onSelect={onTemplates}>
+                  <LayoutTemplate className="h-3.5 w-3.5" /> Templates
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem onSelect={onHistory}>
+                <History className="h-3.5 w-3.5" /> Version history
+              </DropdownMenuItem>
+              {profile?.handle && (
+                <DropdownMenuItem asChild>
+                  <a href={`/u/${profile.handle}`} target="_blank" rel="noreferrer">
+                    <ExternalLink className="h-3.5 w-3.5" /> Open public page
+                  </a>
+                </DropdownMenuItem>
+              )}
+              {!compact && mode === "edit" && (
+                <DropdownMenuCheckboxItem
+                  checked={snapToBlocks}
+                  onCheckedChange={(checked) => onSnapToBlocksChange(checked === true)}
+                >
+                  Snap to block edges
+                </DropdownMenuCheckboxItem>
+              )}
+              {!compact && (
+                <DropdownMenuItem onSelect={onShortcuts}>
+                  <Keyboard className="h-3.5 w-3.5" /> Keyboard shortcuts
+                  <DropdownMenuShortcut>?</DropdownMenuShortcut>
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              {onSaveAsTemplate && (
+                <DropdownMenuItem onSelect={onSaveAsTemplate}>
+                  <LayoutTemplate className="h-3.5 w-3.5" /> Share as a template…
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem onSelect={onReset}>
+                <RotateCcw className="h-3.5 w-3.5" /> Reset to the default Studio…
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
-      {mode === "edit" && (
-        <div className="flex min-h-5 items-center gap-2 border-t border-border bg-[var(--surface)] px-3 py-0.5">
-          <span className="t-label">Editing</span>
-          <span className="truncate text-2xs text-muted-foreground-subtle pointer-coarse:hidden">
-            Drag blocks between areas · pull a block's right edge to change its width · arrow keys
-            nudge · Del removes · Ctrl/⌘D duplicates · click a block for its settings
-          </span>
-          <span className="hidden truncate text-2xs text-muted-foreground-subtle pointer-coarse:inline">
-            Tap a block to edit it · use Edit Studio below to arrange and add
-          </span>
-        </div>
-      )}
       {/* Anchored to this header, so it drops below the bar instead of floating
           over its own trigger; dismisses like every other popover in the file. */}
       {historyOpen && (
@@ -1328,7 +1340,7 @@ function GSectionBand({
             <input
               autoFocus
               defaultValue={sectionTitle}
-              aria-label="Section name"
+              aria-label="Area name"
               onBlur={(event) => {
                 props.onRenameSection(section.id, event.target.value.trim());
                 setRenaming(false);
@@ -1344,7 +1356,7 @@ function GSectionBand({
               type="button"
               onClick={() => setRenaming(true)}
               title="Rename area"
-              aria-label="Rename area"
+              aria-label={`${sectionTitle}. Rename area`}
               className="t-label flex h-6 pointer-coarse:h-10 items-center truncate rounded-sm px-1 hover:text-foreground"
             >
               {sectionTitle}
@@ -1355,6 +1367,7 @@ function GSectionBand({
           </span>
           <SectionLayoutPicker
             value={section.layout}
+            areaName={sectionTitle}
             onChange={(layout) => props.onSectionLayoutChange(section.id, layout)}
           />
           <div className="ml-auto flex gap-0.5">
@@ -1780,16 +1793,18 @@ const GBlockFrame = forwardRef<
             <GripVertical className="h-3.5 w-3.5" />
           </span>
           {selected && (
+            // Straddles the frame's bottom edge: the top edge is where blocks
+            // keep their own controls (the profile header's Add banner etc.),
+            // which the toolbar used to cover. Settings live in the Block tab.
             <div
-              className="absolute -top-2 right-1 z-30 flex items-center gap-0.5 border border-border bg-[var(--popover)] px-1 py-0.5 shadow-panel"
+              role="toolbar"
+              aria-label={`${def?.label ?? block.type} block actions`}
+              className="absolute -bottom-3.5 right-2 z-30 flex items-center gap-0.5 border border-border bg-[var(--popover)] px-1 py-0.5 shadow-panel"
               onClick={(event) => event.stopPropagation()}
             >
               <span className="t-label max-w-[110px] truncate pr-1">
                 {def?.label ?? block.type}
               </span>
-              <IconButton label="Block settings" onClick={() => props.onSelect(block.id)}>
-                <Settings2 className="h-3.5 w-3.5" />
-              </IconButton>
               <IconButton
                 label={block.visible === false ? "Show block" : "Hide block"}
                 onClick={() => props.onBlockAction(block.id, { visible: block.visible === false })}
@@ -1798,21 +1813,6 @@ const GBlockFrame = forwardRef<
                   <Eye className="h-3.5 w-3.5" />
                 ) : (
                   <EyeOff className="h-3.5 w-3.5" />
-                )}
-              </IconButton>
-              <IconButton
-                label={block.frameBorder === "none" ? "Show block border" : "Hide block border"}
-                active={block.frameBorder === "none"}
-                onClick={() =>
-                  props.onBlockAction(block.id, {
-                    frameBorder: block.frameBorder === "none" ? "default" : "none",
-                  })
-                }
-              >
-                {block.frameBorder === "none" ? (
-                  <SquareDashed className="h-3.5 w-3.5" />
-                ) : (
-                  <Frame className="h-3.5 w-3.5" />
                 )}
               </IconButton>
               <IconButton label="Duplicate block" onClick={() => props.onDuplicate(block.id)}>
@@ -1940,7 +1940,7 @@ function BlockFrameSection({
               <ShapeThumbnail radius={preset.radius} active={active} />
               <span
                 className={cn(
-                  "text-[9px] leading-none",
+                  "text-2xs leading-none",
                   active ? "text-foreground" : "text-muted-foreground",
                 )}
               >
@@ -2136,9 +2136,6 @@ function GStudioRail(
             selectedBlockId={props.selectedBlockId}
             onCompleteProfile={props.onCompleteProfile}
             onOpenAppearance={props.onOpenAppearance}
-            onOpenTemplates={props.onOpenTemplates}
-            onSaveAsTemplate={props.onSaveAsTemplate}
-            onReset={props.onReset}
           />
         ) : tab === "add" ? (
           <GBlockPalette {...props} />
@@ -2161,13 +2158,24 @@ function dedupeSharedReadmeBlocks(blockType: string, usedTypes: Set<string>): bo
   return true;
 }
 
+/** The first area whose bottom is below the top of the visible canvas. */
+function sectionInView(): string | undefined {
+  if (typeof document === "undefined") return undefined;
+  const top = document.getElementById("studio-canvas")?.getBoundingClientRect().top ?? 0;
+  for (const el of Array.from(document.querySelectorAll<HTMLElement>("[data-section-id]"))) {
+    if (el.getBoundingClientRect().bottom > top + 80) return el.dataset.sectionId;
+  }
+  return undefined;
+}
+
 function GBlockPalette(props: GStudioSurfaceProps) {
   const [query, setQuery] = useState("");
+  const [inView] = useState(sectionInView);
   const sections = props.layout.sections;
   const selectedSectionId = props.selectedBlockId
     ? findSection(props.layout, props.selectedBlockId)?.id
     : undefined;
-  const target = props.paletteTarget ?? selectedSectionId ?? sections[0]?.id;
+  const target = props.paletteTarget || selectedSectionId || inView || sections[0]?.id;
   const usedTypes = useMemo(
     () => new Set(sections.flatMap((s) => s.blocks.map((b) => b.type))),
     [sections],
@@ -2218,7 +2226,7 @@ function GBlockPalette(props: GStudioSurfaceProps) {
           className="w-full rounded-sm border border-border bg-[var(--surface-sunken)] px-2 py-1 text-xs outline-none"
         />
         <label className="block">
-          <span className="t-label">Drop into</span>
+          <span className="t-label">Add to area</span>
           {/* Studio chrome keeps its compact sunken control instead of the app field grammar. */}
           {/* eslint-disable-next-line no-restricted-syntax */}
           <select
@@ -2519,14 +2527,16 @@ function GMobileEditSheet(props: GStudioSurfaceProps) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed inset-x-3 bottom-20 z-40 flex h-11 items-center justify-center gap-1.5 rounded-md border border-border bg-[var(--surface-elevated)] text-sm font-medium text-foreground shadow-panel"
+        // Inside the builder, not the viewport, so on tablets it doesn't spread
+        // over the app sidebar; phones keep clear of the bottom nav.
+        className="absolute inset-x-3 bottom-20 z-40 flex h-11 md:bottom-4 items-center justify-center gap-1.5 rounded-md border border-border bg-[var(--surface-elevated)] text-sm font-medium text-foreground shadow-panel"
       >
         <Settings2 className="h-4 w-4" aria-hidden /> Edit Studio
       </button>
     );
   return (
     <section
-      className="fixed inset-x-0 bottom-0 z-50 flex max-h-[52vh] flex-col border-t border-border bg-[var(--surface-elevated)] shadow-panel"
+      className="absolute inset-x-0 bottom-0 z-50 flex max-h-[52vh] flex-col border-t border-border bg-[var(--surface-elevated)] shadow-panel"
       aria-label="Mobile Studio editor"
     >
       <div className="flex items-center gap-2 border-b border-border px-3 py-2">

@@ -461,7 +461,10 @@ function StarterPreview({
           className="pointer-events-none select-none overflow-hidden"
           style={{ height: 150, ...previewSurfaceStyle(starter) }}
         >
-          <div className="w-[512px] origin-top-left" style={{ transform: "scale(0.5)" }}>
+          {/* Quarter scale of a desktop-width render: at half scale the 150px
+              window held only the profile header, so identity-first
+              directions all looked the same. This shows the arrangement. */}
+          <div className="w-[1024px] origin-top-left" style={{ transform: "scale(0.25)" }}>
             <PageLayoutRenderer layout={layout} context={context} />
           </div>
         </div>

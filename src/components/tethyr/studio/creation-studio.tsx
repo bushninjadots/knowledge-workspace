@@ -67,6 +67,7 @@ import {
   StudioResetDialog,
   StudioRestoreDialog,
   StudioConflictDialog,
+  StudioShareTemplateDialog,
 } from "./studio-confirm-dialogs";
 
 interface CreationStudioProps {
@@ -113,6 +114,7 @@ export function CreationStudio({
   const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const [restoreTarget, setRestoreTarget] = useState<number | null>(null);
+  const [shareTemplateOpen, setShareTemplateOpen] = useState(false);
   const [publishNote, setPublishNote] = useState("");
   const [projectDialogOpen, setProjectDialogOpen] = useState(false);
   // The Customize panel's Background entry opens the same dialog the banner's
@@ -403,6 +405,7 @@ export function CreationStudio({
   // Toast actions outlive the render that created them, so they call the
   // latest undo through a ref (assigned once `undo` is defined below).
   const undoRef = useRef<() => void>(() => {});
+  const saveRef = useRef<() => void>(() => {});
   const toastUndoable = useCallback((message: string) => {
     toast(message, {
       id: "studio-undoable",
@@ -528,6 +531,13 @@ export function CreationStudio({
       touchedGridRef.current.add(section.id);
       commit(next);
       setSelectedBlockId(block.id);
+      // Bring the new block into view (it lands at the bottom of its area)
+      // and focus it, so it's obvious where it went.
+      window.setTimeout(() => {
+        const el = document.querySelector<HTMLElement>(`[data-block-id="${CSS.escape(block.id)}"]`);
+        el?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        el?.focus({ preventScroll: true });
+      }, 60);
     },
     [commit, layout],
   );
@@ -876,8 +886,14 @@ export function CreationStudio({
           target.tagName === "TEXTAREA" ||
           target.tagName === "SELECT" ||
           target.isContentEditable);
-      if (editable || target?.closest?.('[role="dialog"]')) return;
       const mod = event.metaKey || event.ctrlKey;
+      // Save works from anywhere, mid-typing included (it's what people try).
+      if (mod && event.key.toLowerCase() === "s") {
+        event.preventDefault();
+        saveRef.current();
+        return;
+      }
+      if (editable || target?.closest?.('[role="dialog"]')) return;
       if (mod && event.key.toLowerCase() === "z") {
         event.preventDefault();
         if (event.shiftKey) redo();
@@ -1049,6 +1065,8 @@ export function CreationStudio({
     },
     [config, dirty, layout, page, persistDraft, saving],
   );
+
+  saveRef.current = () => void save();
 
   // Persist the current draft after a short pause, rather than making every
   // field edit a network request. Manual Save draft remains available.
@@ -1254,27 +1272,36 @@ export function CreationStudio({
     [applyCommunityTemplate],
   );
 
-  const saveAsTemplate = useCallback(() => {
-    if (!page?.layoutId) {
-      toast.error("Open your Studio once before submitting it as a template.");
-      return;
-    }
-    const name = profile?.display_name ? `${profile.display_name}'s Studio` : "My Studio";
-    publishTemplate.mutate(
-      {
-        layoutId: page.layoutId,
-        name,
-        description: "A Studio direction shared with the community.",
-      },
-      {
-        onSuccess: () =>
-          toast.success(
-            "Template submitted for review — it'll appear in the community once approved.",
-          ),
-        onError: () => toast.error("Could not submit the template."),
-      },
-    );
-  }, [page?.layoutId, profile?.display_name, publishTemplate]);
+  const shareTemplate = useCallback(
+    (name: string, description: string) => {
+      if (!page?.layoutId) {
+        toast.error("Open your Studio once before submitting it as a template.");
+        return;
+      }
+      const layoutId = page.layoutId;
+      // The template is this layout row, so save pending edits first.
+      void (async () => {
+        if (dirty) await save({ announce: false });
+        publishTemplate.mutate(
+          {
+            layoutId,
+            name,
+            description: description || "A Studio direction shared with the community.",
+          },
+          {
+            onSuccess: () => {
+              setShareTemplateOpen(false);
+              toast.success(
+                "Template submitted for review. It appears in the community once approved.",
+              );
+            },
+            onError: () => toast.error("Could not submit the template."),
+          },
+        );
+      })();
+    },
+    [dirty, page?.layoutId, publishTemplate, save],
+  );
 
   const savedTemplateIds = useMemo(() => {
     const ids = new Set<string>();
@@ -1382,7 +1409,8 @@ export function CreationStudio({
             ? { onBrowse: () => setIntroStarterOpen(true), onDismiss: dismissStarterIntro }
             : undefined
         }
-        onSaveAsTemplate={saveAsTemplate}
+        onSaveAsTemplate={() => setShareTemplateOpen(true)}
+        unpublishedSummary={publishChanges}
         onAddProject={() => setProjectDialogOpen(true)}
         onExit={onExit ? exit : undefined}
         lastSavedAt={lastSavedAt}
@@ -1394,6 +1422,13 @@ export function CreationStudio({
         open={resetConfirmOpen}
         onOpenChange={setResetConfirmOpen}
         onConfirm={resetStudio}
+      />
+      <StudioShareTemplateDialog
+        open={shareTemplateOpen}
+        defaultName={profile?.display_name ? `${profile.display_name}'s Studio` : "My Studio"}
+        pending={publishTemplate.isPending}
+        onOpenChange={setShareTemplateOpen}
+        onSubmit={shareTemplate}
       />
       <StudioConflictDialog
         open={conflict}

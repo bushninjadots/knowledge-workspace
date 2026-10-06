@@ -88,9 +88,9 @@ function ProfileSkillsBlock({ context, config }: BlockProps) {
       {teach.length > 0 && (
         <div>
           {showCategories && (
-            <h4 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            <h2 className="[font-family:inherit] mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Skills I share
-            </h4>
+            </h2>
           )}
           <div className="flex flex-wrap gap-1.5">
             {teach.map((row) => {
@@ -114,9 +114,9 @@ function ProfileSkillsBlock({ context, config }: BlockProps) {
       {learn.length > 0 && (
         <div>
           {showCategories && (
-            <h4 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            <h2 className="[font-family:inherit] mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Skills I'm growing
-            </h4>
+            </h2>
           )}
           <div className="flex flex-wrap gap-1.5">
             {learn.map((row) => {

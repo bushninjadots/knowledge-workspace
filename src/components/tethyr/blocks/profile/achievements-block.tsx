@@ -65,9 +65,9 @@ function ProfileAchievementsBlock({ config, context }: BlockProps) {
   }
   return (
     <div>
-      <h4 className="mb-3 text-sm font-medium text-foreground">
+      <h2 className="[font-family:inherit] mb-3 text-sm font-medium text-foreground">
         Achievements ({achievements.length})
-      </h4>
+      </h2>
       <div className="flex flex-wrap gap-3">
         {achievements.map((a) => (
           <div

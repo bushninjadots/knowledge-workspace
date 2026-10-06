@@ -59,9 +59,9 @@ function ProfileExperienceBlock({ config, context }: BlockProps) {
 
   return (
     <div className="space-y-3">
-      <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+      <h2 className="[font-family:inherit] text-xs font-medium uppercase tracking-wider text-muted-foreground">
         Experience
-      </h4>
+      </h2>
       <div className="grid gap-3 sm:grid-cols-2">
         {hasExp && (
           <div className="flex items-center gap-2 rounded-lg border border-border bg-surface p-3">

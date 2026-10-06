@@ -3,17 +3,7 @@
 //
 // Split out of g-studio-surface.tsx.
 import { useCallback, useEffect, useState } from "react";
-import {
-  ChevronDown,
-  Eye,
-  EyeOff,
-  Frame,
-  LayoutGrid,
-  LayoutTemplate,
-  Palette,
-  Plus,
-  RotateCcw,
-} from "lucide-react";
+import { ChevronDown, Eye, EyeOff, Frame, LayoutGrid, Palette, Plus } from "lucide-react";
 import {
   BORDER_SWATCHES,
   CARD_BORDER_OPTIONS,
@@ -552,9 +542,6 @@ export function GCustomizePanel({
   onSelect,
   selectedBlockId,
   onOpenAppearance,
-  onOpenTemplates,
-  onSaveAsTemplate,
-  onReset,
 }: {
   config: GStudioConfig;
   layout: PageLayout;
@@ -572,11 +559,6 @@ export function GCustomizePanel({
   onCompleteProfile?: () => void;
   /** Opens the shared background/appearance dialog (banner → Appearance). */
   onOpenAppearance?: () => void;
-  /** Opens the Templates picker (starter directions). */
-  onOpenTemplates?: () => void;
-  /** Publishes the current Studio layout as a community template. */
-  onSaveAsTemplate?: () => void;
-  onReset: () => void;
 }) {
   // Progressive disclosure: the three "feel" decisions stay on top for every
   // visitor; fine-tuning lives under "More options" and remembers its state.
@@ -599,19 +581,6 @@ export function GCustomizePanel({
       {/* Single scroll owner: this wrapper scrolls; the footer stays put below it. */}
       <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
         <ThemeSection themeId={themeId} onThemeChange={onThemeChange} />
-        {onOpenTemplates && (
-          <div className="mb-4 shrink-0">
-            <button
-              type="button"
-              onClick={onOpenTemplates}
-              className="flex w-full items-center justify-center gap-1.5 rounded-md border border-border px-2 py-2 text-2xs text-foreground transition-colors outline-none hover:border-[var(--user-accent-border)] hover:bg-[var(--surface-sunken)] focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1"
-              title="Browse starting directions for your Studio"
-            >
-              <LayoutTemplate className="h-3 w-3" aria-hidden />
-              Browse templates
-            </button>
-          </div>
-        )}
         <Choice
           label="Structure"
           hint="How wide your Studio reads"
@@ -661,26 +630,6 @@ export function GCustomizePanel({
           )}
         </div>
       </div>
-      <footer className="shrink-0 border-t border-border p-3">
-        {onSaveAsTemplate && (
-          <button
-            type="button"
-            onClick={onSaveAsTemplate}
-            className="flex w-full items-center justify-center gap-1.5 rounded-sm px-2 py-2 text-xs text-muted-foreground transition-colors outline-none hover:bg-[var(--surface-sunken)] hover:text-foreground focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1"
-          >
-            <LayoutTemplate className="h-3 w-3" aria-hidden />
-            Save as template
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={onReset}
-          className="flex w-full items-center justify-center gap-1.5 rounded-sm px-2 py-2 text-xs text-muted-foreground transition-colors outline-none hover:bg-[var(--surface-sunken)] hover:text-foreground focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1"
-        >
-          <RotateCcw className="h-3 w-3" aria-hidden />
-          Reset to default Studio
-        </button>
-      </footer>
     </div>
   );
 }

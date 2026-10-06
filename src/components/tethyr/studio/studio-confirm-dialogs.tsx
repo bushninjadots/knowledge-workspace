@@ -2,6 +2,7 @@
 //
 // Split out of creation-studio.tsx; state stays with the caller.
 
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
 export function StudioResetDialog({
@@ -203,6 +205,80 @@ export function StudioConflictDialog({
             Keep mine and overwrite
           </Button>
         </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** Sharing a Studio as a community template: name it, describe it, and know
+ *  what leaves the account before it is submitted for review. */
+export function StudioShareTemplateDialog({
+  open,
+  defaultName,
+  pending,
+  onOpenChange,
+  onSubmit,
+}: {
+  open: boolean;
+  defaultName: string;
+  pending: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (name: string, description: string) => void;
+}) {
+  const [name, setName] = useState(defaultName);
+  const [description, setDescription] = useState("");
+  useEffect(() => {
+    if (open) {
+      setName(defaultName);
+      setDescription("");
+    }
+  }, [defaultName, open]);
+  const trimmed = name.trim();
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="studio-editor-chrome sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Share your Studio as a template</DialogTitle>
+          <DialogDescription>
+            Other members can start from your arrangement: its areas, block choices and styling, as
+            your draft has them now. Text you typed into Heading, Text and Markdown blocks is
+            included; your projects, bio and other profile content are not. Templates are reviewed
+            before they appear.
+          </DialogDescription>
+        </DialogHeader>
+        <form
+          className="space-y-3"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (trimmed) onSubmit(trimmed, description.trim());
+          }}
+        >
+          <label className="block text-sm">
+            <span className="mb-1 block font-medium text-foreground">Name</span>
+            <Input value={name} maxLength={60} onChange={(e) => setName(e.target.value)} />
+          </label>
+          <label className="block text-sm">
+            <span className="mb-1 block font-medium text-foreground">
+              What it's good for{" "}
+              <span className="font-normal text-muted-foreground">(optional)</span>
+            </span>
+            <Textarea
+              value={description}
+              maxLength={200}
+              rows={3}
+              placeholder="e.g. A calm single column for writers who lead with one project."
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </label>
+          <DialogFooter className="gap-2 sm:justify-start">
+            <Button type="submit" size="sm" busy={pending} disabled={!trimmed || pending}>
+              Submit for review
+            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

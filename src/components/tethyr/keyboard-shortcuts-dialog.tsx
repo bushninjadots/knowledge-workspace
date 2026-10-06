@@ -5,11 +5,15 @@ const SHORTCUTS: ReadonlyArray<{ keys: string; label: string }> = [
   { keys: "⌘/Ctrl + K", label: "Open quick search anywhere" },
   { keys: "/", label: "Focus search from the top bar" },
   { keys: "?", label: "Show this shortcut list" },
-  { keys: "⌘/Ctrl + Z", label: "Studio — undo" },
-  { keys: "⌘/Ctrl + ⇧ + Z", label: "Studio — redo" },
   { keys: "Esc", label: "Close dialogs, or clear the studio selection" },
   { keys: "← →", label: "Step through galleries and project shelves" },
-  { keys: "Arrow keys", label: "Move a selected block in the studio editor" },
+  { keys: "Tab, Enter", label: "Studio — reach and select a block" },
+  { keys: "Arrow keys", label: "Studio — nudge the selected block" },
+  { keys: "Delete", label: "Studio — remove the selected block" },
+  { keys: "⌘/Ctrl + D", label: "Studio — duplicate the selected block" },
+  { keys: "⌘/Ctrl + Z", label: "Studio — undo" },
+  { keys: "⌘/Ctrl + ⇧ + Z", label: "Studio — redo" },
+  { keys: "⌘/Ctrl + S", label: "Studio — save now" },
 ];
 
 function KeyCombo({ keys }: { keys: string }) {

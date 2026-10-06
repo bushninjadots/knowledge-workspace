@@ -99,7 +99,7 @@ function ProfileActivityHeatmapBlock({ config, context }: BlockProps) {
   return (
     <div className="min-w-0">
       <div className="mb-3 flex items-baseline justify-between gap-3">
-        <h4 className="text-sm font-medium text-foreground">Activity</h4>
+        <h2 className="[font-family:inherit] text-sm font-medium text-foreground">Activity</h2>
         {showSummary && (
           <p className="text-xs text-muted-foreground">
             {total} {total === 1 ? "contribution" : "contributions"} · {activeDays}{" "}

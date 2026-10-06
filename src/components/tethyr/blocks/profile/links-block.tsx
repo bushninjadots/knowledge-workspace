@@ -65,9 +65,9 @@ function ProfileLinksBlock({ context, config }: BlockProps) {
   return (
     <div className="space-y-2">
       {showCategories && (
-        <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        <h2 className="[font-family:inherit] text-xs font-medium uppercase tracking-wider text-muted-foreground">
           Links
-        </h4>
+        </h2>
       )}
       <div className="flex flex-wrap gap-2">
         {portfolio.map((link) => (

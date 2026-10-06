@@ -136,7 +136,7 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
   const showProgress = config.showProgress !== false;
   const showDescription = config.showDescription !== false;
   const presentation = getProfileProjectPresentation(config.presentation);
-  const heading = <h3 className="mb-3 text-sm font-medium text-foreground">Projects</h3>;
+  const heading = <h2 className="mb-3 text-sm font-medium text-foreground">Projects</h2>;
 
   const ProjectImage = ({
     project,
@@ -329,6 +329,7 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
                 <Progress
                   value={featured.project.progress_percent}
                   className="h-1 min-w-12 flex-1"
+                  aria-label={`${featured.project.title}: ${featured.project.progress_percent}% complete`}
                 />
               )}
             </div>

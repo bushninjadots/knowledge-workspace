@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import "@/components/tethyr/blocks/register-all";
 import type { LayoutSection } from "@/lib/page-blocks";
 import { fitGridItemToContent, sectionLabel } from "./studio-grid";
 
@@ -13,6 +14,19 @@ describe("sectionLabel", () => {
   it("names untitled sections in words, never by layout id", () => {
     expect(sectionLabel(section({ layout: "feature" }))).toBe("Featured area");
     expect(sectionLabel(section({ layout: "two_column" }))).toBe("Two-column area");
+  });
+
+  it("names an untitled section after its first block", () => {
+    expect(
+      sectionLabel(
+        section({
+          blocks: [
+            { id: "b", type: "profile-tools", position: 1, config: {}, visible: true },
+            { id: "a", type: "profile-gallery", position: 0, config: {}, visible: true },
+          ],
+        }),
+      ),
+    ).toBe("Gallery area");
   });
 
   it("treats a blank title as untitled", () => {

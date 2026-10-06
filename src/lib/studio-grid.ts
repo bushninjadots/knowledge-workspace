@@ -4,6 +4,7 @@
 // Split out of g-studio-surface.tsx so placement, snapping, and overlap rules
 // can be read and tested without the editor UI around them.
 
+import { getBlock } from "@/lib/block-registry";
 import type {
   LayoutBlockInstance,
   LayoutGridItem,
@@ -266,8 +267,14 @@ const SECTION_LAYOUT_NAMES: Record<LayoutSection["layout"], string> = {
   compact_list: "Compact list",
 };
 
-/** Display label for a section: its custom title, else a name for its layout. */
+/** Display label for a section: its custom title, else what's in it ("Gallery
+ *  area"), else a name for its layout. Naming by layout alone gave several
+ *  areas the same name ("Full-width area" twice) in every area picker. */
 export function sectionLabel(section: LayoutSection): string {
   const title = section.title?.trim();
-  return title || (SECTION_LAYOUT_NAMES[section.layout] ?? "Area");
+  if (title) return title;
+  const first = [...section.blocks].sort((a, b) => a.position - b.position)[0];
+  const blockLabel = first ? getBlock(first.type)?.label : undefined;
+  if (blockLabel) return `${blockLabel} area`;
+  return SECTION_LAYOUT_NAMES[section.layout] ?? "Area";
 }
