@@ -208,6 +208,39 @@ try {
   }
   await page.waitForTimeout(2500);
 
+  // 6a ─ multi-select: shift-click builds a selection; bulk edits are one undo step
+  await blank(page);
+  await selectBlock(page, 1);
+  await page.keyboard.down("Shift");
+  await selectBlock(page, 2);
+  await selectBlock(page, 3);
+  await page.keyboard.up("Shift");
+  await page.waitForTimeout(400);
+  const multiTitle = await page
+    .locator("#studio-rail-panel h2")
+    .first()
+    .innerText()
+    .catch(() => "-");
+  log("shift-click selects several blocks", /^3 blocks selected$/.test(multiTitle), multiTitle);
+  const areas = () => page.locator("section[data-section-id]").count();
+  const areas0 = await areas();
+  await page
+    .locator("#studio-rail-panel")
+    .getByRole("button", { name: "Group into a new area" })
+    .click();
+  await page.waitForTimeout(600);
+  const grouped = (await areas()) === areas0 + 1;
+  await blank(page);
+  await page.keyboard.press("Control+z");
+  await page.waitForTimeout(600);
+  log(
+    "Group into a new area makes one area, undone in one step",
+    grouped && (await areas()) === areas0,
+    `${areas0} → ${grouped ? areas0 + 1 : "?"} → ${await areas()}`,
+  );
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(2500);
+
   // 6b ─ snap: a near-miss drag lines back up with its neighbour
   const pair = page
     .locator("section[data-section-id]")

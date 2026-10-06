@@ -3,6 +3,7 @@ import "@/components/tethyr/blocks/register-all";
 import type { LayoutSection } from "@/lib/page-blocks";
 import {
   alignedEdges,
+  arrangeGrid,
   fitGridItemToContent,
   reflowAroundHidden,
   sectionLabel,
@@ -108,3 +109,48 @@ describe("alignedEdges", () => {
     });
   });
 });
+
+describe("arrangeGrid", () => {
+  const grid = [
+    { i: "a", x: 0, y: 0, w: 4, h: 3, minW: 2 },
+    { i: "b", x: 6, y: 0, w: 6, h: 2, minW: 2 },
+    { i: "c", x: 0, y: 3, w: 12, h: 2, minW: 2 },
+  ];
+  const anchor = grid[0];
+
+  it("matches widths and pushes what it now overlaps down", () => {
+    const out = arrangeGrid(grid, new Set(["a", "c"]), anchor, "match-width")!;
+    expect(out.find((item) => item.i === "c")).toMatchObject({ x: 0, y: 3, w: 4 });
+    expect(out.find((item) => item.i === "b")).toMatchObject({ x: 6, y: 0 });
+  });
+
+  it("puts the selection side by side across the full width", () => {
+    const out = arrangeGrid(grid, new Set(["a", "b", "c"]), anchor, "row")!;
+    expect(out.map(({ i, x, y, w }) => ({ i, x, y, w }))).toEqual([
+      { i: "a", x: 0, y: 0, w: 4 },
+      { i: "b", x: 8, y: 0, w: 4 },
+      { i: "c", x: 4, y: 0, w: 4 },
+    ]);
+  });
+
+  it("never leaves two blocks overlapping", () => {
+    const out = arrangeGrid(grid, new Set(["b"]), anchor, "align-left")!;
+    for (const item of out) {
+      for (const other of out) {
+        if (item.i !== other.i) expect(overlaps(item, other)).toBe(false);
+      }
+    }
+    expect(out.find((item) => item.i === "b")).toMatchObject({ x: 0, y: 0 });
+  });
+
+  it("returns null when nothing changes", () => {
+    expect(arrangeGrid(grid, new Set(["a"]), anchor, "match-width")).toBeNull();
+  });
+});
+
+function overlaps(
+  a: { x: number; y: number; w: number; h: number },
+  b: { x: number; y: number; w: number; h: number },
+) {
+  return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+}

@@ -354,3 +354,74 @@ export function alignedEdges(
   );
   return { cols, rows };
 }
+
+/** How a multi-selection is laid out relative to its first-picked block. */
+export type GridArrangement = "match-width" | "match-height" | "align-left" | "align-top" | "row";
+
+/**
+ * Lay out the selected items of one area's grid relative to `anchor` (the
+ * first block picked, possibly in another area), then push any block they now
+ * overlap down until it fits. "row" puts the selected items side by side in
+ * one row, sharing the full width. Returns null when nothing would change or
+ * the arrangement can't respect the blocks' minimum widths.
+ */
+export function arrangeGrid(
+  grid: LayoutGridItem[],
+  ids: ReadonlySet<string>,
+  anchor: Pick<LayoutGridItem, "x" | "y" | "w" | "h">,
+  how: GridArrangement,
+): LayoutGridItem[] | null {
+  const picked = grid.filter((item) => ids.has(item.i)).sort((a, b) => a.y - b.y || a.x - b.x);
+  if (picked.length === 0) return null;
+  const moved = new Map<string, LayoutGridItem>();
+  if (how === "row") {
+    const ordered = [...picked].sort((a, b) => a.x - b.x || a.y - b.y);
+    const base = Math.floor(COLS / ordered.length);
+    if (ordered.some((item) => base < (item.minW ?? 1))) return null;
+    const extra = COLS - base * ordered.length;
+    const top = Math.min(...ordered.map((item) => item.y));
+    let x = 0;
+    ordered.forEach((item, index) => {
+      const w = base + (index < extra ? 1 : 0);
+      moved.set(item.i, { ...item, x, y: top, w });
+      x += w;
+    });
+  } else {
+    for (const item of picked) {
+      const next = { ...item };
+      if (how === "match-width") next.w = Math.max(item.minW ?? 1, Math.min(COLS, anchor.w));
+      if (how === "match-height") next.h = Math.max(item.minH ?? 1, anchor.h);
+      if (how === "align-left") next.x = anchor.x;
+      if (how === "align-top") next.y = anchor.y;
+      next.x = Math.max(0, Math.min(COLS - next.w, next.x));
+      moved.set(item.i, next);
+    }
+  }
+  // Selected blocks claim their places first (top to bottom); everything
+  // else keeps its place unless it now overlaps, in which case it moves down.
+  const placed: LayoutGridItem[] = [];
+  const settle = (item: LayoutGridItem) => {
+    const next = { ...item };
+    for (;;) {
+      const hits = placed.filter((other) => overlapsGridItems(next, other));
+      if (hits.length === 0) break;
+      next.y = Math.max(...hits.map((other) => other.y + other.h));
+    }
+    placed.push(next);
+  };
+  [...moved.values()].sort((a, b) => a.y - b.y || a.x - b.x).forEach(settle);
+  grid
+    .filter((item) => !moved.has(item.i))
+    .sort((a, b) => a.y - b.y || a.x - b.x)
+    .forEach(settle);
+  const byId = new Map(placed.map((item) => [item.i, item]));
+  const next = grid.map((item) => byId.get(item.i) ?? item);
+  const same = next.every(
+    (item, index) =>
+      item.x === grid[index].x &&
+      item.y === grid[index].y &&
+      item.w === grid[index].w &&
+      item.h === grid[index].h,
+  );
+  return same ? null : next;
+}

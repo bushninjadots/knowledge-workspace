@@ -85,6 +85,7 @@ import {
   snapGridPlacement,
   alignedEdges,
   sizeFor,
+  type GridArrangement,
 } from "@/lib/studio-grid";
 import { useCardInk } from "@/hooks/use-card-ink";
 import { useIsMobile, useMediaQuery } from "@/hooks/use-mobile";
@@ -120,6 +121,8 @@ export interface GStudioSurfaceProps {
   mode: GStudioMode;
   device: GStudioDevice;
   selectedBlockId: string | null;
+  /** Every selected block, in the order picked (the last is the primary). */
+  selectedBlockIds: string[];
   dragType: string | null;
   paletteTarget: string | null;
   dirty: boolean;
@@ -139,7 +142,8 @@ export interface GStudioSurfaceProps {
   userId: string;
   onModeChange: (mode: GStudioMode) => void;
   onDeviceChange: (device: GStudioDevice) => void;
-  onSelect: (id: string | null) => void;
+  /** Select a block; `toggle` adds it to (or drops it from) the selection. */
+  onSelect: (id: string | null, options?: { toggle?: boolean }) => void;
   /** Live grid updates (drag/resize frames, auto-fit) — not undo steps. */
   onGridChange: (sectionId: string, grid: LayoutGridItem[]) => void;
   /** Content auto-fit of row heights — never an edit, never saved alone. */
@@ -155,10 +159,22 @@ export interface GStudioSurfaceProps {
   onMove: (id: string, direction: -1 | 1) => void;
   onMoveSection: (id: string, direction: -1 | 1) => void;
   onToggleSection: (id: string) => void;
+  /** Remove an area that has no blocks left. */
+  onRemoveSection: (id: string) => void;
   onRenameSection: (id: string, title: string) => void;
   onSectionLayoutChange: (sectionId: string, layout: LayoutSection["layout"]) => void;
   /** Apply one style patch to several blocks as a single undo step. */
-  onApplyBlockStyle: (blockIds: string[], patch: Partial<LayoutBlockInstance>) => void;
+  onApplyBlockStyle: (
+    blockIds: string[],
+    patch: Partial<LayoutBlockInstance>,
+    message?: string,
+  ) => void;
+  /** Remove several blocks as one undo step (locked ones are kept). */
+  onRemoveBlocks: (blockIds: string[]) => void;
+  /** Lay several blocks out relative to the first one picked. */
+  onArrangeBlocks: (blockIds: string[], how: GridArrangement) => void;
+  /** Move several blocks into a new area. */
+  onGroupIntoArea: (blockIds: string[]) => void;
   /** Open an area's settings in the rail (set by the surface itself). */
   onEditArea?: (sectionId: string) => void;
   /** The area whose settings the rail shows. */
@@ -1078,6 +1094,14 @@ function GSectionBand({
                 <Eye className="h-3.5 w-3.5" />
               )}
             </IconButton>
+            {section.blocks.length === 0 && (
+              <IconButton
+                label="Remove empty area"
+                onClick={() => props.onRemoveSection(section.id)}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </IconButton>
+            )}
           </div>
         </header>
       ) : (
@@ -1107,7 +1131,7 @@ function GSectionBand({
                 key={block.id}
                 block={block}
                 editing={editing}
-                selected={props.selectedBlockId === block.id}
+                selected={props.selectedBlockIds.includes(block.id)}
                 fluid
                 {...props}
               />
@@ -1284,7 +1308,7 @@ function GSectionBand({
                 key={block.id}
                 block={block}
                 editing={editing}
-                selected={props.selectedBlockId === block.id}
+                selected={props.selectedBlockIds.includes(block.id)}
                 reportContentHeight={fitBlock}
                 {...props}
               />
@@ -1462,7 +1486,7 @@ const GBlockFrame = forwardRef<
         if (!editing || event.target !== event.currentTarget) return;
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
-          props.onSelect(block.id);
+          props.onSelect(block.id, { toggle: event.shiftKey });
         }
       }}
       onMouseDown={onMouseDown}
@@ -1484,13 +1508,14 @@ const GBlockFrame = forwardRef<
       onClickCapture={(event) => {
         if (!editing) return;
         const link = (event.target as Element).closest?.("a[href]");
-        if (!link || event.metaKey || event.ctrlKey || event.shiftKey) return;
+        // Shift-click adds the block to the selection, so it never follows.
+        if (!link || event.metaKey || event.ctrlKey) return;
         event.preventDefault();
       }}
       onClick={(event) => {
         if (!editing) return;
         event.stopPropagation();
-        props.onSelect(block.id);
+        props.onSelect(block.id, { toggle: event.shiftKey });
       }}
     >
       <div
@@ -1555,7 +1580,13 @@ const GBlockFrame = forwardRef<
           >
             <GripVertical className="h-3.5 w-3.5" />
           </span>
-          {selected && (
+          {selected && props.selectedBlockIds.length > 1 && (
+            <span className="absolute -bottom-3 right-2 z-30 inline-flex h-5 min-w-5 items-center justify-center rounded-sm border border-[var(--user-accent-border)] bg-[var(--popover)] px-1 text-2xs font-medium tabular-nums text-[var(--user-accent-text)] shadow-sm">
+              {props.selectedBlockIds.indexOf(block.id) + 1}
+              <span className="sr-only"> of {props.selectedBlockIds.length} selected</span>
+            </span>
+          )}
+          {selected && props.selectedBlockIds.length < 2 && (
             // Straddles the frame's bottom edge: the top edge is where blocks
             // keep their own controls (the profile header's Add banner etc.),
             // which the toolbar used to cover. Settings live in the Block tab.

@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { ProjectDialog } from "@/components/tethyr/profile";
 import { BackgroundPickerDialog } from "@/components/tethyr/profile/background-picker-dialog";
 import { CURRENT_USER_KEY, useSkillsCatalog } from "@/hooks/use-current-user";
-import { overlapsGridItems } from "@/lib/studio-grid";
+import { arrangeGrid, overlapsGridItems, type GridArrangement } from "@/lib/studio-grid";
 import {
   GStudioSurface,
   type GStudioConfig,
@@ -106,7 +106,17 @@ export function CreationStudio({
   const [savedLayout, setSavedLayout] = useState<PageLayout | null>(null);
   const [config, setConfig] = useState<GStudioConfig | null>(null);
   const [savedConfig, setSavedConfig] = useState<GStudioConfig | null>(null);
-  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+  // The selection, in the order blocks were picked. The last one is the
+  // "primary" block whose settings the Block tab shows; shift-click adds more.
+  const [selectedBlockIds, setSelectedBlockIds] = useState<string[]>([]);
+  const selectedBlockId = selectedBlockIds.at(-1) ?? null;
+  const selectBlock = useCallback((id: string | null, options?: { toggle?: boolean }) => {
+    if (!id) return setSelectedBlockIds([]);
+    if (!options?.toggle) return setSelectedBlockIds([id]);
+    setSelectedBlockIds((current) =>
+      current.includes(id) ? current.filter((value) => value !== id) : [...current, id],
+    );
+  }, []);
   const [dragType, setDragType] = useState<string | null>(null);
   const [paletteTarget, setPaletteTarget] = useState<string | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
@@ -205,7 +215,7 @@ export function CreationStudio({
     baselineRef.current = source.updatedAt ?? null;
     setHistory(carry ? [carry] : []);
     setFuture([]);
-    setSelectedBlockId(null);
+    setSelectedBlockIds([]);
     autosaveSnapshotRef.current = null;
     touchedGridRef.current = new Set(
       nextLayout.sections.filter((s) => s.grid && s.grid.length > 0).map((s) => s.id),
@@ -289,7 +299,7 @@ export function CreationStudio({
           return;
         }
       }
-      if (target) setSelectedBlockId(target);
+      if (target) setSelectedBlockIds([target]);
       const sectionEl = targetSection
         ? document.querySelector(`[data-section-id="${CSS.escape(targetSection)}"]`)
         : null;
@@ -406,6 +416,15 @@ export function CreationStudio({
     [config, layout, pushHistory],
   );
 
+  // Undo, redo and removals can take selected blocks away; drop them.
+  useEffect(() => {
+    if (!layout) return;
+    const present = new Set(layout.sections.flatMap((s) => s.blocks.map((b) => b.id)));
+    setSelectedBlockIds((current) =>
+      current.every((id) => present.has(id)) ? current : current.filter((id) => present.has(id)),
+    );
+  }, [layout]);
+
   const findBlock = useCallback(
     (blockId: string) =>
       layout?.sections.flatMap((section) => section.blocks).find((block) => block.id === blockId),
@@ -425,7 +444,7 @@ export function CreationStudio({
 
   /** One style patch on several blocks, as a single undo step. */
   const applyBlockStyle = useCallback(
-    (blockIds: string[], patch: Partial<LayoutBlockInstance>) => {
+    (blockIds: string[], patch: Partial<LayoutBlockInstance>, message?: string) => {
       if (!layout || blockIds.length === 0) return;
       const ids = new Set(blockIds);
       commit({
@@ -436,7 +455,9 @@ export function CreationStudio({
           ),
         })),
       });
-      if (blockIds.length > 1) toastUndoable(`Style applied to ${blockIds.length} blocks`);
+      if (blockIds.length > 1) {
+        toastUndoable(message ?? `Style applied to ${blockIds.length} blocks`);
+      }
     },
     [commit, layout, toastUndoable],
   );
@@ -558,7 +579,7 @@ export function CreationStudio({
       ];
       touchedGridRef.current.add(section.id);
       commit(next);
-      setSelectedBlockId(block.id);
+      setSelectedBlockIds([block.id]);
       // Bring the new block into view (it lands at the bottom of its area)
       // and focus it, so it's obvious where it went.
       window.setTimeout(() => {
@@ -586,7 +607,7 @@ export function CreationStudio({
           grid: section.grid?.filter((item) => item.i !== blockId),
         })),
       });
-      setSelectedBlockId(null);
+      setSelectedBlockIds([]);
       toastUndoable("Block removed");
     },
     [commit, layout, toastUndoable],
@@ -619,7 +640,7 @@ export function CreationStudio({
         );
         touchedGridRef.current.add(section.id);
         commit(next);
-        setSelectedBlockId(duplicate.id);
+        setSelectedBlockIds([duplicate.id]);
         return;
       }
     },
@@ -708,6 +729,105 @@ export function CreationStudio({
     [commit, layout],
   );
 
+  /** Remove several blocks as one undo step. Locked blocks stay put. */
+  const removeBlocks = useCallback(
+    (blockIds: string[]) => {
+      if (!layout) return;
+      const locked = new Set(
+        layout.sections
+          .flatMap((s) => s.blocks)
+          .filter((b) => b.locked)
+          .map((b) => b.id),
+      );
+      const ids = new Set(blockIds.filter((id) => !locked.has(id)));
+      if (ids.size === 0) {
+        toast("Locked blocks can't be removed — unlock them first.");
+        return;
+      }
+      for (const section of layout.sections) {
+        if (section.blocks.some((b) => ids.has(b.id))) touchedGridRef.current.add(section.id);
+      }
+      commit({
+        sections: layout.sections.map((section) => ({
+          ...section,
+          blocks: section.blocks
+            .filter((block) => !ids.has(block.id))
+            .map((block, index) => ({ ...block, position: index })),
+          grid: section.grid?.filter((item) => !ids.has(item.i)),
+        })),
+      });
+      const kept = blockIds.length - ids.size;
+      setSelectedBlockIds(blockIds.filter((id) => locked.has(id)));
+      toastUndoable(
+        `${ids.size} block${ids.size === 1 ? "" : "s"} removed` +
+          (kept ? ` — ${kept} locked kept` : ""),
+      );
+    },
+    [commit, layout, toastUndoable],
+  );
+
+  /** Move the selected blocks into a new area placed after the first one's. */
+  const groupIntoArea = useCallback(
+    (blockIds: string[]) => {
+      if (!layout) return;
+      const next = cloneLayout(layout);
+      const ids = new Set(blockIds);
+      const moving: Array<{ block: LayoutBlockInstance; item?: LayoutGridItem }> = [];
+      let afterIndex = -1;
+      next.sections.forEach((section, sectionIndex) => {
+        const taken = section.blocks.filter(
+          (block) => ids.has(block.id) && !block.locked && block.type !== "profile-header",
+        );
+        if (taken.length === 0) return;
+        if (taken.some((block) => block.id === blockIds[0]) || afterIndex < 0) {
+          afterIndex = sectionIndex;
+        }
+        const takenIds = new Set(taken.map((block) => block.id));
+        const grid = section.grid ?? [];
+        moving.push(
+          ...[...taken]
+            .map((block) => ({ block, item: grid.find((item) => item.i === block.id) }))
+            .sort(
+              (a, b) => (a.item?.y ?? 0) - (b.item?.y ?? 0) || (a.item?.x ?? 0) - (b.item?.x ?? 0),
+            ),
+        );
+        section.blocks = section.blocks.filter((block) => !takenIds.has(block.id));
+        section.grid = grid.filter((item) => !takenIds.has(item.i));
+        touchedGridRef.current.add(section.id);
+      });
+      if (moving.length === 0) {
+        toast("Locked blocks and the header stay where they are.");
+        return;
+      }
+      const id = makeId("section");
+      const grid: LayoutGridItem[] = [];
+      for (const { block, item } of moving) {
+        const [defaultW, defaultH, minW, minH] = blockSize(block.type);
+        grid.push(
+          nextGridItem(block.id, grid, item?.w ?? defaultW, item?.h ?? defaultH, minW, minH),
+        );
+      }
+      next.sections.splice(afterIndex + 1, 0, {
+        id,
+        position: 0,
+        layout: "full",
+        title: `Area ${next.sections.length + 1}`,
+        visible: true,
+        blocks: moving.map(({ block }, index) => ({ ...block, position: index })),
+        grid,
+      });
+      next.sections.forEach((section, index) => {
+        section.position = index;
+        section.blocks.forEach((block, blockIndex) => (block.position = blockIndex));
+      });
+      touchedGridRef.current.add(id);
+      commit(next);
+      setRenameFocusId(id);
+      toastUndoable(`Moved ${moving.length} blocks into a new area`);
+    },
+    [commit, layout, toastUndoable],
+  );
+
   const addSection = useCallback(() => {
     if (!layout) return;
     const next = cloneLayout(layout);
@@ -722,7 +842,7 @@ export function CreationStudio({
       grid: [],
     });
     commit(next);
-    setSelectedBlockId(null);
+    setSelectedBlockIds([]);
     setRenameFocusId(id);
     // Keep the new area in view so the rename happens where you can see it.
     setTimeout(
@@ -759,10 +879,28 @@ export function CreationStudio({
     [commit, layout],
   );
 
+  const removeSection = useCallback(
+    (sectionId: string) => {
+      if (!layout) return;
+      const section = layout.sections.find((candidate) => candidate.id === sectionId);
+      // Only empty areas: blocks are never removed as a side effect.
+      if (!section || section.blocks.length > 0) return;
+      commit({
+        sections: layout.sections
+          .filter((candidate) => candidate.id !== sectionId)
+          .map((candidate, index) => ({ ...candidate, position: index })),
+      });
+      toastUndoable("Area removed");
+    },
+    [commit, layout, toastUndoable],
+  );
+
   const renameSection = useCallback(
     (sectionId: string, title: string) => {
       if (!layout || !title.trim()) return;
       const clean = title.trim().slice(0, 40);
+      // Leaving the rename box unchanged isn't an edit (or an undo step).
+      if (layout.sections.find((section) => section.id === sectionId)?.title === clean) return;
       commit({
         sections: layout.sections.map((section) =>
           section.id === sectionId ? { ...section, title: clean } : section,
@@ -783,7 +921,7 @@ export function CreationStudio({
       section.blocks.forEach((block, index) => (block.position = index));
       touchedGridRef.current.add(sectionId);
       commit(next);
-      setSelectedBlockId(null);
+      setSelectedBlockIds([]);
       toastUndoable("Area layout changed — blocks were rearranged");
     },
     [commit, layout, toastUndoable],
@@ -834,6 +972,47 @@ export function CreationStudio({
     (sectionId: string, nextGrid: LayoutGridItem[]) =>
       layout ? gridOn(layout, sectionId, nextGrid) : null,
     [gridOn, layout],
+  );
+
+  /** Lay the selection out relative to the first block picked. */
+  const arrangeBlocks = useCallback(
+    (blockIds: string[], how: GridArrangement) => {
+      if (!layout || blockIds.length < 2) return;
+      const anchorId = blockIds[0];
+      const anchor = layout.sections
+        .flatMap((section) => section.grid ?? [])
+        .find((item) => item.i === anchorId);
+      if (!anchor) return;
+      const locked = new Set(
+        layout.sections
+          .flatMap((s) => s.blocks)
+          .filter((b) => b.locked)
+          .map((b) => b.id),
+      );
+      const ids = new Set(blockIds.filter((id) => !locked.has(id)));
+      let next: PageLayout = layout;
+      let changed = false;
+      for (const section of layout.sections) {
+        // Tops and rows only mean something inside one area.
+        const sameArea = section.grid?.some((item) => item.i === anchorId);
+        if ((how === "align-top" || how === "row") && !sameArea) continue;
+        const arranged = arrangeGrid(section.grid ?? [], ids, anchor, how);
+        if (!arranged) continue;
+        // Locked blocks only move if a selected block now sits on them.
+        const updated = gridOn(next, section.id, arranged);
+        if (updated) {
+          next = updated;
+          changed = true;
+        }
+      }
+      if (!changed) {
+        toast(how === "row" ? "Those blocks can't share one row." : "Already lined up.");
+        return;
+      }
+      commit(next);
+      toastUndoable(`Arranged ${blockIds.length} blocks`);
+    },
+    [commit, gridOn, layout, toastUndoable],
   );
 
   // Live grid updates: drag/resize frames (history was recorded when the
@@ -959,7 +1138,7 @@ export function CreationStudio({
         event.preventDefault();
         redo();
       } else if (event.key === "Escape") {
-        setSelectedBlockId(null);
+        setSelectedBlockIds([]);
       } else if (mod && event.key.toLowerCase() === "d" && mode === "edit" && selectedBlockId) {
         event.preventDefault();
         duplicateBlock(selectedBlockId);
@@ -970,6 +1149,7 @@ export function CreationStudio({
         (event.key === "Delete" || event.key === "Backspace")
       ) {
         event.preventDefault();
+        if (selectedBlockIds.length > 1) return removeBlocks(selectedBlockIds);
         // Locked blocks ignore the keyboard's destructive and moving keys.
         if (findBlock(selectedBlockId)?.locked) return;
         removeBlock(selectedBlockId);
@@ -978,6 +1158,7 @@ export function CreationStudio({
         mode === "edit" &&
         layout &&
         selectedBlockId &&
+        selectedBlockIds.length === 1 &&
         ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)
       ) {
         const section = layout.sections.find((candidate) =>
@@ -1006,7 +1187,19 @@ export function CreationStudio({
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [commit, duplicateBlock, findBlock, layout, mode, redo, removeBlock, selectedBlockId, undo]);
+  }, [
+    commit,
+    duplicateBlock,
+    findBlock,
+    layout,
+    mode,
+    redo,
+    removeBlock,
+    removeBlocks,
+    selectedBlockId,
+    selectedBlockIds,
+    undo,
+  ]);
 
   // Replace the draft with a published version via the rollback RPC, then
   // re-seed the editor from the restored row. Without the re-seed the canvas
@@ -1410,6 +1603,7 @@ export function CreationStudio({
         mode={mode}
         device={device}
         selectedBlockId={selectedBlockId}
+        selectedBlockIds={selectedBlockIds}
         dragType={dragType}
         paletteTarget={paletteTarget}
         dirty={dirty}
@@ -1428,7 +1622,7 @@ export function CreationStudio({
           if (next === "preview" && dirty) void save({ announce: false });
         }}
         onDeviceChange={setDevice}
-        onSelect={setSelectedBlockId}
+        onSelect={selectBlock}
         onGridChange={applyGrid}
         onResizeBlock={commitGrid}
         onGridFit={fitGrid}
@@ -1441,10 +1635,14 @@ export function CreationStudio({
         onMove={moveBlock}
         onMoveSection={moveSection}
         onToggleSection={toggleSection}
+        onRemoveSection={removeSection}
         onRenameSection={renameSection}
         onSectionLayoutChange={setSectionLayout}
         onSectionAppearanceChange={setSectionAppearance}
         onApplyBlockStyle={applyBlockStyle}
+        onRemoveBlocks={removeBlocks}
+        onArrangeBlocks={arrangeBlocks}
+        onGroupIntoArea={groupIntoArea}
         onAddSection={addSection}
         onMoveToSection={moveToSection}
         onAdd={addBlock}
