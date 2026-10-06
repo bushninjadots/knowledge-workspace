@@ -107,7 +107,7 @@ async function ensureCustomizeOpen(page) {
     if (visible) return true;
     const toggle = page
       .locator("[data-studio-builder] header")
-      .getByRole("button", { name: /^(customize|templates?)$/i })
+      .getByRole("button", { name: /^(style|customize|templates?)$/i })
       .first();
     if (!(await toggle.isVisible().catch(() => false))) {
       // Under a loaded dev server the header itself may still be mounting —
@@ -181,7 +181,7 @@ const SHELL = () => {
     docOverflow: document.scrollingElement.scrollHeight - document.scrollingElement.clientHeight,
     builder: b(root),
     header: b(root.querySelector("header")),
-    canvas: b(root.querySelector("main")),
+    canvas: b(root.querySelector('[aria-label="Studio canvas"]')),
     panel: b(root.querySelector("aside")),
     // Below `lg` the desktop aside is intentionally hidden and the phone sheet
     // takes over; record which surface is actually in play.
@@ -196,7 +196,12 @@ const REACH = (scrollTop) => {
     root.querySelector("aside") ??
     document.querySelector('section[aria-label="Mobile Studio editor"]');
   if (!panel) return { absent: true, blocked: [], offscreen: [] };
-  const wrapper = panel.querySelector(":scope > div");
+  // The scroll owner is the panel's first scrolling descendant (the rail's
+  // Style tab scrolls one level below its tab panel).
+  const wrapper =
+    [...panel.querySelectorAll("div")].find((d) =>
+      /(auto|scroll)/.test(getComputedStyle(d).overflowY),
+    ) ?? panel.querySelector(":scope > div");
   const wcs = wrapper ? getComputedStyle(wrapper) : null;
   // The content wrapper is the scroll owner when it actually clips and
   // scrolls; the panel itself is the fallback (legacy layout).
@@ -278,7 +283,7 @@ const POPOVER = () => {
   );
   if (!p) return { present: false };
   const r = p.getBoundingClientRect();
-  const trigger = document.querySelector('[aria-label="Version history"]');
+  const trigger = document.querySelector('[aria-label="More Studio actions"]');
   const t = trigger?.getBoundingClientRect();
   const covered = [];
   for (const el of document.querySelectorAll("[data-studio-builder] > header button")) {
@@ -326,17 +331,19 @@ const POPOVER = () => {
  *  (border-radius), border weight (border width), card fill (background). */
 const SNAP = () => {
   const root = document.querySelector("[data-studio-builder]");
-  const cs = getComputedStyle(root);
+  // Studio tokens are set on the canvas (inherited root tokens included), and
+  // each block paints its surface on the inner .studio-block, not the frame.
+  const cs = getComputedStyle(root.querySelector('[aria-label="Studio canvas"]') ?? root);
   const vars = {};
   for (let i = 0; i < cs.length; i++) {
     const name = cs.item(i);
     if (name.startsWith("--")) vars[name] = cs.getPropertyValue(name).trim();
   }
-  const main = root.querySelector("main");
+  const main = root.querySelector('[aria-label="Studio canvas"]');
   // The structure cap lives on an inline style on the canvas wrapper, not on
   // main, so read it from there.
   const capped = main?.querySelector('div[style*="max-width"]');
-  const blocks = [...root.querySelectorAll("[data-block-id]")].slice(0, 3);
+  const blocks = [...root.querySelectorAll(".react-grid-item .studio-block")].slice(0, 3);
   const styles = blocks.map((b) => {
     const r = b.getBoundingClientRect();
     const bcs = getComputedStyle(b);
@@ -378,6 +385,12 @@ const LABELS = () => {
       ls: cs.letterSpacing,
       family: cs.fontFamily.split(",")[0].replace(/"/g, ""),
       utility: el.className.toString().split(/\s+/)[0],
+      // Block titles are h2s set in the body face on purpose (they read as
+      // labels); only display headings promise the personality face.
+      bodyFace: el.className.toString().includes("[font-family:inherit]"),
+      // Editor chrome stays on the app's fonts by design; only labels on the
+      // canvas follow the Studio's label font.
+      inCanvas: !!el.closest('[aria-label="Studio canvas"]'),
     });
   }
   const seen = new Set();
@@ -459,10 +472,10 @@ const RAIL = () => {
   const where = (el) => {
     if (el.closest("aside")) return "inspector rail";
     if (el.closest('section[aria-label="Mobile Studio editor"]')) return "phone sheet";
-    if (el.closest("main")) {
+    if (el.closest('[aria-label="Studio canvas"]')) {
       // GSectionBand renders its controls in a <header> inside the canvas
       // column, between sections — that is the section band, not the top bar.
-      return el.closest("main header") ? "section band" : "canvas";
+      return el.closest('[aria-label="Studio canvas"] header') ? "section band" : "canvas";
     }
     return el.closest("header") ? "top bar" : "panel / other";
   };
@@ -679,7 +692,15 @@ try {
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
     await login(page);
     await openStudio(page);
-    const trigger = page.getByRole("button", { name: /version history/i }).first();
+    // Version history lives in the top bar's "⋯" menu.
+    const trigger = {
+      click: async (opts) => {
+        await page.getByRole("button", { name: "More Studio actions" }).click(opts);
+        await page.getByRole("menuitem", { name: /version history/i }).click(opts);
+      },
+      evaluate: async () => trigger.click({ timeout: 5000 }),
+    };
+    const closeButton = page.getByRole("button", { name: "Close versions" });
     // Each dismissal test starts from a known-open popover, so a pass means
     // "the popover was open and this input closed it" — never a vacuous pass on
     // an already-closed popover.
@@ -704,8 +725,8 @@ try {
       await forceToggle();
       pop = await page.evaluate(POPOVER);
     }
-    // With the popover open, its own trigger is the obvious way to close it.
-    const closedByTrigger = await trigger
+    // With the popover open, its Close button is the obvious way to close it.
+    const closedByTrigger = await closeButton
       .click({ timeout: 5000 })
       .then(() => true)
       .catch(() => false);
@@ -977,9 +998,11 @@ try {
     for (const personality of ["Editorial", "Technical"]) {
       const rows = perPersonality[personality] || [];
       const want = personality === "Technical" ? "JetBrains Mono" : "Inter";
-      const micro = rows.filter((r) => r.utility === "t-label" || r.utility === "section-label");
+      const micro = rows.filter(
+        (r) => r.inCanvas && (r.utility === "t-label" || r.utility === "section-label"),
+      );
       const off = micro.filter((r) => r.family !== want);
-      const headings = rows.filter((r) => /^h[123]$/.test(r.tag));
+      const headings = rows.filter((r) => /^h[123]$/.test(r.tag) && !r.bodyFace);
       const titleWant = personality === "Technical" ? "JetBrains Mono" : "Space Grotesk";
       const headingsOff = headings.filter((r) => r.family !== titleWant);
       log(
@@ -1085,7 +1108,7 @@ try {
       await page.waitForTimeout(400);
     }
     // Setting groups live on the Style tab; switch to it before inventorying.
-    await page.getByRole("button", { name: "Style", exact: true }).click();
+    await page.getByRole("tab", { name: "Style", exact: true }).click();
     await page.waitForTimeout(300);
     const sheet = await page.evaluate(() => {
       const sec = document.querySelector('section[aria-label="Mobile Studio editor"]');
