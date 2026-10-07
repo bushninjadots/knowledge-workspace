@@ -15,6 +15,7 @@ export function syncedAgo(at: string | null | undefined): string | null {
   if (!at) return null;
   const date = new Date(at);
   if (Number.isNaN(date.getTime())) return null;
+  if (Date.now() - date.getTime() < 60_000) return "synced just now";
   return `synced ${formatDistanceToNowStrict(date, { addSuffix: true })}`;
 }
 

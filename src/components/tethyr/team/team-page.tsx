@@ -1,4 +1,6 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { useState, useRef } from "react";
+import { TeamGitHub, refreshCrewGithub } from "./team-github";
 import { Link } from "@tanstack/react-router";
 import {
   UserPlus,
@@ -181,6 +183,9 @@ export function TeamPage({
           </ul>
         )}
       </section>
+
+      {/* The crew's GitHub organisation, from its GitHub link */}
+      <TeamGitHub team={team} isLead={isLead} />
 
       {/* Crew activity — the work behind the projects */}
       <section aria-labelledby="crew-activity" className="mb-10">
@@ -656,6 +661,7 @@ function Management({ team }: { team: TeamRow }) {
   const invite = useInviteToTeam(team.id);
   const attach = useAttachProjectToTeam(team.id);
   const updateTeam = useUpdateTeam(team.id);
+  const queryClient = useQueryClient();
   const { data: myProjects = [] } = useMyProjects();
 
   async function handleInvite() {
@@ -719,6 +725,12 @@ function Management({ team }: { team: TeamRow }) {
         social_links: socialLinks,
       });
       toast.success("Links saved");
+      // A new or removed GitHub link brings the crew's repos along with it.
+      if ((socialLinks.github ?? "") !== (team.social_links?.github ?? "")) {
+        void refreshCrewGithub(team.id).then(() =>
+          queryClient.invalidateQueries({ queryKey: ["team"] }),
+        );
+      }
     } catch {
       toast.error("Couldn't save links");
     } finally {

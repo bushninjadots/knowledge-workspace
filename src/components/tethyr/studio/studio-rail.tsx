@@ -89,22 +89,21 @@ const SHAPE_PRESETS: Array<{ value: BlockShape; label: string; radius: string }>
 /** Shapes that support a per-block radius slider. */
 const RADIUS_SHAPES = new Set<BlockShape>(["rounded", "soft"]);
 
-/** Tiny SVG preview of a shape silhouette at 28×20. */
+/** Tiny preview of a shape silhouette at 28×20. A box with the shape's own
+ *  CSS border-radius, so organic/blob/leaf curves show truly — an SVG <rect>
+ *  can't take those values (it drew them square and logged errors). */
 function ShapeThumbnail({ radius, active }: { radius: string; active: boolean }) {
   return (
-    <svg width={28} height={20} viewBox="0 0 28 20" className="shrink-0" aria-hidden>
-      <rect
-        x={2}
-        y={2}
-        width={24}
-        height={16}
-        rx={radius}
-        ry={radius}
-        fill={active ? "var(--user-accent-subtle)" : "var(--surface-sunken)"}
-        stroke={active ? "var(--user-accent)" : "var(--border-strong)"}
-        strokeWidth={0.8}
+    <span className="flex h-5 w-7 shrink-0 items-center justify-center" aria-hidden>
+      <span
+        className="block h-4 w-6"
+        style={{
+          borderRadius: radius,
+          background: active ? "var(--user-accent-subtle)" : "var(--surface-sunken)",
+          border: `0.8px solid ${active ? "var(--user-accent)" : "var(--border-strong)"}`,
+        }}
       />
-    </svg>
+    </span>
   );
 }
 

@@ -9,9 +9,9 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   fetchRepoCommits,
   fetchRepoCommitActivity,
-  fetchRepoFile,
   fetchRepoMeta,
   fetchRepoReadme,
+  absolutizeRelativeLinks,
   fetchUserRepos,
   validateGitHubToken,
   type GithubCommitLite,
@@ -20,7 +20,8 @@ import {
   type RepoReadmeResult,
   type CommitActivityResult,
 } from "./github";
-import { parseGithubSource, type GithubSource } from "./github-source";
+import type { GithubSource } from "./github-source";
+import { publicGithubToken, type RefreshSummary } from "./github-refresh";
 
 async function getStoredToken(userId: string): Promise<string | null> {
   // Dynamic import keeps the service-role client out of the client bundle.
@@ -33,18 +34,7 @@ async function getStoredToken(userId: string): Promise<string | null> {
   return data?.token ?? null;
 }
 
-/**
- * Tethyr's own read-only token for PUBLIC GitHub data (env GITHUB_PUBLIC_TOKEN),
- * used when a member hasn't stored one. It only lifts the anonymous limit
- * (60 requests an hour, shared by the whole server) to 5,000. It must be a
- * fine-grained token with "Public repositories (read-only)" access, and it is
- * only ever sent with requests for a named repo or user — never /user/* — so
- * it can't widen what anyone sees.
- */
-function publicToken(): string | undefined {
-  const token = typeof process !== "undefined" ? process.env?.GITHUB_PUBLIC_TOKEN : undefined;
-  return token?.trim() || undefined;
-}
+const publicToken = publicGithubToken;
 
 /** The token for a request about a named repo: the member's own, else the
  *  public one, else none. */
@@ -325,37 +315,123 @@ export const syncLibraryItemFromGithub = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context, data }): Promise<SyncResult> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: item } = await supabaseAdmin
-      .from("library_items")
-      .select("id, user_id, github_source")
-      .eq("id", data.itemId)
-      .maybeSingle();
-    if (!item || item.user_id !== context.userId) return { ok: false, reason: "forbidden" };
-    const source = parseGithubSource(item.github_source);
-    if (!source) return { ok: false, reason: "not_linked" };
-
-    const token = await repoToken(context.userId);
-    const result = await fetchRepoFile(
-      source.repo,
-      source.path,
-      source.branch ?? undefined,
-      token ?? undefined,
+    const { syncLibraryItem } = await import("./github-refresh");
+    return syncLibraryItem(
+      supabaseAdmin,
+      data.itemId,
+      context.userId,
+      await repoToken(context.userId),
     );
-    if (result.unauthorized) return { ok: false, reason: "unauthorized" };
-    if (result.rateLimited) return { ok: false, reason: "rate_limited" };
-    if (result.notFound) return { ok: false, reason: "not_found" };
-    if (!result.text) return { ok: false, reason: "binary" };
-    if (source.sha && result.sha === source.sha) return { ok: true, updated: false, source };
+  });
 
-    const synced: GithubSource = {
-      ...source,
-      synced_at: new Date().toISOString(),
-      sha: result.sha,
-    };
-    const { error } = await supabaseAdmin
-      .from("library_items")
-      .update({ content: result.text, content_format: "markdown", github_source: synced })
-      .eq("id", data.itemId);
-    if (error) throw error;
-    return { ok: true, updated: true, source: synced };
+export type SyncEverythingResult = {
+  repos: Omit<RefreshSummary, "teams">;
+  notes: { checked: number; updated: number; failed: number };
+  teams: { checked: number; refreshed: number };
+  /** The profile README against its GitHub source, if it has one. */
+  readme: "none" | "up_to_date" | "has_updates" | "unavailable";
+};
+
+/**
+ * "Sync everything" in Settings → GitHub, for the signed-in member: fresh
+ * stats and commit graphs for their projects' repos, their library notes
+ * brought up to date with the files they're linked to, and the GitHub repos
+ * of crews they lead. Their README is only checked — it's never replaced
+ * without them seeing the new version first.
+ */
+export const syncAllGithub = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<SyncEverythingResult> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { refreshRepoSnapshots, refreshTeamSnapshot, syncLibraryItem } =
+      await import("./github-refresh");
+    const userId = context.userId;
+    const token = await repoToken(userId);
+
+    const { data: projects } = await supabaseAdmin
+      .from("projects")
+      .select("id")
+      .eq("profile_id", userId);
+    const repos = await refreshRepoSnapshots(supabaseAdmin, {
+      projectIds: (projects ?? []).map((p: { id: string }) => p.id),
+      max: 40,
+    });
+
+    const notes = { checked: 0, updated: 0, failed: 0 };
+    if (!repos.rateLimited) {
+      const { data: items } = await supabaseAdmin
+        .from("library_items")
+        .select("id")
+        .eq("user_id", userId)
+        .not("github_source", "is", null)
+        .limit(40);
+      for (const item of (items ?? []) as Array<{ id: string }>) {
+        notes.checked += 1;
+        const result = await syncLibraryItem(supabaseAdmin, item.id, userId, token);
+        if (!result.ok) notes.failed += 1;
+        else if (result.updated) notes.updated += 1;
+      }
+    }
+
+    const teams = { checked: 0, refreshed: 0 };
+    const { data: leads } = await supabaseAdmin
+      .from("team_members")
+      .select("team_id, teams(id, social_links)")
+      .eq("profile_id", userId)
+      .eq("role", "lead");
+    for (const row of (leads ?? []) as unknown as Array<{
+      teams: { id: string; social_links: Record<string, string> | null } | null;
+    }>) {
+      if (!row.teams?.social_links?.github) continue;
+      teams.checked += 1;
+      if (await refreshTeamSnapshot(supabaseAdmin, row.teams)) teams.refreshed += 1;
+    }
+
+    let readme: SyncEverythingResult["readme"] = "none";
+    const { data: profileRow } = await supabaseAdmin
+      .from("profiles")
+      .select("readme, readme_source")
+      .eq("id", userId)
+      .maybeSingle();
+    const profile = profileRow as unknown as {
+      readme: string | null;
+      readme_source: { repo?: string } | null;
+    } | null;
+    const repo = profile?.readme_source?.repo;
+    if (repo) {
+      const fetched = await fetchRepoReadme(repo, token);
+      if (!fetched.text) readme = "unavailable";
+      else {
+        const text = absolutizeRelativeLinks(fetched.text, repo, "HEAD").trim();
+        readme = text === (profile?.readme ?? "").trim() ? "up_to_date" : "has_updates";
+      }
+    }
+    return { repos, notes, teams, readme };
+  });
+
+/** Refresh a crew's GitHub repos now (crew leads, after changing the link). */
+export const refreshTeamGithub = createServerFn({ method: "POST" })
+  .validator((d: { teamId: string }) => ({ teamId: d.teamId.trim() }))
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context, data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: membership } = await supabaseAdmin
+      .from("team_members")
+      .select("role")
+      .eq("team_id", data.teamId)
+      .eq("profile_id", context.userId)
+      .maybeSingle();
+    if (membership?.role !== "lead") return { ok: false as const, reason: "forbidden" as const };
+    const { data: team } = await supabaseAdmin
+      .from("teams")
+      .select("id, social_links")
+      .eq("id", data.teamId)
+      .maybeSingle();
+    if (!team) return { ok: false as const, reason: "forbidden" as const };
+    const { refreshTeamSnapshot } = await import("./github-refresh");
+    const ok = await refreshTeamSnapshot(
+      supabaseAdmin,
+      team as unknown as { id: string; social_links: Record<string, string> | null },
+    );
+    return ok ? { ok: true as const } : { ok: false as const, reason: "unavailable" as const };
   });

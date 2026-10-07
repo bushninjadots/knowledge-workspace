@@ -7,6 +7,7 @@
 //     → preview → use it; the block shows it with its source, and the next
 //     click is "Sync from GitHub", which says "Already up to date"
 //   • the skills picker suggests skills from the account's repo languages
+//   • Settings → Sync everything says what it did (README up to date)
 //
 // Uses a public repo (octocat/Spoon-Knife) and only a handful of GitHub
 // requests, so it runs within the anonymous rate limit.
@@ -188,6 +189,14 @@ try {
   await page.goto(`${BASE}/settings#github`, { waitUntil: "load" });
   await page.locator("#github").waitFor({ timeout: 30000 });
   await page.waitForTimeout(2000);
+  const settings = page.locator("#github");
+  await settings.getByRole("button", { name: "Sync everything" }).click();
+  const summary = await settings
+    .getByText(/README up to date/)
+    .waitFor({ timeout: 30000 })
+    .then(() => true)
+    .catch(() => false);
+  log("Sync everything reports what it did", summary);
   log(
     "Settings lists the README's source",
     (await page

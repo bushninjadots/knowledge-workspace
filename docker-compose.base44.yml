@@ -25,6 +25,10 @@ services:
       # wrapper then forces port 8080/strictPort, matching the "3000:8080"
       # mapping below, and vite.config.ts skips its bare-metal 5173 pin.
       - LOVABLE_SANDBOX=1
+      # Optional GitHub settings for the server (see .env.example), passed
+      # through from your shell or ./.env; empty means "not set".
+      - GITHUB_PUBLIC_TOKEN=${GITHUB_PUBLIC_TOKEN:-}
+      - GITHUB_REFRESH_SECRET=${GITHUB_REFRESH_SECRET:-}
     extra_hosts:
       - "host.docker.internal:host-gateway" # so SSR can reach Supabase on the host
     command: sh -c "npm install --no-audit --no-fund --prefer-offline && npm run dev"

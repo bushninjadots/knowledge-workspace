@@ -16,6 +16,8 @@ export type TeamRow = {
   social_links: Record<string, string>;
   avatar_url: string | null;
   cover_url: string | null;
+  /** Cached public repos of the crew's GitHub organisation (server-written). */
+  github_snapshot?: import("@/lib/github-refresh").TeamGithubSnapshot | null;
   created_by: string;
   created_at: string;
 };

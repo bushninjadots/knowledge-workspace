@@ -71,6 +71,38 @@ async function normalizeCatastrophicSsrResponse(
   return securityErrorResponse(renderErrorPage());
 }
 
+/** Constant-time string comparison, so the secret can't be guessed by timing. */
+function sameSecret(a: string, b: string): boolean {
+  const left = new TextEncoder().encode(a);
+  const right = new TextEncoder().encode(b);
+  let diff = left.length ^ right.length;
+  for (let i = 0; i < Math.max(left.length, right.length); i++) {
+    diff |= (left[i] ?? 0) ^ (right[i] ?? 0);
+  }
+  return diff === 0;
+}
+
+/**
+ * The daily GitHub refresh (scheduled by pg_cron, migration
+ * 20261007140000): fresh repo snapshots for every linked project and every
+ * crew's GitHub organisation. Requires `Authorization: Bearer
+ * $GITHUB_REFRESH_SECRET`; without that variable set, the endpoint doesn't
+ * exist (404).
+ */
+async function githubRefreshCron(request: Request): Promise<Response> {
+  const secret = process.env.GITHUB_REFRESH_SECRET?.trim();
+  if (!secret) return new Response("Not found", { status: 404 });
+  if (request.method !== "POST") return new Response("Method not allowed", { status: 405 });
+  const given = (request.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
+  if (!sameSecret(given, secret)) return new Response("Unauthorized", { status: 401 });
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { refreshAllGithub } = await import("./lib/github-refresh");
+  const summary = await refreshAllGithub(supabaseAdmin);
+  return new Response(JSON.stringify(summary), {
+    headers: { "content-type": "application/json", "cache-control": "no-store" },
+  });
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
@@ -89,6 +121,9 @@ export default {
             },
           }),
         );
+      }
+      if (url.pathname === "/api/cron/github-refresh") {
+        return addSecurityHeaders(await githubRefreshCron(request));
       }
       if (url.pathname === "/robots.txt") {
         return addSecurityHeaders(

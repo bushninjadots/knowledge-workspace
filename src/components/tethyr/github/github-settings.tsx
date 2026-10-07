@@ -9,7 +9,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowRight,
   BookOpen,
@@ -19,6 +19,7 @@ import {
   LayoutGrid,
   Link2,
   Loader2,
+  RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,8 @@ import { useProfileReadme } from "@/hooks/use-profile-readme";
 import { supabasePending } from "@/lib/supabase-pending-schema";
 import { cn } from "@/lib/utils";
 import { syncedAgo } from "./github-sync-button";
+import { ProfileReadmeGitHub } from "./profile-readme-github";
+import { syncAllGithub, type SyncEverythingResult } from "@/lib/github-server";
 
 /** Connect with GitHub's own sign-in (links the identity to this account). */
 async function connectWithGithub() {
@@ -117,6 +120,36 @@ function GitHubUses() {
   const userId = user?.id ?? null;
   const { connected, username } = useGithubConnection();
   const { data: readme } = useProfileReadme(userId);
+  const queryClient = useQueryClient();
+  const [syncing, setSyncing] = useState(false);
+  const [result, setResult] = useState<SyncEverythingResult | null>(null);
+
+  const syncEverything = async () => {
+    setSyncing(true);
+    try {
+      const next = await syncAllGithub();
+      setResult(next);
+      // Everything that shows GitHub data reads it fresh.
+      for (const key of [
+        "project-repos",
+        "profile-repo-snapshot",
+        "library",
+        "team",
+        "github-uses",
+      ]) {
+        void queryClient.invalidateQueries({ queryKey: [key] });
+      }
+      if (next.repos.rateLimited) {
+        toast.warning("GitHub asked us to slow down — the rest syncs in the daily refresh");
+      } else {
+        toast.success("GitHub synced");
+      }
+    } catch {
+      toast.error("Couldn't sync with GitHub — try again in a minute");
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const { data: linked } = useQuery({
     queryKey: ["github-uses", userId],
@@ -163,11 +196,16 @@ function GitHubUses() {
     {
       icon: FileText,
       title: "README",
-      status: source
-        ? `From ${source.repo}${syncedAgo(source.synced_at) ? ` · ${syncedAgo(source.synced_at)}` : ""}`
-        : "Import your GitHub profile README, or any repo's, from the README block.",
+      status:
+        result?.readme === "has_updates"
+          ? `${source?.repo} has a newer README — review it before it replaces yours.`
+          : source
+            ? `From ${source.repo}${syncedAgo(source.synced_at) ? ` · ${syncedAgo(source.synced_at)}` : ""}`
+            : "Import your GitHub profile README, or any repo's, from the README block.",
       done: !!source,
-      action: (
+      action: source ? (
+        <ProfileReadmeGitHub profileId={userId} data={readme} className="h-7 text-xs" />
+      ) : (
         <Link to="/studio" className={USE_LINK}>
           Open Studio{arrow}
         </Link>
@@ -230,7 +268,24 @@ function GitHubUses() {
 
   return (
     <div className="mt-5 border-t border-border/60 pt-4">
-      <h3 className="text-xs font-semibold text-muted-foreground">Where GitHub shows up</h3>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-xs font-semibold text-muted-foreground">Where GitHub shows up</h3>
+        {connected && (
+          <Button size="sm" variant="outline" onClick={syncEverything} disabled={syncing}>
+            {syncing ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+            ) : (
+              <RefreshCw className="h-3.5 w-3.5" aria-hidden />
+            )}
+            {syncing ? "Syncing everything…" : "Sync everything"}
+          </Button>
+        )}
+      </div>
+      <p className="mt-1 text-xs text-muted-foreground" aria-live="polite">
+        {result
+          ? syncSummary(result)
+          : "Tethyr also refreshes your repos' stats and commit graphs once a day."}
+      </p>
       <ul className="mt-2 divide-y divide-border/50">
         {rows.map(({ icon: Icon, title, status, done, action }) => (
           <li key={title} className="flex items-center gap-3 py-2.5">
@@ -248,6 +303,29 @@ function GitHubUses() {
       </ul>
     </div>
   );
+}
+
+/** One line saying what "Sync everything" did. */
+export function syncSummary(result: SyncEverythingResult): string {
+  const plural = (n: number, one: string) => `${n} ${one}${n === 1 ? "" : "s"}`;
+  const parts: string[] = [];
+  parts.push(
+    result.repos.repos
+      ? `${plural(result.repos.refreshed, "repository")} refreshed`
+      : "no repositories linked yet",
+  );
+  if (result.notes.checked) {
+    parts.push(
+      result.notes.updated
+        ? `${plural(result.notes.updated, "note")} updated`
+        : "library notes already up to date",
+    );
+  }
+  if (result.teams.checked) parts.push(`${plural(result.teams.refreshed, "crew")} refreshed`);
+  if (result.readme === "up_to_date") parts.push("README up to date");
+  if (result.readme === "has_updates") parts.push("your README has updates to review");
+  const line = parts.join(" · ");
+  return `${line.charAt(0).toUpperCase()}${line.slice(1)}.`;
 }
 
 const USE_LINK =

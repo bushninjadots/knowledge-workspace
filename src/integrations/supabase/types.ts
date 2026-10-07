@@ -2737,6 +2737,7 @@ export type Database = {
           created_at: string;
           created_by: string;
           description: string | null;
+          github_snapshot: Json | null;
           id: string;
           name: string;
           slug: string;
@@ -2747,6 +2748,7 @@ export type Database = {
           created_at?: string;
           created_by: string;
           description?: string | null;
+          github_snapshot?: Json | null;
           id?: string;
           name: string;
           slug: string;
@@ -2757,6 +2759,7 @@ export type Database = {
           created_at?: string;
           created_by?: string;
           description?: string | null;
+          github_snapshot?: Json | null;
           id?: string;
           name?: string;
           slug?: string;
