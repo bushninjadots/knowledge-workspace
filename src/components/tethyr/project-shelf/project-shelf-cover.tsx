@@ -97,7 +97,7 @@ function ProjectShelfFace({
         </div>
 
         {/* Info panel */}
-        <div className="flex flex-1 flex-col gap-1.5 border-t border-black/10 bg-gradient-to-b from-surface/60 to-surface p-4 dark:border-white/10">
+        <div className="flex flex-1 flex-col gap-1.5 border-t border-border/60 bg-gradient-to-b from-surface/60 to-surface p-4">
           <div className="flex items-start justify-between gap-2">
             <p
               className="min-w-0 text-sm font-bold text-foreground group-hover:text-primary transition-colors"

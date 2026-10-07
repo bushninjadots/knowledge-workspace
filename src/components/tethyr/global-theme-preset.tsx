@@ -76,7 +76,37 @@ export function GlobalThemePreset() {
     else el.removeAttribute("data-site-motion");
   }, [siteAppearance, vars]);
 
+  // The browser's toolbar (mobile address bar, PWA title bar) takes the
+  // colour Tethyr is actually painted in, not a fixed white or grey. The tag
+  // is ours rather than the route head's, so a re-render can't reset it.
+  useEffect(() => {
+    const color = paintedBackground();
+    if (!color) return;
+    let meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    if (!meta) {
+      meta = document.createElement("meta");
+      meta.name = "theme-color";
+      document.head.appendChild(meta);
+    }
+    meta.content = color;
+  }, [themePreset, resolvedTheme, siteAppearance, vars]);
+
   return null;
+}
+
+/** The page background as #rrggbb. Read from the token, not the body's
+ *  colour, which may still be mid-crossfade from the previous theme. Tokens
+ *  are oklch, which not every browser takes in theme-color, so one canvas
+ *  pixel converts it. */
+function paintedBackground(): string | null {
+  const css = getComputedStyle(document.documentElement).getPropertyValue("--background").trim();
+  const ctx = document.createElement("canvas").getContext("2d");
+  if (!css || !ctx) return null;
+  ctx.fillStyle = css;
+  ctx.fillRect(0, 0, 1, 1);
+  const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data;
+  if (a === 0) return null;
+  return `#${[r, g, b].map((n) => n.toString(16).padStart(2, "0")).join("")}`;
 }
 
 /** Postgres "undefined column" and friends: the migration isn't applied yet. */

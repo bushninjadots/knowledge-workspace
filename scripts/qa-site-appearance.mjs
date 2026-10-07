@@ -8,6 +8,7 @@
 //   • a profile looks the same whatever the visitor chose for Tethyr
 //   • it follows the member to a fresh browser
 //   • Reset leaves nothing behind
+//   • the browser toolbar (theme-color) matches the painted background
 // Screenshots land in qa-artifacts/site-appearance/.
 //
 //   node scripts/qa-site-appearance.mjs [--base URL]
@@ -144,6 +145,21 @@ try {
   log(
     "a dark theme brings dark mode with it",
     await page.evaluate(() => document.documentElement.classList.contains("dark")),
+  );
+  // The browser toolbar takes the painted background, not a fixed colour.
+  const toolbar = await page.evaluate(() => {
+    const ctx = document.createElement("canvas").getContext("2d");
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--background");
+    ctx.fillRect(0, 0, 1, 1);
+    const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+    const painted = `#${[r, g, b].map((n) => n.toString(16).padStart(2, "0")).join("")}`;
+    const metas = [...document.querySelectorAll('meta[name="theme-color"]')].map((m) => m.content);
+    return { painted, metas };
+  });
+  log(
+    "the browser toolbar matches the theme",
+    toolbar.metas.length > 0 && toolbar.metas.every((c) => c === toolbar.painted),
+    JSON.stringify(toolbar),
   );
   const measure = () =>
     page.evaluate(() => {

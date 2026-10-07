@@ -550,7 +550,7 @@ function ProjectReturnShelf() {
 function TodayRow({
   icon: Icon,
   accent,
-  foreground = "#fff",
+  foreground = "var(--primary-foreground)",
   title,
   href,
   search,

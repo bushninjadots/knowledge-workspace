@@ -84,8 +84,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         name: "viewport",
         content: "width=device-width, initial-scale=1, viewport-fit=cover",
       },
-      { name: "theme-color", content: "#ffffff", media: "(prefers-color-scheme: light)" },
-      { name: "theme-color", content: "#27272a", media: "(prefers-color-scheme: dark)" },
+      // theme-color is set by GlobalThemePreset from the painted background:
+      // head dedupes metas by name, so per-scheme tags never both rendered.
       { title: `${SITE.name} — ${SITE.tagline}` },
       { name: "description", content: SITE.description },
       { name: "author", content: SITE.name },

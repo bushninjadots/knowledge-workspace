@@ -291,7 +291,7 @@ const TIERS: ReputationTier[] = [
     name: "Leader",
     minScore: 200,
     color: "text-teaching",
-    gradient: "from-amber-500/20 to-amber-500/10",
+    gradient: "from-teaching/20 to-teaching/10",
   },
   {
     name: "Legend",
