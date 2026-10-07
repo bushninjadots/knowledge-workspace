@@ -24,6 +24,7 @@ import type { ReactNode } from "react";
 
 const from = vi.fn();
 vi.mock("@/integrations/supabase/client", () => ({
+  browserFacingUrl: (url: string | null | undefined) => url ?? null,
   supabase: {
     from: (...a: unknown[]) => from(...a),
     // fetchPublicProfile signs banner/avatar/background images alongside the

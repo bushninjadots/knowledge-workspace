@@ -406,10 +406,13 @@ export function BackgroundPickerDialog({
                     id="accent-heading"
                     className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
                   >
-                    Accent colour
+                    Tethyr accent
                   </h3>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Dynamic follows your banner; custom lets you choose the identity colour.
+                    Colours menus, buttons and your dashboard while you use Tethyr. &ldquo;From your
+                    banner&rdquo; picks it from your banner image and updates when you change the
+                    banner. Your Studio page has its own accent, in Studio &rarr; Style &rarr;
+                    Identity.
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -426,7 +429,7 @@ export function BackgroundPickerDialog({
                         : "border-border/60 text-muted-foreground hover:text-foreground",
                     )}
                   >
-                    Dynamic from banner
+                    From your banner
                   </button>
                   <label
                     className={cn(
@@ -716,6 +719,12 @@ export function BackgroundPickerDialog({
                     );
                   })}
                 </div>
+                <p className="mt-2 flex items-center gap-1 text-2xs text-muted-foreground">
+                  <Sparkles className="h-3 w-3 shrink-0" aria-hidden />
+                  {bannerColor
+                    ? "Takes its tint from your banner, and changes when your banner does."
+                    : "Takes its tint from your banner. Add a banner image to use it."}
+                </p>
               </section>
 
               {/* PATTERNS */}

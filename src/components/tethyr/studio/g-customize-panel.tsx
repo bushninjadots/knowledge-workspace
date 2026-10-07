@@ -14,9 +14,9 @@ import { DEFAULT_THEME_ID } from "@/lib/constants";
 import { getBlock } from "@/lib/block-registry";
 import type { LayoutBlockInstance, PageLayout } from "@/lib/page-blocks";
 import { cn } from "@/lib/utils";
-import { CARD_FILL_SWATCHES, RADIUS_MAX, RADIUS_MIN } from "@/lib/studio-config";
+import { ACCENT_OPTIONS, CARD_FILL_SWATCHES, RADIUS_MAX, RADIUS_MIN } from "@/lib/studio-config";
 import { FONT_OPTIONS } from "@/lib/fonts";
-import { resolveTitles } from "@/lib/visual-language";
+import { resolveLook, resolveTitles } from "@/lib/visual-language";
 import { starterMap } from "@/data/starters";
 import { LayoutPreview } from "./layout-preview";
 import { FineTune, GroupHeading, LanguagePicker, LookOptions } from "./look-controls";
@@ -251,25 +251,38 @@ export function GStyleSections({
       // Storage unavailable: the choice lasts for this visit.
     }
   };
-  // The shared card outline (member appearance) and card fill: fine-tuning
-  // under Borders and Surfaces.
-  const CARD_OUTLINE_CONTROLS = (
+  // Borders has one on/off switch: the Borders style above. The outline
+  // colour (member appearance, so it also colours cards across the app) and
+  // the weight only tune a line that is on. A legacy "None" colour still
+  // hides every line, so the style picker shows None for it.
+  const bordersOff = cardBorders === "none" || resolveLook(config).borders === "none";
+  const pickBorderStyle = (patch: Partial<GStudioConfig>) => {
+    onChange(patch);
+    if (cardBorders === "none" && resolveLook({ ...config, ...patch }).borders !== "none") {
+      onCardBordersChange("neutral");
+    }
+  };
+  const CARD_OUTLINE_CONTROLS = bordersOff ? (
+    <p className="mb-4 text-2xs leading-snug text-muted-foreground">
+      Borders are off. Pick a style above to choose the line&rsquo;s colour and weight.
+    </p>
+  ) : (
     <div className="mb-4">
       <div className="mb-2 flex items-start gap-2">
         <Frame className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--user-accent-text)]" aria-hidden />
-        <div>
-          <p className="text-xs font-medium text-foreground">Card outlines</p>
-          <p className="mt-0.5 text-2xs leading-snug text-muted-foreground">
-            One default for every card and panel. Per-block overrides live in the block inspector
-            and are optional.
-          </p>
-        </div>
+        <p className="text-2xs leading-snug text-muted-foreground">
+          Colour and weight of the line around every card and panel. A block can pick its own style
+          in its settings.
+        </p>
       </div>
       <Choice
-        label="Outline style"
-        hint="Theme is quiet · Accent follows your Studio accent · Colour pins one · None hides outlines. Part of your profile, so visitors see a change as soon as it saves, without publishing."
+        label="Line colour"
+        hint="Theme is quiet · Accent follows your accent colour · Colour pins one. Part of your profile, so it also colours cards across Tethyr and goes live as soon as it saves."
         value={cardBorders}
-        options={CARD_BORDER_OPTIONS.map((option) => [option.id, option.label])}
+        options={CARD_BORDER_OPTIONS.filter((option) => option.id !== "none").map((option) => [
+          option.id,
+          option.label,
+        ])}
         onChange={(value) => {
           const next = value as CardBorderPreference;
           onCardBordersChange(next);
@@ -280,7 +293,7 @@ export function GStyleSections({
       />
       <Choice
         label="Line weight"
-        hint="How strong the shared outline appears"
+        hint="How strong the line appears"
         value={config.cardBorderWidth ?? "thin"}
         options={[
           ["thin", "Thin"],
@@ -292,14 +305,14 @@ export function GStyleSections({
         }
       />
       {cardBorders === "custom" && (
-        <div className="mb-1" role="group" aria-label="Card outline colour">
-          <p className="t-label mb-1.5">Outline colour</p>
+        <div className="mb-1" role="group" aria-label="Line colour swatches">
+          <p className="t-label mb-1.5">Pick a colour</p>
           <div className="flex flex-wrap gap-1.5">
             {BORDER_SWATCHES.map((swatch) => (
               <button
                 key={swatch}
                 type="button"
-                aria-label={`Card border ${swatch}`}
+                aria-label={`Line colour ${swatch}`}
                 aria-pressed={cardBorderColor.toLowerCase() === swatch}
                 onClick={() => onCardBorderColorChange(swatch)}
                 className={cn(
@@ -474,17 +487,13 @@ export function GStyleSections({
               label="Accent colour"
               hint={
                 config.accentMode === "dual"
-                  ? "Pick an interactive colour; the banner colour tints the background"
+                  ? "Buttons and links use the colour you pick. Your banner's colour softly tints the page behind your blocks, and follows the banner when you change it."
                   : config.accentMode === "none"
-                    ? "No colour accent — the theme carries the Studio"
-                    : undefined
+                    ? "No accent colour: your theme's own colours carry the page."
+                    : "Buttons, links and highlights use the colour you pick."
               }
               value={config.accentMode}
-              options={[
-                ["custom", "Pick"],
-                ["dual", "Banner + colour"],
-                ["none", "None"],
-              ]}
+              options={ACCENT_OPTIONS.map((option) => [option.value, option.label])}
               onChange={(value) => onChange({ accentMode: value as GStudioConfig["accentMode"] })}
             />
             {(config.accentMode === "custom" || config.accentMode === "dual") && (
@@ -581,15 +590,16 @@ export function GStyleSections({
             <GroupHeading
               config={config}
               group="borders"
-              onChange={onChange}
+              onChange={pickBorderStyle}
               hint="The line around blocks. A block can pick its own in its settings."
             />
             <LookOptions
               config={config}
               setting="borders"
-              onChange={onChange}
+              onChange={pickBorderStyle}
               label="Borders"
               columns={4}
+              activeValue={cardBorders === "none" ? "none" : undefined}
             />
             <FineTune>{CARD_OUTLINE_CONTROLS}</FineTune>
             <GroupHeading

@@ -59,6 +59,25 @@ export function resolveSupabaseEnv(isServer: boolean = typeof window === "undefi
   };
 }
 
+/**
+ * A URL the server minted (signed storage links) rewritten to the
+ * browser-facing Supabase origin. In a containerised setup SSR signs against
+ * the internal host, which the browser cannot load — so anything a loader
+ * hands to the page, and the page samples or displays, goes through here.
+ */
+export function browserFacingUrl(
+  url: string | null | undefined,
+  isServer: boolean = typeof window === "undefined",
+): string | null {
+  if (!url) return null;
+  // Client-side loaders already sign against the browser origin.
+  if (!isServer) return url;
+  const server = resolveSupabaseEnv(true).url;
+  const browser = resolveSupabaseEnv(false).url;
+  if (!server || !browser || server === browser || !url.startsWith(server)) return url;
+  return browser.replace(/\/$/, "") + url.slice(server.replace(/\/$/, "").length);
+}
+
 function createSupabaseClient() {
   const { url: SUPABASE_URL, key: SUPABASE_PUBLISHABLE_KEY } = resolveSupabaseEnv();
 

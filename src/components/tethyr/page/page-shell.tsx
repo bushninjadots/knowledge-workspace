@@ -3,6 +3,7 @@
 // also receive the Studio toolbar and persistence callbacks; public views remain
 // read-only.
 
+import { appearanceStyle, type ProfileBackground } from "@/lib/background-themes";
 import { useCallback, useEffect, useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -47,6 +48,13 @@ interface PageShellProps {
   showPreviewBanner?: boolean;
   onBackToStudio?: () => void;
   profileMedia?: { avatarUrl: string | null; bannerUrl: string | null };
+  /** The banner's colour when the caller has already sampled it (the public
+   *  page does, for its backdrop). Drives "Colour + banner tint" accents. */
+  bannerColor?: string | null;
+  /** The owner's appearance. Its card-border colour is re-declared on the
+   *  canvas so `var(--border)` / the accent resolve against this page's theme
+   *  (as in the editor), not the surrounding shell's. */
+  appearance?: ProfileBackground | null;
   onProfileMediaSaved?: () => void;
   profileCompleteness?: number;
   onCompleteProfile?: () => void;
@@ -75,6 +83,8 @@ export function PageShell({
   showPreviewBanner = true,
   onBackToStudio,
   profileMedia,
+  bannerColor,
+  appearance,
   onProfileMediaSaved,
   profileCompleteness,
   onCompleteProfile,
@@ -105,7 +115,8 @@ export function PageShell({
   const updateConfig = useUpdatePageConfig();
   const updateTheme = useUpdatePageTheme();
   const isGlassTheme = page?.config?.vibeId === "glass" || page?.config?.personalityId === "glass";
-  const bannerAccent = useDominantColor(profileMedia?.bannerUrl ?? null);
+  const sampledBanner = useDominantColor(bannerColor ? null : (profileMedia?.bannerUrl ?? null));
+  const bannerAccent = bannerColor ?? sampledBanner;
   const saveLayout = (nextLayout: PageLayout) => {
     if (!page || updateLayout.isPending || !isOwner || previewMode) return;
     recordSnapshot({
@@ -235,6 +246,11 @@ export function PageShell({
       // accent; "none" neutralizes the accent family toward the theme primary.
       Object.assign(style, configStyle);
     }
+    if (appearance !== undefined) {
+      const owner = appearanceStyle(appearance) as Record<string, string>;
+      style["--card-border-color"] = owner["--card-border-color"] ?? "var(--border)";
+      style["--card-border-force-color"] = owner["--card-border-force-color"] ?? "var(--border)";
+    }
     if (isGlassTheme || blockContext.translucent) {
       style["--surface"] = "color-mix(in oklab, var(--background) 72%, transparent)";
       style["--surface-elevated"] = "color-mix(in oklab, var(--background) 84%, transparent)";
@@ -259,6 +275,7 @@ export function PageShell({
     blockContext.translucent,
     page,
     bannerAccent,
+    appearance,
     ownerType,
   ]);
 

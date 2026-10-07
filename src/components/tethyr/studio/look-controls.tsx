@@ -554,6 +554,7 @@ export function LookOptions<K extends LookKey>({
   onChange,
   label,
   columns = 3,
+  activeValue,
 }: {
   config: GStudioConfig;
   setting: K;
@@ -561,6 +562,8 @@ export function LookOptions<K extends LookKey>({
   /** Visible group label for the radios (screen readers). */
   label: string;
   columns?: 2 | 3 | 4;
+  /** What the page actually shows, when something outside the look decides it. */
+  activeValue?: Look[K];
 }) {
   const look = resolveLook(config);
   const options = LOOK_OPTIONS[setting] as ReadonlyArray<{ id: Look[K]; label: string }>;
@@ -574,7 +577,7 @@ export function LookOptions<K extends LookKey>({
       )}
     >
       {options.map((option) => {
-        const active = look[setting] === option.id;
+        const active = (activeValue ?? look[setting]) === option.id;
         return (
           <button
             key={option.id}

@@ -431,7 +431,7 @@ export const DENSITY_OPTIONS: ReadonlyArray<{ value: DensityId; label: string }>
 
 export const ACCENT_OPTIONS: ReadonlyArray<{ value: AccentMode; label: string }> = [
   { value: "custom", label: "Pick" },
-  { value: "dual", label: "Banner + colour" },
+  { value: "dual", label: "Colour + banner tint" },
   { value: "none", label: "None" },
 ];
 

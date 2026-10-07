@@ -40,7 +40,11 @@ import {
   type CommunityTemplate,
 } from "@/hooks/use-templates";
 import { applyTemplateSections, sanitizeTemplateSections } from "@/lib/template-apply";
-import { withCardBorderPreference, type CardBorderPreference } from "@/lib/background-themes";
+import {
+  withCardBorderPreference,
+  type CardBorderPreference,
+  type ProfileBackground,
+} from "@/lib/background-themes";
 import type {
   AreaAppearance,
   BlockConfig,
@@ -1283,16 +1287,36 @@ export function CreationStudio({
     ) {
       return;
     }
+    // A separate public look (Appearance → visitors see their own) is what
+    // the public page reads, so the line colour goes to both or visitors
+    // would never see it change.
+    const publicBackground = me?.profile?.public_background as ProfileBackground | null | undefined;
     const { error } = await supabase
       .from("profiles")
       .update({
         background: withCardBorderPreference(me?.background, cardBorders, cardBorderColor),
+        ...(publicBackground
+          ? {
+              public_background: withCardBorderPreference(
+                publicBackground,
+                cardBorders,
+                cardBorderColor,
+              ),
+            }
+          : {}),
       })
       .eq("id", userId);
     if (error) return;
     persistedBordersRef.current = next;
     void refreshMe();
-  }, [cardBorderColor, cardBorders, me?.background, refreshMe, userId]);
+  }, [
+    cardBorderColor,
+    cardBorders,
+    me?.background,
+    me?.profile?.public_background,
+    refreshMe,
+    userId,
+  ]);
 
   /** Write a draft snapshot (layout + config) and the border preference. */
   const persistDraft = useCallback(

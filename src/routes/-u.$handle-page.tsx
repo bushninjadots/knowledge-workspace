@@ -146,6 +146,8 @@ export function PublicProfileRoute() {
             previewDraft={previewDraft}
             previewMode={previewDraft ? "public" : undefined}
             showPreviewBanner={!embed}
+            bannerColor={bannerColor}
+            appearance={data.publicBackground}
             pageCreationAction={profilePageQuery.createPage}
             pageCreationError={profilePageQuery.pageCreationError}
             pageCreationPending={profilePageQuery.pageCreationPending}

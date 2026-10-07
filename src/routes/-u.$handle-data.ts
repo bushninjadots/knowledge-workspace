@@ -1,7 +1,7 @@
 // Shared data plane for the /u/$handle route: the eager loader and the
 // lazy page component both need this, so it lives outside both chunks.
 import { notFound } from "@tanstack/react-router";
-import { supabase } from "@/integrations/supabase/client";
+import { browserFacingUrl, supabase } from "@/integrations/supabase/client";
 import { backgroundImageSignedUrl, type ProfileBackground } from "@/lib/background-themes";
 
 export type PublicProfile = {
@@ -46,9 +46,9 @@ export async function fetchPublicProfile(handle: string) {
   return {
     profile: profile as PublicProfile,
     publicBackground: publicBg ?? null,
-    backgroundImageUrl,
+    backgroundImageUrl: browserFacingUrl(backgroundImageUrl),
     // Needed when the backdrop tint follows the banner (`colorSource: "banner"`).
-    bannerSigned: banner.data?.signedUrl ?? null,
-    avatarSigned: avatar.data?.signedUrl ?? null,
+    bannerSigned: browserFacingUrl(banner.data?.signedUrl),
+    avatarSigned: browserFacingUrl(avatar.data?.signedUrl),
   };
 }

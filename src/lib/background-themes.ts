@@ -398,7 +398,7 @@ export const CARD_BORDER_OPTIONS: ReadonlyArray<{
   description: string;
 }> = [
   { id: "neutral", label: "Theme", description: "The Tethyr rule — a quiet outline" },
-  { id: "accent", label: "Accent", description: "Follows your accent colour, banner included" },
+  { id: "accent", label: "Accent", description: "Follows your accent colour" },
   { id: "custom", label: "Colour", description: "Pick one border colour" },
   { id: "none", label: "None", description: "No outline on cards and panels" },
 ];
