@@ -1,4 +1,4 @@
-import { useSearch } from "@tanstack/react-router";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import {
   Sparkles,
@@ -36,7 +36,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { validateImageFile } from "@/lib/validators";
 import { useCropConfirm } from "@/components/tethyr/profile/crop-confirm-dialog";
 import { SkillEditingSection } from "@/components/tethyr/profile/skill-editing";
-import { GitHubConnect } from "@/components/tethyr/profile/github-connect";
+import { GitHubStatusChip } from "@/components/tethyr/github/github-settings";
 import {
   normalizeProfileHandle,
   validateProfileInput,
@@ -53,6 +53,7 @@ export function ProfilePage() {
   const setupPalette = useUserPalette(profileQuery.data?.bannerSigned ?? null);
   const refresh = profileQuery.refresh;
 
+  const navigate = useNavigate();
   const { github: githubParam } = useSearch({ strict: false }) as {
     github?: string;
   };
@@ -62,16 +63,12 @@ export function ProfilePage() {
   // their profile — entering the Studio should not require it first.
   const [showSetup, setShowSetup] = useState(false);
 
+  // Old links to the token form (?github=token) now land in Settings → GitHub.
   useEffect(() => {
-    if (!focusGithubToken || !profileQuery.data || githubScrolledRef.current) return;
+    if (!focusGithubToken || githubScrolledRef.current) return;
     githubScrolledRef.current = true;
-    const t = setTimeout(() => {
-      document
-        .getElementById("github-integration")
-        ?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 250);
-    return () => clearTimeout(t);
-  }, [focusGithubToken, profileQuery.data]);
+    void navigate({ to: "/settings", hash: "github", replace: true });
+  }, [focusGithubToken, navigate]);
 
   if (profileQuery.isError) {
     return (
@@ -538,8 +535,8 @@ function ProfileSetupForm({
           </div>
         </div>
 
-        {/* EVIDENCE — GITHUB */}
-        <GitHubConnect autoOpenToken />
+        {/* EVIDENCE — GITHUB (managed in Settings → GitHub) */}
+        <GitHubStatusChip />
 
         {/* METADATA RAIL */}
         {/* IDENTITY FORM */}

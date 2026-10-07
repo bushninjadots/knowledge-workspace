@@ -1,4 +1,5 @@
 import { SiteAppearancePanel } from "./site-appearance-panel";
+import { GitHubSettingsSection } from "./github/github-settings";
 import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
@@ -131,7 +132,7 @@ export function SettingsPage() {
             Settings
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Account, security, and what you want to hear about — all in one place.
+            Account, security, GitHub, and what you want to hear about — all in one place.
           </p>
         </header>
 
@@ -250,6 +251,9 @@ export function SettingsPage() {
               </div>
             </div>
           </section>
+
+          {/* GitHub — the one home for the connection and what it powers */}
+          <GitHubSettingsSection />
 
           {/* Notifications */}
           <section className="rounded-lg border border-border bg-card p-5">

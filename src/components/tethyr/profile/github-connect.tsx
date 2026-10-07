@@ -2,138 +2,18 @@ import { useState } from "react";
 import { Github, ExternalLink, Check, Loader2, KeyRound, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuthUser } from "@/hooks/use-current-user";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
-import { hasGithubToken, saveGithubToken, removeGithubToken } from "@/lib/github-server";
+import { saveGithubToken, removeGithubToken } from "@/lib/github-server";
 import { githubTokenErrorMessage } from "@/lib/github";
-
-const sb = supabase;
-
-type ConnectedAccount = {
-  id: string;
-  provider: string;
-  username: string | null;
-  created_at: string;
-};
-
-/**
- * Normalize whatever the member pasted (a bare handle, `@handle`,
- * `https://github.com/handle`, or `owner/repo`) down to just the handle, so
- * the stored value and the rendered link never double-prefix `github.com/`.
- */
-function githubHandleFrom(value: string): string {
-  const trimmed = value.trim();
-  if (!trimmed) return "";
-  const withoutProtocol = trimmed.replace(/^https?:\/\/github\.com\//i, "");
-  const firstSegment = withoutProtocol.split("/")[0];
-  return firstSegment.replace(/^@/, "").replace(/[\s]+/g, "");
-}
-
-function useConnectedAccounts() {
-  const { data: user } = useAuthUser();
-  return useQuery({
-    queryKey: ["connected-accounts"],
-    // `connected_accounts` is auth-only (RLS `TO authenticated`). Gate on the
-    // signed-in user so the query never fires anonymously during SSR or before
-    // the session is loaded — otherwise PostgREST returns 403.
-    enabled: !!user,
-    queryFn: async (): Promise<ConnectedAccount[]> => {
-      const { data, error } = await sb
-        .from("connected_accounts")
-        .select("id, provider, username, created_at");
-      if (error) throw error;
-      return (data ?? []) as ConnectedAccount[];
-    },
-  });
-}
-
-function useConnectGitHub() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (username: string) => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-      const handle = githubHandleFrom(username);
-      if (!handle) throw new Error("Enter a GitHub username");
-      // Store the GitHub username as a connected account
-      const { data, error } = await sb
-        .from("connected_accounts")
-        .upsert(
-          {
-            user_id: user.id,
-            provider: "github",
-            username: handle,
-            provider_id: handle,
-          },
-          { onConflict: "user_id,provider" },
-        )
-        // connected_accounts contains server-only access_token/metadata columns;
-        // request only the safe representation after the upsert.
-        .select("id, provider, username, created_at")
-        .single();
-      if (error) throw error;
-
-      // Mirror the GitHub link into the profile's social links so the "Links"
-      // card and the public profile show it without a separate edit.
-      const { data: profile } = await sb
-        .from("profiles")
-        .select("social_links")
-        .eq("id", user.id)
-        .maybeSingle();
-      const social = (profile?.social_links as Record<string, string> | null) ?? {};
-      social.github = `https://github.com/${handle}`;
-      await sb.from("profiles").update({ social_links: social }).eq("id", user.id);
-
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["connected-accounts"] });
-      queryClient.invalidateQueries({ queryKey: ["current-user"] });
-      toast.success("GitHub account connected");
-    },
-    onError: (error: Error) => {
-      toast.error(friendlyError(error));
-    },
-  });
-}
-
-function useDisconnectGitHub() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      const { error } = await sb.from("connected_accounts").delete().eq("provider", "github");
-      if (error) throw error;
-      if (user) {
-        // Remove the mirrored GitHub link from the profile's social links.
-        const { data: profile } = await sb
-          .from("profiles")
-          .select("social_links")
-          .eq("id", user.id)
-          .maybeSingle();
-        const social = (profile?.social_links as Record<string, string> | null) ?? {};
-        if (social.github) {
-          delete social.github;
-          await sb.from("profiles").update({ social_links: social }).eq("id", user.id);
-        }
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["connected-accounts"] });
-      queryClient.invalidateQueries({ queryKey: ["current-user"] });
-      toast.success("GitHub account disconnected");
-    },
-  });
-}
+import {
+  githubHandleFrom,
+  useConnectGitHub,
+  useConnectedAccounts,
+  useDisconnectGitHub,
+  useGithubTokenStatus,
+} from "@/hooks/use-github";
 
 /** Where to create a fine-grained, read-only token on GitHub. */
 const GITHUB_TOKEN_URL = "https://github.com/settings/personal-access-tokens/new";
@@ -159,22 +39,27 @@ function TokenHelper() {
   );
 }
 
-export function GitHubConnect({ autoOpenToken = false }: { autoOpenToken?: boolean }) {
+export function GitHubConnect({
+  autoOpenToken = false,
+  startEditing = false,
+  onCancel,
+}: {
+  autoOpenToken?: boolean;
+  /** Open straight on the username form (Settings' "enter it instead"). */
+  startEditing?: boolean;
+  onCancel?: () => void;
+}) {
   const queryClient = useQueryClient();
   const { data: accounts = [], isLoading } = useConnectedAccounts();
   const connectGitHub = useConnectGitHub();
   const disconnectGitHub = useDisconnectGitHub();
   const [username, setUsername] = useState("");
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(startEditing);
   const [tokenDraft, setTokenDraft] = useState("");
   const [tokenEditing, setTokenEditing] = useState(autoOpenToken);
   const [savingToken, setSavingToken] = useState(false);
 
-  const { data: tokenSet = false } = useQuery({
-    queryKey: ["github-token-status"],
-    queryFn: () => hasGithubToken(),
-    staleTime: 60_000,
-  });
+  const { data: tokenSet = false } = useGithubTokenStatus();
 
   const githubAccount = accounts.find((a) => a.provider === "github");
 
@@ -423,7 +308,14 @@ export function GitHubConnect({ autoOpenToken = false }: { autoOpenToken?: boole
           <TokenHelper />
         </div>
         <div className="flex items-center justify-end gap-2">
-          <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setEditing(false);
+              onCancel?.();
+            }}
+          >
             Cancel
           </Button>
           <Button

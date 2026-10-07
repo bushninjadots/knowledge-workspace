@@ -486,9 +486,15 @@ export type GithubRepoLite = {
  * endpoint (subject to the usual 60 req/hr rate limit); with a token it uses
  * the authenticated /user/repos endpoint which includes private repos.
  */
-export async function fetchUserRepos(username: string, token?: string): Promise<GithubRepoLite[]> {
+export async function fetchUserRepos(
+  username: string,
+  token?: string,
+  /** A public-only token for the named user's list (rate limits only). */
+  publicToken?: string,
+): Promise<GithubRepoLite[]> {
   const headers: Record<string, string> = { Accept: "application/vnd.github.v3+json" };
-  if (token) headers.Authorization = `Bearer ${token}`;
+  const auth = token ?? publicToken;
+  if (auth) headers.Authorization = `Bearer ${auth}`;
 
   // With a token, /user/repos returns the authenticated user's own repos
   // (including private ones) regardless of the username argument.

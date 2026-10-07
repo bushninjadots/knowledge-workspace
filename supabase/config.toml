@@ -6,9 +6,14 @@ project_id = "mfeinmphbsnjcchkmldi"
 # URLs so the social login buttons work locally.
 site_url = "http://127.0.0.1:54321"
 additional_redirect_urls = [
+  "http://localhost:3000",
   "http://localhost:8080",
   "http://localhost:8081",
 ]
+# Lets a signed-in member link GitHub to their account (Settings -> GitHub ->
+# "Connect with GitHub"); the GitHub provider below must be enabled too.
+# Hosted: Authentication -> Sign In / Providers -> "Allow manual linking".
+enable_manual_linking = true
 
 # Social login providers. Each one must also be enabled in the Supabase
 # dashboard (Authentication -> Sign In / Providers) with its OAuth client id

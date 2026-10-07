@@ -1478,6 +1478,7 @@ export type Database = {
           portfolio_links: Json;
           public_background: Json | null;
           site_appearance: Json | null;
+          readme_source: Json | null;
           reputation_score: number;
           social_links: Json;
           software_stack: string[];
@@ -1511,6 +1512,7 @@ export type Database = {
           portfolio_links?: Json;
           public_background?: Json | null;
           site_appearance?: Json | null;
+          readme_source?: Json | null;
           reputation_score?: number;
           social_links?: Json;
           software_stack?: string[];
@@ -1544,6 +1546,7 @@ export type Database = {
           portfolio_links?: Json;
           public_background?: Json | null;
           site_appearance?: Json | null;
+          readme_source?: Json | null;
           reputation_score?: number;
           social_links?: Json;
           software_stack?: string[];

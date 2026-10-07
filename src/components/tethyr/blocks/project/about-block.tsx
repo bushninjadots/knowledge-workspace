@@ -2,8 +2,8 @@
 // Dual-context block:
 //  - Project pages: renders the project README / description / vision.
 //  - Profile pages (the Studio): becomes the owner's personal About/README,
-//    editable in a dialog and pullable from their GitHub profile README
-//    (`<username>/<username>`), mirroring the profile README block.
+//    editable in a dialog and importable / syncable from GitHub, sharing
+//    `profiles.readme` (and its cache) with the profile README block.
 //
 // Reading: the shared ReadmeMarkdown renderer (react-markdown, fenced code
 // blocks promoted to the copyable CodeBlock).
@@ -14,23 +14,21 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { supabasePending } from "@/lib/supabase-pending-schema";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Pencil } from "lucide-react";
-import { toast } from "sonner";
-import { friendlyError } from "@/lib/error-message";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { BlockEmptyState } from "@/components/tethyr/blocks/block-empty-state";
 import { ReadmeMarkdown } from "@/components/tethyr/blocks/readme-markdown";
 import { ReadmeEditorDialog } from "@/components/tethyr/blocks/readme-editor-dialog";
+import {
+  ProfileReadmeGitHub,
+  readmeSourceCaption,
+} from "@/components/tethyr/github/profile-readme-github";
+import { useProfileReadme, useSaveProfileReadme } from "@/hooks/use-profile-readme";
 import { registerBlock } from "@/lib/block-registry";
 import { blockMarkdownToHtml } from "@/lib/block-markdown";
 import type { BlockProps } from "@/lib/page-blocks";
-
-type ProfileAboutData = {
-  readme: string | null;
-  social_links: Record<string, string> | null;
-};
 
 type ProjectAboutData = {
   description: string | null;
@@ -42,7 +40,6 @@ function ProjectAboutBlock({ config, context }: BlockProps) {
   const { blockId, isEditing, quickEdit, isOwner, onBlockEmptyChange } = context;
   const isProject = context.ownerType === "project";
   const ownerId = context.ownerId;
-  const queryClient = useQueryClient();
 
   const projectQuery = useQuery({
     queryKey: ["project-about", ownerId],
@@ -57,18 +54,8 @@ function ProjectAboutBlock({ config, context }: BlockProps) {
     enabled: isProject,
   });
 
-  const profileQuery = useQuery({
-    queryKey: ["project-about-profile", ownerId],
-    queryFn: async (): Promise<ProfileAboutData | null> => {
-      const { data } = await supabasePending
-        .from("profiles")
-        .select("readme, social_links")
-        .eq("id", ownerId)
-        .maybeSingle();
-      return (data as unknown as ProfileAboutData | null) ?? null;
-    },
-    enabled: !isProject,
-  });
+  const profileQuery = useProfileReadme(isProject ? null : ownerId);
+  const saveReadme = useSaveProfileReadme(isProject ? null : ownerId);
 
   const profileData = profileQuery.data;
   const readme = profileData?.readme?.trim() ?? "";
@@ -86,20 +73,9 @@ function ProjectAboutBlock({ config, context }: BlockProps) {
   const startEdit = useCallback(() => setEditing(true), []);
 
   const save = useCallback(
-    async (content: string): Promise<boolean> => {
-      const { error } = await supabasePending
-        .from("profiles")
-        .update({ readme: content.trim() || null })
-        .eq("id", ownerId);
-      if (error) {
-        toast.error(friendlyError(error));
-        return false;
-      }
-      await queryClient.invalidateQueries({ queryKey: ["project-about-profile", ownerId] });
-      toast.success("About saved");
-      return true;
-    },
-    [ownerId, queryClient],
+    (content: string, source?: string) =>
+      saveReadme(content, { ...(source ? { source } : {}), message: "About saved" }),
+    [saveReadme],
   );
 
   const editor = editing ? (
@@ -110,7 +86,7 @@ function ProjectAboutBlock({ config, context }: BlockProps) {
       title="About / README"
       description="Your long-form story for this space — what you make, how you work, and how people can build with you."
       githubLink={profileData?.social_links?.github}
-      importLabel="Pull from GitHub"
+      source={profileData?.readme_source}
       saveLabel="Save"
       onSave={save}
     />
@@ -154,6 +130,7 @@ function ProjectAboutBlock({ config, context }: BlockProps) {
           detail="the long-form story of what you make — what you're building, how you work, and how to collaborate"
           actionLabel="Write your About"
           onAction={startEdit}
+          alternative={<ProfileReadmeGitHub profileId={ownerId} data={profileData} />}
         />
         {editor}
       </>
@@ -163,7 +140,13 @@ function ProjectAboutBlock({ config, context }: BlockProps) {
   return (
     <div className="space-y-3">
       {canEdit && (
-        <div className="flex flex-wrap items-end justify-end gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {readmeSourceCaption(profileData) && (
+            <span className="mr-auto text-2xs text-muted-foreground">
+              {readmeSourceCaption(profileData)}
+            </span>
+          )}
+          <ProfileReadmeGitHub profileId={ownerId} data={profileData} />
           <Button variant="outline" size="sm" onClick={startEdit}>
             <Pencil className="h-3.5 w-3.5" />
             Edit About
@@ -181,7 +164,7 @@ registerBlock({
   category: "project",
   label: "About / README",
   description:
-    "Your long-form About on studio pages — markdown, editable with GitHub README import. On project pages it shows the project README.",
+    "Your long-form About on studio pages — markdown, written here or imported and synced from GitHub. On project pages it shows the project README.",
   icon: "FileText",
   defaults: { showReadme: true, showVision: true },
   fields: [

@@ -5,7 +5,6 @@ import remarkGfm from "remark-gfm";
 import { MARKDOWN_COMPONENTS } from "@/components/tethyr/blocks/readme-markdown";
 import {
   Pencil,
-  Download,
   X,
   Plus,
   Loader2,
@@ -22,7 +21,9 @@ import type { ProjectDetail, GalleryItem, ResourceItem } from "@/hooks/use-proje
 import type { ProjectPresentationPreset } from "@/lib/project-presentation";
 import { useUpdateProjectReadme, useUpdateProjectContent } from "@/hooks/use-projects";
 import { useProjectRepos } from "@/hooks/use-project-repos";
-import { fetchProjectReadmeSource, readmeSourceMessage } from "@/lib/project-readme-source";
+import { getRepoFullName } from "@/lib/github";
+import { GitHubImportDialog } from "@/components/tethyr/github/github-import-dialog";
+import { GitHubSyncButton } from "@/components/tethyr/github/github-sync-button";
 import { buildTree, treeToAscii } from "@/lib/file-tree";
 import { diffLines, diffStats } from "@/lib/line-diff";
 import { cn } from "@/lib/utils";
@@ -71,9 +72,7 @@ export function ProjectReadmeTab({
   const [editorView, setEditorView] = useState<EditorView>("write");
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
-  const [pulling, setPulling] = useState(false);
-  const [previewing, setPreviewing] = useState(false);
-  const [preview, setPreview] = useState<{ text: string; fullName: string } | null>(null);
+  const [importing, setImporting] = useState(false);
   const [toolDraft, setToolDraft] = useState("");
   const [addingTool, setAddingTool] = useState(false);
 
@@ -96,43 +95,6 @@ export function ProjectReadmeTab({
     } finally {
       setSaving(false);
     }
-  };
-
-  const pullFromGitHub = async () => {
-    setPulling(true);
-    try {
-      const result = await fetchProjectReadmeSource(repos[0]);
-      if (!result.ok) {
-        toast.error(readmeSourceMessage(result.reason));
-        return;
-      }
-      setDraft(result.text);
-      setEditing(true);
-      toast.success("README imported — review it, then save");
-    } finally {
-      setPulling(false);
-    }
-  };
-
-  const previewFromGitHub = async () => {
-    setPreviewing(true);
-    try {
-      const result = await fetchProjectReadmeSource(repos[0]);
-      if (!result.ok) {
-        toast.error(readmeSourceMessage(result.reason));
-        return;
-      }
-      setPreview({ text: result.text, fullName: result.fullName });
-    } finally {
-      setPreviewing(false);
-    }
-  };
-
-  const usePreviewReadme = () => {
-    if (!preview) return;
-    setDraft(preview.text);
-    setPreview(null);
-    setEditing(true);
   };
 
   const saveContent = async (patch: { gallery?: GalleryItem[]; resources?: ResourceItem[] }) => {
@@ -242,32 +204,12 @@ export function ProjectReadmeTab({
           {isOwner && !editing && (
             <div className="flex items-center gap-2">
               {repos.length > 0 && (
-                <>
-                  <button
-                    onClick={previewFromGitHub}
-                    disabled={previewing}
-                    className="inline-flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition-lift hover:text-foreground disabled:opacity-50"
-                  >
-                    {previewing ? (
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                    ) : (
-                      <Eye className="h-3 w-3" />
-                    )}
-                    Preview from GitHub
-                  </button>
-                  <button
-                    onClick={pullFromGitHub}
-                    disabled={pulling}
-                    className="inline-flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition-lift hover:text-foreground disabled:opacity-50"
-                  >
-                    {pulling ? (
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                    ) : (
-                      <Download className="h-3 w-3" />
-                    )}
-                    Pull from GitHub
-                  </button>
-                </>
+                <GitHubSyncButton
+                  synced={!!project.readme}
+                  syncedAt={repos[0]?.updated_at}
+                  onClick={() => setImporting(true)}
+                  className="h-auto rounded-full border-border/60 px-3 py-1.5 text-xs font-normal text-muted-foreground hover:text-foreground"
+                />
               )}
               <button
                 onClick={startEdit}
@@ -467,38 +409,26 @@ export function ProjectReadmeTab({
         </Card>
       )}
 
-      {/* Live repo README preview — import-on-demand, never auto-saves */}
-      {preview && !editing && (
-        <section className="content-safe min-w-0 max-w-full rounded-xl border border-[var(--user-accent-border,var(--border-strong))]/60 bg-surface">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 px-4 py-3">
-            <h2 className="flex items-center gap-2 text-sm font-medium text-foreground/80">
-              <Eye className="h-4 w-4 text-muted-foreground" />
-              Live preview — {preview.fullName}
-              <span className="rounded-full border border-border/60 bg-background/40 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                not saved
-              </span>
-            </h2>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={usePreviewReadme}
-                className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-background transition-fade hover:opacity-90"
-              >
-                <Download className="h-3 w-3" />
-                Use this README
-              </button>
-              <button
-                onClick={() => setPreview(null)}
-                className="inline-flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition-lift hover:text-foreground"
-              >
-                <X className="h-3 w-3" />
-                Dismiss
-              </button>
-            </div>
-          </div>
-          <div className="prose-custom max-h-[32rem] overflow-auto px-5 py-5 sm:px-6">
-            <Markdown remarkPlugins={[remarkGfm]}>{preview.text}</Markdown>
-          </div>
-        </section>
+      {/* README from a linked repo — previewed first, then reviewed in the
+          editor before it's saved (never auto-saves). */}
+      {importing && (
+        <GitHubImportDialog
+          open
+          onOpenChange={setImporting}
+          sources={repos.map((repo) => ({
+            fullName: getRepoFullName(repo),
+            branch: repo.metadata?.default_branch ?? undefined,
+          }))}
+          initialRepo={project.readme && repos[0] ? getRepoFullName(repos[0]) : null}
+          syncedAt={repos[0]?.updated_at}
+          currentText={project.readme}
+          confirmLabel="Review in the editor"
+          onConfirm={(text) => {
+            setDraft(text);
+            setEditorView("changes");
+            setEditing(true);
+          }}
+        />
       )}
 
       {/* Built with + Tools — integrated into README flow */}

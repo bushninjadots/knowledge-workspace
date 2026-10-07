@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { Plus, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,8 @@ interface BlockEmptyStateProps {
   /** Optional route for a read-only next step. */
   nextHref?: string;
   nextLabel?: string;
+  /** Another way to start, shown beside the action (e.g. Import from GitHub). */
+  alternative?: ReactNode;
 }
 
 export function BlockEmptyState({
@@ -22,6 +25,7 @@ export function BlockEmptyState({
   onAction,
   nextHref,
   nextLabel,
+  alternative,
 }: BlockEmptyStateProps) {
   return (
     <div
@@ -42,6 +46,7 @@ export function BlockEmptyState({
             </Link>
           </Button>
         )}
+        {alternative}
         {actionLabel && onAction && (
           <Button type="button" size="sm" variant="outline" onClick={onAction}>
             <Plus aria-hidden="true" data-icon="inline-start" />

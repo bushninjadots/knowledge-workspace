@@ -33,6 +33,25 @@ async function getStoredToken(userId: string): Promise<string | null> {
   return data?.token ?? null;
 }
 
+/**
+ * Tethyr's own read-only token for PUBLIC GitHub data (env GITHUB_PUBLIC_TOKEN),
+ * used when a member hasn't stored one. It only lifts the anonymous limit
+ * (60 requests an hour, shared by the whole server) to 5,000. It must be a
+ * fine-grained token with "Public repositories (read-only)" access, and it is
+ * only ever sent with requests for a named repo or user — never /user/* — so
+ * it can't widen what anyone sees.
+ */
+function publicToken(): string | undefined {
+  const token = typeof process !== "undefined" ? process.env?.GITHUB_PUBLIC_TOKEN : undefined;
+  return token?.trim() || undefined;
+}
+
+/** The token for a request about a named repo: the member's own, else the
+ *  public one, else none. */
+async function repoToken(userId: string): Promise<string | undefined> {
+  return (await getStoredToken(userId)) ?? publicToken();
+}
+
 /** Validate the token against GitHub, then store it for the signed-in user. */
 export const saveGithubToken = createServerFn({ method: "POST" })
   .validator((d: { token: string }) => ({ token: d.token.trim() }))
@@ -111,7 +130,7 @@ export const listGithubRepos = createServerFn({ method: "GET" })
       .eq("provider", "github")
       .maybeSingle();
     if (!data?.username) return [];
-    return fetchUserRepos(data.username);
+    return fetchUserRepos(data.username, undefined, publicToken());
   });
 
 /** Fetch a repo README on the server, using the stored token when present. */
@@ -119,8 +138,7 @@ export const fetchRepoReadmeServer = createServerFn({ method: "POST" })
   .validator((d: { fullName: string }) => ({ fullName: d.fullName.trim() }))
   .middleware([requireSupabaseAuth])
   .handler(async ({ context, data }): Promise<RepoReadmeResult> => {
-    const token = await getStoredToken(context.userId);
-    return fetchRepoReadme(data.fullName, token ?? undefined);
+    return fetchRepoReadme(data.fullName, await repoToken(context.userId));
   });
 
 /**
@@ -151,7 +169,7 @@ export const syncGithubProjectActivity = createServerFn({ method: "POST" })
       .limit(5);
     if (!repos?.length) return { added: 0, checked: 0 };
 
-    const token = await getStoredToken(context.userId);
+    const token = await repoToken(context.userId);
     let checked = 0;
     let added = 0;
     for (const repo of repos) {
@@ -211,8 +229,7 @@ export const fetchRepoMetaServer = createServerFn({ method: "POST" })
   }))
   .middleware([requireSupabaseAuth])
   .handler(async ({ context, data }): Promise<RepoMeta | null> => {
-    const token = await getStoredToken(context.userId);
-    return fetchRepoMeta(data.owner, data.repo, token ?? undefined);
+    return fetchRepoMeta(data.owner, data.repo, await repoToken(context.userId));
   });
 
 /**
@@ -225,8 +242,7 @@ export const fetchRepoCommitActivityServer = createServerFn({ method: "POST" })
   .validator((d: { fullName: string }) => ({ fullName: d.fullName.trim() }))
   .middleware([requireSupabaseAuth])
   .handler(async ({ context, data }): Promise<CommitActivityResult> => {
-    const token = await getStoredToken(context.userId);
-    return fetchRepoCommitActivity(data.fullName, token ?? undefined);
+    return fetchRepoCommitActivity(data.fullName, await repoToken(context.userId));
   });
 
 /** Attach (or replace) a GitHub file link on a library item. Owner-only. */
@@ -318,7 +334,7 @@ export const syncLibraryItemFromGithub = createServerFn({ method: "POST" })
     const source = parseGithubSource(item.github_source);
     if (!source) return { ok: false, reason: "not_linked" };
 
-    const token = await getStoredToken(context.userId);
+    const token = await repoToken(context.userId);
     const result = await fetchRepoFile(
       source.repo,
       source.path,

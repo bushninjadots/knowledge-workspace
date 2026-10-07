@@ -1,14 +1,13 @@
 // ── Shared README / About editor dialog ──────────────────────────────────────
 // The one editing surface for markdown body content on the profile README and
 // About blocks: a dialog with Write/Preview tabs (rich Tiptap editor, lazily
-// loaded) and a one-click pull of the owner's GitHub profile README
-// (`<username>/<username>`).
+// loaded) and "Import from GitHub" / "Sync from GitHub" through the shared
+// preview dialog (the GitHub profile README `<you>/<you>`, or any repo).
 
 import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Check, Download, Eye, Loader2, Pencil } from "lucide-react";
-import { toast } from "sonner";
+import { Check, Eye, Loader2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -17,9 +16,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { fetchRepoReadmeServer, getConnectedGithubUsername } from "@/lib/github-server";
-import { absolutizeRelativeLinks } from "@/lib/github";
 import { cn } from "@/lib/utils";
+import { GitHubImportDialog } from "@/components/tethyr/github/github-import-dialog";
+import { GitHubSyncButton } from "@/components/tethyr/github/github-sync-button";
+import type { ReadmeSource } from "@/hooks/use-profile-readme";
 import {
   extractGithubUsername,
   MARKDOWN_COMPONENTS as SHARED_MARKDOWN_COMPONENTS,
@@ -38,12 +38,14 @@ type ReadmeEditorDialogProps = {
   initialContent: string;
   title: string;
   description: string;
-  /** GitHub profile link used to resolve the username for import fallback. */
+  /** GitHub profile link used to suggest `<you>/<you>` when not connected. */
   githubLink?: string | null;
-  importLabel?: string;
+  /** Where the content was imported from, if anywhere ("Sync from GitHub"). */
+  source?: ReadmeSource | null;
   saveLabel?: string;
-  /** Persist the content. Return true when saved so the dialog can close. */
-  onSave: (content: string) => Promise<boolean>;
+  /** Persist the content — with the GitHub repo it was just brought in from,
+   *  if it was. Return true when saved so the dialog can close. */
+  onSave: (content: string, source?: string) => Promise<boolean>;
 };
 
 export function ReadmeEditorDialog({
@@ -53,18 +55,21 @@ export function ReadmeEditorDialog({
   title,
   description,
   githubLink,
-  importLabel = "Import from GitHub",
+  source,
   saveLabel = "Save README",
   onSave,
 }: ReadmeEditorDialogProps) {
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
   const [importing, setImporting] = useState(false);
+  // The repo the draft was just brought in from, saved with it.
+  const [imported, setImported] = useState<string | undefined>(undefined);
   const [view, setView] = useState<"write" | "preview">("write");
 
   useEffect(() => {
     if (open) {
       setDraft(initialContent);
+      setImported(undefined);
       setView("write");
     }
   }, [open, initialContent]);
@@ -72,54 +77,12 @@ export function ReadmeEditorDialog({
   const save = useCallback(async () => {
     setSaving(true);
     try {
-      const ok = await onSave(draft.trim());
+      const ok = await onSave(draft.trim(), imported);
       if (ok) onOpenChange(false);
     } finally {
       setSaving(false);
     }
-  }, [draft, onSave, onOpenChange]);
-
-  const importFromGithub = useCallback(async () => {
-    setImporting(true);
-    try {
-      let username: string | null = null;
-      try {
-        username = await getConnectedGithubUsername();
-      } catch {
-        username = null;
-      }
-      if (!username) username = extractGithubUsername(githubLink);
-      if (!username) {
-        toast.error(
-          "Add your GitHub link to your profile (or connect GitHub in Settings) to import",
-        );
-        return;
-      }
-      const fullName = `${username}/${username}`;
-      const { text, rateLimited, unauthorized } = await fetchRepoReadmeServer({
-        data: { fullName },
-      });
-      if (unauthorized) {
-        toast.error("GitHub rejected the saved token — check it and try again");
-        return;
-      }
-      if (rateLimited) {
-        toast.error("GitHub is rate-limited right now — try again in a minute");
-        return;
-      }
-      if (!text) {
-        toast.error(`No README found at ${fullName} — create that repo on GitHub first`);
-        return;
-      }
-      setDraft(absolutizeRelativeLinks(text, fullName, "HEAD"));
-      setView("write");
-      toast.success("README imported — review it, then save");
-    } catch {
-      toast.error("Couldn't reach GitHub — try again");
-    } finally {
-      setImporting(false);
-    }
-  }, [githubLink]);
+  }, [draft, imported, onSave, onOpenChange]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -171,20 +134,11 @@ export function ReadmeEditorDialog({
         )}
 
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={importFromGithub}
-            disabled={importing}
-            title="Import your GitHub profile README (username/username)"
-          >
-            {importing ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Download className="h-3.5 w-3.5" />
-            )}
-            {importLabel}
-          </Button>
+          <GitHubSyncButton
+            synced={!!source}
+            syncedAt={source?.synced_at}
+            onClick={() => setImporting(true)}
+          />
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
               Cancel
@@ -199,6 +153,23 @@ export function ReadmeEditorDialog({
             </Button>
           </div>
         </div>
+        {importing && (
+          <GitHubImportDialog
+            open
+            onOpenChange={setImporting}
+            sources="profile"
+            fallbackUsername={extractGithubUsername(githubLink)}
+            initialRepo={source?.repo}
+            syncedAt={source?.synced_at}
+            currentText={draft}
+            confirmLabel="Put it in the editor"
+            onConfirm={(text, repo) => {
+              setDraft(text);
+              setImported(repo);
+              setView("write");
+            }}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

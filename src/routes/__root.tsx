@@ -24,6 +24,7 @@ import {
   SiteMotionConfig,
 } from "@/components/tethyr/global-theme-preset";
 import { RouteErrorBoundary } from "@/components/tethyr/route-error-boundary";
+import { GithubIdentitySync } from "@/components/tethyr/github/github-settings";
 
 function NotFoundComponent() {
   return (
@@ -226,6 +227,7 @@ function RootComponent() {
       <ThemeProvider>
         <GlobalThemePreset />
         <SiteAppearanceSync />
+        <GithubIdentitySync />
         <SiteMotionConfig>
           <Outlet />
           <ThemedToaster />

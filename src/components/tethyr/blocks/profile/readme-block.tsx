@@ -6,48 +6,32 @@
 // Reading: the shared ReadmeMarkdown renderer (react-markdown, fenced code
 // blocks promoted to the copyable CodeBlock).
 // Writing: the shared ReadmeEditorDialog (rich Tiptap editor, code-split so
-// visitors never download it). Owners can also import their GitHub profile
-// README (`<username>/<username>`) in one click.
+// visitors never download it). Owners can import it from GitHub — their
+// profile README (`<you>/<you>`) or any repo — and sync it again later
+// (ProfileReadmeGitHub; the source is kept in `profiles.readme_source`).
 
 import { BlockTitle } from "@/components/tethyr/blocks/block-title";
 import { useCallback, useEffect, useState } from "react";
-import { supabasePending } from "@/lib/supabase-pending-schema";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil } from "lucide-react";
-import { toast } from "sonner";
-import { friendlyError } from "@/lib/error-message";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { BlockEmptyState } from "@/components/tethyr/blocks/block-empty-state";
 import { ReadmeMarkdown } from "@/components/tethyr/blocks/readme-markdown";
 import { ReadmeEditorDialog } from "@/components/tethyr/blocks/readme-editor-dialog";
+import {
+  ProfileReadmeGitHub,
+  readmeSourceCaption,
+} from "@/components/tethyr/github/profile-readme-github";
+import { useProfileReadme, useSaveProfileReadme } from "@/hooks/use-profile-readme";
 import { registerBlock } from "@/lib/block-registry";
 import type { BlockProps } from "@/lib/page-blocks";
-
-type ProfileReadmeData = {
-  readme: string | null;
-  social_links: Record<string, string> | null;
-};
 
 function ProfileReadmeBlock({ config, context }: BlockProps) {
   const { blockId, isEditing, quickEdit, isOwner, onBlockEmptyChange } = context;
   const profileId = context.ownerType === "profile" ? context.ownerId : null;
   const canEdit = isOwner === true && (isEditing || quickEdit === true);
-  const queryClient = useQueryClient();
-
-  const { data, isLoading } = useQuery({
-    queryKey: ["profile-readme", profileId],
-    queryFn: async (): Promise<ProfileReadmeData | null> => {
-      if (!profileId) return null;
-      const { data } = await supabasePending
-        .from("profiles")
-        .select("readme, social_links")
-        .eq("id", profileId)
-        .maybeSingle();
-      return (data as unknown as ProfileReadmeData | null) ?? null;
-    },
-    enabled: !!profileId,
-  });
+  const { data, isLoading } = useProfileReadme(profileId);
+  const saveReadme = useSaveProfileReadme(profileId);
 
   const readme = data?.readme?.trim() ?? "";
   const showHeading = config.showHeading !== false;
@@ -62,23 +46,9 @@ function ProfileReadmeBlock({ config, context }: BlockProps) {
   }, [blockId, hasReadme, isEditing, isLoading, onBlockEmptyChange]);
 
   const startEdit = useCallback(() => setEditing(true), []);
-
   const save = useCallback(
-    async (content: string): Promise<boolean> => {
-      if (!profileId) return false;
-      const { error } = await supabasePending
-        .from("profiles")
-        .update({ readme: content.trim() || null })
-        .eq("id", profileId);
-      if (error) {
-        toast.error(friendlyError(error));
-        return false;
-      }
-      await queryClient.invalidateQueries({ queryKey: ["profile-readme", profileId] });
-      toast.success("README saved");
-      return true;
-    },
-    [profileId, queryClient],
+    (content: string, source?: string) => saveReadme(content, source ? { source } : {}),
+    [saveReadme],
   );
 
   const editor = editing ? (
@@ -89,7 +59,7 @@ function ProfileReadmeBlock({ config, context }: BlockProps) {
       title="Profile README"
       description="Your home document — what you make, how you work, and how people can build with you."
       githubLink={data?.social_links?.github}
-      importLabel="Import from GitHub"
+      source={data?.readme_source}
       saveLabel="Save README"
       onSave={save}
     />
@@ -107,15 +77,17 @@ function ProfileReadmeBlock({ config, context }: BlockProps) {
       <>
         <BlockEmptyState
           label="README"
-          detail="the long-form story of what you make — what you're building, how you work, and how to collaborate"
+          detail="the long-form story of what you make — write it here, or bring in the README you already keep on GitHub"
           actionLabel="Write your README"
           onAction={startEdit}
+          alternative={<ProfileReadmeGitHub profileId={profileId} data={data} />}
         />
         {editor}
       </>
     );
   }
 
+  const caption = canEdit ? readmeSourceCaption(data) : null;
   return (
     <div className="space-y-3">
       <BlockTitle
@@ -123,15 +95,19 @@ function ProfileReadmeBlock({ config, context }: BlockProps) {
         config={showHeading ? config : { ...config, hideTitle: true }}
         action={
           canEdit ? (
-            <Button variant="outline" size="sm" onClick={startEdit}>
-              <Pencil className="h-3.5 w-3.5" />
-              Edit README
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <ProfileReadmeGitHub profileId={profileId} data={data} />
+              <Button variant="outline" size="sm" onClick={startEdit}>
+                <Pencil className="h-3.5 w-3.5" />
+                Edit README
+              </Button>
+            </div>
           ) : undefined
         }
       >
         README
       </BlockTitle>
+      {caption && <p className="text-2xs text-muted-foreground">{caption}</p>}
       <ReadmeMarkdown>{readme}</ReadmeMarkdown>
       {editor}
     </div>
@@ -143,7 +119,8 @@ registerBlock({
   category: "identity",
   label: "README",
   title: "README",
-  description: "The long-form introduction to you. Markdown, with GitHub profile README import.",
+  description:
+    "The long-form introduction to you. Markdown — write it here or import and sync it from GitHub.",
   icon: "FileText",
   defaults: { showHeading: true },
   fields: [{ key: "showHeading", label: "Show README heading", type: "toggle" }],

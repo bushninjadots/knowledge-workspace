@@ -1515,14 +1515,15 @@ const GBlockFrame = forwardRef<
       // card selects the block instead of leaving the editor. Modifier clicks
       // still open the link in a new tab.
       onClickCapture={(event) => {
-        if (!editing) return;
+        // Only clicks on the block itself — not in a dialog it opened.
+        if (!editing || !event.currentTarget.contains(event.target as Node)) return;
         const link = (event.target as Element).closest?.("a[href]");
         // Shift-click adds the block to the selection, so it never follows.
         if (!link || event.metaKey || event.ctrlKey) return;
         event.preventDefault();
       }}
       onClick={(event) => {
-        if (!editing) return;
+        if (!editing || !event.currentTarget.contains(event.target as Node)) return;
         event.stopPropagation();
         props.onSelect(block.id, { toggle: event.shiftKey });
       }}

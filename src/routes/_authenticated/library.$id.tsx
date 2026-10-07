@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { GitHubSyncButton, syncedAgo } from "@/components/tethyr/github/github-sync-button";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
@@ -17,7 +18,6 @@ import {
   Code2,
   FileCode2,
   Github,
-  RefreshCw,
   Unlink,
   Share2,
   Link2,
@@ -566,17 +566,14 @@ function LibraryItemPage() {
                   <span className="text-muted-foreground">· {item.github_source.branch}</span>
                 )}
                 <span className="text-muted-foreground">
-                  ·{" "}
-                  {item.github_source.synced_at
-                    ? `Synced ${new Date(item.github_source.synced_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`
-                    : "Not synced yet"}
+                  · {syncedAgo(item.github_source.synced_at) ?? "not synced yet"}
                 </span>
                 <span className="flex-1" />
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-7 gap-1.5 text-xs"
-                  disabled={syncGithub.isPending}
+                <GitHubSyncButton
+                  synced
+                  syncedAt={item.github_source.synced_at}
+                  busy={syncGithub.isPending}
+                  className="h-7 text-xs"
                   onClick={() => {
                     if (
                       hasChanges &&
@@ -587,14 +584,7 @@ function LibraryItemPage() {
                       return;
                     syncGithub.mutate(item.id);
                   }}
-                >
-                  {syncGithub.isPending ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                  ) : (
-                    <RefreshCw className="h-3 w-3" />
-                  )}
-                  Sync from GitHub
-                </Button>
+                />
                 <Button
                   size="sm"
                   variant="ghost"

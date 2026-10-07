@@ -1,15 +1,7 @@
 import { useState } from "react";
-import {
-  CalendarClock,
-  Link2,
-  Lock,
-  Plus,
-  RefreshCw,
-  Scale,
-  Settings2,
-  Sparkles,
-} from "lucide-react";
+import { CalendarClock, Link2, Lock, Plus, Scale, Settings2, Sparkles } from "lucide-react";
 import { formatDistanceToNowStrict } from "date-fns";
+import { GitHubSyncButton, syncedAgo } from "@/components/tethyr/github/github-sync-button";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { languageColor } from "@/lib/language-colors";
@@ -271,15 +263,18 @@ export function ProjectCodePanel({
 
           {isOwner && primary && (
             <>
-              <button
-                type="button"
+              <GitHubSyncButton
+                synced
+                syncedAt={primary.updated_at}
+                busy={syncing}
                 onClick={syncFromGithub}
-                disabled={syncing}
-                className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border/60 px-2.5 py-1.5 text-[12px] font-medium text-foreground transition-colors hover:bg-surface-elevated disabled:opacity-60"
-              >
-                <RefreshCw className={cn("h-3 w-3", syncing && "animate-spin")} />
-                {syncing ? "Syncing…" : "Sync from GitHub"}
-              </button>
+                className="h-auto w-full rounded-md border-border/60 px-2.5 py-1.5 text-[12px]"
+              />
+              {syncedAgo(primary.updated_at) && (
+                <p className="-mt-1 text-center text-[11px] text-muted-foreground">
+                  README and stats {syncedAgo(primary.updated_at)}
+                </p>
+              )}
               {onLinkRepo && (
                 <button
                   type="button"
