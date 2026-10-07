@@ -201,6 +201,7 @@ export function ProfileMediaControls({
       <div className="space-y-2">
         <Label className="text-[11px] font-medium">Display name</Label>
         <Input
+          aria-label="Display name"
           className="h-8 text-xs"
           value={displayName}
           placeholder="Your name"
@@ -210,6 +211,7 @@ export function ProfileMediaControls({
       <div className="space-y-2">
         <Label className="text-[11px] font-medium">Handle</Label>
         <Input
+          aria-label="Handle"
           className="h-8 text-xs"
           value={handle}
           placeholder="yourhandle"
@@ -219,6 +221,7 @@ export function ProfileMediaControls({
       <div className="space-y-2">
         <Label className="text-[11px] font-medium">Creator title</Label>
         <Input
+          aria-label="Creator title"
           className="h-8 text-xs"
           value={title}
           placeholder="What do you do?"
@@ -228,6 +231,7 @@ export function ProfileMediaControls({
       <div className="space-y-2">
         <Label className="text-[11px] font-medium">Banner caption</Label>
         <Input
+          aria-label="Banner caption"
           className="h-8 text-xs"
           value={caption}
           maxLength={60}

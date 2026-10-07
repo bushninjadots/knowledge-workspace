@@ -55,7 +55,7 @@ function ProfileAvailabilityBlock({ config, onChange, context }: BlockProps) {
       {context.isEditing && (
         <button
           type="button"
-          className="self-start text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          className="inline-flex min-h-6 items-center self-start text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline pointer-coarse:min-h-10"
           onClick={() =>
             onChange?.({ ...config, capacity: capacity === "open" ? "limited" : "open" })
           }

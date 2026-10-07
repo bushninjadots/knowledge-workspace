@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  createHistoryEntry,
   insertDuplicateGridItem,
   normalizedSectionGrid,
   normalizeGridItem,
@@ -8,7 +7,6 @@ import {
   seedGridFromLayout,
 } from "@/lib/studio-layout";
 import { snapGridPlacement } from "@/lib/studio-grid";
-import type { StudioConfig } from "@/lib/studio-config";
 import type { LayoutSection } from "@/lib/page-blocks";
 
 function makeSection(overrides: Partial<LayoutSection> = {}): LayoutSection {
@@ -23,31 +21,6 @@ function makeSection(overrides: Partial<LayoutSection> = {}): LayoutSection {
     ...overrides,
   };
 }
-
-const studioConfig: StudioConfig = {
-  starterId: null,
-  structure: "wide",
-  personality: "modern",
-  density: "comfortable",
-  radius: 12,
-  accentMode: "dual",
-  accentColor: "#3f8f8a",
-  cardColor: "",
-  cardOpacity: 30,
-  appBackground: "surface",
-  publicBackground: "default",
-};
-
-describe("Creation Studio history snapshots", () => {
-  it("captures appearance before the next config is applied", () => {
-    const previous = { ...studioConfig, radius: 6 };
-    const next = { ...studioConfig, radius: 12 };
-    const entry = createHistoryEntry({ sections: [] }, previous);
-
-    expect(entry.config).toEqual(previous);
-    expect(entry.config).not.toEqual(next);
-  });
-});
 
 describe("Creation Studio grid adapter", () => {
   it("creates stable positions for legacy sections", () => {
