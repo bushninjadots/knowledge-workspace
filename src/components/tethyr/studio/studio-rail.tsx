@@ -790,6 +790,7 @@ export function GStudioRail(
             onSelect={props.onSelect}
             selectedBlockId={props.selectedBlockId}
             emptyBlockIds={props.emptyBlockIds}
+            onEditArea={props.onEditArea}
             onCompleteProfile={props.onCompleteProfile}
             onOpenAppearance={props.onOpenAppearance}
             onOpenLayouts={props.onOpenTemplates}

@@ -181,6 +181,8 @@ export type StyleSectionProps = {
   onCardBordersChange: (cardBorders: CardBorderPreference) => void;
   onCardBorderColorChange: (color: string) => void;
   onToggleSection: (id: string) => void;
+  /** Opens an area's settings. Without it, area names in Outline are labels. */
+  onEditArea?: (id: string) => void;
   onBlockAction: (id: string, patch: Partial<LayoutBlockInstance>) => void;
   onSelect: (id: string | null) => void;
   selectedBlockId: string | null;
@@ -221,6 +223,7 @@ export function GStyleSections({
   onCardBordersChange,
   onCardBorderColorChange,
   onToggleSection,
+  onEditArea,
   onBlockAction,
   onSelect,
   selectedBlockId,
@@ -721,32 +724,55 @@ export function GStyleSections({
             <ul className="space-y-2">
               {layout.sections.map((section) => (
                 <li key={section.id}>
-                  <button
-                    type="button"
-                    onClick={() => onToggleSection(section.id)}
-                    aria-label={
-                      section.visible === false
-                        ? `Show ${sectionLabel(section)}`
-                        : `Hide ${sectionLabel(section)}`
-                    }
-                    className="flex min-w-0 w-full items-center gap-1.5 rounded-sm px-1 py-1 text-left hover:bg-[var(--surface-sunken)]"
-                  >
-                    {section.visible === false ? (
-                      <EyeOff className="h-3 w-3 shrink-0 text-muted-foreground-subtle" />
-                    ) : (
-                      <Eye className="h-3 w-3 shrink-0 text-muted-foreground" />
-                    )}
-                    <span
-                      className={cn(
-                        "truncate text-xs",
+                  <div className="group/area flex items-center gap-0.5">
+                    {(() => {
+                      const name = (
+                        <span
+                          className={cn(
+                            "truncate text-xs",
+                            section.visible === false
+                              ? "text-muted-foreground-subtle line-through"
+                              : "text-foreground",
+                          )}
+                        >
+                          {sectionLabel(section)}
+                        </span>
+                      );
+                      // The name opens the area's settings, like a block name
+                      // selects the block; hiding lives on the eye beside it.
+                      return onEditArea ? (
+                        <button
+                          type="button"
+                          onClick={() => onEditArea(section.id)}
+                          aria-label={`Settings for ${sectionLabel(section)}`}
+                          className="flex min-w-0 flex-1 items-center rounded-sm px-1 py-1 text-left hover:bg-[var(--surface-sunken)]"
+                        >
+                          {name}
+                        </button>
+                      ) : (
+                        <span className="flex min-w-0 flex-1 items-center px-1 py-1">{name}</span>
+                      );
+                    })()}
+                    <IconButton
+                      label={
                         section.visible === false
-                          ? "text-muted-foreground-subtle line-through"
-                          : "text-foreground",
+                          ? `Show ${sectionLabel(section)}`
+                          : `Hide ${sectionLabel(section)}`
+                      }
+                      className={cn(
+                        "h-5 w-5",
+                        section.visible !== false &&
+                          "opacity-0 group-hover/area:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100",
                       )}
+                      onClick={() => onToggleSection(section.id)}
                     >
-                      {sectionLabel(section)}
-                    </span>
-                  </button>
+                      {section.visible === false ? (
+                        <EyeOff className="h-3 w-3" />
+                      ) : (
+                        <Eye className="h-3 w-3" />
+                      )}
+                    </IconButton>
+                  </div>
                   <ul className="ml-4 mt-0.5 space-y-0.5 border-l border-border pl-2">
                     {section.blocks.map((block) => (
                       <li key={block.id} className="group/block flex items-center gap-0.5">
@@ -782,7 +808,7 @@ export function GStyleSections({
                               ? `Show ${getBlock(block.type)?.label ?? block.type}`
                               : `Hide ${getBlock(block.type)?.label ?? block.type}`
                           }
-                          className="h-5 w-5 opacity-0 group-hover/block:opacity-100 focus-visible:opacity-100"
+                          className="h-5 w-5 opacity-0 group-hover/block:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100"
                           onClick={() =>
                             onBlockAction(block.id, { visible: block.visible === false })
                           }
