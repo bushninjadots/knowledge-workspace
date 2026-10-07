@@ -1,19 +1,14 @@
 // ── Page Shell ────────────────────────────────────────────────────────────────
-// Fetches a page, applies its theme, and renders the block layout. Owner views
-// also receive the Studio toolbar and persistence callbacks; public views remain
-// read-only.
+// Fetches a page, applies its theme, and renders the block layout read-only:
+// the public profile page and its draft preview. Editing happens in the
+// Studio editor (creation-studio / g-studio-surface).
 
 import { appearanceStyle, type ProfileBackground } from "@/lib/background-themes";
-import { useCallback, useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { usePage } from "@/hooks/use-page";
-import {
-  useCreatePage,
-  useUpdatePageConfig,
-  useUpdatePageLayout,
-  useUpdatePageTheme,
-} from "@/hooks/use-page-editor";
+import { useCreatePage } from "@/hooks/use-page-editor";
 import { useProfileTheme } from "@/hooks/use-theme";
 import { themeTokensToStyle, deepMergeTokens } from "@/lib/theme-tokens";
 import { LookFilters, lookCanvasAttributes } from "./look-canvas";
@@ -26,12 +21,9 @@ import {
   studioSurfaceStyle,
 } from "@/lib/studio-config";
 import { PageLayoutRenderer } from "@/components/tethyr/page/page-layout";
-import { useEditMode, type PreviewDevice } from "@/components/tethyr/page/edit-mode-context";
 import { friendlyError } from "@/lib/error-message";
-import { useDominantColor } from "@/lib/dominant-color";
 import { useCardInk } from "@/hooks/use-card-ink";
 import type { BlockContext, PageOwnerType, PageLayout } from "@/lib/page-blocks";
-import type { StudioSnapshot } from "@/lib/studio-history";
 
 interface PageShellProps {
   ownerId: string;
@@ -47,15 +39,13 @@ interface PageShellProps {
    *  inside the editor's device preview, which has its own chrome. */
   showPreviewBanner?: boolean;
   onBackToStudio?: () => void;
-  profileMedia?: { avatarUrl: string | null; bannerUrl: string | null };
-  /** The banner's colour when the caller has already sampled it (the public
-   *  page does, for its backdrop). Drives "Colour + banner tint" accents. */
+  /** The banner's colour, sampled by the caller (the public page does, for
+   *  its backdrop). Drives "Colour + banner tint" accents. */
   bannerColor?: string | null;
   /** The owner's appearance. Its card-border colour is re-declared on the
    *  canvas so `var(--border)` / the accent resolve against this page's theme
    *  (as in the editor), not the surrounding shell's. */
   appearance?: ProfileBackground | null;
-  onProfileMediaSaved?: () => void;
   profileCompleteness?: number;
   onCompleteProfile?: () => void;
   pageCreationAction?: () => void;
@@ -82,10 +72,8 @@ export function PageShell({
   previewMode,
   showPreviewBanner = true,
   onBackToStudio,
-  profileMedia,
   bannerColor,
   appearance,
-  onProfileMediaSaved,
   profileCompleteness,
   onCompleteProfile,
   pageCreationAction,
@@ -108,90 +96,9 @@ export function PageShell({
     ownerType === "profile" ? page?.config : null,
   );
   const cardInk = useCardInk(ownerType === "profile" ? (page?.config ?? null) : null);
-  const { isEditing, isPreviewing, previewDevice, recordSnapshot, registerRestoreHandler } =
-    useEditMode();
   const createPage = useCreatePage();
-  const updateLayout = useUpdatePageLayout();
-  const updateConfig = useUpdatePageConfig();
-  const updateTheme = useUpdatePageTheme();
   const isGlassTheme = page?.config?.vibeId === "glass" || page?.config?.personalityId === "glass";
-  const sampledBanner = useDominantColor(bannerColor ? null : (profileMedia?.bannerUrl ?? null));
-  const bannerAccent = bannerColor ?? sampledBanner;
-  const saveLayout = (nextLayout: PageLayout) => {
-    if (!page || updateLayout.isPending || !isOwner || previewMode) return;
-    recordSnapshot({
-      layout: page.layout,
-      config: page.config,
-      themeId: page.themeId,
-      theme: page.theme,
-    });
-    updateLayout.mutate(
-      {
-        layoutId: page.layoutId,
-        layout: nextLayout,
-        ownerId,
-        ownerType,
-      },
-      { onSuccess: () => void refetch() },
-    );
-  };
-
-  const saveBlockConfig = (blockId: string, config: Record<string, unknown>) => {
-    if (!page || updateLayout.isPending || !isOwner || previewMode) return;
-    saveLayout({
-      sections: page.layout.sections.map((section) => ({
-        ...section,
-        blocks: section.blocks.map((block) =>
-          block.id === blockId ? { ...block, config } : block,
-        ),
-      })),
-    });
-  };
-
-  const restoreSnapshot = useCallback(
-    async (snapshot: StudioSnapshot) => {
-      if (!page || !isOwner || previewMode) return;
-      await Promise.all([
-        updateLayout.mutateAsync({
-          layoutId: page.layoutId,
-          layout: snapshot.layout,
-          ownerId,
-          ownerType,
-        }),
-        updateConfig.mutateAsync({
-          pageId: page.id,
-          config: snapshot.config,
-          ownerId,
-          ownerType,
-        }),
-        snapshot.themeId !== page.themeId
-          ? updateTheme.mutateAsync({
-              pageId: page.id,
-              themeId: snapshot.themeId || null,
-              ownerId,
-              ownerType,
-            })
-          : Promise.resolve(),
-      ]);
-      await refetch();
-    },
-    [
-      page,
-      isOwner,
-      previewMode,
-      updateLayout,
-      updateConfig,
-      updateTheme,
-      ownerId,
-      ownerType,
-      refetch,
-    ],
-  );
-
-  useEffect(
-    () => registerRestoreHandler(restoreSnapshot),
-    [registerRestoreHandler, restoreSnapshot],
-  );
+  const bannerAccent = bannerColor ?? null;
 
   const blockContext: BlockContext = useMemo(
     () => ({
@@ -199,7 +106,7 @@ export function PageShell({
       ownerType,
       pageId: page?.id ?? "",
       data: previewData,
-      isEditing: isOwner && isEditing && !previewMode,
+      isEditing: false,
       isOwner: isOwner && !previewMode,
       profileCompleteness,
       onCompleteProfile,
@@ -210,7 +117,6 @@ export function PageShell({
       page?.id,
       previewData,
       isOwner,
-      isEditing,
       previewMode,
       profileCompleteness,
       onCompleteProfile,
@@ -348,17 +254,12 @@ export function PageShell({
   // same `structureMaxWidth` the private Studio view uses), so the published
   // page reads at the width the creator designed it at.
   const structureWidth = page ? structureMaxWidth(page.config) : null;
-  const canvasFrameClass = isPreviewing
-    ? previewFrameClasses(previewDevice)
-    : isEditing
-      ? "mx-auto w-full max-w-5xl overflow-hidden border-y border-border/50"
-      : ownerType === "profile" && structureWidth
-        ? // A 16px gutter so cards and area labels never touch a phone's edge;
-          // the max width grows by the same amount, so desktop is unchanged.
-          "mx-auto w-full px-4 pb-16 pt-6 sm:pt-10"
-        : "w-full";
-  const workspaceClass =
-    isPreviewing || isEditing ? "bg-surface-sunken px-3 py-5 sm:px-8 sm:py-10" : "";
+  const canvasFrameClass =
+    ownerType === "profile" && structureWidth
+      ? // A 16px gutter so cards and area labels never touch a phone's edge;
+        // the max width grows by the same amount, so desktop is unchanged.
+        "mx-auto w-full px-4 pb-16 pt-6 sm:pt-10"
+      : "w-full";
 
   return (
     <div
@@ -381,15 +282,12 @@ export function PageShell({
           : undefined
       }
     >
-      <div
-        className={`${workspaceClass} ${isPreviewing || isEditing ? "studio-editor-workspace" : ""}`}
-        data-studio-workspace={isPreviewing ? "preview" : isEditing ? "editor" : "view"}
-      >
+      <div data-studio-workspace="view">
         <div
           className={`${canvasFrameClass} studio-canvas relative isolate bg-[var(--studio-bg,var(--background))] bg-noise font-sans text-foreground`}
           {...(page && ownerType === "profile" ? lookCanvasAttributes(page.config) : {})}
           style={
-            ownerType === "profile" && structureWidth && !isPreviewing && !isEditing
+            ownerType === "profile" && structureWidth
               ? {
                   ...containerStyle,
                   maxWidth: structureWidth + 32,
@@ -430,31 +328,14 @@ export function PageShell({
           )}
           {layout.sections.length === 0 ? (
             <div className="flex min-h-[20vh] items-center justify-center px-4">
-              {isOwner && isEditing ? (
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground" role="status">
-                    Your page is empty.
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Add a block to start building your page.
-                  </p>
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground" role="status">
-                  Nothing here yet.
-                </p>
-              )}
+              <p className="text-sm text-muted-foreground" role="status">
+                Nothing here yet.
+              </p>
             </div>
           ) : (
             <PageLayoutRenderer
               layout={layout}
               context={blockContext}
-              onLayoutChange={isOwner && isEditing && !previewMode ? saveLayout : undefined}
-              onBlockConfigChange={
-                isOwner && isEditing && !previewMode ? saveBlockConfig : undefined
-              }
-              profileMedia={profileMedia}
-              onProfileMediaSaved={onProfileMediaSaved}
               profileCompleteness={profileCompleteness}
               onCompleteProfile={onCompleteProfile}
             />
@@ -463,15 +344,4 @@ export function PageShell({
       </div>
     </div>
   );
-}
-
-function previewFrameClasses(device: PreviewDevice): string {
-  switch (device) {
-    case "mobile":
-      return "mx-auto w-full max-w-[390px] overflow-hidden rounded-lg border border-border/60";
-    case "tablet":
-      return "mx-auto w-full max-w-[768px] overflow-hidden rounded-lg border border-border/60";
-    default:
-      return "mx-auto w-full max-w-7xl overflow-hidden rounded-lg border border-border/60";
-  }
 }

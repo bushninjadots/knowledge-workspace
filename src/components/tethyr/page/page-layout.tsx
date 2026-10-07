@@ -1,16 +1,11 @@
 // ── Page Layout ───────────────────────────────────────────────────────────────
-// Renders a PageLayout: an ordered list of sections, each with a column
-// arrangement (full, two_column, three_column, sidebar, feature).
-// Each section contains an ordered list of blocks.
-//
-// In edit mode, blocks are wrapped in SortableBlock with move/remove controls
-// and drag-and-drop reordering.
+// Renders a published (or draft-previewed) PageLayout for visitors: an ordered
+// list of areas (sections), each with a column arrangement or a persisted
+// 12-column grid. Editing happens in the Studio editor (g-studio-surface),
+// which has the one block inspector; this renderer is view-only.
 
 import { memo, useCallback, useEffect, useState } from "react";
-import { ChevronDown, Copy, Eye, EyeOff, LayoutGrid, MoreVertical, Trash2 } from "lucide-react";
 import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
-import { SortableBlock } from "@/components/tethyr/page/sortable-block";
-import { InlineInspector } from "@/components/tethyr/studio/inline-inspector";
 import {
   AreaDivider,
   AreaTitle,
@@ -20,29 +15,10 @@ import {
   areaOverlapped,
   overlapAttr,
 } from "./area-frame";
-import { StudioSectionGrid } from "@/components/tethyr/page/studio-section-grid";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import type {
   PageLayout as PageLayoutType,
   BlockContext,
   LayoutBlockInstance,
-  LayoutSection,
   SectionLayoutType,
 } from "@/lib/page-blocks";
 import { getBlock } from "@/lib/block-registry";
@@ -54,12 +30,6 @@ import "@/components/tethyr/blocks/register-all";
 interface PageLayoutRendererProps {
   layout: PageLayoutType;
   context: BlockContext;
-  /** Called when the layout changes (edit mode only). */
-  onLayoutChange?: (layout: PageLayoutType) => void;
-  /** Called when a block's config changes. */
-  onBlockConfigChange?: (blockId: string, config: Record<string, unknown>) => void;
-  profileMedia?: { avatarUrl: string | null; bannerUrl: string | null };
-  onProfileMediaSaved?: () => void;
   profileCompleteness?: number;
   onCompleteProfile?: () => void;
 }
@@ -82,31 +52,6 @@ export const SECTION_GRID: Record<SectionLayoutType, string> = {
   compact_list: "",
 };
 
-/** Section layouts whose rhythm is length/whitespace-driven instead of boxy. */
-const WHITESPACE_LED_LAYOUTS = new Set<SectionLayoutType>([
-  "featured_work",
-  "asymmetric",
-  "split",
-  "image_lead",
-  "compact_list",
-]);
-const BLOCK_LABELS: Record<string, string> = {
-  "profile-header": "Header",
-  "profile-projects": "Your work",
-  "profile-direction": "What I’m looking for",
-  "profile-bio": "About",
-  "profile-links": "Links",
-  "profile-skills": "Skills",
-  "profile-experience": "Experience",
-  "profile-gallery": "Gallery",
-  "profile-tools": "Tools",
-  "profile-achievements": "Achievements",
-};
-
-function blockLabel(type: string): string {
-  return BLOCK_LABELS[type] ?? type.replace(/^profile-/, "").replace(/-/g, " ");
-}
-
 /**
  * A template should not preserve an elaborate multi-column composition after
  * empty blocks have been removed. Falling back to flow for one public block,
@@ -124,51 +69,24 @@ function sparseSafeGridClass(layout: SectionLayoutType, blockCount: number): str
 /**
  * Renders the full page composition: sections → blocks.
  * Memoised at the layout level so only changed sections re-render.
- * In edit mode, each block gets move/remove/configure controls.
  */
 export const PageLayoutRenderer = memo(function PageLayoutRenderer({
   layout,
   context,
-  onLayoutChange,
-  onBlockConfigChange,
-  profileMedia,
-  onProfileMediaSaved,
   profileCompleteness,
   onCompleteProfile,
 }: PageLayoutRendererProps) {
   const sections = [...layout.sections]
     .sort((a, b) => a.position - b.position)
-    // Hidden blocks remain visible to the owner as editor targets, but public
-    // rendering should not reserve space for sections with no visible content.
-    .filter(
-      (section) => context.isEditing || section.blocks.some((block) => block.visible !== false),
-    );
+    // Visitors never get space reserved for sections with no visible content.
+    .filter((section) => section.blocks.some((block) => block.visible !== false));
 
-  const [removingBlockId, setRemovingBlockId] = useState<string | null>(null);
-  const [configuringBlockId, setConfiguringBlockId] = useState<string | null>(null);
-  const [resizingBlockId, setResizingBlockId] = useState<string | null>(null);
-  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
-  const [configuringSectionId, setConfiguringSectionId] = useState<string | null>(null);
-  const [removingSectionId, setRemovingSectionId] = useState<string | null>(null);
-  const [dropTarget, setDropTarget] = useState<{ sectionIdx: number; blockIdx: number } | null>(
-    null,
-  );
-  // Blocks that report (in view mode) they rendered no public content. Used to
-  // fully collapse sections whose visible blocks are all empty, so the public
+  // Blocks that report they rendered no public content. Used to fully
+  // collapse sections whose visible blocks are all empty, so the public
   // Studio doesn't leave blank bands + dividers behind.
   const [emptyBlockIds, setEmptyBlockIds] = useState<Set<string>>(new Set());
 
-  // The block currently being configured (inspector target).
-  const configuredBlock: LayoutBlockInstance | undefined = configuringBlockId
-    ? sections.flatMap((s) => s.blocks).find((b) => b.id === configuringBlockId)
-    : undefined;
-  const configuredDefinition = configuredBlock ? getBlock(configuredBlock.type) : undefined;
-  const resizingBlock = resizingBlockId
-    ? sections.flatMap((s) => s.blocks).find((b) => b.id === resizingBlockId)
-    : undefined;
-
-  // Track which blocks rendered no public content (view mode only). Memoised so
-  // unrelated layout renders don't reset the set.
+  // Memoised so unrelated layout renders don't reset the set.
   const reportBlockEmpty = useCallback((blockId: string, isEmpty: boolean) => {
     setEmptyBlockIds((prev) => {
       const next = new Set(prev);
@@ -179,8 +97,7 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
     });
   }, []);
 
-  // Remove reports for deleted blocks and reset them when returning to edit
-  // mode. This prevents stale empty ids from hiding a newly reused block id.
+  // Drop reports for deleted blocks so a reused id isn't hidden by a stale report.
   useEffect(() => {
     const blockIds = new Set(
       sections.flatMap((section) => section.blocks).map((block) => block.id),
@@ -191,221 +108,19 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
     });
   }, [sections]);
 
-  // In view mode, drop sections whose visible blocks are all empty so the
-  // public Studio renders only real content. A block counts as empty when it
-  // was classified statically (config-driven, empty config) or when it reported
-  // no public content at runtime (`emptyBlockIds`). Editing always shows every
-  // section (empty blocks get their inline "add content" affordance).
-  const sectionsToRender = context.isEditing
-    ? sections
-    : sections.filter((section) =>
-        shouldRenderSectionInView(
-          section,
-          new Set([
-            ...emptyBlockIds,
-            ...section.blocks
-              .filter((block) => isDefinitelyEmptyBlock(block))
-              .map((block) => block.id),
-          ]),
-        ),
-      );
-
-  // ── Block actions ───────────────────────────���──────────────────────────
-  const handleMoveUp = useCallback(
-    (sectionIdx: number, blockIdx: number) => {
-      if (!onLayoutChange || blockIdx === 0) return;
-      const newSections = cloneSections(layout);
-      const blocks = newSections[sectionIdx].blocks;
-      const temp = blocks[blockIdx];
-      blocks[blockIdx] = { ...blocks[blockIdx - 1], position: blocks[blockIdx].position };
-      blocks[blockIdx - 1] = { ...temp, position: blocks[blockIdx - 1].position };
-      reindex(blocks);
-      onLayoutChange({ sections: newSections });
-    },
-    [layout, onLayoutChange],
+  // Drop sections whose visible blocks are all empty. A block counts as empty
+  // when it was classified statically (config-driven, empty config) or when it
+  // reported no public content at runtime (`emptyBlockIds`).
+  const sectionsToRender = sections.filter((section) =>
+    shouldRenderSectionInView(
+      section,
+      new Set([
+        ...emptyBlockIds,
+        ...section.blocks.filter((block) => isDefinitelyEmptyBlock(block)).map((block) => block.id),
+      ]),
+    ),
   );
 
-  const handleMoveDown = useCallback(
-    (sectionIdx: number, blockIdx: number) => {
-      if (!onLayoutChange) return;
-      const newSections = cloneSections(layout);
-      const blocks = newSections[sectionIdx].blocks;
-      if (blockIdx >= blocks.length - 1) return;
-      const temp = blocks[blockIdx];
-      blocks[blockIdx] = { ...blocks[blockIdx + 1], position: blocks[blockIdx].position };
-      blocks[blockIdx + 1] = { ...temp, position: blocks[blockIdx + 1].position };
-      reindex(blocks);
-      onLayoutChange({ sections: newSections });
-    },
-    [layout, onLayoutChange],
-  );
-
-  const handleDuplicateSection = useCallback(
-    (sectionIdx: number) => {
-      if (!onLayoutChange) return;
-      const nextSections = cloneSections(layout);
-      const source = nextSections[sectionIdx];
-      if (!source) return;
-      const duplicate: LayoutSection = {
-        ...source,
-        id: `${source.id}-copy-${Date.now()}`,
-        position: sectionIdx + 1,
-        blocks: source.blocks.map((block) => ({
-          ...block,
-          id: `${block.id}-copy-${Date.now()}`,
-          config: { ...block.config },
-        })),
-      };
-      nextSections.splice(sectionIdx + 1, 0, duplicate);
-      nextSections.forEach((section, index) => {
-        section.position = index;
-      });
-      onLayoutChange({ sections: nextSections });
-    },
-    [layout, onLayoutChange],
-  );
-
-  const handleMoveSection = useCallback(
-    (sectionIdx: number, direction: -1 | 1) => {
-      if (!onLayoutChange) return;
-      const targetIdx = sectionIdx + direction;
-      if (targetIdx < 0 || targetIdx >= layout.sections.length) return;
-      const nextSections = cloneSections(layout);
-      [nextSections[sectionIdx], nextSections[targetIdx]] = [
-        nextSections[targetIdx],
-        nextSections[sectionIdx],
-      ];
-      nextSections.forEach((section, index) => {
-        section.position = index;
-      });
-      onLayoutChange({ sections: nextSections });
-    },
-    [layout, onLayoutChange],
-  );
-
-  const handleToggleSectionVisibility = useCallback(
-    (sectionIdx: number) => {
-      if (!onLayoutChange) return;
-      const nextSections = cloneSections(layout);
-      const section = nextSections[sectionIdx];
-      if (!section) return;
-      const shouldHide = section.blocks.some((item) => item.visible !== false);
-      section.blocks.forEach((block) => {
-        block.visible = !shouldHide;
-      });
-      onLayoutChange({ sections: nextSections });
-    },
-    [layout, onLayoutChange],
-  );
-
-  const handleRemoveSection = useCallback(
-    (sectionIdx: number) => {
-      if (!onLayoutChange) return;
-      const nextSections = cloneSections(layout);
-      nextSections.splice(sectionIdx, 1);
-      nextSections.forEach((section, index) => {
-        section.position = index;
-      });
-      onLayoutChange({ sections: nextSections });
-      setRemovingSectionId(null);
-    },
-    [layout, onLayoutChange],
-  );
-
-  const handleRemove = useCallback(
-    (sectionIdx: number, blockIdx: number) => {
-      if (!onLayoutChange) return;
-      const newSections = cloneSections(layout);
-      newSections[sectionIdx].blocks.splice(blockIdx, 1);
-      if (newSections[sectionIdx].blocks.length === 0) {
-        // Remove empty sections.
-        newSections.splice(sectionIdx, 1);
-      } else {
-        reindex(newSections[sectionIdx].blocks);
-      }
-      onLayoutChange({ sections: newSections });
-    },
-    [layout, onLayoutChange],
-  );
-
-  const handleBlockDrop = useCallback(
-    (sectionIdx: number, blockIdx: number, e: React.DragEvent) => {
-      if (!onLayoutChange) return;
-      e.preventDefault();
-      const blockId = e.dataTransfer.getData("text/plain");
-      if (!blockId) return;
-      const newSections = cloneSections(layout);
-      let sourceSectionIdx = -1;
-      let sourceBlockIdx = -1;
-      for (let si = 0; si < newSections.length; si++) {
-        const index = newSections[si].blocks.findIndex((block) => block.id === blockId);
-        if (index >= 0) {
-          sourceSectionIdx = si;
-          sourceBlockIdx = index;
-          break;
-        }
-      }
-      if (sourceSectionIdx < 0) return;
-      const [moved] = newSections[sourceSectionIdx].blocks.splice(sourceBlockIdx, 1);
-      if (sourceSectionIdx === sectionIdx && sourceBlockIdx < blockIdx) blockIdx--;
-      const targetSection = newSections[sectionIdx];
-      if (!targetSection) return;
-      targetSection.blocks.splice(blockIdx, 0, moved);
-      reindex(targetSection.blocks);
-      if (newSections[sourceSectionIdx].blocks.length === 0 && sourceSectionIdx !== sectionIdx) {
-        newSections.splice(sourceSectionIdx, 1);
-      }
-      newSections.forEach((section, index) => {
-        section.position = index;
-      });
-      setDropTarget(null);
-      onLayoutChange({ sections: newSections });
-    },
-    [layout, onLayoutChange],
-  );
-
-  const handleDrop = useCallback(
-    (sectionIdx: number, e: React.DragEvent) => {
-      if (!onLayoutChange) return;
-      e.preventDefault();
-      const blockId = e.dataTransfer.getData("text/plain");
-      if (!blockId) return;
-
-      // Find source block and section in the persisted layout order.
-      let srcSectionIdx = -1;
-      let srcBlockIdx = -1;
-      for (let si = 0; si < layout.sections.length; si++) {
-        const bi = layout.sections[si].blocks.findIndex((b) => b.id === blockId);
-        if (bi !== -1) {
-          srcSectionIdx = si;
-          srcBlockIdx = bi;
-          break;
-        }
-      }
-      if (srcBlockIdx === -1) return;
-
-      const newSections = cloneSections(layout);
-      const [moved] = newSections[srcSectionIdx].blocks.splice(srcBlockIdx, 1);
-      const targetSection = newSections[sectionIdx];
-      if (!targetSection) return;
-      targetSection.blocks.push(moved);
-      if (newSections[srcSectionIdx].blocks.length === 0) {
-        newSections.splice(srcSectionIdx, 1);
-        if (sectionIdx > srcSectionIdx) sectionIdx--;
-      }
-      const target =
-        newSections[sectionIdx >= newSections.length ? newSections.length - 1 : sectionIdx];
-      if (!target) return;
-      reindex(target.blocks);
-      newSections.forEach((section, index) => {
-        section.position = index;
-      });
-      onLayoutChange({ sections: newSections });
-    },
-    [layout, onLayoutChange],
-  );
-
-  // ── Render ─────────────────────────────────────────────────────────────
   return (
     <div
       className="flex flex-col"
@@ -414,600 +129,134 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
     >
       {sectionsToRender.map((section, renderIndex) => {
         const previousSection = sectionsToRender[renderIndex - 1] ?? null;
-        const sectionIndex = sections.findIndex((candidate) => candidate.id === section.id);
-        const layoutSectionIndex = layout.sections.findIndex(
-          (candidate) => candidate.id === section.id,
-        );
         /** Grid-based (builder) sections render from their persisted 12-col
          *  grid; template sections fall back to SECTION_GRID + block.span. */
-        const hasGrid = !context.isEditing && (section.grid?.length ?? 0) > 0;
+        const hasGrid = (section.grid?.length ?? 0) > 0;
         const gridByBlock = new Map((section.grid ?? []).map((item) => [item.i, item]));
         const blocks = section.blocks
           .filter(
-            (b) =>
-              context.isEditing ||
-              (b.visible !== false && !emptyBlockIds.has(b.id) && !isDefinitelyEmptyBlock(b)),
+            (b) => b.visible !== false && !emptyBlockIds.has(b.id) && !isDefinitelyEmptyBlock(b),
           )
           .sort((a, b) => a.position - b.position);
         // Blocks that won't show (hidden or empty) give their columns back to
         // the rest of their row instead of leaving a hole.
-        const placed = context.isEditing
-          ? null
-          : reflowAroundHidden(
-              section.grid ?? [],
-              new Set(
-                (section.grid ?? [])
-                  .map((item) => item.i)
-                  .filter((id) => !blocks.some((block) => block.id === id)),
-              ),
-            );
+        const placed = reflowAroundHidden(
+          section.grid ?? [],
+          new Set(
+            (section.grid ?? [])
+              .map((item) => item.i)
+              .filter((id) => !blocks.some((block) => block.id === id)),
+          ),
+        );
         const gridClass = sparseSafeGridClass(section.layout, blocks.length);
-        const persistedBlocks = layout.sections[layoutSectionIndex]?.blocks ?? [];
-
-        const isWhitespaceLed = WHITESPACE_LED_LAYOUTS.has(section.layout);
 
         return (
           <section
             key={section.id}
             data-section-id={section.id}
             data-section-layout={section.layout}
-            style={context.isEditing ? undefined : areaSurfaceStyle(section)}
-            className={[
-              context.isEditing ? "py-8 first:pt-0" : "first:pt-0",
-              context.isEditing ? "" : areaSurfaceClass(section),
-              // Public rhythm mirrors the private Studio view: whitespace-led
-              // gaps (density-scaled) instead of full-width divider rules.
-              isWhitespaceLed || !context.isEditing
-                ? ""
-                : "border-b border-border/35 last:border-b-0 last:pb-0",
-            ]
-              .filter(Boolean)
-              .join(" ")}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => handleDrop(layoutSectionIndex, e)}
+            style={areaSurfaceStyle(section)}
+            className={["first:pt-0", areaSurfaceClass(section)].filter(Boolean).join(" ")}
           >
-            {context.isEditing && (
-              <div className="studio-section-editor-bar mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-border/35 pb-2">
-                <p className="text-xs text-muted-foreground">
-                  Section {sectionIndex + 1}
-                  <span className="ml-2 text-foreground">
-                    · {section.blocks.map((block) => blockLabel(block.type)).join(" + ")}
-                  </span>
-                </p>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                      aria-label={`Section ${sectionIndex + 1} actions`}
-                    >
-                      <MoreVertical className="h-3.5 w-3.5" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="studio-editor-chrome w-48">
-                    <DropdownMenuItem onClick={() => setConfiguringSectionId(section.id)}>
-                      <LayoutGrid className="mr-2 h-3.5 w-3.5" /> Change layout
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDuplicateSection(layoutSectionIndex)}>
-                      <Copy className="mr-2 h-3.5 w-3.5" /> Duplicate section
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      disabled={sectionIndex === 0}
-                      onClick={() => handleMoveSection(layoutSectionIndex, -1)}
-                    >
-                      <ChevronDown className="mr-2 h-3.5 w-3.5 rotate-180" /> Move up
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      disabled={sectionIndex === sections.length - 1}
-                      onClick={() => handleMoveSection(layoutSectionIndex, 1)}
-                    >
-                      <ChevronDown className="mr-2 h-3.5 w-3.5" /> Move down
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => handleToggleSectionVisibility(layoutSectionIndex)}
-                    >
-                      {blocks.some((block) => block.visible !== false) ? (
-                        <EyeOff className="mr-2 h-3.5 w-3.5" />
-                      ) : (
-                        <Eye className="mr-2 h-3.5 w-3.5" />
-                      )}
-                      {blocks.some((block) => block.visible !== false)
-                        ? "Hide section"
-                        : "Show section"}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className="text-destructive focus:text-destructive"
-                      onClick={() => setRemovingSectionId(section.id)}
-                    >
-                      <Trash2 className="mr-2 h-3.5 w-3.5" /> Delete section
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            )}
-            {context.isEditing ? (
-              <div
-                className="studio-edit-canvas rounded-lg border border-dashed border-[var(--user-accent-border,var(--border))] bg-[var(--user-accent-subtle,var(--surface))]/10 p-2 sm:p-3"
-                data-studio-edit-canvas
-              >
-                <StudioSectionGrid
-                  section={section}
-                  blocks={blocks}
-                  onChange={(nextBlocks) => {
-                    const nextSections = cloneSections(layout);
-                    const targetSection = nextSections.find(
-                      (candidate) => candidate.id === section.id,
-                    );
-                    if (!targetSection) return;
-                    targetSection.blocks = nextBlocks;
-                    onLayoutChange?.({ sections: nextSections });
-                  }}
-                  renderBlock={(block, bi) => (
-                    <SortableBlock
-                      block={block}
-                      context={context}
-                      isFirst={bi === 0}
-                      isLast={bi === blocks.length - 1}
-                      onMoveUp={() =>
-                        handleMoveUp(
-                          layoutSectionIndex,
-                          persistedBlocks.findIndex((candidate) => candidate.id === block.id),
-                        )
-                      }
-                      onMoveDown={() =>
-                        handleMoveDown(
-                          layoutSectionIndex,
-                          persistedBlocks.findIndex((candidate) => candidate.id === block.id),
-                        )
-                      }
-                      onRemove={() => {
-                        setSelectedBlockId(null);
-                        setRemovingBlockId(block.id);
-                      }}
-                      onConfigure={() => {
-                        setSelectedBlockId(block.id);
-                        setConfiguringBlockId(block.id);
-                      }}
-                      onResize={() => setResizingBlockId(block.id)}
-                      gridManaged
-                      isSelected={selectedBlockId === block.id}
-                      isHidden={block.visible === false}
-                      onSelect={() => setSelectedBlockId(block.id)}
-                      onConfigChange={(config) => onBlockConfigChange?.(block.id, config)}
-                    />
-                  )}
-                />
-              </div>
-            ) : (
-              <>
-                {!context.isEditing && <AreaTitle section={section} />}
-                <div
-                  className={`${
-                    hasGrid
-                      ? "grid grid-cols-2 gap-8 md:grid-cols-12 content-safe"
-                      : `${gridClass} content-safe ${context.isEditing ? "transition-colors" : ""}`
-                  }`}
-                  style={areaGridStyle(
-                    section,
-                    hasGrid
-                      ? { gridAutoFlow: "row dense", alignItems: "start" }
-                      : gridClass
-                        ? { gridAutoFlow: "row", alignItems: "start" }
-                        : undefined,
-                  )}
-                  data-section-canvas={context.isEditing ? "true" : undefined}
-                  data-section-grid={hasGrid ? "true" : undefined}
-                  data-overlapped={
-                    hasGrid &&
-                    areaOverlapped(
-                      section,
-                      sectionsToRender[renderIndex + 1],
-                      (b) =>
-                        b.visible !== false &&
-                        !emptyBlockIds.has(b.id) &&
-                        !isDefinitelyEmptyBlock(b),
-                    )
-                      ? ""
-                      : undefined
-                  }
-                >
-                  {blocks.map((block, bi) => {
-                    const persistedBlockIndex = persistedBlocks.findIndex(
-                      (candidate) => candidate.id === block.id,
-                    );
-                    const stored = hasGrid ? gridByBlock.get(block.id) : undefined;
-                    const gridItem = stored
-                      ? { ...stored, ...(placed?.get(block.id) ?? {}) }
-                      : undefined;
-                    const blockDef = getBlock(block.type);
-                    // Full-bleed blocks opt out of the studio-block frame, exactly
-                    // like the owner Studio view and the editor canvas.
-                    const isFlush =
-                      blockDef?.containerless === true || block.type === "profile-header";
-                    return (
-                      <div
-                        key={`drop-${block.id}`}
-                        className={[
-                          // "Show on" desktop / phone only (block settings).
-                          !context.isEditing && block.showOn === "desktop" ? "max-md:hidden" : "",
-                          !context.isEditing && block.showOn === "mobile" ? "md:hidden" : "",
-                          context.isEditing
-                            ? "relative rounded-md border border-transparent p-1 transition-colors hover:border-card-border hover:bg-surface/20"
-                            : hasGrid
-                              ? gridItem
-                                ? `relative min-w-0 ${colStartClass(gridItem.x + 1)} ${spanClass(gridItem.w)} ${phoneClasses(block)}`
-                                : "relative min-w-0 max-md:col-span-2"
-                              : // Template sections (no persisted grid): the wrapper is
-                                // the grid item — same span boxes the owner view uses —
-                                // instead of display:contents auto-flow, which laid the
-                                // same section out differently on the public page.
-                                "relative min-w-0",
-                          !context.isEditing &&
-                          !hasGrid &&
-                          gridClass &&
-                          typeof block.span === "number"
-                            ? spanClass(block.span)
-                            : "",
-                          dropTarget?.sectionIdx === layoutSectionIndex &&
-                          dropTarget.blockIdx === bi
-                            ? "border-t-2 border-[var(--user-accent,var(--trust))]"
-                            : "",
-                        ].join(" ")}
-                        data-overlap={
-                          !context.isEditing && hasGrid
-                            ? overlapAttr(block, gridItem, section, previousSection)
-                            : undefined
-                        }
-                        onDragOver={(event) => {
-                          event.preventDefault();
-                          setDropTarget({ sectionIdx: layoutSectionIndex, blockIdx: bi });
-                        }}
-                        onDrop={(event) =>
-                          handleBlockDrop(layoutSectionIndex, persistedBlockIndex, event)
-                        }
-                      >
-                        {context.isEditing ? (
-                          <SortableBlock
-                            block={block}
-                            context={context}
-                            isFirst={bi === 0}
-                            isLast={bi === blocks.length - 1}
-                            onMoveUp={() => handleMoveUp(layoutSectionIndex, persistedBlockIndex)}
-                            onMoveDown={() =>
-                              handleMoveDown(layoutSectionIndex, persistedBlockIndex)
-                            }
-                            onRemove={() => {
-                              setSelectedBlockId(null);
-                              setRemovingBlockId(block.id);
-                            }}
-                            onConfigure={() => {
-                              setSelectedBlockId(block.id);
-                              setConfiguringBlockId(block.id);
-                            }}
-                            onResize={() => {
-                              setSelectedBlockId(block.id);
-                              setResizingBlockId(block.id);
-                            }}
-                            isSelected={selectedBlockId === block.id}
-                            isHidden={block.visible === false}
-                            onSelect={() => setSelectedBlockId(block.id)}
-                            onConfigChange={(config) => onBlockConfigChange?.(block.id, config)}
-                          />
-                        ) : (
-                          // Same studio-block frame the owner Studio view wraps its
-                          // blocks in (background, border, radius, inset; flush for
-                          // full-bleed blocks) — so a block reads identically on the
-                          // public page and in the creator's view.
-                          <div
-                            style={blockFrameStyle(block)}
-                            className={[
-                              "relative h-full min-h-0 overflow-hidden studio-block",
-                              isFlush ? "studio-block-flush" : "",
-                            ]
-                              .filter(Boolean)
-                              .join(" ")}
-                          >
-                            <BlockRenderer
-                              type={block.type}
-                              config={block.config}
-                              context={{
-                                ...context,
-                                blockId: block.id,
-                                profileCompleteness:
-                                  block.type === "profile-header" ? profileCompleteness : undefined,
-                                onCompleteProfile:
-                                  block.type === "profile-header" ? onCompleteProfile : undefined,
-                                onBlockEmptyChange: context.isEditing
-                                  ? undefined
-                                  : reportBlockEmpty,
-                              }}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                  {context.isEditing && blocks.length > 0 && (
+            <AreaTitle section={section} />
+            <div
+              className={
+                hasGrid
+                  ? "grid grid-cols-2 gap-8 md:grid-cols-12 content-safe"
+                  : `${gridClass} content-safe`
+              }
+              style={areaGridStyle(
+                section,
+                hasGrid
+                  ? { gridAutoFlow: "row dense", alignItems: "start" }
+                  : gridClass
+                    ? { gridAutoFlow: "row", alignItems: "start" }
+                    : undefined,
+              )}
+              data-section-grid={hasGrid ? "true" : undefined}
+              data-overlapped={
+                hasGrid &&
+                areaOverlapped(
+                  section,
+                  sectionsToRender[renderIndex + 1],
+                  (b) =>
+                    b.visible !== false && !emptyBlockIds.has(b.id) && !isDefinitelyEmptyBlock(b),
+                )
+                  ? ""
+                  : undefined
+              }
+            >
+              {blocks.map((block) => {
+                const stored = hasGrid ? gridByBlock.get(block.id) : undefined;
+                const gridItem = stored
+                  ? { ...stored, ...(placed?.get(block.id) ?? {}) }
+                  : undefined;
+                const blockDef = getBlock(block.type);
+                // Full-bleed blocks opt out of the studio-block frame, exactly
+                // like the owner Studio view and the editor canvas.
+                const isFlush = blockDef?.containerless === true || block.type === "profile-header";
+                return (
+                  <div
+                    key={`drop-${block.id}`}
+                    className={[
+                      // "Show on" desktop / phone only (block settings).
+                      block.showOn === "desktop" ? "max-md:hidden" : "",
+                      block.showOn === "mobile" ? "md:hidden" : "",
+                      hasGrid
+                        ? gridItem
+                          ? `relative min-w-0 ${colStartClass(gridItem.x + 1)} ${spanClass(gridItem.w)} ${phoneClasses(block)}`
+                          : "relative min-w-0 max-md:col-span-2"
+                        : // Template sections (no persisted grid): the wrapper is
+                          // the grid item — same span boxes the owner view uses —
+                          // instead of display:contents auto-flow, which laid the
+                          // same section out differently on the public page.
+                          "relative min-w-0",
+                      !hasGrid && gridClass && typeof block.span === "number"
+                        ? spanClass(block.span)
+                        : "",
+                    ].join(" ")}
+                    data-overlap={
+                      hasGrid ? overlapAttr(block, gridItem, section, previousSection) : undefined
+                    }
+                  >
+                    {/* Same studio-block frame the owner Studio view wraps its
+                        blocks in (background, border, radius, inset; flush for
+                        full-bleed blocks) — so a block reads identically on the
+                        public page and in the creator's view. */}
                     <div
+                      style={blockFrameStyle(block)}
                       className={[
-                        "col-span-full min-h-4 border-t border-dashed border-border/45 text-center text-[10px] text-muted-foreground/60 transition-colors",
-                        dropTarget?.sectionIdx === layoutSectionIndex &&
-                        dropTarget.blockIdx === persistedBlocks.length
-                          ? "border-[var(--user-accent,var(--trust))] bg-[var(--user-accent-subtle,var(--learning-subtle))]"
-                          : "",
-                      ].join(" ")}
-                      aria-label={`Drop at end of section ${sectionIndex + 1}`}
-                      role="button"
-                      tabIndex={0}
-                      onDragOver={(event) => {
-                        event.preventDefault();
-                        setDropTarget({
-                          sectionIdx: layoutSectionIndex,
-                          blockIdx: persistedBlocks.length,
-                        });
-                      }}
-                      onDrop={(event) =>
-                        handleBlockDrop(layoutSectionIndex, persistedBlocks.length, event)
-                      }
+                        "relative h-full min-h-0 overflow-hidden studio-block",
+                        isFlush ? "studio-block-flush" : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
                     >
-                      <span className="sr-only">Drop section content here</span>
+                      <BlockRenderer
+                        type={block.type}
+                        config={block.config}
+                        context={{
+                          ...context,
+                          blockId: block.id,
+                          profileCompleteness:
+                            block.type === "profile-header" ? profileCompleteness : undefined,
+                          onCompleteProfile:
+                            block.type === "profile-header" ? onCompleteProfile : undefined,
+                          onBlockEmptyChange: reportBlockEmpty,
+                        }}
+                      />
                     </div>
-                  )}
-                </div>
-              </>
-            )}
-            {!context.isEditing && <AreaDivider section={section} />}
+                  </div>
+                );
+              })}
+            </div>
+            <AreaDivider section={section} />
           </section>
         );
       })}
-
-      {/* Remove section confirmation dialog */}
-      <Dialog
-        open={!!removingSectionId}
-        onOpenChange={(open) => {
-          if (!open) setRemovingSectionId(null);
-        }}
-      >
-        <DialogContent className="studio-editor-chrome sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Delete section?</DialogTitle>
-            <DialogDescription>
-              This removes the section and all of its blocks from your Studio.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2 sm:justify-start">
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => {
-                if (!removingSectionId) return;
-                const sectionIdx = layout.sections.findIndex(
-                  (section) => section.id === removingSectionId,
-                );
-                if (sectionIdx >= 0) handleRemoveSection(sectionIdx);
-              }}
-            >
-              Delete section
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setRemovingSectionId(null)}>
-              Cancel
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Remove confirmation dialog */}
-      <Dialog
-        open={!!removingBlockId}
-        onOpenChange={(open) => {
-          if (!open) setRemovingBlockId(null);
-        }}
-      >
-        <DialogContent className="studio-editor-chrome sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Remove block?</DialogTitle>
-            <DialogDescription>
-              This removes the block from your page. Its content will be lost.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2 sm:justify-start">
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => {
-                if (!removingBlockId) return;
-                for (let si = 0; si < layout.sections.length; si++) {
-                  const bi = layout.sections[si].blocks.findIndex((b) => b.id === removingBlockId);
-                  if (bi !== -1) {
-                    handleRemove(si, bi);
-                    break;
-                  }
-                }
-                setSelectedBlockId(null);
-                setRemovingBlockId(null);
-              }}
-            >
-              Remove
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setRemovingBlockId(null)}>
-              Cancel
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {configuringSectionId && onLayoutChange && (
-        <SectionLayoutPanel
-          section={sections.find((candidate) => candidate.id === configuringSectionId)}
-          onClose={() => setConfiguringSectionId(null)}
-          onChange={(layoutType) => {
-            const next = cloneSections(layout);
-            const section = next.find((candidate) => candidate.id === configuringSectionId);
-            if (!section) return;
-            section.layout = layoutType;
-            onLayoutChange({ sections: next });
-            setConfiguringSectionId(null);
-          }}
-        />
-      )}
-
-      {resizingBlock && onLayoutChange && (
-        <Card className="studio-editor-chrome fixed inset-x-3 bottom-3 z-50 p-4 shadow-xl sm:inset-x-auto sm:right-3 sm:top-24 sm:bottom-auto sm:w-72">
-          <div className="mb-3 flex items-center justify-between">
-            <div>
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Resize block
-              </h3>
-              <p className="mt-1 text-[11px] text-muted-foreground">
-                Set how much of the section grid it occupies.
-              </p>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={() => setResizingBlockId(null)}
-              aria-label="Close resize panel"
-            >
-              ×
-            </Button>
-          </div>
-          <div className="grid grid-cols-3 gap-1.5">
-            {[1, 2, 3, 4, 6, 12].map((span) => (
-              <Button
-                key={span}
-                type="button"
-                variant={resizingBlock.span === span ? "default" : "outline"}
-                size="sm"
-                className="h-8 text-xs"
-                onClick={() => {
-                  const next = cloneSections(layout);
-                  const target = next
-                    .flatMap((section) => section.blocks)
-                    .find((block) => block.id === resizingBlock.id);
-                  if (!target) return;
-                  target.span = span;
-                  onLayoutChange({ sections: next });
-                  setResizingBlockId(null);
-                }}
-              >
-                {span}/12
-              </Button>
-            ))}
-          </div>
-          <p className="mt-3 text-[10px] text-muted-foreground">
-            Choose a width to change the block size. On single-column sections, blocks remain full
-            width.
-          </p>
-        </Card>
-      )}
-
-      {/* Inline block settings */}
-      {configuredBlock && configuredDefinition && (
-        <InlineInspector
-          block={configuredBlock}
-          definition={configuredDefinition}
-          ownerId={context.ownerId}
-          profileMedia={configuredBlock.type === "profile-header" ? profileMedia : undefined}
-          onProfileMediaSaved={onProfileMediaSaved}
-          onBlockLayoutChange={(layoutChange) => {
-            if (!onLayoutChange) return;
-            const next = cloneSections(layout);
-            const section = next.find((candidate) =>
-              candidate.blocks.some((item) => item.id === configuredBlock.id),
-            );
-            const target = section?.blocks.find((item) => item.id === configuredBlock.id);
-            if (!target) return;
-            Object.assign(target, layoutChange);
-            onLayoutChange({ sections: next });
-          }}
-          onChange={(config) => onBlockConfigChange?.(configuredBlock.id, config)}
-          onRemove={() => {
-            setConfiguringBlockId(null);
-            setSelectedBlockId(null);
-            setRemovingBlockId(configuredBlock.id);
-          }}
-          onClose={() => setConfiguringBlockId(null)}
-        />
-      )}
     </div>
   );
 });
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-function cloneSections(layout: PageLayoutType): LayoutSection[] {
-  return layout.sections.map((s) => ({
-    ...s,
-    blocks: s.blocks.map((b) => ({ ...b, config: { ...b.config } })),
-  }));
-}
-
-function reindex(blocks: { position: number }[]) {
-  blocks.forEach((b, i) => {
-    b.position = i;
-  });
-}
-
-function SectionLayoutPanel({
-  section,
-  onClose,
-  onChange,
-}: {
-  section: LayoutSection | undefined;
-  onClose: () => void;
-  onChange: (layout: SectionLayoutType) => void;
-}) {
-  if (!section) return null;
-  const options: Array<[SectionLayoutType, string]> = [
-    ["full", "Full width"],
-    ["two_column", "Two columns"],
-    ["three_column", "Three columns"],
-    ["sidebar_left", "Sidebar left"],
-    ["sidebar_right", "Sidebar right"],
-    ["feature", "Feature + support"],
-    ["side_by_side", "Side by side"],
-  ];
-  return (
-    <Card className="studio-editor-chrome fixed inset-x-3 bottom-3 z-50 p-4 shadow-xl sm:inset-x-auto sm:right-3 sm:top-24 sm:bottom-auto sm:w-72">
-      <div className="mb-3 flex items-start justify-between gap-2">
-        <div>
-          <h3 className="text-sm font-semibold text-foreground">Change section layout</h3>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Choose how the blocks in this section should be arranged.
-          </p>
-        </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6"
-          onClick={onClose}
-          aria-label="Close section layout"
-        >
-          ×
-        </Button>
-      </div>
-      <div className="grid gap-1.5">
-        {options.map(([value, label]) => (
-          <Button
-            key={value}
-            type="button"
-            variant={section.layout === value ? "default" : "outline"}
-            size="sm"
-            className="justify-between text-xs"
-            onClick={() => onChange(value)}
-          >
-            <span>{label}</span>
-            {section.layout === value && <span className="text-[10px] opacity-75">Current</span>}
-          </Button>
-        ))}
-      </div>
-    </Card>
-  );
-}
 
 /** Phone placement for a block in a grid area: phones get a two-column
  *  grid, where a block spans both (default) or one ("half"), and can move to

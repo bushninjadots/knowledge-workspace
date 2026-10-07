@@ -23,7 +23,6 @@ import { BackgroundLayer } from "@/components/tethyr/background-layer";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDominantColor } from "@/lib/dominant-color";
 import { PageShell } from "@/components/tethyr/page/page-shell";
-import { EditModeProvider } from "@/components/tethyr/page/edit-mode-context";
 import { useProfilePage } from "@/hooks/use-profile-page";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { ProfileWorkEvidence } from "@/components/tethyr/profile/work-evidence";
@@ -136,30 +135,28 @@ export function PublicProfileRoute() {
       {profilePageQuery.isLoading ? (
         <ProfileSkeleton />
       ) : hasBlocks ? (
-        <EditModeProvider>
-          <PageShell
-            ownerId={profile.id}
-            ownerType="profile"
-            // A draft preview needs owner access to read the draft, but renders
-            // exactly as visitors will see it (previewMode="public").
-            isOwner={previewDraft}
-            previewDraft={previewDraft}
-            previewMode={previewDraft ? "public" : undefined}
-            showPreviewBanner={!embed}
-            bannerColor={bannerColor}
-            appearance={data.publicBackground}
-            pageCreationAction={profilePageQuery.createPage}
-            pageCreationError={profilePageQuery.pageCreationError}
-            pageCreationPending={profilePageQuery.pageCreationPending}
-            backgroundSlot={
-              <BackgroundLayer
-                background={data.publicBackground}
-                imageUrl={data.backgroundImageUrl}
-                bannerColor={bannerColor}
-              />
-            }
-          />
-        </EditModeProvider>
+        <PageShell
+          ownerId={profile.id}
+          ownerType="profile"
+          // A draft preview needs owner access to read the draft, but renders
+          // exactly as visitors will see it (previewMode="public").
+          isOwner={previewDraft}
+          previewDraft={previewDraft}
+          previewMode={previewDraft ? "public" : undefined}
+          showPreviewBanner={!embed}
+          bannerColor={bannerColor}
+          appearance={data.publicBackground}
+          pageCreationAction={profilePageQuery.createPage}
+          pageCreationError={profilePageQuery.pageCreationError}
+          pageCreationPending={profilePageQuery.pageCreationPending}
+          backgroundSlot={
+            <BackgroundLayer
+              background={data.publicBackground}
+              imageUrl={data.backgroundImageUrl}
+              bannerColor={bannerColor}
+            />
+          }
+        />
       ) : (
         <BasicProfile profile={profile} avatarSigned={data.avatarSigned} />
       )}

@@ -125,14 +125,4 @@ describe("PageLayoutRenderer public parity with the owner Studio view", () => {
     expect(firstItem?.className).toContain("md:col-span-6");
     expect(firstItem?.className).not.toContain("contents");
   });
-
-  it("does not add the frame in edit mode (the editor owns block chrome)", () => {
-    render(
-      <PageLayoutRenderer
-        layout={layoutWith({}, [block("editing")])}
-        context={{ ...ctx, isEditing: true, isOwner: true }}
-      />,
-    );
-    expect(frameOf("editing")).toBeFalsy();
-  });
 });
