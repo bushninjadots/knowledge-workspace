@@ -7,7 +7,7 @@
 // looks the same in all three.
 
 import type { CSSProperties, ReactNode } from "react";
-import type { LayoutSection } from "@/lib/page-blocks";
+import type { LayoutBlockInstance, LayoutGridItem, LayoutSection } from "@/lib/page-blocks";
 import { accentFamilyVars } from "@/lib/studio-config";
 import { isSafeUrl } from "@/lib/validators";
 import { cn } from "@/lib/utils";
@@ -144,4 +144,57 @@ export function AreaTitle({ section, action }: { section: LayoutSection; action?
       {action}
     </header>
   );
+}
+
+/**
+ * "Overlap the piece above" (LayoutBlockInstance.overlap) for one block's
+ * grid cell, as its `data-overlap` value (styles.css; bigger screens only).
+ * The grid itself never overlaps — dragging, snapping and phone stacking
+ * work as usual. The piece is drawn up across the space above it and into
+ * room the frames above make for it (`areaOverlapped`), so it layers over
+ * their edge and never over their content:
+ *   • "row" — from a later row of its area, across the row gap;
+ *   • "area" — from its area's first row into the area before, only when no
+ *     area title sits between them.
+ * It never reaches over a profile header, which has no frame to make room.
+ */
+export function overlapAttr(
+  block: Pick<LayoutBlockInstance, "overlap">,
+  item: Pick<LayoutGridItem, "y"> | undefined,
+  section: LayoutSection,
+  previous: LayoutSection | null | undefined,
+): "area" | "row" | undefined {
+  if (block.overlap !== "up" || !item) return undefined;
+  const top = Math.min(...(section.grid ?? []).map((cell) => cell.y));
+  if (item.y > top) return hasHeader(section) ? undefined : "row";
+  if (!previous || hasHeader(previous) || areaTitle(section)) return undefined;
+  return "area";
+}
+
+const hasHeader = (section: LayoutSection) =>
+  section.blocks.some((block) => block.type === "profile-header");
+
+/**
+ * Whether this area's frames make room at their foot for a piece layered
+ * over them — from a later row of this area, or from the area after it.
+ * `shown` says which blocks will actually render (hidden and empty ones
+ * don't reach anywhere).
+ */
+export function areaOverlapped(
+  section: LayoutSection,
+  next: LayoutSection | null | undefined,
+  shown: (block: LayoutBlockInstance) => boolean,
+): boolean {
+  const reaches = (area: LayoutSection, previous: LayoutSection | null, kind: "area" | "row") =>
+    area.blocks.some(
+      (block) =>
+        shown(block) &&
+        overlapAttr(
+          block,
+          area.grid?.find((cell) => cell.i === block.id),
+          area,
+          previous,
+        ) === kind,
+    );
+  return reaches(section, null, "row") || (!!next && reaches(next, section, "area"));
 }

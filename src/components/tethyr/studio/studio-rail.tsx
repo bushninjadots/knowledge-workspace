@@ -579,6 +579,20 @@ function BlockFrameSection({
               })
             }
           />
+          <div className="mb-1 flex items-center justify-between gap-2">
+            <span className="text-xs text-foreground">Overlap the piece above</span>
+            <Switch
+              label="Overlap the piece above"
+              checked={block.overlap === "up"}
+              onChange={(checked) =>
+                props.onBlockAction(block.id, { overlap: checked ? "up" : undefined })
+              }
+            />
+          </div>
+          <p className="mb-3 text-2xs leading-snug text-muted-foreground">
+            Layers this block over the edge of whatever sits above it, collage-style. Shows in
+            Preview and on your page; phones stack as usual.
+          </p>
           <Choice
             label="On phones"
             hint="Two half-width blocks sit side by side on a phone."

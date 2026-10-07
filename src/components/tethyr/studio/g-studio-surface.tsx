@@ -21,6 +21,7 @@ import {
   X,
   Lock,
   LockOpen,
+  Layers,
   Monitor,
   SlidersHorizontal,
   Smartphone,
@@ -1553,14 +1554,29 @@ const GBlockFrame = forwardRef<
           <span className="sr-only">Locked</span>
         </span>
       )}
-      {editing && block.showOn && block.showOn !== "all" && (
-        <span className="absolute right-1.5 top-1.5 z-20 inline-flex items-center gap-1 rounded-sm border border-border bg-[var(--surface-elevated)] px-1.5 py-0.5 text-2xs text-muted-foreground shadow-sm">
-          {block.showOn === "desktop" ? (
-            <Monitor className="h-3 w-3" aria-hidden />
-          ) : (
-            <Smartphone className="h-3 w-3" aria-hidden />
+      {editing && ((block.showOn && block.showOn !== "all") || block.overlap === "up") && (
+        <span className="absolute right-1.5 top-1.5 z-20 flex items-center gap-1">
+          {block.overlap === "up" && (
+            // Drawn for real in Preview and on the page; the canvas keeps a
+            // plain grid so every block stays easy to grab.
+            <span
+              title="Overlaps the piece above in Preview and on your page"
+              className="inline-flex items-center gap-1 rounded-sm border border-border bg-[var(--surface-elevated)] px-1.5 py-0.5 text-2xs text-muted-foreground shadow-sm"
+            >
+              <Layers className="h-3 w-3" aria-hidden />
+              Overlaps above
+            </span>
           )}
-          {block.showOn === "desktop" ? "Desktop only" : "Phone only"}
+          {block.showOn && block.showOn !== "all" && (
+            <span className="inline-flex items-center gap-1 rounded-sm border border-border bg-[var(--surface-elevated)] px-1.5 py-0.5 text-2xs text-muted-foreground shadow-sm">
+              {block.showOn === "desktop" ? (
+                <Monitor className="h-3 w-3" aria-hidden />
+              ) : (
+                <Smartphone className="h-3 w-3" aria-hidden />
+              )}
+              {block.showOn === "desktop" ? "Desktop only" : "Phone only"}
+            </span>
+          )}
         </span>
       )}
       {editing && props.emptyBlockIds?.has(block.id) && block.visible !== false && (

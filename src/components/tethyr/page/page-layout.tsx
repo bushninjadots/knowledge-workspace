@@ -17,6 +17,8 @@ import {
   areaGridStyle,
   areaSurfaceClass,
   areaSurfaceStyle,
+  areaOverlapped,
+  overlapAttr,
 } from "./area-frame";
 import { StudioSectionGrid } from "@/components/tethyr/page/studio-section-grid";
 import { Button } from "@/components/ui/button";
@@ -410,7 +412,8 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
       style={{ gap: "calc(var(--studio-gap, 14px) * 1.6)" }}
       data-page-layout
     >
-      {sectionsToRender.map((section) => {
+      {sectionsToRender.map((section, renderIndex) => {
+        const previousSection = sectionsToRender[renderIndex - 1] ?? null;
         const sectionIndex = sections.findIndex((candidate) => candidate.id === section.id);
         const layoutSectionIndex = layout.sections.findIndex(
           (candidate) => candidate.id === section.id,
@@ -597,6 +600,19 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
                   )}
                   data-section-canvas={context.isEditing ? "true" : undefined}
                   data-section-grid={hasGrid ? "true" : undefined}
+                  data-overlapped={
+                    hasGrid &&
+                    areaOverlapped(
+                      section,
+                      sectionsToRender[renderIndex + 1],
+                      (b) =>
+                        b.visible !== false &&
+                        !emptyBlockIds.has(b.id) &&
+                        !isDefinitelyEmptyBlock(b),
+                    )
+                      ? ""
+                      : undefined
+                  }
                 >
                   {blocks.map((block, bi) => {
                     const persistedBlockIndex = persistedBlocks.findIndex(
@@ -640,6 +656,11 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
                             ? "border-t-2 border-[var(--user-accent,var(--trust))]"
                             : "",
                         ].join(" ")}
+                        data-overlap={
+                          !context.isEditing && hasGrid
+                            ? overlapAttr(block, gridItem, section, previousSection)
+                            : undefined
+                        }
                         onDragOver={(event) => {
                           event.preventDefault();
                           setDropTarget({ sectionIdx: layoutSectionIndex, blockIdx: bi });

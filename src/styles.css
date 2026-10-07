@@ -615,6 +615,47 @@
     padding 220ms ease;
 }
 
+/* "Overlap the piece above" (overlapAttr / areaOverlapped in area-frame.tsx),
+   bigger screens only — phones stack as usual. The frames being overlapped
+   grow by --overlap-room at their foot; the layered piece reaches up across
+   the gap (--overlap-gap) and exactly that room, so it covers empty frame,
+   never content. It sits on the page colour with the theme's elevation so
+   the layering reads as intended, whatever the card fill. Contexts with
+   other gaps (the layout picker's miniatures) set --overlap-gap inline. */
+@media (width >= 48rem) {
+  [data-overlap] {
+    position: relative;
+    z-index: 2;
+    margin-top: calc(-1 * (var(--overlap-gap) + var(--overlap-room, 2.5rem)));
+  }
+  [data-overlap="area"] {
+    --overlap-gap: calc(var(--studio-gap, 14px) * 1.6);
+  }
+  [data-overlap="row"] {
+    --overlap-gap: 2rem;
+  }
+  [data-overlap]::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: var(--studio-radius, var(--radius-lg));
+    background: var(--studio-bg, var(--background));
+  }
+  [data-overlap] > .studio-block {
+    box-shadow: var(--studio-block-shadow, var(--shadow-elevation-2));
+  }
+  [data-overlapped] .studio-block:not(.studio-block-flush) {
+    padding-bottom: calc(
+      var(--studio-block-pb, var(--studio-block-inset, var(--vl-block-inset, 1rem))) +
+        var(--overlap-room, 2.5rem)
+    );
+  }
+  [data-overlapped] [data-overlap] > .studio-block {
+    padding-bottom: var(--studio-block-pb, var(--studio-block-inset, var(--vl-block-inset, 1rem)));
+  }
+}
+
 /* Member-picked card fill (Ink, Midnight, Teal…): text inside block frames
    switches to the ink useCardInk measured against the real backdrop, so a
    dark fill on a light theme (or the reverse) never leaves unreadable text.

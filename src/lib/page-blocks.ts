@@ -253,6 +253,9 @@ export interface LayoutBlockInstance {
   phoneWidth?: "full" | "half";
   /** On phones: keep the desktop order (default) or move first / last. */
   phoneOrder?: "first" | "last";
+  /** On bigger screens: reach up over the bottom edge of the piece above
+   *  (Collage). Never on phones. See `overlapAttr` in area-frame. */
+  overlap?: "up";
 }
 
 /** Per-block corner shape presets. Percentage-based shapes ("organic", "blob",

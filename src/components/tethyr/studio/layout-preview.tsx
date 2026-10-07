@@ -26,6 +26,8 @@ import {
   areaSurfaceClass,
   areaSurfaceStyle,
   areaWidthStyle,
+  areaOverlapped,
+  overlapAttr,
 } from "@/components/tethyr/page/area-frame";
 import { lookCanvasAttributes } from "@/components/tethyr/page/look-canvas";
 
@@ -79,6 +81,8 @@ const PAGE_WIDTH: Record<StudioConfig["structure"], number> = {
 };
 
 /** The composed page scaled to the preview's width, clipped to `height` px. */
+const visible = (block: LayoutBlockInstance) => block.visible !== false;
+
 export function LayoutPreview({
   layout,
   config,
@@ -136,7 +140,7 @@ export function LayoutPreview({
         <div className="flex flex-col gap-10">
           {layout.sections
             .filter((section) => section.visible !== false)
-            .map((section) => {
+            .map((section, sectionIndex, shown) => {
               const grid = new Map((section.grid ?? []).map((item) => [item.i, item]));
               const blocks = section.blocks
                 .filter((block) => block.visible !== false && grid.has(block.id))
@@ -152,22 +156,42 @@ export function LayoutPreview({
                   style={areaSurfaceStyle(section)}
                 >
                   <AreaTitle section={section} />
-                  <div className="grid grid-cols-12 gap-4" style={areaWidthStyle(section)}>
+                  <div
+                    className="grid grid-cols-12 gap-4"
+                    style={areaWidthStyle(section)}
+                    data-overlapped={
+                      areaOverlapped(section, shown[sectionIndex + 1], visible) ? "" : undefined
+                    }
+                  >
                     {blocks.map((block) => {
                       const item = grid.get(block.id)!;
+                      const overlap = overlapAttr(
+                        block,
+                        item,
+                        section,
+                        shown[sectionIndex - 1] ?? null,
+                      );
                       return (
                         <div
                           key={block.id}
-                          className={cn(
-                            "studio-block",
-                            block.type === "profile-header" && "studio-block-flush",
-                          )}
+                          data-overlap={overlap}
                           style={{
                             gridColumn: `${item.x + 1} / span ${item.w}`,
-                            ...blockFrameStyle(block),
+                            // This miniature's own gaps (gap-10 / gap-4).
+                            ...(overlap && {
+                              "--overlap-gap": overlap === "area" ? "2.5rem" : "1rem",
+                            }),
                           }}
                         >
-                          <SkeletonBlock block={block} />
+                          <div
+                            className={cn(
+                              "studio-block h-full",
+                              block.type === "profile-header" && "studio-block-flush",
+                            )}
+                            style={blockFrameStyle(block)}
+                          >
+                            <SkeletonBlock block={block} />
+                          </div>
                         </div>
                       );
                     })}

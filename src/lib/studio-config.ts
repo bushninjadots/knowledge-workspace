@@ -272,7 +272,12 @@ export function blockFrameStyle(
   }
   // Curved shapes move content in so it never runs under the curve.
   const padding = shapePadding(shape);
-  if (padding) style["--studio-block-padding"] = padding;
+  if (padding) {
+    style["--studio-block-padding"] = padding;
+    // The bottom side alone, for frames that add room at their foot.
+    style["--studio-block-pb"] =
+      `calc(var(--studio-block-inset, 1rem) + ${SHAPE_PADDING[shape!]![2]})`;
+  }
   Object.assign(style, blockFillVars(block.frameFill));
   if (block.frameShadow) style["--studio-block-shadow"] = SHADOWS[block.frameShadow];
   if (block.titleStyle) Object.assign(style, blockTitleOverride(block.titleStyle));

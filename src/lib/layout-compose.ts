@@ -13,7 +13,9 @@
 //   • it is content-aware: a slot with nothing to fill is skipped, and the
 //     blocks left in its row widen to use the space, so a missing gallery
 //     never leaves a hole;
-//   • it never touches the look (theme, visual language, fonts, colours).
+//   • it never touches the look (theme, visual language, fonts, colours);
+//     phone width and overlap are composition, so they're reset to the
+//     template's.
 //
 // Blocks the template doesn't name stay in their own areas, re-flowed with
 // the template's `rest` rhythm, so the whole page follows the composition.
@@ -62,6 +64,9 @@ export interface Slot {
   x?: number;
   /** On phones: half width (two side by side) instead of full. */
   phone?: "half";
+  /** On bigger screens: reach up over the edge of the piece above
+   *  (LayoutBlockInstance.overlap). Placement only — the grid never overlaps. */
+  overlap?: true;
 }
 
 export interface ComposedArea {
@@ -214,11 +219,16 @@ export function composeLayout(
   };
 
   const phoneHalf = new Set<Role>(composition.phoneHalf ?? []);
+  // Placement the template decides: phone width and overlap.
   const withPhone = (block: LayoutBlockInstance, slot?: Slot): LayoutBlockInstance => {
     const role = blockRole(block.type);
     const half = slot?.phone === "half" || (role !== null && phoneHalf.has(role));
-    const { phoneWidth: _phoneWidth, ...rest } = block;
-    return half ? { ...rest, phoneWidth: "half" } : rest;
+    const { phoneWidth: _phoneWidth, overlap: _overlap, ...rest } = block;
+    return {
+      ...rest,
+      ...(half && { phoneWidth: "half" as const }),
+      ...(slot?.overlap && { overlap: "up" as const }),
+    };
   };
 
   const reusedIds = new Set<string>();

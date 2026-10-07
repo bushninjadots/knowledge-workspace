@@ -246,6 +246,20 @@ describe("content-aware composition", () => {
     expect(links?.phoneWidth).toBe("half");
     expect(header?.phoneWidth).toBeUndefined();
   });
+  it("layers Collage's pieces, and the next layout takes the layering away", () => {
+    const composition = (id: string) => STARTERS.find((s) => s.id === id)!.composition;
+    const start = createDefaultProfileLayout();
+    const collage = composeLayout(start, composition("collage"));
+    const layered = blocksOf(collage).filter((b) => b.overlap === "up");
+    expect(layered.length).toBeGreaterThan(0);
+    // Overlap is drawn, never placed: the grid itself still has no collisions.
+    for (const section of collage.sections) {
+      const grid = section.grid ?? [];
+      grid.forEach((a, i) => grid.slice(i + 1).forEach((b) => expect(overlaps(a, b)).toBe(false)));
+    }
+    const editorial = composeLayout(collage, composition("editorial"));
+    expect(blocksOf(editorial).some((b) => b.overlap)).toBe(false);
+  });
 });
 
 describe("For hire", () => {

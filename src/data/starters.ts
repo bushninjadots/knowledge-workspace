@@ -510,7 +510,7 @@ export const STARTERS: Starter[] = [
     family: "Expressive",
     tagline: "Uneven, layered, a little restless.",
     feels:
-      "Alternating wide and narrow pieces — work beside a quote, images beside your story — so no two rows match.",
+      "Alternating wide and narrow pieces — work beside a quote, images beside your story — each row reaching up over the edge of the one before. Phones stack it cleanly.",
     remixNote: "For studios and collectors whose work refuses the grid.",
     structure: "full",
     presentation: "horizontal-scroll",
@@ -532,7 +532,8 @@ export const STARTERS: Starter[] = [
           rows: [
             [
               { role: "gallery", w: 5 },
-              { role: "bio", w: 7 },
+              // Pieces most pages fill in, alternating sides.
+              { role: "bio", w: 7, overlap: true },
             ],
           ],
         },
@@ -540,7 +541,7 @@ export const STARTERS: Starter[] = [
           key: "three",
           rows: [
             [
-              { role: ["building", "proof"], w: 4 },
+              { role: ["building", "proof"], w: 4, overlap: true },
               { role: ["highlights", "readme"], w: 8 },
             ],
           ],

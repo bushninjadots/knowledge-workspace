@@ -349,6 +349,11 @@ try {
   if (paused) {
     await page.getByRole("button", { name: "Load the latest version" }).click();
     await page.waitForTimeout(2000);
+  } else {
+    // The write went through instead of pausing: undo it too, or the area
+    // stays hidden in the account's draft for every later run.
+    await areaToggle(page, 3).click();
+    await page.waitForTimeout(3000);
   }
   // Put both toggles back from a fresh editor.
   await areaToggle(second, 2).click();

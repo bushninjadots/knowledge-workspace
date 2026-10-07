@@ -40,6 +40,8 @@ import {
   areaSurfaceClass,
   areaSurfaceStyle,
   areaTitle,
+  areaOverlapped,
+  overlapAttr,
 } from "@/components/tethyr/page/area-frame";
 import { blockFrameStyle, normalizeStudioConfig } from "@/lib/studio-config";
 import { useCreatePage, usePublishPage } from "@/hooks/use-page-editor";
@@ -347,10 +349,12 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
                     .slice()
                     .sort((a, b) => a.position - b.position)
                     .filter((section) => shouldRenderSectionInView(section, emptyBlocks))
-                    .map((section) => (
+                    .map((section, index, shownSections) => (
                       <StudioViewSection
                         key={section.id}
                         section={section}
+                        previous={shownSections[index - 1] ?? null}
+                        next={shownSections[index + 1] ?? null}
                         context={blockContext}
                         emptyBlockIds={emptyBlocks}
                         revealEdits={revealEdits}
@@ -562,12 +566,17 @@ function StudioViewTopBar({
 
 function StudioViewSection({
   section,
+  previous,
+  next,
   context,
   emptyBlockIds,
   onEdit,
   revealEdits,
 }: {
   section: LayoutSection;
+  /** The areas shown before and after, for "Overlap the piece above". */
+  previous: LayoutSection | null;
+  next: LayoutSection | null;
   context: BlockContext;
   /** Blocks that reported nothing to show: kept mounted (so they can report
    *  content that loads later) but hidden, and their rows reflow. */
@@ -634,6 +643,16 @@ function StudioViewSection({
               ? { gridAutoFlow: "row", alignItems: "start" }
               : undefined,
         )}
+        data-overlapped={
+          hasGrid &&
+          areaOverlapped(
+            section,
+            next,
+            (block) => block.visible !== false && !emptyBlockIds.has(block.id),
+          )
+            ? ""
+            : undefined
+        }
       >
         {blocks.map((block) => (
           <StudioViewBlock
@@ -641,6 +660,9 @@ function StudioViewSection({
             block={block}
             hidden={emptyBlockIds.has(block.id)}
             gridItem={gridMap.get(block.id)}
+            overlap={
+              hasGrid ? overlapAttr(block, gridMap.get(block.id), section, previous) : undefined
+            }
             gridClass={gridClass}
             hasGrid={hasGrid}
             context={context}
@@ -656,6 +678,7 @@ function StudioViewBlock({
   block,
   hidden,
   gridItem,
+  overlap,
   gridClass,
   hasGrid,
   context,
@@ -663,6 +686,7 @@ function StudioViewBlock({
   block: LayoutBlockInstance;
   hidden: boolean;
   gridItem?: LayoutGridItem;
+  overlap?: "area" | "row";
   gridClass: string;
   hasGrid: boolean;
   context: BlockContext;
@@ -684,6 +708,7 @@ function StudioViewBlock({
         block.showOn === "mobile" && "md:hidden",
       )}
       style={{ borderRadius: "var(--studio-radius)" }}
+      data-overlap={overlap}
       // Empty: no frame, no space — but still mounted so it can report content.
       hidden={hidden}
     >
