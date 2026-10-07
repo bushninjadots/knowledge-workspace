@@ -402,6 +402,37 @@ try {
   );
   await openStudio(page);
 
+  // ── Light & dark: "Always as designed" keeps a dark theme dark ───────────
+  await openStyle(page, "Identity");
+  await rail(page).locator('button[title="Obsidian"]').first().click();
+  await page.waitForTimeout(1200);
+  await rail(page).getByRole("button", { name: "Always as designed" }).click();
+  await page.waitForTimeout(800);
+  await publish(page);
+  await page.evaluate(() => localStorage.setItem("tethyr-theme", "light"));
+  await publicPage(page);
+  const kept = await page.evaluate(() => {
+    const shell = document.querySelector("[data-page-shell]");
+    return {
+      scheme: shell?.getAttribute("data-scheme"),
+      bg: getComputedStyle(document.querySelector(".studio-canvas"))
+        .getPropertyValue("--background")
+        .trim(),
+    };
+  });
+  log(
+    "a dark theme set to Always as designed stays dark for light-mode visitors",
+    kept.scheme === "dark",
+    JSON.stringify(kept),
+  );
+  // Back to following visitors and the default theme, for the checks below.
+  await openStudio(page);
+  await openStyle(page, "Identity");
+  await rail(page).getByRole("button", { name: "Follow each visitor" }).click();
+  await rail(page).locator('button[title="Default"]').first().click();
+  await page.waitForTimeout(1200);
+  await publish(page);
+
   // ── Flow 5 ────────────────────────────────────────────────────────────────
   // As the owner: some of a new account's areas are private to visitors.
   const phone = await browser.newContext({

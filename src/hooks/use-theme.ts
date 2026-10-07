@@ -10,6 +10,7 @@ import type { ThemeTokens } from "@/lib/page-blocks";
 import { themeTokensToVars } from "@/lib/theme-tokens";
 import { useTheme as useAppTheme, THEME_PRESET_STORAGE_KEY } from "@/lib/theme";
 import { DEFAULT_THEME_ID } from "@/lib/constants";
+import { profileScheme, type StudioConfig } from "@/lib/studio-config";
 
 interface ThemeRecord {
   tokens: Json;
@@ -116,5 +117,28 @@ export function useTheme(themeId: string | null | undefined) {
     [query.data, resolvedTheme],
   );
 
-  return { ...query, data: vars };
+  return { ...query, data: vars, tokens: query.data };
+}
+
+/**
+ * A profile's theme variables in the mode the profile renders in: the
+ * visitor's light/dark by default, or the theme's own when the owner chose
+ * "Always as designed" (StudioConfig.colorMode). One hook for the editor,
+ * the owner's view and the public page, so they always agree.
+ */
+export function useProfileTheme(
+  themeId: string | null | undefined,
+  config: StudioConfig | null | undefined,
+) {
+  const { resolvedTheme } = useAppTheme();
+  const { data: visitorVars, tokens } = useTheme(themeId);
+  const scheme = profileScheme(config, tokens, resolvedTheme);
+  const vars = useMemo(
+    () =>
+      scheme === resolvedTheme
+        ? visitorVars
+        : themeTokensToVars((tokens ?? {}) as ThemeTokens, scheme),
+    [scheme, resolvedTheme, visitorVars, tokens],
+  );
+  return { vars, scheme };
 }

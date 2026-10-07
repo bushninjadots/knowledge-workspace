@@ -1,5 +1,5 @@
 // ── Site appearance ───────────────────────────────────────────────────────────
-// How Tethyr itself looks for this person, on this device: its density,
+// How Tethyr itself looks for this person, across their devices: its density,
 // shape, accent and motion. It sits on top of the site theme (a preset from
 // the shared `themes` catalogue, chosen in the same place) and is applied as
 // CSS custom properties on <html>, so every component that uses the shared
@@ -127,4 +127,21 @@ export function siteAppearanceVars(appearance: SiteAppearance): Record<string, s
     vars["--user-accent-border"] = `color-mix(in oklab, ${accent} 30%, transparent)`;
   }
   return vars;
+}
+
+/** What follows the member across devices: the site theme preset and the
+ *  appearance on top of it. Light/dark mode stays per device on purpose. */
+export interface AccountSiteAppearance extends SiteAppearance {
+  /** Theme preset id, or null for Tethyr Default. */
+  preset: string | null;
+}
+
+/** The stored account value, or null when there is none (or it's junk). */
+export function normalizeAccountSiteAppearance(raw: unknown): AccountSiteAppearance | null {
+  if (!raw || typeof raw !== "object") return null;
+  const preset = (raw as { preset?: unknown }).preset;
+  return {
+    ...normalizeSiteAppearance(raw),
+    preset: typeof preset === "string" && preset.length > 0 ? preset : null,
+  };
 }

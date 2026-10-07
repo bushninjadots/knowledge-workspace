@@ -1,11 +1,12 @@
 // Site appearance click-through (dev tool, not shipped).
 //
-// Settings → Site appearance changes how Tethyr itself looks on this device
-// (stored in the browser only, so this changes nothing in the account):
+// Settings → Site appearance changes how Tethyr itself looks, and follows the
+// member to every device (saved on their profile, and reset at the end):
 //   • every theme applies, and the Settings page passes axe in each
 //   • density, shape and accent reach real app controls
 //   • choices survive a reload (painted before hydration)
 //   • a profile looks the same whatever the visitor chose for Tethyr
+//   • it follows the member to a fresh browser
 //   • Reset leaves nothing behind
 // Screenshots land in qa-artifacts/site-appearance/.
 //
@@ -189,6 +190,29 @@ try {
   await page.reload({ waitUntil: "domcontentloaded" });
   const painted = await htmlVar(page, "--spacing");
   log("choices survive a reload, painted before hydration", painted === "0.225rem", painted);
+
+  // It follows the member: a fresh browser (no local copy) gets it from the account.
+  await page.waitForTimeout(1500); // the account write is debounced
+  const other = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const second = await other.newPage();
+  {
+    const keep = page;
+    page = second;
+    await login(page);
+    page = keep;
+  }
+  await second.goto(`${BASE}/dashboard`, { waitUntil: "load" });
+  await second.waitForTimeout(4000);
+  const synced = await second.evaluate(() => ({
+    spacing: document.documentElement.style.getPropertyValue("--spacing").trim(),
+    primary: document.documentElement.style.getPropertyValue("--primary").trim(),
+  }));
+  log(
+    "it follows the member to another browser",
+    synced.spacing === "0.225rem" && synced.primary === "#7a4ecf",
+    JSON.stringify(synced),
+  );
+  await other.close();
 
   // Light/dark is the visitor's to choose and profiles follow it; hold it at
   // light so only the theme, density, shape and accent are under test.

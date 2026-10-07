@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   DEFAULT_STUDIO_CONFIG,
   normalizeStudioConfig,
+  profileScheme,
   studioConfigToThemeTokens,
   studioSurfaceStyle,
   type StudioConfig,
@@ -22,6 +23,7 @@ import {
   resolveTitles,
   setLookValue,
 } from "./visual-language";
+import { naturalScheme } from "./theme-tokens";
 
 const base = (patch: Partial<StudioConfig> = {}): StudioConfig => ({
   ...DEFAULT_STUDIO_CONFIG,
@@ -176,5 +178,32 @@ describe("surfaces and motion", () => {
       string
     >;
     expect(style["--user-accent"]).toBe("var(--foreground)");
+  });
+});
+
+describe("a profile's light and dark", () => {
+  const obsidian = { colors: { background: "#0b0c0e", foreground: "#e7e9ec" } };
+  it("follows each visitor by default", () => {
+    expect(profileScheme(base(), obsidian, "light")).toBe("light");
+    expect(profileScheme(normalizeStudioConfig({}), obsidian, "dark")).toBe("dark");
+  });
+
+  it("keeps the theme's own mode when the owner asks", () => {
+    const always = base({ colorMode: "theme" });
+    expect(profileScheme(always, obsidian, "light")).toBe("dark");
+    // An atmosphere is the palette, so its mode wins over the page theme's.
+    expect(profileScheme({ ...always, look: { atmosphere: "warm" } }, obsidian, "dark")).toBe(
+      "light",
+    );
+  });
+
+  it("follows the visitor when there is no palette of its own", () => {
+    expect(profileScheme(base({ colorMode: "theme" }), {}, "dark")).toBe("dark");
+    expect(naturalScheme({ colors: { background: "#ffffff" } })).toBe("light");
+  });
+
+  it("survives a save and reload, and drops junk", () => {
+    expect(normalizeStudioConfig({ colorMode: "theme" }).colorMode).toBe("theme");
+    expect(normalizeStudioConfig({ colorMode: "night" }).colorMode).toBeUndefined();
   });
 });

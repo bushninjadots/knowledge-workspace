@@ -12,14 +12,17 @@ import {
 import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
-import { MotionConfig } from "framer-motion";
 import { initSentry } from "@/lib/sentry";
 import { getConfiguredSiteUrl, SITE } from "@/lib/seo";
 import { googleFontsHref } from "@/lib/fonts";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider, themeInitScript, useTheme } from "@/lib/theme";
-import { GlobalThemePreset } from "@/components/tethyr/global-theme-preset";
+import {
+  GlobalThemePreset,
+  SiteAppearanceSync,
+  SiteMotionConfig,
+} from "@/components/tethyr/global-theme-preset";
 import { RouteErrorBoundary } from "@/components/tethyr/route-error-boundary";
 
 function NotFoundComponent() {
@@ -222,10 +225,11 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <GlobalThemePreset />
-        <MotionConfig reducedMotion="user">
+        <SiteAppearanceSync />
+        <SiteMotionConfig>
           <Outlet />
           <ThemedToaster />
-        </MotionConfig>
+        </SiteMotionConfig>
       </ThemeProvider>
     </QueryClientProvider>
   );

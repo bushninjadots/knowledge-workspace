@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   DEFAULT_SITE_APPEARANCE,
+  normalizeAccountSiteAppearance,
   normalizeSiteAppearance,
   siteAppearanceVars,
 } from "./site-appearance";
@@ -43,5 +44,19 @@ describe("site appearance", () => {
       normalizeSiteAppearance({ density: "tiny", shape: "blob", accent: "red", motion: "fast" }),
     ).toEqual(DEFAULT_SITE_APPEARANCE);
     expect(normalizeSiteAppearance(null)).toEqual(DEFAULT_SITE_APPEARANCE);
+  });
+});
+
+describe("the account copy", () => {
+  it("is null until the member has set something", () => {
+    expect(normalizeAccountSiteAppearance(null)).toBeNull();
+    expect(normalizeAccountSiteAppearance("x")).toBeNull();
+  });
+
+  it("keeps the preset with the appearance and cleans the rest", () => {
+    expect(
+      normalizeAccountSiteAppearance({ preset: "p1", density: "compact", shape: "blob" }),
+    ).toEqual({ ...DEFAULT_SITE_APPEARANCE, density: "compact", preset: "p1" });
+    expect(normalizeAccountSiteAppearance({ preset: "" })?.preset).toBeNull();
   });
 });

@@ -455,6 +455,16 @@ export function GStyleSections({
               label="Accent behaviour"
             />
             <Choice
+              label="Light & dark"
+              hint="Follow each visitor shows your profile in their light or dark mode. Always as designed keeps your theme's own mode — a dark theme stays dark."
+              value={config.colorMode ?? "visitor"}
+              options={[
+                ["visitor", "Follow each visitor"],
+                ["theme", "Always as designed"],
+              ]}
+              onChange={(value) => onChange({ colorMode: value === "theme" ? "theme" : undefined })}
+            />
+            <Choice
               label="Accent colour"
               hint={
                 config.accentMode === "dual"

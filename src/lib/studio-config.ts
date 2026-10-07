@@ -28,6 +28,7 @@
 
 import type { BlockShape, LayoutBlockInstance, ThemeTokens } from "@/lib/page-blocks";
 import { fontStack, isFontId, type FontId } from "@/lib/fonts";
+import { naturalScheme } from "@/lib/theme-tokens";
 import {
   MOTION_ANIMATION,
   atmosphereColors,
@@ -358,6 +359,9 @@ export interface StudioConfig {
   cardShadow?: ShadowStyle;
   /** Legacy motion switch ("rise" = Reveal); Motion now lives in `look`. */
   motion?: "none" | "rise";
+  /** Light/dark for visitors: "visitor" (default) follows each visitor's
+   *  setting; "theme" always shows the profile's theme in its own mode. */
+  colorMode?: "visitor" | "theme";
   /** The chosen visual direction; unset = Original (see visual-language.ts). */
   visualLanguage?: VisualLanguageId | null;
   /** The member's own page-wide visual choices, over the direction's. */
@@ -559,6 +563,7 @@ export function normalizeStudioConfig(raw: unknown): StudioConfig {
     blockTitles: isOneOf(BLOCK_TITLE_VALUES)(value.blockTitles) ? value.blockTitles : undefined,
     cardShadow: isOneOf(SHADOW_VALUES)(value.cardShadow) ? value.cardShadow : undefined,
     motion: value.motion === "rise" ? "rise" : undefined,
+    colorMode: value.colorMode === "theme" ? "theme" : undefined,
     visualLanguage: visualLanguage(value.visualLanguage as string | undefined)?.id ?? null,
     look: normalizeLook(value.look),
     cardOpacity:
@@ -1015,4 +1020,21 @@ function contrastingAccentForeground(color: string): string {
   if (r === null || g === null || b === null) return "var(--background)";
   const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
   return luminance > 0.56 ? "#1f2328" : "#ffffff";
+}
+
+/**
+ * The light/dark mode a profile renders in. Following the visitor is the
+ * default; "theme" keeps the palette in its own mode — the atmosphere's if
+ * one is set, else the page theme's. A profile with no palette of its own
+ * (Tethyr Default, no atmosphere) always follows the visitor.
+ */
+export function profileScheme(
+  config: StudioConfig | null | undefined,
+  pageThemeTokens: ThemeTokens | null | undefined,
+  visitor: "light" | "dark",
+): "light" | "dark" {
+  if (!config || config.colorMode !== "theme") return visitor;
+  return (
+    naturalScheme(studioConfigToThemeTokens(config)) ?? naturalScheme(pageThemeTokens) ?? visitor
+  );
 }

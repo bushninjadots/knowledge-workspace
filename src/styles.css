@@ -2,7 +2,9 @@
 @source "../src";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
+/* Dark styles follow the app's mode, except inside a profile that keeps its
+ * theme's own mode ([data-scheme], set on profile canvases). */
+@custom-variant dark (&:is(.dark *, [data-scheme="dark"] *):not(:is([data-scheme="light"] *)));
 
 /*
  * =============================================================================
@@ -205,7 +207,8 @@
  * is inline on that element and still wins.
  * ------------------------------------------------------------------------ */
 :root,
-[data-base-palette] {
+[data-base-palette],
+.dark [data-base-palette][data-scheme="light"] {
   --radius: 4px;
 
   /* Warm editorial paper with cool ink and clear workspace layers */
@@ -274,7 +277,8 @@
  * Dark theme — GitHub dark dimmed / Linear register with richer layering.
  * ------------------------------------------------------------------------ */
 .dark,
-.dark [data-base-palette] {
+.dark [data-base-palette],
+[data-base-palette][data-scheme="dark"] {
   /* Base — deeper charcoal with a subtle blue cast */
   --background: oklch(0.152 0.006 260); /* deeper, cooler charcoal */
   --foreground: oklch(0.93 0.005 250);

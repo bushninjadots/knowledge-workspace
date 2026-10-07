@@ -24,14 +24,13 @@ import {
 } from "lucide-react";
 import { usePage } from "@/hooks/use-page";
 import { getBlock } from "@/lib/block-registry";
-import { useTheme } from "@/hooks/use-theme";
+import { useProfileTheme } from "@/hooks/use-theme";
 import { CURRENT_USER_KEY, useCurrentUser, useSkillsCatalog } from "@/hooks/use-current-user";
 import { ProjectDialog } from "@/components/tethyr/profile";
 import { BackgroundLayer } from "@/components/tethyr/background-layer";
 import { appearanceStyle, avatarShapeStyle } from "@/lib/background-themes";
 import { useUserPalette } from "@/lib/dominant-color";
 import { themeTokensToStyle } from "@/lib/theme-tokens";
-import { useTheme as useAppTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { reflowAroundHidden } from "@/lib/studio-grid";
 import {
@@ -92,7 +91,6 @@ const PREVIEW_DEVICE_WIDTHS: Record<PreviewDevice, number | undefined> = {
 };
 
 export function StudioView({ userId, profile, onBack, onCompleteProfile }: StudioViewProps) {
-  const { resolvedTheme } = useAppTheme();
   const navigate = useNavigate();
   const [mode, setMode] = useState<"view" | "preview">("view");
   const [previewDevice, setPreviewDevice] = useState<PreviewDevice>("desktop");
@@ -166,11 +164,11 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
   const maxWidth = structureMaxWidth(config);
   // Keep the Studio view in step with the editor: apply the page theme so a
   // chosen preset is visible here exactly as it renders publicly.
-  const { data: themeVars = {} } = useTheme(page?.themeId);
+  const { vars: themeVars, scheme } = useProfileTheme(page?.themeId, config);
   const cardInk = useCardInk(config);
   const surfaceStyle = {
     ...themeVars,
-    ...themeTokensToStyle(studioConfigToThemeTokens(config), resolvedTheme),
+    ...themeTokensToStyle(studioConfigToThemeTokens(config), scheme),
     ...studioSurfaceStyle(config, palette?.dominant ?? null),
     ...appearanceStyle(me?.background),
     ...avatarShapeStyle(me?.background),
@@ -245,7 +243,8 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
       // A profile, so Tethyr's own palette under its theme — never the
       // viewer's Site appearance.
       data-base-palette=""
-      style={{ ...surfaceStyle, ...cardInk.style }}
+      data-scheme={scheme}
+      style={{ ...surfaceStyle, ...cardInk.style, colorScheme: scheme }}
     >
       <StudioViewTopBar
         profile={profile}

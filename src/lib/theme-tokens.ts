@@ -347,3 +347,10 @@ export function deepMergeTokens<T>(base: T, overrides: T): T {
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
 }
+
+/** Whether a palette is light or dark by nature (from its background), or
+ *  null when it declares none (Tethyr Default) or it can't be told. */
+export function naturalScheme(tokens: ThemeTokens | null | undefined): ThemeScheme | null {
+  const background = tokens?.colors?.background;
+  return background ? colorScheme(background) : null;
+}

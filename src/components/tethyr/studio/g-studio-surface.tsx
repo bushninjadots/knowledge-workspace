@@ -45,8 +45,7 @@ import {
 } from "@/lib/background-themes";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useUserPalette } from "@/lib/dominant-color";
-import { useTheme } from "@/hooks/use-theme";
-import { useTheme as useAppTheme } from "@/lib/theme";
+import { useProfileTheme } from "@/hooks/use-theme";
 import { SECTION_GRID, colStartClass, spanClass } from "@/components/tethyr/page/page-layout";
 import { Button } from "@/components/ui/button";
 import {
@@ -388,12 +387,11 @@ function SectionLayoutPicker({
 }
 
 export function GStudioSurface(props: GStudioSurfaceProps) {
-  const { resolvedTheme } = useAppTheme();
   const { data: me } = useCurrentUser();
   const palette = useUserPalette(me?.bannerSigned ?? null);
   // Live theme preview: derive the page theme's CSS vars for the active
   // light/dark scheme so picking a preset repaints the canvas immediately.
-  const { data: themeVars = {} } = useTheme(props.themeId);
+  const { vars: themeVars, scheme } = useProfileTheme(props.themeId, props.config);
   // One side rail with three tabs (Style, Add, Block) instead of a panel on
   // each side: selecting a block switches tabs rather than squeezing the
   // canvas. Style starts open on desktop so customizing is discoverable.
@@ -464,7 +462,7 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
   const cardInk = useCardInk(props.config);
   const surfaceStyle = {
     ...themeVars,
-    ...themeTokensToStyle(studioConfigToThemeTokens(props.config), resolvedTheme),
+    ...themeTokensToStyle(studioConfigToThemeTokens(props.config), scheme),
     ...studioSurfaceStyle(props.config, palette?.dominant ?? null),
     ...appearanceStyle(borderPreview),
     ...cardFillStyle(props.config),
@@ -561,7 +559,8 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
             // The canvas is the member's profile: Tethyr's own palette under
             // their theme, never the editor's Site appearance.
             data-base-palette=""
-            style={surfaceStyle}
+            data-scheme={scheme}
+            style={{ ...surfaceStyle, colorScheme: scheme }}
           >
             {/* Pinned to the visible canvas: absolute inside this scroll box,
                 the backdrop scrolled away after the first screen. */}

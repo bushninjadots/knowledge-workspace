@@ -50,6 +50,7 @@ import type {
   PageLayout,
 } from "@/lib/page-blocks";
 import { DEFAULT_STUDIO_CONFIG, normalizeStudioConfig } from "@/lib/studio-config";
+import { resolveLook, setLookValue } from "@/lib/visual-language";
 import { createDefaultProfileLayout } from "@/lib/default-layouts";
 import "@/components/tethyr/blocks/register-all";
 import {
@@ -521,6 +522,16 @@ export function CreationStudio({
       if ((next || null) === themeIdRef.current) return;
       pushHistory();
       applyTheme(next || null);
+      // A colour atmosphere replaces the canvas palette, so a theme picked
+      // under one would change nothing you could see. Picking a theme brings
+      // its palette back (same undo step; the look shows as Modified).
+      if (next) {
+        setConfig((current) =>
+          current && resolveLook(current).atmosphere !== "theme"
+            ? { ...current, ...setLookValue(current, "atmosphere", "theme") }
+            : current,
+        );
+      }
     },
     [applyTheme, pushHistory],
   );

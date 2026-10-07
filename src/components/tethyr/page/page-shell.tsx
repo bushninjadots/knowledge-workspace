@@ -13,8 +13,7 @@ import {
   useUpdatePageLayout,
   useUpdatePageTheme,
 } from "@/hooks/use-page-editor";
-import { useTheme } from "@/hooks/use-theme";
-import { useTheme as useAppTheme } from "@/lib/theme";
+import { useProfileTheme } from "@/hooks/use-theme";
 import { themeTokensToStyle, deepMergeTokens } from "@/lib/theme-tokens";
 import { LookFilters, lookCanvasAttributes } from "./look-canvas";
 import {
@@ -94,9 +93,11 @@ export function PageShell({
     ownerType,
     includeDraft: renderState === "draft" || previewDraft === true || isOwner,
   });
-  const { data: themeVars = {} } = useTheme(page?.themeId);
+  const { vars: themeVars, scheme } = useProfileTheme(
+    page?.themeId,
+    ownerType === "profile" ? page?.config : null,
+  );
   const cardInk = useCardInk(ownerType === "profile" ? (page?.config ?? null) : null);
-  const { resolvedTheme } = useAppTheme();
   const { isEditing, isPreviewing, previewDevice, recordSnapshot, registerRestoreHandler } =
     useEditMode();
   const createPage = useCreatePage();
@@ -216,7 +217,7 @@ export function PageShell({
   const containerStyle = useMemo(() => {
     const style = {
       ...themeVars,
-      ...themeTokensToStyle(effectiveTheme, resolvedTheme),
+      ...themeTokensToStyle(effectiveTheme, scheme),
     } as React.CSSProperties & Record<string, string>;
     if (page) {
       // Full Studio surface style (accent family, density, radius/gap/pad,
@@ -253,7 +254,7 @@ export function PageShell({
   }, [
     themeVars,
     effectiveTheme,
-    resolvedTheme,
+    scheme,
     isGlassTheme,
     blockContext.translucent,
     page,
@@ -349,6 +350,7 @@ export function PageShell({
       // A profile renders on Tethyr's own palette under its own theme, never
       // the visitor's Site appearance (applied on <html>).
       data-base-palette={ownerType === "profile" ? "" : undefined}
+      data-scheme={ownerType === "profile" ? scheme : undefined}
       data-card-ink={cardInk.active ? "" : undefined}
       style={
         page && ownerType === "profile"
@@ -356,6 +358,8 @@ export function PageShell({
               ...cardFillStyle(page.config),
               ...studioBackgroundVars(page.config, "public"),
               ...cardInk.style,
+              // Native controls and scrollbars match the profile's mode.
+              colorScheme: scheme,
             }
           : undefined
       }

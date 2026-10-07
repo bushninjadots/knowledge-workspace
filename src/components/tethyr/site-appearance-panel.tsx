@@ -1,5 +1,5 @@
-// Settings → Site appearance: how Tethyr itself looks to this person, on this
-// device. Theme (the shared preset catalogue), light/dark, accent, density,
+// Settings → Site appearance: how Tethyr itself looks to this person, synced
+// to their account. Theme (the shared preset catalogue), light/dark, accent, density,
 // shape and motion — with a miniature of the app that repaints as they
 // choose, so it's unmistakable that this changes Tethyr, not their profile.
 
@@ -233,8 +233,8 @@ export function SiteAppearancePanel() {
             {` — ${current?.description ?? "Clean, contemporary and human."}`}
           </p>
           <p className="mt-2">
-            Applies to Tethyr&rsquo;s interface on this device. It never changes how your profile
-            looks to anyone — that&rsquo;s{" "}
+            Follows you to every device you sign in on (light/dark is set per device). It never
+            changes how your profile looks to anyone — that&rsquo;s{" "}
             <Link
               to="/studio"
               className="font-medium text-foreground underline-offset-4 hover:underline"

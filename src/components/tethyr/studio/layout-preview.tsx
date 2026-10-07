@@ -15,6 +15,7 @@ import {
   studioBackgroundVars,
   studioConfigToThemeTokens,
   studioSurfaceStyle,
+  profileScheme,
   type StudioConfig,
 } from "@/lib/studio-config";
 import { themeTokensToStyle } from "@/lib/theme-tokens";
@@ -104,7 +105,10 @@ export function LayoutPreview({
   const style = useMemo(
     () =>
       ({
-        ...themeTokensToStyle(studioConfigToThemeTokens(config), resolvedTheme),
+        ...themeTokensToStyle(
+          studioConfigToThemeTokens(config),
+          profileScheme(config, null, resolvedTheme),
+        ),
         ...studioSurfaceStyle(config),
         ...cardFillStyle(config),
         ...studioBackgroundVars(config, "public"),
