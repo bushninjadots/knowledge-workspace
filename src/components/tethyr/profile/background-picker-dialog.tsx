@@ -17,48 +17,72 @@ import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
 import { validateImageFile } from "@/lib/validators";
 import {
-  AVATAR_RINGS,
-  AVATAR_RING_WIDTHS,
   BACKGROUND_COLORS,
   BACKGROUND_DEFAULT_STRENGTH,
   BACKGROUND_GRADIENTS,
   BACKGROUND_MAX_STRENGTH,
   BACKGROUND_MIN_STRENGTH,
   BACKGROUND_PATTERNS,
-  BORDER_SWATCHES,
   appearanceStyle,
   backgroundImageSignedUrl,
   backgroundStyle,
-  AVATAR_SHAPES,
   clampStrength,
   emptyBackground,
   gradientBackgroundImage,
-  hasAppearanceSettings,
   imageOpacityFor,
-  normalizeAvatarRing,
-  normalizeAvatarShape,
-  avatarShapeStyle,
-  type ContentDensity,
   type ProfileBackground,
 } from "@/lib/background-themes";
 import { useDominantColor } from "@/lib/dominant-color";
-import { BannerOverlayPicker } from "./banner-overlay";
 import { cn } from "@/lib/utils";
 
 const EMPTY_BACKGROUND = emptyBackground();
 
-type BgTab = "app" | "public";
+/** The backdrop fields this dialog owns. The same document also carries the
+ *  header look and card-border choices, which are edited elsewhere and must
+ *  survive a background change or reset untouched. */
+const BACKDROP_KEYS = [
+  "mode",
+  "color",
+  "colorSource",
+  "pattern",
+  "gradient",
+  "image_url",
+  "strength",
+] as const;
+
+function backdropOf(background: ProfileBackground): Partial<ProfileBackground> {
+  return Object.fromEntries(BACKDROP_KEYS.map((key) => [key, background[key] ?? null]));
+}
+
+/** Back to Tethyr's plain background, keeping everything that isn't the backdrop. */
+function clearBackdrop(background: ProfileBackground): ProfileBackground {
+  return { ...background, mode: null, colorSource: null, strength: BACKGROUND_DEFAULT_STRENGTH };
+}
+
+export type BackgroundScope = "app" | "page";
+
+const COPY: Record<BackgroundScope, { title: string; description: string }> = {
+  app: {
+    title: "App background",
+    description:
+      "A colour, pattern or image behind Tethyr while you use it. Your public page uses it too, unless you give the page its own in Studio → Style.",
+  },
+  page: {
+    title: "Page background",
+    description: "A colour, pattern or image behind your public page, for everyone who visits.",
+  },
+};
 
 /**
- * Editor for the member's backdrops. Colour and pattern choices are curated so
- * they tint rather than overwhelm; uploaded images are dimmed to a readable
- * wallpaper level. Two surfaces: the member's own app (everything behind their
- * authenticated pages) and their public Studio, which can fall back to the app
- * background or use its own. Persisted to profiles.background / .public_background.
+ * Picker for one backdrop. "app" is the member's own Tethyr (profiles.background);
+ * "page" is their public page (profiles.public_background), which can simply use
+ * the app background. Photo shape, ring and banner overlay live in the header
+ * block's settings; Tethyr's accent and density live in Site appearance.
  */
 export function BackgroundPickerDialog({
   open,
   onOpenChange,
+  scope,
   background,
   publicBackground,
   userId,
@@ -67,42 +91,35 @@ export function BackgroundPickerDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  scope: BackgroundScope;
   background: ProfileBackground | null;
   publicBackground: ProfileBackground | null;
   userId: string;
   onSaved: () => void;
-  /** Signed banner image URL (or custom banner URL). Lets the colour preview
-   *  follow the banner so the "From banner" swatch shows the exact tint. */
+  /** Signed banner image URL. Lets the "From your banner" swatch show the exact tint. */
   bannerUrl?: string | null;
 }) {
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<BgTab>("app");
-  const [appDraft, setAppDraft] = useState<ProfileBackground>(EMPTY_BACKGROUND);
-  const [publicDraft, setPublicDraft] = useState<ProfileBackground>(EMPTY_BACKGROUND);
-  const [publicSeparate, setPublicSeparate] = useState(false);
+  const [draft, setDraft] = useState<ProfileBackground>(EMPTY_BACKGROUND);
+  // Page scope only: whether the page has its own backdrop.
+  const [separate, setSeparate] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Re-seed the drafts each time the dialog opens so external changes (or a
-  // just-saved background) are reflected.
+  // Re-seed each time the dialog opens so external changes are reflected.
   useEffect(() => {
     if (!open) return;
-    setTab("app");
-    setAppDraft(background ?? EMPTY_BACKGROUND);
-    setPublicDraft(publicBackground ?? EMPTY_BACKGROUND);
-    setPublicSeparate(publicBackground?.mode != null);
-  }, [open, background, publicBackground]);
+    const pageOwn = publicBackground?.mode != null;
+    setSeparate(pageOwn);
+    setDraft(scope === "page" && pageOwn ? publicBackground : (background ?? EMPTY_BACKGROUND));
+  }, [open, scope, background, publicBackground]);
 
-  const activeDraft = tab === "app" ? appDraft : publicDraft;
-  const setActiveDraft = (updater: (d: ProfileBackground) => ProfileBackground) => {
-    if (tab === "app") setAppDraft(updater);
-    else setPublicDraft(updater);
-  };
+  const editing = scope === "app" || separate;
 
   const { data: draftImageUrl = null } = useQuery({
-    queryKey: ["signed-background", activeDraft.image_url],
-    queryFn: () => backgroundImageSignedUrl(activeDraft.image_url),
-    enabled: !!activeDraft.image_url,
+    queryKey: ["signed-background", draft.image_url],
+    queryFn: () => backgroundImageSignedUrl(draft.image_url),
+    enabled: !!draft.image_url,
     staleTime: 60 * 60 * 1000,
   });
 
@@ -110,14 +127,14 @@ export function BackgroundPickerDialog({
 
   const previewStyle = useMemo(() => {
     const style = {
-      ...appearanceStyle(activeDraft),
-      ...backgroundStyle(activeDraft, draftImageUrl, bannerColor),
+      ...appearanceStyle(draft),
+      ...backgroundStyle(draft, draftImageUrl, bannerColor),
     };
     // Mirror the real layer's dimming so the preview shows exactly what ships.
-    return activeDraft.mode === "image"
-      ? { ...style, opacity: imageOpacityFor(activeDraft.strength), filter: "saturate(0.9)" }
+    return draft.mode === "image"
+      ? { ...style, opacity: imageOpacityFor(draft.strength), filter: "saturate(0.9)" }
       : style;
-  }, [activeDraft, draftImageUrl, bannerColor]);
+  }, [draft, draftImageUrl, bannerColor]);
 
   async function handleFiles(files: File[]) {
     const file = files[0];
@@ -127,7 +144,7 @@ export function BackgroundPickerDialog({
     setUploading(true);
     // Use a unique path so the browser doesn't serve a stale cached copy
     // when the user re-uploads with the same file extension.
-    const previousPath = activeDraft.image_url;
+    const previousPath = draft.image_url;
     const path = `${userId}/background-${Date.now()}.${check.ext}`;
     const { error: upErr } = await supabase.storage
       .from("backgrounds")
@@ -138,425 +155,104 @@ export function BackgroundPickerDialog({
     if (previousPath) {
       supabase.storage.from("backgrounds").remove([previousPath]);
     }
-    setActiveDraft((d) => ({ ...d, mode: "image", image_url: path }));
+    setDraft((d) => ({ ...d, mode: "image", image_url: path }));
   }
 
   function removeImage() {
-    setActiveDraft((d) => ({
+    setDraft((d) => ({
       ...d,
       mode: d.color ? "color" : d.pattern ? "pattern" : d.gradient ? "gradient" : null,
       image_url: null,
     }));
   }
 
-  function startSeparatePublic() {
-    // Start the public draft from the app draft so switching isn't jarring.
-    setPublicDraft(appDraft);
-    setPublicSeparate(true);
-  }
-
   async function save() {
     setSaving(true);
-    const appPayload = hasAppearanceSettings(appDraft) ? appDraft : null;
-    const publicPayload = publicSeparate && hasAppearanceSettings(publicDraft) ? publicDraft : null;
-    const { error } = await supabase
-      .from("profiles")
-      .update({ background: appPayload, public_background: publicPayload })
-      .eq("id", userId);
+    const base = background ?? EMPTY_BACKGROUND;
+    const update =
+      scope === "app"
+        ? { background: { ...base, ...backdropOf(draft) } }
+        : {
+            // The page's own document starts as a copy of the app one, so the
+            // header look and card borders carry over; null = use the app's.
+            public_background: separate
+              ? { ...(publicBackground ?? base), ...backdropOf(draft) }
+              : null,
+          };
+    const { error } = await supabase.from("profiles").update(update).eq("id", userId);
     setSaving(false);
     if (error) return toast.error(friendlyError(error));
-    toast.success("Background updated");
-    // Caption position/overlay live here — resync the studio header block too,
-    // not just current-user readers, so dashboard and studio stay in step.
+    toast.success(scope === "app" ? "App background saved" : "Page background saved");
     void queryClient.invalidateQueries({ queryKey: ["profile-header-block"] });
     void queryClient.invalidateQueries({ queryKey: ["current-user"] });
     onOpenChange(false);
     onSaved();
   }
 
-  const hasCustom =
-    hasAppearanceSettings(appDraft) || (publicSeparate && hasAppearanceSettings(publicDraft));
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[min(88vh,44rem)] max-w-xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Background</DialogTitle>
-          <DialogDescription>
-            Set the backdrop for your Tethyr space — a colour, a pattern, or an image of your own.
-            It sits quietly behind every page.
-          </DialogDescription>
+          <DialogTitle>{COPY[scope].title}</DialogTitle>
+          <DialogDescription>{COPY[scope].description}</DialogDescription>
         </DialogHeader>
 
-        {/* SURFACE TABS */}
-        <div
-          className="flex items-center gap-1 rounded-xl border border-border/40 bg-background/40 p-1"
-          role="tablist"
-          aria-label="Where the background applies"
-        >
-          {(
-            [
-              { id: "app", label: "My app" },
-              { id: "public", label: "Public Studio" },
-            ] as const
-          ).map(({ id, label }) => (
-            <button
-              key={id}
-              type="button"
-              role="tab"
-              aria-selected={tab === id}
-              onClick={() => setTab(id)}
-              className={cn(
-                "flex-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-lift",
-                tab === id
-                  ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] text-foreground"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
         <div className="space-y-5 py-2">
-          {/* PROFILE PICTURE SHAPE — identity, not surface, so it is
-              deliberately not per-tab: one silhouette everywhere. */}
-          <section className="space-y-3" aria-labelledby="avatar-shape-heading">
-            <div>
-              <h3
-                id="avatar-shape-heading"
-                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-              >
-                Profile picture shape
-              </h3>
-              <p className="mt-1 text-xs text-muted-foreground">
-                The silhouette of your profile photo — the same everywhere your Tethyr space shows
-                it.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2" role="group" aria-label="Profile picture shape">
-              {AVATAR_SHAPES.map((shape) => {
-                const selected = normalizeAvatarShape(activeDraft.avatarShape) === shape.id;
-                return (
-                  <button
-                    key={shape.id}
-                    type="button"
-                    title={`${shape.label} — ${shape.description}`}
-                    aria-pressed={selected}
-                    onClick={() => setActiveDraft((d) => ({ ...d, avatarShape: shape.id }))}
-                    className={cn(
-                      "flex flex-col items-center gap-1 rounded-lg border px-3 py-2 transition-lift",
-                      selected
-                        ? "border-[var(--user-accent,var(--primary))] bg-[var(--user-accent-subtle,var(--surface-elevated))]"
-                        : "border-border/60 hover:border-[var(--user-accent-border,var(--border-strong))]",
-                    )}
-                  >
-                    <span
-                      aria-hidden="true"
-                      className="block h-9 w-9 bg-[var(--user-accent,var(--primary))]"
-                      style={{
-                        ...avatarShapeStyle({ ...EMPTY_BACKGROUND, avatarShape: shape.id }),
-                        borderRadius: shape.id === "circle" ? "9999px" : undefined,
-                        clipPath:
-                          avatarShapeStyle({ ...EMPTY_BACKGROUND, avatarShape: shape.id })[
-                            "--avatar-clip"
-                          ] ?? "none",
-                      }}
-                    />
-                    <span className="text-[10px] font-medium">{shape.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-
-          {/* AVATAR RING — a decorative outline in the identity accent or a
-              custom colour. Identity, not surface: one choice everywhere. */}
-          <section className="space-y-3" aria-labelledby="avatar-ring-heading">
-            <div>
-              <h3
-                id="avatar-ring-heading"
-                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-              >
-                Profile picture ring
-              </h3>
-              <p className="mt-1 text-xs text-muted-foreground">
-                A thin outline around your photo — accent follows your identity colour.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2" role="group" aria-label="Profile picture ring">
-              {AVATAR_RINGS.map((ring) => {
-                const selected =
-                  normalizeAvatarRing(activeDraft.avatarRing, activeDraft.avatarRingColor) ===
-                  ring.id;
-                return (
-                  <button
-                    key={ring.id}
-                    type="button"
-                    aria-pressed={selected}
-                    onClick={() =>
-                      setActiveDraft((d) => ({
-                        ...d,
-                        avatarRing: ring.id,
-                        // Seed a swatch so "custom" is immediately visible.
-                        avatarRingColor:
-                          ring.id === "custom" && !d.avatarRingColor
-                            ? BORDER_SWATCHES[0]
-                            : d.avatarRingColor,
-                      }))
-                    }
-                    className={cn(
-                      "rounded-lg border px-3 py-1.5 text-xs transition-lift",
-                      selected
-                        ? "border-[var(--user-accent,var(--primary))] bg-[var(--user-accent-subtle,var(--surface-elevated))]"
-                        : "border-border/60 text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    {ring.label}
-                  </button>
-                );
-              })}
-            </div>
-            {activeDraft.avatarRing !== "none" && (
-              <div className="space-y-2" role="group" aria-label="Profile picture border thickness">
-                <p className="text-[11px] text-muted-foreground">Border thickness</p>
-                <div className="flex flex-wrap gap-2">
-                  {AVATAR_RING_WIDTHS.map((width) => (
-                    <button
-                      key={width.id}
-                      type="button"
-                      aria-pressed={(activeDraft.avatarRingWidth ?? "medium") === width.id}
-                      onClick={() => setActiveDraft((d) => ({ ...d, avatarRingWidth: width.id }))}
-                      className={cn(
-                        "rounded-lg border px-3 py-1.5 text-xs transition-lift",
-                        (activeDraft.avatarRingWidth ?? "medium") === width.id
-                          ? "border-[var(--user-accent,var(--primary))] bg-[var(--user-accent-subtle,var(--surface-elevated))]"
-                          : "border-border/60 text-muted-foreground hover:text-foreground",
-                      )}
-                    >
-                      {width.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-            {activeDraft.avatarRing === "custom" && (
-              <div
-                className="flex flex-wrap items-center gap-2"
-                role="group"
-                aria-label="Custom ring colour"
-              >
-                {BORDER_SWATCHES.map((swatch) => {
-                  const selected = (activeDraft.avatarRingColor ?? "").toLowerCase() === swatch;
-                  return (
-                    <SwatchButton
-                      key={swatch}
-                      title={swatch}
-                      selected={selected}
-                      style={{ backgroundColor: swatch }}
-                      onClick={() => setActiveDraft((d) => ({ ...d, avatarRingColor: swatch }))}
-                    >
-                      {selected && <Check className="h-3.5 w-3.5 text-foreground/70" />}
-                    </SwatchButton>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-
-          {/* PUBLIC STUDIO: same-as-app state */}
-          {tab === "public" && !publicSeparate && (
+          {scope === "page" && !separate && (
             <Card className="bg-surface/40 p-4">
-              <p className="text-sm font-medium text-foreground">Same as your app</p>
+              <p className="text-sm font-medium text-foreground">Same as your app background</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Your public Studio currently uses the background from your app. You can give it its
-                own backdrop here.
+                Your page shows the backdrop you use in Tethyr. Give it its own to show visitors
+                something different.
               </p>
-              <Button variant="outline" size="sm" className="mt-3" onClick={startSeparatePublic}>
-                Set a different one
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-3"
+                onClick={() => {
+                  setDraft(background ?? EMPTY_BACKGROUND);
+                  setSeparate(true);
+                }}
+              >
+                Give my page its own
               </Button>
             </Card>
           )}
 
-          {tab === "public" && publicSeparate && (
+          {scope === "page" && separate && (
             <div className="flex items-center justify-between gap-3">
-              <p className="text-xs text-muted-foreground">
-                A separate backdrop for visitors of your public Studio.
-              </p>
+              <p className="text-xs text-muted-foreground">Only your public page uses this.</p>
               <Button
                 variant="ghost"
                 size="sm"
                 className="shrink-0 text-muted-foreground"
-                onClick={() => setPublicSeparate(false)}
+                onClick={() => setSeparate(false)}
               >
-                Use same as app
+                Use my app background
               </Button>
             </div>
           )}
 
-          {(tab === "app" || (tab === "public" && publicSeparate)) && (
+          {editing && (
             <>
-              {/* Card borders are not here: they are a Studio setting with one
-                  home, the Studio editor's Customize panel (see
-                  CARD_BORDER_OPTIONS in src/lib/background-themes.ts). This
-                  dialog owns backdrops, avatar and accent only. */}
-              <section className="space-y-3" aria-labelledby="accent-heading">
-                <div>
-                  <h3
-                    id="accent-heading"
-                    className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-                  >
-                    Tethyr accent
-                  </h3>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Colours menus, buttons and your dashboard while you use Tethyr. &ldquo;From your
-                    banner&rdquo; picks it from your banner image and updates when you change the
-                    banner. Your Studio page has its own accent, in Studio &rarr; Style &rarr;
-                    Identity.
-                  </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    aria-pressed={(activeDraft.accentMode ?? "dynamic") === "dynamic"}
-                    onClick={() =>
-                      setActiveDraft((d) => ({ ...d, accentMode: "dynamic", accentColor: null }))
-                    }
-                    className={cn(
-                      "rounded-lg border px-3 py-2 text-xs transition-lift",
-                      (activeDraft.accentMode ?? "dynamic") === "dynamic"
-                        ? "border-[var(--user-accent,var(--primary))] bg-[var(--user-accent-subtle,var(--surface-elevated))]"
-                        : "border-border/60 text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    From your banner
-                  </button>
-                  <label
-                    className={cn(
-                      "inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs transition-lift",
-                      activeDraft.accentMode === "custom"
-                        ? "border-[var(--user-accent,var(--primary))] bg-[var(--user-accent-subtle,var(--surface-elevated))]"
-                        : "border-border/60 text-muted-foreground",
-                    )}
-                  >
-                    <input
-                      type="color"
-                      value={activeDraft.accentColor ?? "#2563eb"}
-                      onChange={(e) =>
-                        setActiveDraft((d) => ({
-                          ...d,
-                          accentMode: "custom",
-                          accentColor: e.target.value,
-                        }))
-                      }
-                      className="h-6 w-6 cursor-pointer rounded border-0 bg-transparent p-0"
-                      aria-label="Choose custom accent colour"
-                    />
-                    <span>Choose a colour</span>
-                  </label>
-                </div>
-              </section>
-
-              {/* DENSITY */}
-              <section className="space-y-3" aria-labelledby="density-heading">
-                <div>
-                  <h3
-                    id="density-heading"
-                    className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-                  >
-                    Density
-                  </h3>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    How much breathing room sits between elements.
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2" role="group" aria-label="Content density">
-                  {(["comfortable", "compact"] as const).map((d: ContentDensity) => (
-                    <button
-                      key={d}
-                      type="button"
-                      aria-pressed={(activeDraft.density ?? "comfortable") === d}
-                      onClick={() => setActiveDraft((prev) => ({ ...prev, density: d }))}
-                      className={cn(
-                        "rounded-lg border px-3 py-2 text-xs transition-lift",
-                        (activeDraft.density ?? "comfortable") === d
-                          ? "border-[var(--user-accent,var(--primary))] bg-[var(--user-accent-subtle,var(--surface-elevated))]"
-                          : "border-border/60 text-muted-foreground hover:text-foreground",
-                      )}
-                    >
-                      {d === "comfortable" ? "Comfortable" : "Compact"}
-                    </button>
-                  ))}
-                </div>
-              </section>
-
-              {/* BANNER OVERLAY + CAPTION POSITION */}
-              <section className="space-y-3" aria-labelledby="banner-overlay-heading">
-                <div>
-                  <h3
-                    id="banner-overlay-heading"
-                    className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-                  >
-                    Banner overlay
-                  </h3>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Keeps captions readable on your banner image — used on Dashboard and Studio.
-                  </p>
-                </div>
-                <BannerOverlayPicker
-                  value={activeDraft.bannerOverlay}
-                  onChange={(value) =>
-                    setActiveDraft((prev) => ({ ...prev, bannerOverlay: value }))
-                  }
-                />
-                <div
-                  className="flex flex-wrap items-center gap-2"
-                  role="group"
-                  aria-label="Banner caption position"
-                >
-                  <span className="text-[11px] text-muted-foreground">Caption position</span>
-                  {(["left", "center", "right"] as const).map((position) => (
-                    <button
-                      key={position}
-                      type="button"
-                      aria-pressed={(activeDraft.bannerCaptionPosition ?? "right") === position}
-                      onClick={() =>
-                        setActiveDraft((prev) => ({ ...prev, bannerCaptionPosition: position }))
-                      }
-                      className={cn(
-                        "rounded-lg border px-3 py-1.5 text-xs capitalize transition-lift",
-                        (activeDraft.bannerCaptionPosition ?? "right") === position
-                          ? "border-[var(--user-accent,var(--primary))] bg-[var(--user-accent-subtle,var(--surface-elevated))]"
-                          : "border-border/60 text-muted-foreground hover:text-foreground",
-                      )}
-                    >
-                      {position}
-                    </button>
-                  ))}
-                </div>
-              </section>
-
               {/* LIVE PREVIEW */}
               <div
                 className="relative h-28 overflow-hidden rounded-xl border card-border"
                 style={previewStyle}
               >
-                <div className="absolute inset-3 flex min-w-0 items-center gap-2">
+                <div className="absolute inset-3 flex min-w-0 items-center">
                   <div className="content-safe min-w-0 flex-1 rounded-lg border card-border bg-card/90 p-2">
                     <p className="truncate text-[10px] font-semibold">Your project</p>
                     <p className="mt-1 truncate text-[10px] text-muted-foreground">
-                      A quiet preview of your surface style
+                      How cards sit on this background
                     </p>
                   </div>
-                  <span className="shrink-0 rounded-md bg-[var(--user-accent,var(--primary))] px-2 py-1 text-[10px] font-semibold text-[var(--user-accent-foreground,var(--background))]">
-                    Accent
-                  </span>
                 </div>
               </div>
 
               {/* STRENGTH — how bold the backdrop is. Applies to colours,
-                  patterns, and images alike. */}
-              {activeDraft.mode && (
+              patterns, and images alike. */}
+              {draft.mode && (
                 <section aria-labelledby="bg-strength-heading">
                   <div className="flex items-center justify-between">
                     <h3
@@ -566,7 +262,7 @@ export function BackgroundPickerDialog({
                       Strength
                     </h3>
                     <span className="text-xs tabular-nums text-muted-foreground">
-                      {clampStrength(activeDraft.strength)}%
+                      {clampStrength(draft.strength)}%
                     </span>
                   </div>
                   <input
@@ -574,9 +270,9 @@ export function BackgroundPickerDialog({
                     min={BACKGROUND_MIN_STRENGTH}
                     max={BACKGROUND_MAX_STRENGTH}
                     step={2}
-                    value={clampStrength(activeDraft.strength)}
+                    value={clampStrength(draft.strength)}
                     onChange={(e) =>
-                      setActiveDraft((d) => ({
+                      setDraft((d) => ({
                         ...d,
                         strength: Number(e.target.value),
                       }))
@@ -606,8 +302,7 @@ export function BackgroundPickerDialog({
                   aria-label="Background gradients"
                 >
                   {BACKGROUND_GRADIENTS.map((g) => {
-                    const selected =
-                      activeDraft.mode === "gradient" && activeDraft.gradient === g.id;
+                    const selected = draft.mode === "gradient" && draft.gradient === g.id;
                     return (
                       <button
                         key={g.id}
@@ -615,7 +310,7 @@ export function BackgroundPickerDialog({
                         title={g.label}
                         aria-pressed={selected}
                         onClick={() =>
-                          setActiveDraft((d) => ({
+                          setDraft((d) => ({
                             ...d,
                             mode: "gradient",
                             gradient: g.id,
@@ -630,8 +325,7 @@ export function BackgroundPickerDialog({
                         style={{
                           backgroundColor: "var(--background)",
                           backgroundImage:
-                            gradientBackgroundImage(g, clampStrength(activeDraft.strength)) ??
-                            undefined,
+                            gradientBackgroundImage(g, clampStrength(draft.strength)) ?? undefined,
                         }}
                       />
                     );
@@ -658,8 +352,8 @@ export function BackgroundPickerDialog({
                 >
                   <SwatchButton
                     title="Tethyr default"
-                    selected={!activeDraft.mode}
-                    onClick={() => setActiveDraft(() => EMPTY_BACKGROUND)}
+                    selected={!draft.mode}
+                    onClick={() => setDraft(clearBackdrop)}
                   >
                     <Ban className="h-3.5 w-3.5 text-muted-foreground" />
                   </SwatchButton>
@@ -669,19 +363,19 @@ export function BackgroundPickerDialog({
                         ? "From your banner — follows the banner image"
                         : "From your banner — add a banner image to see the tint"
                     }
-                    selected={activeDraft.mode === "color" && activeDraft.colorSource === "banner"}
+                    selected={draft.mode === "color" && draft.colorSource === "banner"}
                     style={
                       bannerColor
                         ? {
-                            backgroundColor: `color-mix(in oklab, ${bannerColor} ${clampStrength(activeDraft.strength)}%, var(--background))`,
+                            backgroundColor: `color-mix(in oklab, ${bannerColor} ${clampStrength(draft.strength)}%, var(--background))`,
                           }
                         : undefined
                     }
                     onClick={() =>
-                      setActiveDraft((d) => ({ ...d, mode: "color", colorSource: "banner" }))
+                      setDraft((d) => ({ ...d, mode: "color", colorSource: "banner" }))
                     }
                   >
-                    {activeDraft.mode === "color" && activeDraft.colorSource === "banner" ? (
+                    {draft.mode === "color" && draft.colorSource === "banner" ? (
                       <Check className="h-3.5 w-3.5 text-foreground/70" />
                     ) : (
                       <Sparkles
@@ -694,19 +388,19 @@ export function BackgroundPickerDialog({
                   </SwatchButton>
                   {BACKGROUND_COLORS.map((c) => {
                     const selected =
-                      activeDraft.colorSource !== "banner" &&
-                      activeDraft.mode === "color" &&
-                      activeDraft.color === c.color;
+                      draft.colorSource !== "banner" &&
+                      draft.mode === "color" &&
+                      draft.color === c.color;
                     return (
                       <SwatchButton
                         key={c.id}
                         title={c.label}
                         selected={selected}
                         style={{
-                          backgroundColor: `color-mix(in oklab, ${c.color} ${clampStrength(activeDraft.strength)}%, var(--background))`,
+                          backgroundColor: `color-mix(in oklab, ${c.color} ${clampStrength(draft.strength)}%, var(--background))`,
                         }}
                         onClick={() =>
-                          setActiveDraft((d) => ({
+                          setDraft((d) => ({
                             ...d,
                             mode: "color",
                             color: c.color,
@@ -741,16 +435,14 @@ export function BackgroundPickerDialog({
                   aria-label="Background patterns"
                 >
                   {BACKGROUND_PATTERNS.map((p) => {
-                    const selected = activeDraft.mode === "pattern" && activeDraft.pattern === p.id;
+                    const selected = draft.mode === "pattern" && draft.pattern === p.id;
                     return (
                       <button
                         key={p.id}
                         type="button"
                         title={p.label}
                         aria-pressed={selected}
-                        onClick={() =>
-                          setActiveDraft((d) => ({ ...d, mode: "pattern", pattern: p.id }))
-                        }
+                        onClick={() => setDraft((d) => ({ ...d, mode: "pattern", pattern: p.id }))}
                         className={cn(
                           "h-10 w-14 rounded-md border transition-lift",
                           selected
@@ -759,13 +451,13 @@ export function BackgroundPickerDialog({
                         )}
                         style={{
                           ...backgroundStyle(
-                            { ...activeDraft, mode: "pattern", pattern: p.id },
+                            { ...draft, mode: "pattern", pattern: p.id },
                             null,
                             bannerColor,
                           ),
                           backgroundColor:
                             backgroundStyle(
-                              { ...activeDraft, mode: "pattern", pattern: p.id },
+                              { ...draft, mode: "pattern", pattern: p.id },
                               null,
                               bannerColor,
                             ).backgroundColor ?? "var(--background)",
@@ -785,7 +477,7 @@ export function BackgroundPickerDialog({
                   Your image
                 </h3>
                 <div className="mt-2">
-                  {activeDraft.mode === "image" && draftImageUrl ? (
+                  {draft.mode === "image" && draftImageUrl ? (
                     <Card className="flex items-center gap-3 bg-surface/40 p-3">
                       <img
                         src={draftImageUrl}
@@ -830,14 +522,8 @@ export function BackgroundPickerDialog({
         <DialogFooter>
           <Button
             variant="ghost"
-            onClick={() => {
-              if (tab === "app") setAppDraft(EMPTY_BACKGROUND);
-              else {
-                setPublicDraft(EMPTY_BACKGROUND);
-                setPublicSeparate(false);
-              }
-            }}
-            disabled={!hasCustom}
+            onClick={() => setDraft(clearBackdrop)}
+            disabled={!editing || !draft.mode}
             className="mr-auto text-muted-foreground"
           >
             <RotateCcw className="mr-1.5 h-3.5 w-3.5" />

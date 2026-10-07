@@ -25,7 +25,7 @@ import { StudioView } from "@/components/tethyr/studio/studio-view";
 import { setupCompletenessPercent, showcaseCompletenessPercent } from "@/lib/profile-completeness";
 import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
-import { useUserPalette, paletteToStyle } from "@/lib/dominant-color";
+import { useUserPalette } from "@/lib/dominant-color";
 import { appearanceStyle, type ProfileBackground } from "@/lib/background-themes";
 import { BackgroundLayer } from "@/components/tethyr/background-layer";
 import { BannerStrip } from "@/components/tethyr/profile-sections";
@@ -126,10 +126,7 @@ export function ProfilePage() {
       <Dialog open={showSetup} onOpenChange={setShowSetup}>
         <DialogContent className="max-h-[90vh] max-w-4xl gap-0 overflow-y-auto p-0 md:max-w-5xl">
           <DialogTitle className="sr-only">Edit details</DialogTitle>
-          <div
-            className={`relative isolate ${setupBackground?.density === "compact" ? "tethyr-density-compact" : ""}`}
-            style={{ ...appearanceStyle(setupBackground) }}
-          >
+          <div className="relative isolate" style={{ ...appearanceStyle(setupBackground) }}>
             <BackgroundLayer
               background={setupBackground}
               imageUrl={profileQuery.data.backgroundImageUrl}
@@ -245,12 +242,10 @@ function ProfileSetupForm({
   const [handleStatus, setHandleStatus] = useState<"idle" | "checking" | "available" | "taken">(
     "idle",
   );
-  const palette = useUserPalette(bannerSigned);
 
-  const accentStyle = {
-    ...paletteToStyle(palette),
-    ...appearanceStyle(background),
-  };
+  // The accent comes from the app shell (Site appearance → Accent); only the
+  // card-border colour is re-declared here.
+  const accentStyle = appearanceStyle(background);
 
   const setupCompleteness = setupCompletenessPercent({
     profile,
@@ -373,7 +368,7 @@ function ProfileSetupForm({
 
   return (
     <div
-      className={`animate-room-enter mx-auto max-w-7xl bg-noise px-4 py-6 sm:px-6 sm:py-8 ${background?.density === "compact" ? "tethyr-density-compact" : ""}`}
+      className="animate-room-enter mx-auto max-w-7xl bg-noise px-4 py-6 sm:px-6 sm:py-8"
       style={accentStyle}
     >
       {/* First-save celebration: tokenized element (accent-aware card border,
@@ -468,7 +463,7 @@ function ProfileSetupForm({
                   onClick={() => setBgOpen(true)}
                 >
                   <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-                  Change appearance
+                  Page background
                 </Button>
               </div>
 
@@ -901,6 +896,7 @@ function ProfileSetupForm({
       </div>
 
       <BackgroundPickerDialog
+        scope="page"
         open={bgOpen}
         onOpenChange={setBgOpen}
         background={background}

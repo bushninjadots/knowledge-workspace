@@ -277,59 +277,23 @@ describe("ownerAccentStyle", () => {
   });
 });
 
-describe("appearanceStyle accent fallback", () => {
-  it("keeps an explicit custom accent untouched", () => {
-    const style = appearanceStyle({
-      mode: "color",
-      color: "#38bdf8",
-      accentMode: "custom",
-      accentColor: "#6d28d9",
-      pattern: null,
-      image_url: null,
-    }) as Record<string, string>;
-    expect(style["--user-accent"]).toBe("#6d28d9");
-  });
-
-  it("adopts the member's own colour when no accent preference is set", () => {
+// Tethyr's accent has one home, Site appearance. The profile document only
+// carries the card-border colour, so nothing here may set the accent.
+describe("appearanceStyle never sets Tethyr's accent", () => {
+  it.each([
+    { accentMode: "custom" as const, accentColor: "#6d28d9" },
+    { accentMode: "dynamic" as const },
+    {},
+  ])("ignores %o", (extra) => {
     const style = appearanceStyle({
       mode: "color",
       color: "#2dd4bf",
       pattern: null,
       image_url: null,
-    }) as Record<string, string>;
-    expect(style["--user-accent"]).toBe("#2dd4bf");
-  });
-
-  it("skips the fallback when the tint follows the banner", () => {
-    const style = appearanceStyle({
-      mode: "color",
-      color: "#38bdf8",
-      colorSource: "banner",
-      pattern: null,
-      image_url: null,
+      ...extra,
     }) as Record<string, string>;
     expect(style["--user-accent"]).toBeUndefined();
-  });
-
-  it("skips the fallback when an explicit accent mode is set", () => {
-    const style = appearanceStyle({
-      mode: "color",
-      color: "#38bdf8",
-      accentMode: "dynamic",
-      pattern: null,
-      image_url: null,
-    }) as Record<string, string>;
-    expect(style["--user-accent"]).toBeUndefined();
-  });
-
-  it("returns no styles for a cleared background", () => {
-    const style = appearanceStyle({
-      mode: null,
-      color: null,
-      pattern: null,
-      image_url: null,
-    }) as Record<string, string>;
-    expect(style["--user-accent"]).toBeUndefined();
+    expect(style["--card-border-color"]).toBe("var(--border)");
   });
 });
 

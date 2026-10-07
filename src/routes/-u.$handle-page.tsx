@@ -226,12 +226,11 @@ function Shell({
   // + appearance variables; the content wrapper becomes the themed canvas
   // (page theme + backdrop) so blocks sit on exactly the surface the creator
   // sees in their own view. Embeds skip the chrome entirely.
-  const densityClass = background?.density === "compact" ? "tethyr-density-compact" : undefined;
   const rootStyle = { ...appearanceStyle(background), ...avatarShapeStyle(background) };
 
   if (embed) {
     return (
-      <div className={`relative isolate min-h-screen ${densityClass ?? ""}`} style={rootStyle}>
+      <div className="relative isolate min-h-screen" style={rootStyle}>
         <main
           className="relative isolate min-w-0 flex-1 bg-background bg-noise"
           style={pageThemeStyle}
@@ -249,7 +248,6 @@ function Shell({
 
   return (
     <SectionShell
-      className={densityClass}
       style={rootStyle}
       mainClassName="relative isolate min-w-0 flex-1 bg-background bg-noise"
       mainStyle={pageThemeStyle}

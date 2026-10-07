@@ -171,7 +171,7 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
           userId={data.id}
           hasBanner={!!bannerSrc}
           onCompleteProfile={context.onCompleteProfile}
-          bannerSigned={bannerSrc}
+          blockId={blockId}
           identity={{
             display_name: data.display_name,
             handle: data.handle,

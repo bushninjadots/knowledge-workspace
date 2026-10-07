@@ -19,7 +19,8 @@ const KeyboardShortcutsDialog = lazy(() =>
   import("./keyboard-shortcuts-dialog").then((m) => ({ default: m.KeyboardShortcutsDialog })),
 );
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { useUserPalette, paletteToStyle } from "@/lib/dominant-color";
+import { useSiteAccentStyle } from "@/hooks/use-site-accent-style";
+import { useUserPalette } from "@/lib/dominant-color";
 import { MobilePrimaryNav } from "./mobile-primary-nav";
 import { BackgroundLayer } from "./background-layer";
 import { appearanceStyle } from "@/lib/background-themes";
@@ -40,9 +41,10 @@ export function AuthenticatedShell() {
   const { collapsed: sidebarCollapsed, toggle: toggleSidebar } = useSidebarRail();
   const { data: me } = useCurrentUser();
   const palette = useUserPalette(me?.bannerSigned ?? null);
+  const siteAccent = useSiteAccentStyle(palette?.dominant);
   const themeStyle = useMemo(
-    () => ({ ...paletteToStyle(palette), ...appearanceStyle(me?.background) }),
-    [palette, me?.background],
+    () => ({ ...siteAccent, ...appearanceStyle(me?.background) }),
+    [siteAccent, me?.background],
   );
   const [showScrollTop, setShowScrollTop] = useState(false);
   const online = useOnlineStatus();
@@ -54,10 +56,7 @@ export function AuthenticatedShell() {
   }, []);
 
   return (
-    <div
-      className={`relative isolate flex min-h-screen ${me?.background?.density === "compact" ? "tethyr-density-compact" : ""}`}
-      style={themeStyle}
-    >
+    <div className="relative isolate flex min-h-screen" style={themeStyle}>
       <NavigationProgress />
       <a
         href="#main-content"

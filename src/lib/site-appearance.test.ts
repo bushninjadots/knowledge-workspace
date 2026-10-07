@@ -3,6 +3,8 @@ import {
   DEFAULT_SITE_APPEARANCE,
   normalizeAccountSiteAppearance,
   normalizeSiteAppearance,
+  rgbToHex,
+  siteAccentVars,
   siteAppearanceVars,
 } from "./site-appearance";
 
@@ -58,5 +60,25 @@ describe("the account copy", () => {
       normalizeAccountSiteAppearance({ preset: "p1", density: "compact", shape: "blob" }),
     ).toEqual({ ...DEFAULT_SITE_APPEARANCE, density: "compact", preset: "p1" });
     expect(normalizeAccountSiteAppearance({ preset: "" })?.preset).toBeNull();
+  });
+});
+
+describe("the banner accent", () => {
+  it("keeps Theme and From your banner as real choices", () => {
+    expect(normalizeSiteAppearance({ accent: "" }).accent).toBe("");
+    expect(normalizeSiteAppearance({ accent: "banner" }).accent).toBe("banner");
+    expect(normalizeSiteAppearance({}).accent).toBe("banner");
+  });
+
+  it("sets nothing on <html> for the banner (the shell resolves it)", () => {
+    expect(siteAppearanceVars({ ...DEFAULT_SITE_APPEARANCE, accent: "banner" })).toEqual({});
+  });
+
+  it("builds the same family from a banner colour as from a picked one", () => {
+    expect(rgbToHex("rgb(94, 129, 211)")).toBe("#5e81d3");
+    expect(siteAccentVars("#5e81d3")).toEqual(
+      siteAppearanceVars({ ...DEFAULT_SITE_APPEARANCE, accent: "#5e81d3" }),
+    );
+    expect(rgbToHex(null)).toBeNull();
   });
 });

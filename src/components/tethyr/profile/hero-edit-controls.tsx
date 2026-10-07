@@ -1,8 +1,9 @@
 // ── Hero header owner controls ───────────────────────────────────────────────
 // Restores the in-place editing affordances that used to live on the profile
-// hero: change banner, write a banner caption, edit identity fields, and open
-// the appearance (backdrop) editor. Rendered as an overlay inside the header
-// block's `relative` frame, owner-only.
+// hero: change banner, write a banner caption, edit identity fields, and jump
+// to the header block's settings in Studio (photo shape, ring, banner overlay,
+// caption position). Rendered as an overlay inside the header block's
+// `relative` frame, owner-only.
 
 import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -10,7 +11,7 @@ import { Camera, Palette, Pencil, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { BackgroundPickerDialog } from "@/components/tethyr/profile/background-picker-dialog";
+import { Link } from "@tanstack/react-router";
 
 import { supabase } from "@/integrations/supabase/client";
 import { friendlyError } from "@/lib/error-message";
@@ -39,15 +40,15 @@ export function HeroEditControls({
   userId,
   identity,
   hasBanner,
-  bannerSigned,
+  blockId,
   onChanged,
   onCompleteProfile,
 }: {
   userId: string;
   identity: HeroIdentity;
   hasBanner: boolean;
-  /** Resolved banner URL, so the appearance editor can preview a banner-derived tint. */
-  bannerSigned?: string | null;
+  /** The header block, so "Header look" opens its settings in Studio. */
+  blockId?: string;
   onChanged?: () => void;
   /** Opens the full identity-completion form (route-level "Edit details" dialog). */
   onCompleteProfile?: () => void;
@@ -60,7 +61,6 @@ export function HeroEditControls({
   const [editingCaption, setEditingCaption] = useState(false);
   const [captionDraft, setCaptionDraft] = useState(identity.banner_caption ?? "");
   const [savingCaption, setSavingCaption] = useState(false);
-  const [appearanceOpen, setAppearanceOpen] = useState(false);
   const { requestCrop, dialog: cropDialog } = useCropConfirm();
 
   function refresh() {
@@ -157,14 +157,15 @@ export function HeroEditControls({
           Edit details
         </button>
 
-        <button
-          type="button"
-          onClick={() => setAppearanceOpen(true)}
+        <Link
+          to="/studio"
+          search={blockId ? { block: blockId } : {}}
+          title="Photo shape, ring, banner overlay and caption position"
           className="inline-flex items-center gap-1.5 rounded-md border on-media-control px-2.5 py-1.5 text-xs font-medium text-foreground backdrop-blur-sm transition-lift hover:bg-background"
         >
           <Palette className="h-3.5 w-3.5" />
-          Appearance
-        </button>
+          Header look
+        </Link>
       </div>
 
       <input
@@ -222,18 +223,6 @@ export function HeroEditControls({
         </div>
       )}
 
-      <BackgroundPickerDialog
-        open={appearanceOpen}
-        onOpenChange={setAppearanceOpen}
-        background={identity.background ?? null}
-        publicBackground={identity.public_background ?? null}
-        userId={userId}
-        bannerUrl={bannerSigned ?? null}
-        onSaved={() => {
-          setAppearanceOpen(false);
-          refresh();
-        }}
-      />
       {cropDialog}
     </>
   );

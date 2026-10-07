@@ -54,14 +54,15 @@ beforeEach(() => {
   handle.on("profiles:update", () => ({ data: null, error: null }));
 });
 
-describe("BackgroundPickerDialog — caption position propagation", () => {
-  it("invalidates profile-header-block and current-user on save", async () => {
+describe("BackgroundPickerDialog — header sync", () => {
+  it("invalidates profile-header-block and current-user on save, keeping the header look", async () => {
     const user = userEvent.setup();
     const onSaved = vi.fn();
     const { invalidateSpy } = renderWithClient(
       <BackgroundPickerDialog
         open
         onOpenChange={() => {}}
+        scope="app"
         background={baseBackground as never}
         publicBackground={null}
         userId="u-1"
@@ -71,8 +72,16 @@ describe("BackgroundPickerDialog — caption position propagation", () => {
 
     await user.click(screen.getByRole("button", { name: /save/i }));
 
+    // The caption position lives in the header block's settings now; saving a
+    // background must carry it through untouched, not reset it.
     expect(handle.calls).toContainEqual(
-      expect.objectContaining({ table: "profiles", action: "update" }),
+      expect.objectContaining({
+        table: "profiles",
+        action: "update",
+        value: {
+          background: expect.objectContaining({ bannerCaptionPosition: "left" }),
+        },
+      }),
     );
     const invalidatedKeys = invalidateSpy.mock.calls.map((c) => c[0]?.queryKey?.[0]);
     expect(invalidatedKeys).toContain("profile-header-block");

@@ -3,7 +3,7 @@
 //
 // Split out of g-studio-surface.tsx.
 import { useEffect, useState } from "react";
-import { Eye, EyeOff, Frame, LayoutGrid, Palette, Plus } from "lucide-react";
+import { Eye, EyeOff, Frame, LayoutGrid, Palette, Plus, UserRound } from "lucide-react";
 import {
   BORDER_SWATCHES,
   CARD_BORDER_OPTIONS,
@@ -49,7 +49,7 @@ export function ThemeSection({
 
   return (
     <div className="mb-4 shrink-0">
-      <p className="t-label mb-1.5">Profile theme</p>
+      <p className="t-label mb-1.5">Theme</p>
       <p className="mb-1.5 text-2xs leading-snug text-muted-foreground-subtle">
         Palette, faces, corners and depth for your public profile.
       </p>
@@ -189,7 +189,7 @@ export type StyleSectionProps = {
   /** Blocks with nothing to show yet; visitors never see them. */
   emptyBlockIds?: ReadonlySet<string>;
   onCompleteProfile?: () => void;
-  /** Opens the shared background/appearance dialog (banner → Appearance). */
+  /** Opens the page background picker. */
   onOpenAppearance?: () => void;
   /** Opens the layout picker. */
   onOpenLayouts?: () => void;
@@ -231,6 +231,9 @@ export function GStyleSections({
   onOpenAppearance,
   onOpenLayouts,
 }: StyleSectionProps) {
+  const headerBlockId = layout.sections
+    .flatMap((section) => section.blocks)
+    .find((block) => block.type === "profile-header")?.id;
   const [tab, setTab] = useState<StyleTab>("identity");
   useEffect(() => {
     try {
@@ -422,6 +425,16 @@ export function GStyleSections({
               hint="How your name, photo and banner meet visitors."
             />
             <LookOptions config={config} setting="header" onChange={onChange} label="Header" />
+            {headerBlockId && (
+              <button
+                type="button"
+                onClick={() => onSelect(headerBlockId)}
+                className="-mt-2 mb-4 flex w-full items-center justify-center gap-1.5 rounded-sm border border-border px-2 py-1.5 text-2xs text-foreground outline-none hover:bg-[var(--surface-sunken)] focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))]"
+              >
+                <UserRound className="h-3 w-3" aria-hidden />
+                Photo, banner &amp; caption settings
+              </button>
+            )}
             <GroupHeading config={config} group="typography" onChange={onChange} />
             <LookOptions
               config={config}
@@ -458,20 +471,18 @@ export function GStyleSections({
               config={config}
               group="colour"
               onChange={onChange}
-              hint="The atmosphere sets the page's light, ink and surfaces; accent sets where your colour shows."
+              hint="Start from a theme, adjust its colours if you like, then choose your accent."
             />
+            <ThemeSection themeId={themeId} onThemeChange={onThemeChange} />
+            <p className="t-label mb-1">Adjust colours</p>
+            <p className="mb-1.5 text-2xs leading-snug text-muted-foreground-subtle">
+              Keep the theme&rsquo;s own colours, or shift the page&rsquo;s light, ink and surfaces.
+            </p>
             <LookOptions
               config={config}
               setting="atmosphere"
               onChange={onChange}
-              label="Atmosphere"
-            />
-            <p className="t-label mb-1.5">Accent</p>
-            <LookOptions
-              config={config}
-              setting="accent"
-              onChange={onChange}
-              label="Accent behaviour"
+              label="Adjust colours"
             />
             <Choice
               label="Light & dark"
@@ -544,11 +555,22 @@ export function GStyleSections({
                 </label>
               </div>
             )}
+            {config.accentMode !== "none" && (
+              <>
+                <p className="t-label mb-1.5">Where it shows</p>
+                <LookOptions
+                  config={config}
+                  setting="accent"
+                  onChange={onChange}
+                  label="Where your accent shows"
+                />
+              </>
+            )}
             <div className="mb-4">
-              <p className="t-label mb-1.5">Background</p>
+              <p className="t-label mb-1.5">Page background</p>
               <p className="mb-2 text-2xs leading-snug text-muted-foreground-subtle">
-                Colour, pattern, or image for your app and your public Studio. Saved to your profile
-                straight away, so visitors see it without publishing.
+                A colour, pattern or image behind your page. It uses your app background unless you
+                give the page its own. Saves straight away, without publishing.
               </p>
               {onOpenAppearance ? (
                 <button
@@ -557,11 +579,10 @@ export function GStyleSections({
                   className="flex w-full items-center justify-center gap-1.5 rounded-sm border border-border px-2 py-1.5 text-2xs text-foreground transition-lift hover:bg-[var(--surface-sunken)]"
                 >
                   <Palette className="h-3 w-3" aria-hidden />
-                  Edit background
+                  Change page background
                 </button>
               ) : null}
             </div>
-            <ThemeSection themeId={themeId} onThemeChange={onThemeChange} />
           </>
         )}
         {tab === "style" && (
@@ -714,8 +735,8 @@ export function GStyleSections({
               onChange={(value) => onChange({ structure: value as GStudioConfig["structure"] })}
             />
             <Choice
-              label="Density"
-              hint="Spacing rhythm between blocks"
+              label="Block spacing"
+              hint="Room between your page's blocks. (Tethyr's own spacing for you is Site appearance in Settings.)"
               value={config.density}
               options={[
                 ["compact", "Compact"],

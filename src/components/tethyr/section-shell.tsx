@@ -20,7 +20,8 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { useAuthUser, useCurrentUser } from "@/hooks/use-current-user";
 import { useSidebarRail } from "@/hooks/use-sidebar-rail";
 import { useOnlineStatus } from "@/hooks/use-online-status";
-import { useUserPalette, paletteToStyle } from "@/lib/dominant-color";
+import { useSiteAccentStyle } from "@/hooks/use-site-accent-style";
+import { useUserPalette } from "@/lib/dominant-color";
 import { appearanceStyle, isBackgroundActive } from "@/lib/background-themes";
 import { BackgroundLayer } from "./background-layer";
 import { cn } from "@/lib/utils";
@@ -142,9 +143,10 @@ export function SectionShell({
   const isAuthed = Boolean(sessionUser);
   const { data: me } = useCurrentUser();
   const palette = useUserPalette(me?.bannerSigned ?? null);
+  const siteAccent = useSiteAccentStyle(palette?.dominant);
   const themeStyle = useMemo(
-    () => ({ ...paletteToStyle(palette), ...appearanceStyle(me?.background) }),
-    [palette, me?.background],
+    () => ({ ...siteAccent, ...appearanceStyle(me?.background) }),
+    [siteAccent, me?.background],
   );
   const hasCustomBackground = isAuthed && isBackgroundActive(me?.background);
   const { collapsed: sidebarCollapsed, toggle: toggleSidebar } = useSidebarRail();
@@ -163,7 +165,6 @@ export function SectionShell({
       className={cn(
         "relative isolate flex min-h-screen",
         hasCustomBackground ? "" : "bg-background",
-        me?.background?.density === "compact" ? "tethyr-density-compact" : "",
         className,
       )}
       style={{ ...style, ...themeStyle }}

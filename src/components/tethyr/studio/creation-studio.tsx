@@ -2029,6 +2029,7 @@ export function CreationStudio({
         }}
       />
       <BackgroundPickerDialog
+        scope="page"
         open={appearanceOpen}
         onOpenChange={setAppearanceOpen}
         background={me?.background ?? null}

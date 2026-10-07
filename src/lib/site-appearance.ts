@@ -1,6 +1,6 @@
 // ── Site appearance ───────────────────────────────────────────────────────────
 // How Tethyr itself looks for this person, across their devices: its density,
-// shape, accent and motion. It sits on top of the site theme (a preset from
+// shape, accent (a colour, or "banner" to follow their banner image) and motion. It sits on top of the site theme (a preset from
 // the shared `themes` catalogue, chosen in the same place) and is applied as
 // CSS custom properties on <html>, so every component that uses the shared
 // tokens follows it: spacing utilities read --spacing, `rounded-*` reads
@@ -17,7 +17,9 @@ export type SiteMotion = "standard" | "reduced";
 export interface SiteAppearance {
   density: SiteDensity;
   shape: SiteShape;
-  /** "" follows the theme; otherwise a #rrggbb accent. */
+  /** "" follows the theme, "banner" follows the member's banner image
+   *  (resolved where the banner is known: see useSiteAccentStyle);
+   *  otherwise a #rrggbb accent. */
   accent: string;
   motion: SiteMotion;
 }
@@ -25,9 +27,14 @@ export interface SiteAppearance {
 export const DEFAULT_SITE_APPEARANCE: Readonly<SiteAppearance> = {
   density: "comfortable",
   shape: "theme",
-  accent: "",
+  // Tethyr has always picked up the member's banner colour; with no banner
+  // this resolves to the theme's own accent.
+  accent: "banner",
   motion: "standard",
 };
+
+/** The Accent value that follows the member's banner image. */
+export const BANNER_ACCENT = "banner";
 
 export const SITE_APPEARANCE_STORAGE_KEY = "tethyr-site-appearance";
 
@@ -47,6 +54,7 @@ export const SITE_SHAPE_OPTIONS: ReadonlyArray<{ id: SiteShape; label: string }>
 
 export const SITE_ACCENTS: ReadonlyArray<{ value: string; label: string }> = [
   { value: "", label: "Theme" },
+  { value: BANNER_ACCENT, label: "From your banner" },
   { value: "#3f8f8a", label: "Teal" },
   { value: "#2f6fd0", label: "Blue" },
   { value: "#7a4ecf", label: "Violet" },
@@ -79,7 +87,12 @@ export function normalizeSiteAppearance(raw: unknown): SiteAppearance {
   return {
     density: pick(["compact", "comfortable", "spacious"], value.density, "comfortable"),
     shape: pick(["theme", "sharp", "soft", "rounded"], value.shape, "theme"),
-    accent: typeof value.accent === "string" && HEX.test(value.accent) ? value.accent : "",
+    // "" is a choice (the theme's own accent); missing or junk is the default.
+    accent:
+      typeof value.accent === "string" &&
+      (value.accent === "" || value.accent === BANNER_ACCENT || HEX.test(value.accent))
+        ? value.accent
+        : DEFAULT_SITE_APPEARANCE.accent,
     motion: pick(["standard", "reduced"], value.motion, "standard"),
   };
 }
@@ -114,19 +127,36 @@ export function siteAppearanceVars(appearance: SiteAppearance): Record<string, s
     });
     vars["--radius"] = `${RADII[appearance.shape][2]}px`;
   }
-  if (HEX.test(appearance.accent)) {
-    const accent = appearance.accent;
-    vars["--primary"] = accent;
-    vars["--primary-foreground"] = onColour(accent);
-    vars["--ring"] = accent;
-    vars["--accent-border"] = `color-mix(in oklab, ${accent} 40%, transparent)`;
-    vars["--user-accent"] = accent;
-    vars["--user-accent-text"] = `color-mix(in oklab, ${accent} 60%, var(--foreground))`;
-    vars["--user-accent-foreground"] = onColour(accent);
-    vars["--user-accent-subtle"] = `color-mix(in oklab, ${accent} 10%, transparent)`;
-    vars["--user-accent-border"] = `color-mix(in oklab, ${accent} 30%, transparent)`;
-  }
+  Object.assign(vars, siteAccentVars(appearance.accent));
   return vars;
+}
+
+/**
+ * The whole accent family for one #rrggbb colour (buttons, focus ring, label
+ * colour, tints), or nothing for anything else. Shared by a picked accent and
+ * the banner accent so both behave exactly alike.
+ */
+export function siteAccentVars(accent: string): Record<string, string> {
+  if (!HEX.test(accent)) return {};
+  return {
+    "--primary": accent,
+    "--primary-foreground": onColour(accent),
+    "--ring": accent,
+    "--accent-border": `color-mix(in oklab, ${accent} 40%, transparent)`,
+    "--user-accent": accent,
+    "--user-accent-text": `color-mix(in oklab, ${accent} 60%, var(--foreground))`,
+    "--user-accent-foreground": onColour(accent),
+    "--user-accent-subtle": `color-mix(in oklab, ${accent} 10%, transparent)`,
+    "--user-accent-border": `color-mix(in oklab, ${accent} 30%, transparent)`,
+    "--user-accent-glow": `color-mix(in oklab, ${accent} 6%, transparent)`,
+  };
+}
+
+/** `rgb(r, g, b)` (as the banner sampler returns it) → `#rrggbb`. */
+export function rgbToHex(rgb: string | null | undefined): string | null {
+  const match = rgb?.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+  if (!match) return null;
+  return `#${[match[1], match[2], match[3]].map((v) => Number(v).toString(16).padStart(2, "0")).join("")}`;
 }
 
 /** What follows the member across devices: the site theme preset and the

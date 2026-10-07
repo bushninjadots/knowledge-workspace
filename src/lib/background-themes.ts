@@ -40,6 +40,9 @@ export type ProfileBackground = {
   strength?: number | null;
   /** Appearance preferences share this JSON document so they work without a new table. */
   cardBorders?: CardBorderPreference | null;
+  /** Legacy: Tethyr's accent and density now live in Site appearance
+   *  (profiles.site_appearance). `accentColor` is still read as the owner's
+   *  signature colour on project covers (ownerAccentStyle). */
   accentMode?: AccentMode | null;
   accentColor?: string | null;
   density?: ContentDensity | null;
@@ -446,9 +449,6 @@ export function emptyBackground(): ProfileBackground {
     image_url: null,
     strength: BACKGROUND_DEFAULT_STRENGTH,
     cardBorders: "neutral",
-    accentMode: "dynamic",
-    accentColor: null,
-    density: "comfortable",
     bannerOverlay: "soft",
     bannerCaptionPosition: "right",
     avatarShape: "circle",
@@ -480,14 +480,13 @@ export function hasAppearanceSettings(background: ProfileBackground | null | und
     if (background.cardBorders === "custom") return !!background.cardBorderColor;
     return true;
   }
-  if (background.accentMode === "custom" && !!background.accentColor) return true;
-  if (background.density === "compact") return true;
   if (background.avatarShape && background.avatarShape !== "circle") return true;
   if (background.avatarRing && background.avatarRing !== "none") return true;
   return false;
 }
 
-/** Apply creator-selected accent, border, and density preferences as CSS variables. */
+/** The member's card-border colour as CSS variables. (Tethyr's accent and
+ *  density are Site appearance, applied by the app shell and <html>.) */
 export function appearanceStyle(background: ProfileBackground | null | undefined): CSSProperties {
   if (!background) return {};
   const style = {} as CSSProperties & Record<string, string>;
@@ -508,22 +507,6 @@ export function appearanceStyle(background: ProfileBackground | null | undefined
   // theme rule — a block that asked for an outline still gets one.
   style["--card-border-force-color"] = borderColor ?? "var(--border)";
 
-  if (background.accentMode === "custom" && background.accentColor) {
-    Object.assign(style, accentVarsFromColor(background.accentColor));
-  } else if (!background.accentMode && background.color && background.colorSource !== "banner") {
-    // Identity fallback: no explicit accent chosen, so the accent follows the
-    // member's own colour. Banner-sourced colours are skipped — the live
-    // palette extracted from the banner is the more accurate signal there.
-    Object.assign(style, accentVarsFromColor(background.color));
-  }
-
-  if (background.density === "compact") {
-    style["--content-density-gap"] = "0.75rem";
-    style["--content-density-padding"] = "0.75rem";
-  } else {
-    style["--content-density-gap"] = "1rem";
-    style["--content-density-padding"] = "1rem";
-  }
   return style;
 }
 

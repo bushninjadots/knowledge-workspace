@@ -835,7 +835,7 @@ try {
     const probes = [
       ["Structure", ["Column", "Balanced", "Wide"], "Layout"],
       ["Type scale", ["Expressive", "Display", "Standard"], "Identity", "radio"],
-      ["Density", ["Compact", "Spacious"], "Layout"],
+      ["Block spacing", ["Compact", "Spacious"], "Layout"],
       ["Line weight", ["Medium", "Thick", "Thin"], "Look"],
     ];
     const function_ = [];

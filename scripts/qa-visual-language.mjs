@@ -277,7 +277,7 @@ try {
   );
   await pick(page, "Identity", "Type pairing", "Art");
   await pick(page, "Look", "Borders", "Dashed");
-  await pick(page, "Identity", "Atmosphere", "Cool");
+  await pick(page, "Identity", "Adjust colours", "Cool");
   const label = await directionLabel(page);
   log("changing settings marks the direction Modified", /Editorial · Modified/.test(label), label);
   await openStyle(page, "Look");

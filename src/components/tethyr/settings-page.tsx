@@ -231,11 +231,10 @@ export function SettingsPage() {
               <div className="border-t border-border/60 pt-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="font-medium">Your background</p>
+                    <p className="font-medium">App background</p>
                     <p className="mt-0.5 text-sm text-muted-foreground">
-                      Colour, pattern or image behind Tethyr and behind your public profile, plus
-                      your banner and avatar treatment. It&rsquo;s part of your profile, so visitors
-                      see it too.
+                      A colour, pattern or image behind Tethyr. Your public page uses it too unless
+                      you give the page its own in Studio &rarr; Style.
                     </p>
                   </div>
                   <Button
@@ -245,7 +244,7 @@ export function SettingsPage() {
                     className="shrink-0"
                   >
                     <Paintbrush className="mr-1.5 h-3.5 w-3.5" />
-                    Open appearance editor
+                    Change background
                   </Button>
                 </div>
               </div>
@@ -435,6 +434,7 @@ export function SettingsPage() {
       {/* Appearance — the same editor as the Studio, so every surface stays in sync. */}
       {me?.userId && (
         <BackgroundPickerDialog
+          scope="app"
           open={appearanceOpen}
           onOpenChange={setAppearanceOpen}
           background={bg ?? null}

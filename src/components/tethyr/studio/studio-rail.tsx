@@ -36,6 +36,7 @@ import {
 import type { BlockShape } from "@/lib/page-blocks";
 import { findSection, sectionLabel, type GridArrangement } from "@/lib/studio-grid";
 import { ProfileMediaControls } from "./profile-media-controls";
+import { HeaderLookControls } from "@/components/tethyr/profile/header-look-controls";
 import { BlockFields, Switch } from "./block-fields";
 import { useGithubConnection } from "@/hooks/use-github";
 import { AreaInspector } from "./area-inspector";
@@ -1217,6 +1218,7 @@ export function GBlockInspector({
           />
         </div>
       )}
+      {block.type === "profile-header" && me && <HeaderLookControls userId={props.userId} />}
       <BlockFields
         definition={def}
         config={block.config}

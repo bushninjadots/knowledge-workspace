@@ -4,11 +4,12 @@
 // choose, so it's unmistakable that this changes Tethyr, not their profile.
 
 import { Link } from "@tanstack/react-router";
-import { Check, Home, LayoutGrid, RotateCcw, Users } from "lucide-react";
+import { Check, Home, LayoutGrid, RotateCcw, Sparkles, Users } from "lucide-react";
 import { useThemePresets, type ThemePreset } from "@/hooks/use-theme";
 import { useTheme as useAppTheme } from "@/lib/theme";
 import { DEFAULT_THEME_ID } from "@/lib/constants";
 import {
+  BANNER_ACCENT,
   DEFAULT_SITE_APPEARANCE,
   SITE_ACCENTS,
   SITE_DENSITY_OPTIONS,
@@ -277,7 +278,10 @@ export function SiteAppearancePanel() {
       <Row title="Mode" hint="Light, dark, or follow the system.">
         <ThemeToggle variant="icon" />
       </Row>
-      <Row title="Accent" hint="Buttons, focus and highlights. Theme keeps the theme's own.">
+      <Row
+        title="Accent"
+        hint="Buttons, focus and highlights. Theme keeps the theme's own; From your banner follows your banner image."
+      >
         <div role="radiogroup" aria-label="Accent" className="flex flex-wrap gap-1.5">
           {SITE_ACCENTS.map((accent) => (
             <button
@@ -292,9 +296,18 @@ export function SiteAppearancePanel() {
                 "flex h-7 min-w-7 items-center justify-center border-2 px-1.5 text-2xs outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 siteAppearance.accent === accent.value ? "border-foreground" : "border-border",
               )}
-              style={accent.value ? { backgroundColor: accent.value } : undefined}
+              style={accent.value.startsWith("#") ? { backgroundColor: accent.value } : undefined}
             >
-              {accent.value ? "" : "Theme"}
+              {accent.value === BANNER_ACCENT ? (
+                <span className="flex items-center gap-1">
+                  <Sparkles className="h-3 w-3" aria-hidden />
+                  Banner
+                </span>
+              ) : accent.value ? (
+                ""
+              ) : (
+                "Theme"
+              )}
             </button>
           ))}
         </div>

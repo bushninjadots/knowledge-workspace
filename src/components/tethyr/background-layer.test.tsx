@@ -102,7 +102,9 @@ describe("BackgroundLayer", () => {
     expect(layer.style.opacity).toBe("0.75");
   });
 
-  it("persists and applies card border and custom accent preferences", () => {
+  // Tethyr's accent is Site appearance now (one home); a legacy profile accent
+  // must not repaint the app on top of it.
+  it("applies the card border and ignores a legacy profile accent", () => {
     const appearance = {
       mode: null,
       color: null,
@@ -115,8 +117,8 @@ describe("BackgroundLayer", () => {
     expect(hasAppearanceSettings(appearance)).toBe(true);
     const style = appearanceStyle(appearance) as Record<string, string>;
     expect(style["--card-border-color"]).toBe("transparent");
-    expect(style["--user-accent"]).toBe("#ff006e");
-    expect(style["--user-accent-foreground"]).toBe("#ffffff");
+    expect(style["--user-accent"]).toBeUndefined();
+    expect(style["--user-accent-foreground"]).toBeUndefined();
   });
 
   it("keeps default appearance quiet for older background rows", () => {

@@ -359,7 +359,7 @@ export const LOOK_OPTIONS: { [K in LookKey]: Options<Look[K]> } = {
     { id: "baseline", label: "Baseline" },
   ],
   atmosphere: [
-    { id: "theme", label: "Theme" },
+    { id: "theme", label: "Theme's own" },
     { id: "warm", label: "Warm" },
     { id: "cool", label: "Cool" },
     { id: "muted", label: "Muted" },
