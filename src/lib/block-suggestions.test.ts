@@ -50,4 +50,14 @@ describe("suggestBlocks", () => {
       2,
     );
   });
+
+  it("offers the GitHub block to builders who connected GitHub", () => {
+    const types = (connected: boolean, projectCount: number) =>
+      suggestBlocks(layout(), { ...facts, githubConnected: connected, projectCount }, 20).map(
+        (s) => s.type,
+      );
+    expect(types(true, 2)).toContain("profile-github");
+    expect(types(false, 2)).not.toContain("profile-github");
+    expect(types(true, 0)).not.toContain("profile-github");
+  });
 });

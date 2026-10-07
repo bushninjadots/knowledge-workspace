@@ -381,6 +381,8 @@ export const STARTERS: Starter[] = [
           key: "signals",
           title: "Signals",
           rows: [
+            // GitHub leads the signals when the page has the block.
+            [{ role: "github", w: 12 }],
             [
               { role: "activity", w: 8 },
               { role: "achievements", w: 4 },

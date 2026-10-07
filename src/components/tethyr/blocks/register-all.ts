@@ -51,4 +51,5 @@ import "./profile/proof-of-work-block";
 import "./profile/looking-for-block";
 import "./profile/availability-block";
 import "./profile/contribution-stats-block";
+import "./profile/github-block";
 import "./profile/collaboration-network-block";

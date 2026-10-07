@@ -36,6 +36,7 @@ import {
   EXPERIENCE_LABEL,
 } from "@/components/tethyr/profile-sections";
 import { SectionCard } from "./section-card";
+import { GitHubSkillSuggestions } from "@/components/tethyr/github/github-skill-suggestions";
 import type { Skill } from "./types";
 import type {
   TeachSkillMeta,
@@ -434,6 +435,11 @@ function TeachSkillsCard({
                 className="pl-9"
               />
             </div>
+            <GitHubSkillSuggestions
+              catalog={allSkills}
+              chosen={draft}
+              onAdd={(ids) => setDraft(new Set([...draft, ...ids]))}
+            />
             <div className="max-h-80 space-y-4 overflow-y-auto pr-1">
               {grouped.map(([category, items]) => (
                 <div key={category}>

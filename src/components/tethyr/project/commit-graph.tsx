@@ -33,23 +33,33 @@ export function formatCommitCellDate(week: number, day: number) {
   return DATE_FORMATTER.format(new Date(week * 1000 + day * DAY_MS));
 }
 
-const MONTH_FORMATTER = new Intl.DateTimeFormat(undefined, {
-  month: "short",
-  year: "numeric",
-});
+const MONTH_FORMATTER = new Intl.DateTimeFormat(undefined, { month: "short" });
+const YEAR_FORMATTER = new Intl.DateTimeFormat(undefined, { year: "numeric" });
 
+/**
+ * Month labels over the graph's week columns (11px each). The year shows on
+ * the first label and on January only, and a month that starts too close to
+ * the previous label is skipped, so labels never run into each other.
+ */
 export function buildCommitMonthLabels(weeks: CommitActivityWeek[]) {
   const labels: { index: number; label: string }[] = [];
-  let lastLabel = "";
+  let lastMonth = "";
+  let lastIndex = -Infinity;
+  let lastWide = false;
 
   [...weeks]
     .sort((a, b) => a.week - b.week)
     .forEach((week, index) => {
-      const label = MONTH_FORMATTER.format(new Date(week.week * 1000));
-      if (label !== lastLabel) {
-        labels.push({ index, label });
-        lastLabel = label;
-      }
+      const date = new Date(week.week * 1000);
+      const month = MONTH_FORMATTER.format(date);
+      if (month === lastMonth) return;
+      lastMonth = month;
+      const wide = labels.length === 0 || date.getMonth() === 0;
+      // Room for the previous label: ~3 columns for "Mar", ~5 for "Jan 2026".
+      if (index - lastIndex < (lastWide ? 5 : 3)) return;
+      labels.push({ index, label: wide ? `${month} ${YEAR_FORMATTER.format(date)}` : month });
+      lastIndex = index;
+      lastWide = wide;
     });
 
   return labels;
@@ -95,10 +105,11 @@ export function CommitGraph({
                   {column.map((cell, j) => {
                     const label = `${formatCommitCellDate(week, j)}: ${cell.count} commit${cell.count === 1 ? "" : "s"}`;
                     return (
+                      // Cells inside role="img" are presentational: the
+                      // graph's own label speaks for it; the title is hover.
                       <span
                         key={`${week}-${j}`}
                         title={label}
-                        aria-label={label}
                         className={cn(
                           "h-[8px] w-[8px] rounded-[2px]",
                           GRAPH_LEVEL_CLASS[cell.level],

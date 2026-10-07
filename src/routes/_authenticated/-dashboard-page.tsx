@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { GitHubDashboardNudge } from "@/components/tethyr/github/github-settings";
 import { lazy, Suspense, useCallback, useEffect, useMemo } from "react";
 import { ArrowRight, Sparkles, Folder, UserPlus, Award, Plus } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -371,6 +372,7 @@ function DashboardContent({
             totalSteps={totalSteps}
             showSetupPrompt={!onboarding}
           />
+          {!onboarding && <GitHubDashboardNudge />}
         </section>
 
         <section aria-labelledby="dashboard-modules-heading" className="space-y-6">

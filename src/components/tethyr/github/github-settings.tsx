@@ -316,3 +316,63 @@ export function GithubIdentitySync() {
 
   return null;
 }
+
+const NUDGE_DISMISSED_KEY = "tethyr-github-nudge-dismissed";
+
+/**
+ * A one-time, dismissible "Connect GitHub" card for the dashboard. Shown only
+ * to members who aren't connected; "Not now" hides it on this device.
+ */
+export function GitHubDashboardNudge() {
+  const { connected, isLoading } = useGithubConnection();
+  const { data: user } = useAuthUser();
+  const [dismissed, setDismissed] = useState(true);
+  useEffect(() => {
+    try {
+      setDismissed(window.localStorage.getItem(NUDGE_DISMISSED_KEY) === "1");
+    } catch {
+      setDismissed(false);
+    }
+  }, []);
+  if (!user || isLoading || connected || dismissed) return null;
+
+  return (
+    <aside
+      aria-label="Connect GitHub"
+      className="flex flex-wrap items-center gap-3 rounded-xl border border-border/60 bg-surface-elevated/30 px-4 py-3"
+    >
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-elevated text-muted-foreground">
+        <Github className="h-4 w-4" aria-hidden />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium">Build on GitHub? Connect it once.</p>
+        <p className="text-xs text-muted-foreground">
+          Bring in your README, start projects from your repos and show your commit activity on your
+          Studio.
+        </p>
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            setDismissed(true);
+            try {
+              window.localStorage.setItem(NUDGE_DISMISSED_KEY, "1");
+            } catch {
+              /* hidden for this visit only */
+            }
+          }}
+          className="rounded-md px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
+        >
+          Not now
+        </button>
+        <Button asChild size="sm" variant="outline">
+          <Link {...GITHUB_SETTINGS}>
+            <Github className="h-3.5 w-3.5" aria-hidden />
+            Connect GitHub
+          </Link>
+        </Button>
+      </div>
+    </aside>
+  );
+}

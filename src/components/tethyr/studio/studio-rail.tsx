@@ -37,6 +37,7 @@ import type { BlockShape } from "@/lib/page-blocks";
 import { findSection, sectionLabel, type GridArrangement } from "@/lib/studio-grid";
 import { ProfileMediaControls } from "./profile-media-controls";
 import { BlockFields, Switch } from "./block-fields";
+import { useGithubConnection } from "@/hooks/use-github";
 import { AreaInspector } from "./area-inspector";
 import { BlockIcon } from "./block-icon";
 import { suggestBlocks } from "@/lib/block-suggestions";
@@ -861,6 +862,7 @@ function GBlockPalette(props: GStudioSurfaceProps) {
         ),
     [query, usedTypes],
   );
+  const github = useGithubConnection();
   const suggestions = useMemo(
     () =>
       suggestBlocks(props.layout, {
@@ -872,8 +874,9 @@ function GBlockPalette(props: GStudioSurfaceProps) {
           (me?.profile?.favourite_tools?.length ?? 0) + (me?.profile?.software_stack?.length ?? 0),
         yearsExperience: me?.profile?.years_experience ?? null,
         availability: me?.profile?.availability ?? null,
+        githubConnected: github.connected,
       }).filter((s) => getBlock(s.type)),
-    [me, props.layout],
+    [me, props.layout, github.connected],
   );
   const blockItem = (def: BlockDefinition, reason?: string) => (
     <button

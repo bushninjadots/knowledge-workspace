@@ -14,6 +14,8 @@ export interface SuggestionFacts {
   toolCount: number;
   yearsExperience: number | null;
   availability: string | null;
+  /** Connected to GitHub (Settings → GitHub). */
+  githubConnected?: boolean;
 }
 
 export interface BlockSuggestion {
@@ -34,6 +36,11 @@ export function suggestBlocks(
       type: "profile-projects",
       when: facts.projectCount > 0,
       reason: `You have ${plural(facts.projectCount, "project")} visitors can't see yet.`,
+    },
+    {
+      type: "profile-github",
+      when: !!facts.githubConnected && facts.projectCount > 0,
+      reason: "You're connected to GitHub — show your commits, languages and repos.",
     },
     {
       type: "call-to-action",

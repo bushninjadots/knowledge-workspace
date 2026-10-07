@@ -3,6 +3,7 @@
 
 import {
   Activity,
+  Github,
   Award,
   BadgeCheck,
   BarChart3,
@@ -46,6 +47,7 @@ import {
 
 const ICONS: Record<string, LucideIcon> = {
   Activity,
+  Github,
   Award,
   BadgeCheck,
   BarChart3,

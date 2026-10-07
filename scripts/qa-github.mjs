@@ -6,6 +6,7 @@
 //   • README block: "Import from GitHub" from its empty state → pick a repo
 //     → preview → use it; the block shows it with its source, and the next
 //     click is "Sync from GitHub", which says "Already up to date"
+//   • the skills picker suggests skills from the account's repo languages
 //
 // Uses a public repo (octocat/Spoon-Knife) and only a handful of GitHub
 // requests, so it runs within the anonymous rate limit.
@@ -167,6 +168,21 @@ try {
     (await syncDialog.getByText("Already up to date").count()) === 1,
   );
   await syncDialog.getByRole("button", { name: "Cancel" }).click();
+
+  // ── Skills from GitHub languages ──────────────────────────────────────────
+  await page.goto(`${BASE}/profile`, { waitUntil: "load" });
+  await page.getByRole("button", { name: "Edit details" }).first().click({ timeout: 30000 });
+  await page.getByRole("button", { name: "Edit section" }).first().click({ timeout: 15000 });
+  const picker = page.getByRole("dialog", { name: "Add skills to share" });
+  await picker.waitFor({ timeout: 10000 });
+  const fromGithub = await picker
+    .getByText("From your GitHub")
+    .waitFor({ timeout: 20000 })
+    .then(() => true)
+    .catch(() => false);
+  await picker.screenshot({ path: `${OUT}/skills.png` });
+  log("the skills picker suggests skills from your GitHub languages", fromGithub);
+  await page.keyboard.press("Escape");
 
   // ── Settings reflects the README source ───────────────────────────────────
   await page.goto(`${BASE}/settings#github`, { waitUntil: "load" });

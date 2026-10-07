@@ -12,6 +12,7 @@ export { ProfileCollaboratorsBlock } from "./collaborators-block";
 export { ProfileLookingForBlock } from "./looking-for-block";
 export { ProfileAvailabilityBlock } from "./availability-block";
 export { ProfileContributionStatsBlock } from "./contribution-stats-block";
+export { ProfileGitHubBlock } from "./github-block";
 export { ProfileCollaborationNetworkBlock } from "./collaboration-network-block";
 export { ProfileActivityHeatmapBlock } from "./activity-heatmap-block";
 export { ProfileCurrentlyBuildingBlock } from "./currently-building-block";

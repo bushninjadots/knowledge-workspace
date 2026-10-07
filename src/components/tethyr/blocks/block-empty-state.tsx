@@ -40,7 +40,7 @@ export function BlockEmptyState({
       <div className="flex items-center gap-2">
         {nextHref && nextLabel && (
           <Button asChild type="button" size="sm" variant="ghost">
-            <Link to={nextHref}>
+            <Link to={nextHref.split("#")[0]} hash={nextHref.split("#")[1]}>
               {nextLabel}
               <ArrowRight aria-hidden="true" data-icon="inline-end" />
             </Link>
