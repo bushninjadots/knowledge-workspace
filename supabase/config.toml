@@ -44,3 +44,6 @@ enable_manual_linking = true
 # demo data, remove "./seed_demo.sql" from this list and run `db reset`.
 enabled = true
 sql_paths = ["./seed.sql", "./seed_demo.sql"]
+
+[analytics]
+enabled = false
