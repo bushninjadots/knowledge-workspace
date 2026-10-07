@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import type { Section } from "@/lib/profile-completeness";
 
 /**
@@ -25,9 +25,13 @@ export const NextStepsList = memo(function NextStepsList({ items }: { items: Sec
       <li key={first.key} className="flex">
         <Link
           to={first.cta?.href ?? "/profile"}
+          search={first.cta?.search}
           className="group flex flex-1 items-center gap-3 rounded-xl border border-[var(--user-accent-border,var(--border-strong))] bg-[var(--user-accent-subtle,var(--surface-elevated))] px-4 py-3 transition-lift hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
         >
-          <Check className="h-4 w-4 shrink-0 text-[var(--user-accent-text,var(--trust))]" />
+          <span
+            aria-hidden
+            className="h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--user-accent,var(--trust))]"
+          />
           <span className="text-sm font-medium text-foreground">{first.label}</span>
           <span className="ml-auto flex shrink-0 items-center gap-1 text-[11px] font-medium text-[var(--user-accent-text,var(--trust))]">
             Do this next
@@ -42,6 +46,7 @@ export const NextStepsList = memo(function NextStepsList({ items }: { items: Sec
               <li key={s.key}>
                 <Link
                   to={s.cta?.href ?? "/profile"}
+                  search={s.cta?.search}
                   className="group flex items-center gap-3 rounded-xl border border-border/60 bg-surface/50 px-4 py-2.5 transition-lift hover:border-border-strong hover:bg-surface-elevated"
                 >
                   <span className="h-2 w-2 shrink-0 rounded-full border border-muted-foreground/50" />

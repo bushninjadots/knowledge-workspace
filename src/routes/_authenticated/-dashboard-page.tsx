@@ -362,7 +362,15 @@ function DashboardContent({
             </p>
           </div>
           <FirstSessionOnboarding data={data} />
-          {renderModule("today")}
+          {/* While the setup guide is up, a card that can only say "all
+              clear" is noise; it returns once there's a project or something
+              waiting. */}
+          {!(
+            onboarding &&
+            activeProjects.length === 0 &&
+            pendingInviteCount === 0 &&
+            unreadMessageCount === 0
+          ) && renderModule("today")}
           <ProjectReturnShelf />
           <FocusBand
             projectId={activeProjects[0]?.id ?? null}
@@ -389,9 +397,6 @@ function DashboardContent({
                 Your active work, collaboration signals, discovery, and contribution evidence.
               </p>
             </div>
-            <p className="max-w-xs text-right text-xs leading-relaxed text-muted-foreground">
-              Arrange this space around what you are building now.
-            </p>
           </div>
           <Suspense fallback={<Skeleton className="h-64 rounded-xl" />}>
             <WorkspaceGrid
@@ -443,9 +448,9 @@ function FocusBand({
       aria-labelledby={showWeekly ? "weekly-show-your-work-heading" : "dashboard-focus-heading"}
       className="border-y border-[var(--user-accent-border,var(--border-strong))] bg-[var(--user-accent-subtle,var(--surface-elevated))] py-4"
     >
-      <div className={twoCol ? "grid gap-6 lg:grid-cols-2" : ""}>
+      <div className={twoCol ? "grid items-start gap-6 lg:grid-cols-2" : ""}>
         {showWeekly && projectId && (
-          <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
+          <div className="flex min-w-0 flex-col items-start gap-3 self-start">
             <div className="flex min-w-0 items-start gap-3">
               <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-[var(--user-accent-text,var(--primary))]" />
               <div className="min-w-0">
@@ -463,7 +468,7 @@ function FocusBand({
               to="/projects/$id"
               params={{ id: projectId }}
               search={{ tab: "activity", focus: "weekly" } as Record<string, string>}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-[var(--user-accent,var(--primary))] px-3 py-2 text-xs font-semibold text-[var(--user-accent-foreground,var(--background))] transition-fade hover:opacity-90"
+              className="ml-7 inline-flex shrink-0 items-center gap-1.5 rounded-md bg-[var(--user-accent,var(--primary))] px-3 py-2 text-xs font-semibold text-[var(--user-accent-foreground,var(--background))] transition-fade hover:opacity-90"
             >
               Add this week’s evidence <ArrowRight className="h-3.5 w-3.5" />
             </Link>

@@ -54,14 +54,23 @@ export function ProfilePage() {
   const refresh = profileQuery.refresh;
 
   const navigate = useNavigate();
-  const { github: githubParam } = useSearch({ strict: false }) as {
+  const { github: githubParam, details: detailsParam } = useSearch({ strict: false }) as {
     github?: string;
+    details?: string;
   };
   const focusGithubToken = githubParam === "token";
   const githubScrolledRef = useRef(false);
   // While in the Studio, users can jump into the setup form anytime to finish
   // their profile — entering the Studio should not require it first.
   const [showSetup, setShowSetup] = useState(false);
+
+  // ?details=open (dashboard "Round out your profile" steps) opens the Edit
+  // details form straight away, then drops the param so a reload doesn't.
+  useEffect(() => {
+    if (detailsParam !== "open") return;
+    setShowSetup(true);
+    void navigate({ to: "/profile", search: {}, replace: true });
+  }, [detailsParam, navigate]);
 
   // Old links to the token form (?github=token) now land in Settings → GitHub.
   useEffect(() => {

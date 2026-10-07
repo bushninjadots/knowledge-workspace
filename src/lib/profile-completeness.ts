@@ -32,7 +32,7 @@ export type Section = {
   key: string;
   label: string;
   done: boolean;
-  cta?: { label: string; href: string };
+  cta?: { label: string; href: string; search?: Record<string, string> };
 };
 
 // Trimmed: a field a user opened and left as spaces is not filled in, though
@@ -47,11 +47,18 @@ export function sections({
   learnCount,
   projectsCount,
 }: CompletenessInput): Section[] {
-  const cta = (href = "/profile") => ({ label: "Edit profile", href });
+  // Every detail below is a field in the profile's Edit details form, so
+  // each step opens that form instead of landing on the Studio view.
+  const cta = () => ({ label: "Edit details", href: "/profile", search: { details: "open" } });
   return [
     { key: "teach", label: "Add your first skill to share", done: teachCount > 0, cta: cta() },
     { key: "learn", label: "Add a skill you're growing", done: learnCount > 0, cta: cta() },
-    { key: "project", label: "Publish your first project", done: projectsCount > 0, cta: cta() },
+    {
+      key: "project",
+      label: "Publish your first project",
+      done: projectsCount > 0,
+      cta: { label: "Your projects", href: "/profile" },
+    },
     { key: "name", label: "Add your display name", done: has(p?.display_name), cta: cta() },
     { key: "title", label: "Write a title", done: has(p?.creator_title), cta: cta() },
     { key: "bio", label: "Write a short bio", done: has(p?.bio), cta: cta() },

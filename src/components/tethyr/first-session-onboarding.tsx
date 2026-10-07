@@ -86,7 +86,7 @@ export function FirstSessionOnboarding({ data }: { data: CurrentUserData }) {
             <li
               key={step.id}
               aria-current={isActive ? "step" : undefined}
-              className={`flex items-start gap-3 rounded-xl border px-3.5 py-3 transition-colors ${
+              className={`flex flex-wrap items-start gap-3 rounded-xl border px-3.5 py-3 transition-colors sm:flex-nowrap ${
                 isActive
                   ? "border-[var(--user-accent-border,var(--primary))] bg-[var(--user-accent-subtle,var(--surface-elevated))]"
                   : "border-transparent bg-background/40"
@@ -121,12 +121,16 @@ export function FirstSessionOnboarding({ data }: { data: CurrentUserData }) {
                 </p>
               </div>
               {isActive && (
-                <div className="shrink-0 self-center">
+                // Phones: the button drops under the text (lined up with it)
+                // instead of squeezing the caption into a narrow column.
+                <div className="basis-full pl-9 sm:basis-auto sm:shrink-0 sm:self-center sm:pl-0">
                   {activeStep.id === "project" ? (
                     <CreateProjectButton label="Start a project" className="rounded-md" />
                   ) : (
                     <Link
                       to="/profile"
+                      // Name, title and skills are all in the Edit details form.
+                      search={{ details: "open" }}
                       className="group inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition-fade hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       {activeStep.id === "skill" ? "Add a skill" : "Open Your Studio"}

@@ -23,7 +23,8 @@ import { useProjectOpenWork } from "@/hooks/use-profile-work";
 import { isColumnSchemaError } from "@/lib/supabase-errors";
 
 /** Secondary row actions share one weight so the demoted rows read as one list. */
-const ROW_ACTION = "text-[11px] font-medium text-primary hover:underline";
+const ROW_ACTION =
+  "inline-flex min-h-6 items-center text-[11px] font-medium text-primary hover:underline pointer-coarse:min-h-10";
 
 /** Open-work summary in the product's own nouns: roles first, needs as the tail. */
 function openSummary(roles: number, needs: number) {
@@ -88,11 +89,9 @@ function ModuleRow({
           {/* Narrow screens stack the label: a squeezed row truncates titles to
               "Appli…" before it drops a single character of context copy. */}
           <div className="flex min-w-0 flex-1 flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-2">
-            <div className="flex min-w-0 items-center gap-2">
+            <div className="flex shrink-0 items-center gap-2">
               {icon && <span className="shrink-0 text-muted-foreground">{icon}</span>}
-              <h2 className="min-w-0 truncate text-sm font-semibold" title={title}>
-                {title}
-              </h2>
+              <h2 className="whitespace-nowrap text-sm font-semibold">{title}</h2>
             </div>
             {subtitle && (
               <span className="min-w-0 truncate text-xs text-muted-foreground" title={subtitle}>

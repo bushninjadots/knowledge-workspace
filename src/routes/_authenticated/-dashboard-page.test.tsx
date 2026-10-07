@@ -21,16 +21,28 @@ vi.mock("@/hooks/use-messages", () => ({
   useUnreadCounts: () => ({ data: { total: counts.unreadTotal } }),
 }));
 
+// An established member (setup done) by default; `member.isNew` switches to
+// someone still in the first-session guide.
+const member = vi.hoisted(() => ({ isNew: false }));
 vi.mock("@/hooks/use-current-user", () => ({
   useCurrentUser: () => ({
-    data: {
-      userId: "user-1",
-      profile: { id: "user-1", display_name: "Maya Lind" },
-      projects: [],
-      activity: [],
-      teachIds: [],
-      learnIds: [],
-    },
+    data: member.isNew
+      ? {
+          userId: "user-1",
+          profile: { id: "user-1", display_name: "Maya Lind" },
+          projects: [],
+          activity: [],
+          teachIds: [],
+          learnIds: [],
+        }
+      : {
+          userId: "user-1",
+          profile: { id: "user-1", display_name: "Maya Lind", creator_title: "Designer" },
+          projects: [{ id: "p1", title: "Bloom", progress_percent: 40 }],
+          activity: [],
+          teachIds: ["t1"],
+          learnIds: [],
+        },
     isLoading: false,
     refresh: vi.fn(),
   }),
@@ -76,6 +88,9 @@ vi.mock("@/components/tethyr/first-session-onboarding", () => ({
 vi.mock("@/components/tethyr/next-steps", () => ({
   NextStepsList: () => null,
 }));
+vi.mock("@/components/tethyr/github/github-settings", () => ({
+  GitHubDashboardNudge: () => null,
+}));
 vi.mock("@/components/tethyr/create-project-button", () => ({
   CreateProjectButton: () => null,
 }));
@@ -90,6 +105,7 @@ function activityRow() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  member.isNew = false;
   counts.sessions = [];
   counts.connections = [];
   counts.unreadTotal = 0;
@@ -130,6 +146,22 @@ describe("Dashboard needs-attention row", () => {
   it("links to messages when only unread messages remain", () => {
     counts.unreadTotal = 2;
     renderPage();
+    expect(activityRow()).toHaveAttribute("href", "/messages");
+  });
+});
+
+describe("Dashboard next-move card for a new member", () => {
+  it("stays out of the way while the setup guide is up and nothing is waiting", () => {
+    member.isNew = true;
+    renderPage();
+    expect(screen.queryByText("Your next move")).toBeNull();
+  });
+
+  it("comes back as soon as something needs attention", () => {
+    member.isNew = true;
+    counts.unreadTotal = 2;
+    renderPage();
+    expect(screen.getByText("Your next move")).toBeInTheDocument();
     expect(activityRow()).toHaveAttribute("href", "/messages");
   });
 });

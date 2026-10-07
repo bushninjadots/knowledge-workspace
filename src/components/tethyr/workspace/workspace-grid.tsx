@@ -423,14 +423,6 @@ export function WorkspaceGrid({
     }
     setShowCustomizeHint(false);
   }, [customizing]);
-  const dismissCustomizeHint = useCallback(() => {
-    try {
-      window.localStorage.setItem(CUSTOMIZE_HINT_KEY, "1");
-    } catch {
-      /* ignore */
-    }
-    setShowCustomizeHint(false);
-  }, []);
 
   const renderGridItem = (it: LayoutItem) => (
     <div
@@ -537,54 +529,47 @@ export function WorkspaceGrid({
               )}
             </div>
           ) : (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="section-label">Make it yours</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Choose which {workspaceLabel} sections people see first.
-                  </p>
-                </div>
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                {showPresetPicker && layoutPresets.length > 0 ? (
+                  <PresetPicker
+                    layoutPresets={layoutPresets}
+                    onSelect={applyPreset}
+                    label={presetPickerLabel}
+                  />
+                ) : (
+                  <p className="section-label">Your {workspaceLabel}</p>
+                )}
                 <span className="relative inline-flex shrink-0 items-center">
                   <Button
                     variant="outline"
                     size="sm"
-                    className={`shrink-0 text-muted-foreground ${
+                    className={`shrink-0 ${
                       showCustomizeHint
                         ? "border-[var(--user-accent-border,var(--border-strong))] text-foreground"
-                        : ""
+                        : "text-muted-foreground"
                     }`}
                     onClick={() => setCustomizing(true)}
                   >
                     <GripVertical className="mr-1.5 h-3.5 w-3.5" />
                     Customize
                   </Button>
+                  {/* First-run nudge: a quiet dot, not a count. It goes away
+                      once Customize has been opened. */}
                   {showCustomizeHint && (
-                    <span className="absolute -right-2 -top-2 z-10 flex items-center">
-                      <button
-                        type="button"
-                        onClick={dismissCustomizeHint}
-                        aria-label="Dismiss customize hint"
-                        className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--user-accent,var(--trust))] text-[9px] font-semibold leading-none text-[var(--user-accent-foreground,var(--background))] shadow-none"
-                      >
-                        1
-                      </button>
-                    </span>
+                    <span
+                      aria-hidden
+                      className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-[var(--user-accent,var(--trust))] ring-2 ring-background"
+                    />
                   )}
                 </span>
               </div>
-              {showPresetPicker && layoutPresets.length > 0 && (
-                <PresetPicker
-                  layoutPresets={layoutPresets}
-                  onSelect={applyPreset}
-                  label={presetPickerLabel}
-                  helper={
-                    presetPickerLabel === "Focus"
-                      ? "Pick what your dashboard leads with — you can still rearrange anytime."
-                      : undefined
-                  }
-                />
-              )}
+              <p className="text-xs text-muted-foreground">
+                {showPresetPicker && layoutPresets.length > 0
+                  ? `${presetPickerLabel} reorders your sections. `
+                  : ""}
+                Customize lets you move, resize, pin or hide them. Only you see this layout.
+              </p>
             </div>
           )}
         </div>
@@ -738,7 +723,7 @@ function PresetPicker({
           type="button"
           title={preset.description}
           onClick={() => onSelect(preset)}
-          className="rounded-md border border-border/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
+          className="inline-flex min-h-8 items-center rounded-md border border-border bg-surface px-2.5 text-xs text-foreground transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated pointer-coarse:min-h-10"
         >
           {preset.label}
         </button>
@@ -804,7 +789,7 @@ function ModuleShell({
                 type="button"
                 aria-label={`Move ${module?.title ?? "module"} up`}
                 title="Move up"
-                className="rounded-md p-1 text-muted-foreground/70 transition-lift hover:bg-surface hover:text-foreground"
+                className="rounded-md p-[5px] text-muted-foreground/70 transition-lift hover:bg-surface hover:text-foreground pointer-coarse:p-2.5"
                 onClick={() => onMove(0, -1)}
               >
                 <ArrowUp className="h-3.5 w-3.5" />
@@ -813,7 +798,7 @@ function ModuleShell({
                 type="button"
                 aria-label={`Move ${module?.title ?? "module"} down`}
                 title="Move down"
-                className="rounded-md p-1 text-muted-foreground/70 transition-lift hover:bg-surface hover:text-foreground"
+                className="rounded-md p-[5px] text-muted-foreground/70 transition-lift hover:bg-surface hover:text-foreground pointer-coarse:p-2.5"
                 onClick={() => onMove(0, 1)}
               >
                 <ArrowDown className="h-3.5 w-3.5" />
@@ -822,7 +807,7 @@ function ModuleShell({
                 type="button"
                 aria-label="Move module"
                 title={`Move ${module?.title ?? "module"} with arrow keys`}
-                className="ws-drag-handle rounded-md p-1 text-muted-foreground/70 transition-lift hover:bg-surface hover:text-foreground"
+                className="ws-drag-handle rounded-md p-[5px] text-muted-foreground/70 transition-lift hover:bg-surface hover:text-foreground pointer-coarse:p-2.5"
                 onKeyDown={(e) => {
                   // Arrow keys normally scroll the page — prevent that so the
                   // module moves cleanly without the viewport jumping.
@@ -850,7 +835,7 @@ function ModuleShell({
                 <button
                   type="button"
                   aria-label="Module options"
-                  className="rounded-md p-1 text-muted-foreground/70 transition-lift hover:bg-surface hover:text-foreground"
+                  className="rounded-md p-[5px] text-muted-foreground/70 transition-lift hover:bg-surface hover:text-foreground pointer-coarse:p-2.5"
                 >
                   <MoreHorizontal className="h-4 w-4" />
                 </button>

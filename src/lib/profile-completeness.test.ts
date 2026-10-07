@@ -113,6 +113,10 @@ describe("sections", () => {
     for (const section of sections(base)) {
       expect(section.label.length, section.key).toBeGreaterThan(0);
       expect(section.cta?.href, section.key).toBe("/profile");
+      // Profile details open the Edit details form directly.
+      if (section.key !== "project") {
+        expect(section.cta?.search, section.key).toEqual({ details: "open" });
+      }
     }
   });
 });
