@@ -23,6 +23,18 @@ export function areaTitle(section: LayoutSection): string | null {
 }
 
 /** Classes for the area's own surface (background treatments pad the area). */
+/**
+ * Phones read top to bottom, so a visitor should meet the person before their
+ * work: the area holding the profile header moves to the top on phones.
+ * Desktop keeps the owner's arrangement. (Areas stack in a flex column on
+ * both the public page and the owner's view.)
+ */
+export function areaPhoneOrderClass(section: LayoutSection): string {
+  return section.blocks.some((block) => block.type === "profile-header" && block.visible !== false)
+    ? "max-md:order-first"
+    : "";
+}
+
 export function areaSurfaceClass(section: LayoutSection): string {
   const appearance = section.appearance ?? {};
   const background = appearance.background ?? "none";

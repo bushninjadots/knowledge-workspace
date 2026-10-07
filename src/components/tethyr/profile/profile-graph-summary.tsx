@@ -1,7 +1,6 @@
 import { Network } from "lucide-react";
 import { useProfileWork } from "@/hooks/use-profile-work";
 import { useGraphTheme } from "@/hooks/use-graph-theme";
-import { GraphTreeView } from "@/components/tethyr/graph/graph-tree-view";
 import { GraphNodeGlyph } from "@/components/tethyr/graph/graph-node-glyph";
 import {
   buildProfileGraph,
@@ -43,7 +42,6 @@ export function ProfileGraphSummary({ profileId, name }: { profileId: string; na
   const counts = getProfileGraphCounts(graph);
   const projectCount = counts.project ?? 0;
   const collaboratorCount = counts.person ? counts.person - 1 : 0; // subtract self
-  const relationships = graph.edges.length;
   const collaborators = getProfileCollaborators(graph);
 
   return (
@@ -70,10 +68,6 @@ export function ProfileGraphSummary({ profileId, name }: { profileId: string; na
         <div>
           <dt className="text-muted-foreground">Collaborators</dt>
           <dd className="font-medium tabular-nums">{collaboratorCount}</dd>
-        </div>
-        <div>
-          <dt className="text-muted-foreground">Connections</dt>
-          <dd className="font-medium tabular-nums">{relationships}</dd>
         </div>
       </dl>
       <div className="mt-5 grid sm:grid-cols-2" style={{ gap: theme.gap }}>
@@ -127,16 +121,6 @@ export function ProfileGraphSummary({ profileId, name }: { profileId: string; na
             </ul>
           </div>
         )}
-      </div>
-      <div className="mt-6">
-        <h3 className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
-          Connections outline
-        </h3>
-        <GraphTreeView graph={graph} rootId={`person:${profileId}`} maxDepth={2} maxNodes={40} />
-        <p className="mt-2 text-xs text-muted-foreground">
-          Every connection above is also described in words — the work graph reads the same with or
-          without its visual layer.
-        </p>
       </div>
     </section>
   );

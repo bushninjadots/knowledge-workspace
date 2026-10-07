@@ -37,6 +37,7 @@ import {
   AreaDivider,
   AreaTitle,
   areaGridStyle,
+  areaPhoneOrderClass,
   areaSurfaceClass,
   areaSurfaceStyle,
   areaTitle,
@@ -607,7 +608,11 @@ function StudioViewSection({
   return (
     <section
       aria-label={section.title ?? section.layout}
-      className={cn("group/section relative", areaSurfaceClass(section))}
+      className={cn(
+        "group/section relative",
+        areaSurfaceClass(section),
+        areaPhoneOrderClass(section),
+      )}
       style={areaSurfaceStyle(section)}
     >
       <AreaTitle

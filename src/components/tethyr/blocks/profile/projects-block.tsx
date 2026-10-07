@@ -167,12 +167,11 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
     role: string,
   ) => (
     <>
-      <div className="flex items-start justify-between gap-2">
-        <span className="text-sm font-medium text-foreground line-clamp-1">{project.title}</span>
-        <span className="shrink-0 text-[11px] text-muted-foreground">
-          {contributionRoleVerb(role)}
-        </span>
-      </div>
+      {/* The verb leads ("Built", "Contributed to"), as on the featured card. */}
+      <span className="block text-[11px] text-muted-foreground">{contributionRoleVerb(role)}</span>
+      <span className="block text-sm font-medium text-foreground line-clamp-1">
+        {project.title}
+      </span>
       {showDescription && project.description && (
         <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{project.description}</p>
       )}
@@ -482,6 +481,7 @@ function CollaboratorAvatar({ row }: { row: CollaboratorRow }) {
         to="/u/$handle"
         params={{ handle: row.profile.handle }}
         title={fullName}
+        aria-label={`${fullName}'s profile`}
         className="block h-6 w-6 shrink-0 rounded-full ring-2 ring-surface transition-transform hover:scale-110"
       >
         {avatarSigned ? (

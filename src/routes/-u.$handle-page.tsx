@@ -196,7 +196,7 @@ function OwnerBar({
       </p>
       <Link
         to="/studio"
-        className="inline-flex shrink-0 items-center gap-1.5 font-medium text-foreground underline-offset-4 hover:underline"
+        className="inline-flex min-h-6 shrink-0 items-center gap-1.5 font-medium text-foreground underline-offset-4 hover:underline pointer-coarse:min-h-10"
       >
         Edit Studio <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
       </Link>
@@ -371,6 +371,13 @@ function BasicProfile({
         {profile.creator_title && (
           <p className="mt-1 text-sm text-foreground/80 break-words">{profile.creator_title}</p>
         )}
+        {/* The bio is who they are, so it sits with the name; category and
+            links stay in the footnote below. */}
+        {profile.bio && (
+          <p className="mx-auto mt-4 max-w-xl text-sm text-muted-foreground whitespace-pre-wrap break-words">
+            {profile.bio}
+          </p>
+        )}
       </div>
 
       {/* 2 + 3 — work, then the people they build with. Left-aligned on their
@@ -387,14 +394,8 @@ function BasicProfile({
       {/* 4 — metadata, demoted to a footnote below a rule */}
       {hasMetadata && (
         <div className="mt-14 border-t border-border pt-8 text-center">
-          {profile.bio && (
-            <p className="mx-auto max-w-xl text-sm text-muted-foreground whitespace-pre-wrap break-words">
-              {profile.bio}
-            </p>
-          )}
-
           {chips.length > 0 && (
-            <div className="mt-4 flex flex-wrap justify-center gap-2 text-xs text-muted-foreground">
+            <div className="flex flex-wrap justify-center gap-2 text-xs text-muted-foreground">
               {chips.map((chip) => (
                 <span
                   key={chip}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { LayoutBlockInstance, LayoutSection } from "@/lib/page-blocks";
-import { areaOverlapped, overlapAttr } from "./area-frame";
+import { areaOverlapped, areaPhoneOrderClass, overlapAttr } from "./area-frame";
 
 const block = (id: string, patch: Partial<LayoutBlockInstance> = {}): LayoutBlockInstance => ({
   id,
@@ -75,5 +75,22 @@ describe("making room for it", () => {
       blocks: [block("top", { overlap: "up", visible: false }), block("below")],
     });
     expect(areaOverlapped(area(), hidden, shown)).toBe(false);
+  });
+});
+
+describe("areaPhoneOrderClass", () => {
+  it("puts the area with the profile header first on phones", () => {
+    expect(areaPhoneOrderClass(area({ blocks: [block("h", { type: "profile-header" })] }))).toBe(
+      "max-md:order-first",
+    );
+  });
+
+  it("leaves other areas, and a hidden header, where the owner put them", () => {
+    expect(areaPhoneOrderClass(area())).toBe("");
+    expect(
+      areaPhoneOrderClass(
+        area({ blocks: [block("h", { type: "profile-header", visible: false })] }),
+      ),
+    ).toBe("");
   });
 });

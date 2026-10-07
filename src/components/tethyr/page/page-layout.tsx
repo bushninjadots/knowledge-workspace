@@ -10,6 +10,7 @@ import {
   AreaDivider,
   AreaTitle,
   areaGridStyle,
+  areaPhoneOrderClass,
   areaSurfaceClass,
   areaSurfaceStyle,
   areaOverlapped,
@@ -156,7 +157,9 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
             data-section-id={section.id}
             data-section-layout={section.layout}
             style={areaSurfaceStyle(section)}
-            className={["first:pt-0", areaSurfaceClass(section)].filter(Boolean).join(" ")}
+            className={["first:pt-0", areaSurfaceClass(section), areaPhoneOrderClass(section)]
+              .filter(Boolean)
+              .join(" ")}
           >
             <AreaTitle section={section} />
             <div
