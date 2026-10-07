@@ -121,6 +121,8 @@ export function GStudioTopBar({
 }) {
   // Autosave runs a second after each edit, so the status is the save
   // indicator; "Save now" lives in the menu for people who want to force it.
+  // Phone labels stay at seven characters or fewer: the top bar's buttons
+  // leave the chip about that much room, and longer words truncated.
   const status = saving
     ? "Saving…"
     : dirty
@@ -130,13 +132,15 @@ export function GStudioTopBar({
       : hasUnpublishedChanges
         ? published
           ? compact
-            ? "Unpublished"
+            ? "Pending"
             : "Unpublished changes"
           : compact
             ? "Draft"
             : "Draft · not published"
         : published
-          ? `Live · v${publishedVersion ?? 1}`
+          ? compact
+            ? `Live v${publishedVersion ?? 1}`
+            : `Live · v${publishedVersion ?? 1}`
           : "Draft";
   const statusDetail = hasUnpublishedChanges
     ? `Not live yet: ${unpublishedSummary.join(", ").toLowerCase() || "changes"}.`

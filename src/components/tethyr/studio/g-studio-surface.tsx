@@ -1599,9 +1599,10 @@ const GBlockFrame = forwardRef<
             className={cn(
               // The drag handle on touch screens (pointer-coarse); decoration
               // elsewhere, where the whole frame drags.
-              "studio-drag-handle pointer-events-none absolute -left-2.5 -top-2.5 z-20 flex h-6 w-6 items-center justify-center rounded-sm border border-[var(--user-accent-border)] bg-[var(--surface-elevated)] text-[var(--user-accent-text)] shadow-sm transition-opacity group-hover/frame:opacity-100 group-focus-visible/frame:opacity-100 pointer-coarse:pointer-events-auto pointer-coarse:h-9 pointer-coarse:w-9 pointer-coarse:touch-none pointer-coarse:opacity-100",
+              "studio-drag-handle pointer-events-none absolute -left-2.5 -top-2.5 z-20 flex h-6 w-6 items-center justify-center rounded-sm border border-[var(--user-accent-border)] bg-[var(--surface-elevated)] text-[var(--user-accent-text)] shadow-sm transition-opacity group-hover/frame:opacity-100 group-focus-visible/frame:opacity-100 pointer-coarse:pointer-events-auto pointer-coarse:-top-6 pointer-coarse:h-9 pointer-coarse:w-9 pointer-coarse:touch-none pointer-coarse:opacity-100",
               // Sits on the frame's corner, off the content: it used to cover
-              // the first letters of every block title.
+              // the first letters of every block title. The larger touch grip
+              // rides higher so it still clears the title.
               selected ? "opacity-100" : "opacity-0",
             )}
           >
