@@ -184,6 +184,8 @@ export type StyleSectionProps = {
   onBlockAction: (id: string, patch: Partial<LayoutBlockInstance>) => void;
   onSelect: (id: string | null) => void;
   selectedBlockId: string | null;
+  /** Blocks with nothing to show yet; visitors never see them. */
+  emptyBlockIds?: ReadonlySet<string>;
   onCompleteProfile?: () => void;
   /** Opens the shared background/appearance dialog (banner → Appearance). */
   onOpenAppearance?: () => void;
@@ -222,6 +224,7 @@ export function GStyleSections({
   onBlockAction,
   onSelect,
   selectedBlockId,
+  emptyBlockIds,
   onOpenAppearance,
   onOpenLayouts,
 }: StyleSectionProps) {
@@ -767,6 +770,11 @@ export function GStyleSections({
                           >
                             {getBlock(block.type)?.label ?? block.type}
                           </span>
+                          {block.visible !== false && emptyBlockIds?.has(block.id) && (
+                            <span className="ml-1 text-2xs text-muted-foreground-subtle">
+                              · empty, hidden from visitors
+                            </span>
+                          )}
                         </button>
                         <IconButton
                           label={

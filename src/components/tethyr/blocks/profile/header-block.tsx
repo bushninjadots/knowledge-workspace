@@ -20,6 +20,7 @@ import { ConnectButton } from "@/components/tethyr/connect-button";
 import { RequestSessionDialog } from "@/components/tethyr/sessions/request-session-dialog";
 import { useSessionRequests } from "@/hooks/use-sessions";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useActiveProject } from "@/hooks/use-active-project";
 import type { ProfileBackground } from "@/lib/background-themes";
 import { normalizeAvatarRing } from "@/lib/background-themes";
 import type { BlockProps } from "@/lib/page-blocks";
@@ -34,7 +35,7 @@ type ProfileHeaderData = {
   category: string | null;
   country: string | null;
   timezone: string | null;
-  languages: string[];
+  languages: string[] | null;
   reputation_score: number | null;
   banner_caption: string | null;
   bio: string | null;
@@ -42,8 +43,6 @@ type ProfileHeaderData = {
   background: unknown;
   public_background: unknown;
 };
-
-type ActiveProject = { id: string; title: string } | null;
 
 /** Where the avatar + identity band sits relative to the banner. */
 const PLACEMENTS = ["left", "center", "right", "below"] as const;
@@ -89,23 +88,7 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
     enabled: !!profileId,
   });
 
-  const { data: activeProject } = useQuery({
-    queryKey: ["profile-header-active-project", profileId],
-    queryFn: async (): Promise<ActiveProject> => {
-      if (!profileId) return null;
-      const { data } = await supabase
-        .from("projects")
-        .select("id, title")
-        .eq("profile_id", profileId)
-        .eq("visibility", "public")
-        .in("status", ["planning", "active"])
-        .order("updated_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      return data ? { id: data.id, title: data.title } : null;
-    },
-    enabled: !!profileId,
-  });
+  const { data: activeProject } = useActiveProject(profileId);
 
   const { data: avatarSigned } = useSignedStorageUrl("avatars", data?.avatar_url);
   const { data: bannerSigned } = useSignedStorageUrl("banners", data?.banner_url);
@@ -151,7 +134,10 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
   // Profile editing belongs to Studio editor mode. View mode stays presentation-only,
   // including on the owner's public-facing Studio route.
   const canEdit = context.isOwner === true && (context.isEditing || context.quickEdit === true);
-  const showConnect = ownerType === "profile" && !canEdit;
+  // Signed-out visitors get no buttons here (ConnectButton renders nothing
+  // for them), so don't draw the empty bordered row either.
+  const showConnect =
+    ownerType === "profile" && !canEdit && me?.userId != null && me.userId !== data.id;
   // Placement of the avatar + identity band against the banner. "left" keeps the
   // composition that predates this option, so stored layouts render unchanged.
   const placement = normalizePlacement(config.placement);
@@ -163,7 +149,9 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
     "flex",
     isCentered
       ? "flex-col items-center gap-3 text-center"
-      : "flex-col gap-4 sm:flex-row sm:items-end",
+      : // Bottom-aligned only when the avatar overlaps a banner; with no
+        // banner it would sink below a tall identity column.
+        `flex-col gap-4 sm:flex-row ${hasBannerBand && !isBelow ? "sm:items-end" : "sm:items-center"}`,
     placement === "right" ? "sm:flex-row-reverse" : "",
     hasBannerBand && !isBelow
       ? isCentered
@@ -280,7 +268,7 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
                   <Clock className="h-3.5 w-3.5" /> {data.timezone}
                 </span>
               )}
-              {data.languages.length > 0 && (
+              {data.languages && data.languages.length > 0 && (
                 <span className="inline-flex items-center gap-1">
                   <Languages className="h-3.5 w-3.5" /> {data.languages.join(", ")}
                 </span>

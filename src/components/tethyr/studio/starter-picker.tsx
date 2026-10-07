@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Check,
   Clock,
@@ -105,6 +105,7 @@ export function StarterPicker({
   onTemplateAction,
 }: StarterPickerProps) {
   const [search, setSearch] = useState("");
+  const directionsRef = useRef<HTMLElement>(null);
   const [sort, setSort] = useState<"newest" | "popular" | "starred">("newest");
   const signedIn = useIsSignedIn();
   const templates = usePublicTemplates({ search, sort });
@@ -137,6 +138,14 @@ export function StarterPicker({
     <Dialog open onOpenChange={(next) => !next && onClose()}>
       <DialogContent
         aria-label="Choose a layout"
+        // Start on the first layout, not the community search far below it.
+        onOpenAutoFocus={(event) => {
+          const first = directionsRef.current?.querySelector<HTMLElement>("button");
+          if (first) {
+            event.preventDefault();
+            first.focus();
+          }
+        }}
         className="flex max-h-[85vh] w-full max-w-4xl flex-col gap-0 overflow-hidden rounded-lg border-card-border bg-surface-elevated p-0 shadow-lg card"
       >
         {/* Right padding clears the dialog's own close button. */}
@@ -182,7 +191,7 @@ export function StarterPicker({
 
         <div className="min-h-0 flex-1 overflow-y-auto">
           {/* ── Built-in directions ─────────────────────────────────────── */}
-          <section aria-label="Built-in directions">
+          <section ref={directionsRef} aria-label="Built-in directions">
             <ul className="grid gap-3 px-5 py-4 sm:grid-cols-2 lg:grid-cols-3">
               {onStartFromScratch && (
                 <li>

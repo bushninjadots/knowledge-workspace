@@ -723,7 +723,12 @@ const RAIL_TABS: Array<[RailTab, string]> = [
 ];
 
 export function GStudioRail(
-  props: GStudioSurfaceProps & { tab: RailTab; onTabChange: (tab: RailTab | null) => void },
+  props: GStudioSurfaceProps & {
+    tab: RailTab;
+    onTabChange: (tab: RailTab | null) => void;
+    /** Blocks with nothing to show; visitors never see them. */
+    emptyBlockIds?: ReadonlySet<string>;
+  },
 ) {
   const { tab, onTabChange } = props;
   const editingArea = props.layout.sections.find((s) => s.id === props.editingAreaId);
@@ -784,6 +789,7 @@ export function GStudioRail(
             onBlockAction={props.onBlockAction}
             onSelect={props.onSelect}
             selectedBlockId={props.selectedBlockId}
+            emptyBlockIds={props.emptyBlockIds}
             onCompleteProfile={props.onCompleteProfile}
             onOpenAppearance={props.onOpenAppearance}
             onOpenLayouts={props.onOpenTemplates}

@@ -6,6 +6,7 @@ import { Link } from "@tanstack/react-router";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BlockEmptyState } from "@/components/tethyr/blocks/block-empty-state";
 import { registerBlock } from "@/lib/block-registry";
+import { useActiveProject } from "@/hooks/use-active-project";
 import type { BlockProps } from "@/lib/page-blocks";
 
 const AVAIL_LABEL: Record<string, string> = {
@@ -17,7 +18,6 @@ const AVAIL_LABEL: Record<string, string> = {
 type DirData = {
   availability: string | null;
   learning_goals: string | null;
-  active_project: { id: string; title: string } | null;
 };
 
 function ProfileDirectionBlock({ config, context }: BlockProps) {
@@ -33,45 +33,25 @@ function ProfileDirectionBlock({ config, context }: BlockProps) {
         .eq("id", profileId)
         .maybeSingle();
       if (!d) return null;
-      let activeProject: DirData["active_project"] = null;
-      try {
-        const { data: contrib } = await supabase
-          .from("project_contributors")
-          .select("project_id, role, projects!inner(id, title, status)")
-          .eq("profile_id", profileId)
-          .eq("role", "creator")
-          .limit(1);
-        if (contrib?.length) {
-          const p = (
-            contrib[0] as unknown as {
-              projects: { id: string; title: string; status: string } | null;
-            }
-          ).projects;
-          if (p && (p.status === "active" || p.status === "planning"))
-            activeProject = { id: p.id, title: p.title };
-        }
-      } catch {
-        // Non-critical — direction falls back to availability + goals only.
-      }
       return {
         availability: d.availability ?? null,
         learning_goals: d.learning_goals ?? null,
-        active_project: activeProject,
       };
     },
     enabled: !!profileId,
   });
+  const { data: activeProject, isLoading: projectLoading } = useActiveProject(profileId);
   const hasContent =
     !!data &&
-    ((config.showProject !== false && !!data.active_project) ||
+    ((config.showProject !== false && !!activeProject) ||
       (config.showAvailability !== false && !!data.availability) ||
       (config.showGoals !== false && !!data.learning_goals));
   useEffect(() => {
-    if (isLoading || !blockId) return;
+    if (isLoading || projectLoading || !blockId) return;
     onBlockEmptyChange?.(blockId, !hasContent);
-  }, [blockId, hasContent, isEditing, isLoading, onBlockEmptyChange]);
+  }, [blockId, hasContent, isEditing, isLoading, projectLoading, onBlockEmptyChange]);
 
-  if (isLoading) return <Skeleton className="h-20 w-full rounded-xl" />;
+  if (isLoading || projectLoading) return <Skeleton className="h-20 w-full rounded-xl" />;
   if (!data || !hasContent) {
     if (context.isEditing)
       return (
@@ -88,10 +68,10 @@ function ProfileDirectionBlock({ config, context }: BlockProps) {
     // tile ~59px wide and the labels broke one letter per line. The word
     // floor (~"collaboration") pushes tiles to their own row below it.
     <div className="flex flex-wrap gap-3">
-      {data.active_project && config.showProject !== false && (
+      {activeProject && config.showProject !== false && (
         <Link
           to="/projects/$id"
-          params={{ id: data.active_project.id }}
+          params={{ id: activeProject.id }}
           className="min-w-[9rem] flex-1 rounded-lg border border-border bg-surface p-3 hover:bg-surface-elevated transition-colors group"
         >
           <Hammer className="h-4 w-4 text-muted-foreground mb-1" />
@@ -99,7 +79,7 @@ function ProfileDirectionBlock({ config, context }: BlockProps) {
             Building now
           </p>
           <p className="mt-1 text-sm font-medium group-hover:text-primary transition-colors flex items-center gap-1">
-            {data.active_project.title}
+            {activeProject.title}
             <ArrowUpRight className="h-3 w-3 opacity-0 group-hover:opacity-100" />
           </p>
         </Link>

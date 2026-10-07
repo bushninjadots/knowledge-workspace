@@ -616,6 +616,7 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
           <GStudioRail
             {...props}
             editingAreaId={editingAreaId}
+            emptyBlockIds={emptyBlocks}
             tab={railTab}
             onTabChange={setRailTab}
           />

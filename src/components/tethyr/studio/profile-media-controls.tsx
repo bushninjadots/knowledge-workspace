@@ -74,8 +74,11 @@ export function ProfileMediaControls({
   const bannerPreviewUrl = bannerUrl?.startsWith("http") ? bannerUrl : signedBannerUrl;
   const isAnimatedBanner = Boolean(bannerUrl?.toLowerCase().split("?")[0].endsWith(".gif"));
 
+  // Its own key: the header block caches the full profile row under
+  // ["profile-header-block", id], and sharing that key with this narrower
+  // select overwrote the block's data and crashed it after a save.
   const { data: identity, isLoading: identityLoading } = useQuery({
-    queryKey: ["profile-header-block", ownerId],
+    queryKey: ["profile-identity", ownerId],
     queryFn: async (): Promise<IdentityRow | null> => {
       const { data } = await supabase
         .from("profiles")
@@ -177,6 +180,7 @@ export function ProfileMediaControls({
         })
         .eq("id", ownerId);
       if (error) throw error;
+      await queryClient.invalidateQueries({ queryKey: ["profile-identity", ownerId] });
       await queryClient.invalidateQueries({ queryKey: ["profile-header-block", ownerId] });
       await queryClient.invalidateQueries({ queryKey: ["current-user"] });
       toast.success("Identity updated");
