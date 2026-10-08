@@ -12,12 +12,15 @@ export function ProfileLink({
   children,
   title,
   style,
+  ariaLabel,
 }: {
   handle: string | null | undefined;
   className?: string;
   children: ReactNode;
   title?: string;
   style?: CSSProperties;
+  /** For links whose visible text can be hidden (avatar-only on phones). */
+  ariaLabel?: string;
 }) {
   if (!handle) {
     return (
@@ -27,7 +30,14 @@ export function ProfileLink({
     );
   }
   return (
-    <Link to="/u/$handle" params={{ handle }} className={className} title={title} style={style}>
+    <Link
+      to="/u/$handle"
+      params={{ handle }}
+      className={className}
+      title={title}
+      style={style}
+      aria-label={ariaLabel}
+    >
       {children}
     </Link>
   );

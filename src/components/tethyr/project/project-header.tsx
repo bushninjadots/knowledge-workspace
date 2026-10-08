@@ -141,13 +141,17 @@ export function ProjectHeader({
     "inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/40 px-2.5 py-0.5 text-[11px] text-muted-foreground transition-lift hover:text-foreground";
   const [copied, setCopied] = useState(false);
 
-  const copyLink = () => {
-    if (!navigator.clipboard?.writeText) return;
-    navigator.clipboard.writeText(window.location.href).then(() => {
+  // A refused or missing clipboard used to do nothing at all (and threw);
+  // say so, like the Library's copy buttons.
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
       setCopied(true);
       toast.success("Link copied");
       window.setTimeout(() => setCopied(false), 1600);
-    });
+    } catch {
+      toast.error("Couldn't copy the link — copy it from the address bar instead.");
+    }
   };
 
   return (
@@ -206,11 +210,13 @@ export function ProjectHeader({
                 {project.visibility === "private" ? "Private" : "Public"}
               </span>
               {project.is_featured && (
-                <Trophy
-                  className="h-4 w-4 shrink-0 text-primary"
-                  role="img"
-                  aria-label="Featured"
-                />
+                <span title="Featured project" className="inline-flex">
+                  <Trophy
+                    className="h-4 w-4 shrink-0 text-primary"
+                    role="img"
+                    aria-label="Featured project"
+                  />
+                </span>
               )}
               <AiIndicator
                 projectId={project.id}
@@ -247,6 +253,7 @@ export function ProjectHeader({
                   role="creator"
                   avatarSrc={avatarSigned[creator.profile_id]}
                   size="sm"
+                  alwaysShowName
                   className="text-muted-foreground hover:text-foreground"
                 />
               )}
@@ -277,7 +284,7 @@ export function ProjectHeader({
                       <button
                         type="button"
                         onClick={onOpenPeople}
-                        className="ml-1.5 rounded-md text-left text-xs text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--trust))]"
+                        className="ml-1.5 inline-flex min-h-6 items-center rounded-md text-left text-xs text-muted-foreground underline-offset-4 pointer-coarse:min-h-10 transition-colors hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--trust))]"
                         aria-label={`View ${others.length} collaborator${others.length !== 1 ? "s" : ""}`}
                       >
                         {others.length} collaborator{others.length !== 1 ? "s" : ""}
@@ -416,10 +423,11 @@ export function ProjectHeader({
             {openNeedCount > 0 && (
               <button
                 onClick={onOpenNeeds}
-                className="inline-flex items-center gap-1.5 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs font-medium text-destructive transition-lift hover:bg-destructive/10"
+                // "Help wanted", not an error: accent, never destructive red.
+                className="inline-flex items-center gap-1.5 rounded-md border border-[var(--user-accent-border,var(--border-strong))] bg-[var(--user-accent-subtle,var(--surface))] px-3 py-2 text-xs font-medium text-[var(--user-accent-text,var(--foreground))] transition-lift hover:border-[var(--user-accent,var(--border-strong))]"
               >
                 <Zap className="h-3.5 w-3.5" />
-                {openNeedCount} need{openNeedCount !== 1 ? "s" : ""}
+                {openNeedCount} open need{openNeedCount !== 1 ? "s" : ""}
               </button>
             )}
             {communityPostCount > 0 && (
@@ -442,7 +450,7 @@ export function ProjectHeader({
               </button>
             )}
             <button
-              onClick={copyLink}
+              onClick={() => void copyLink()}
               className="inline-flex items-center justify-center rounded-md border border-border/60 bg-surface px-3 py-2 text-muted-foreground transition-lift hover:border-border-strong hover:text-foreground"
               aria-label="Copy link"
               title="Copy link"
@@ -470,11 +478,13 @@ export function ProjectHeader({
 
         {/* Progress strip */}
         <div className="mt-5 flex items-center gap-3" aria-label="Project progress">
+          {/* The builder's own measure. Milestones have their own count in
+              Current work, so this never claims "complete". */}
           <span
-            className="hidden shrink-0 text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground sm:inline"
+            className="shrink-0 text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground"
             title="Set by the builder, and nudged along by completed milestones and recent activity"
           >
-            Momentum
+            Progress
           </span>
           <div
             className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-elevated"
@@ -482,7 +492,7 @@ export function ProjectHeader({
             aria-valuenow={project.progress_percent}
             aria-valuemin={0}
             aria-valuemax={100}
-            aria-label={`${project.progress_percent}% complete`}
+            aria-label={`Progress ${project.progress_percent}%`}
           >
             <div
               className="h-full rounded-full bg-[var(--user-accent,var(--foreground))] transition-[width]"
@@ -490,8 +500,7 @@ export function ProjectHeader({
             />
           </div>
           <span className="shrink-0 text-xs font-medium text-foreground tabular-nums">
-            {project.progress_percent}%{" "}
-            <span className="font-normal text-muted-foreground">complete</span>
+            {project.progress_percent}%
           </span>
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">

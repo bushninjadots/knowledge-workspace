@@ -101,7 +101,7 @@ export function ProjectCommunityPosts({ projectId }: { projectId: string }) {
     <div className="rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
       <div className="mb-4 flex items-center gap-2 text-sm font-medium text-foreground/80">
         <MessageCircle className="h-4 w-4" />
-        Community Discussions
+        Community posts
       </div>
       {posts.length === 0 ? (
         <p className="text-sm text-muted-foreground">

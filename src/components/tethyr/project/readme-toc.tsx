@@ -88,13 +88,14 @@ export function ReadmeTocCollapsed({ sections }: { sections: TocSection[] }) {
           {items.length} section{items.length !== 1 ? "s" : ""}
         </span>
       </summary>
-      <ul className="space-y-1 px-4 pb-3">
+      <ul className="px-4 pb-3">
         {items.map((item) => (
           <li key={item.id}>
+            {/* This list only shows on small screens: touch-sized rows. */}
             <a
               href={`#${item.id}`}
               className={cn(
-                "block truncate text-[13px] text-muted-foreground transition-lift hover:text-foreground",
+                "block truncate py-0.5 text-[13px] pointer-coarse:py-2.5 text-muted-foreground transition-lift hover:text-foreground",
                 item.level === 3 && "pl-3",
               )}
             >

@@ -13,7 +13,6 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useProjectWatchStatus, useToggleProjectWatch } from "@/hooks/use-project-loop";
-import { getSeasonMeta } from "@/lib/project-seasons";
 import type {
   GalleryItem,
   MilestoneRow,
@@ -75,7 +74,6 @@ export function ProjectWorkbench({
   const openRolesCount = openRoles.filter((role) => !role.is_filled).length;
   const watchStatus = useProjectWatchStatus(project.id);
   const toggleWatch = useToggleProjectWatch();
-  const seasonMeta = getSeasonMeta(project.season);
   const next = chooseNextAction({
     project,
     gallery,
@@ -120,9 +118,6 @@ export function ProjectWorkbench({
             <p id="project-workbench-heading" className="section-label">
               Project workbench
             </p>
-            <span className="rounded-full border border-[var(--user-accent-border,var(--border-strong))] bg-[var(--user-accent-subtle,var(--surface-elevated))] px-2 py-0.5 text-[11px] font-medium text-foreground">
-              {seasonMeta.label}
-            </span>
           </div>
           <p className="mt-1 truncate text-base font-semibold tracking-tight">{next.title}</p>
           <p className="mt-0.5 text-xs text-muted-foreground">{next.description}</p>

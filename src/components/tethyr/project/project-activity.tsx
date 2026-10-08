@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -211,6 +211,7 @@ export function ProjectActivityTab({
   isContributor,
   isOwner,
   openWeeklyPrompt = false,
+  postRequest = 0,
 }: {
   projectId: string;
   milestones: MilestoneRow[];
@@ -221,6 +222,8 @@ export function ProjectActivityTab({
   isContributor: boolean;
   isOwner: boolean;
   openWeeklyPrompt?: boolean;
+  /** Bumped by the header's "Post update": open the update form here. */
+  postRequest?: number;
 }) {
   const createUpdate = useCreateProjectUpdate();
   const createContribution = useCreateProjectContribution();
@@ -287,6 +290,15 @@ export function ProjectActivityTab({
     window.addEventListener("tethyr:project-activity-focus", focusContribution);
     return () => window.removeEventListener("tethyr:project-activity-focus", focusContribution);
   }, []);
+
+  const postTitleRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!postRequest) return;
+    setShowContribution(false);
+    setShowPost(true);
+    // After the form renders and the page has scrolled to it.
+    window.setTimeout(() => postTitleRef.current?.focus({ preventScroll: true }), 350);
+  }, [postRequest]);
 
   useEffect(() => {
     if (!openWeeklyPrompt) return;
@@ -524,6 +536,7 @@ export function ProjectActivityTab({
         {showPost && (
           <div className="mb-4 space-y-2 rounded-xl border border-border/60 bg-background/40 p-3">
             <Input
+              ref={postTitleRef}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="What did you get done?"
@@ -592,7 +605,7 @@ export function ProjectActivityTab({
                             <Link
                               to="/u/$handle"
                               params={{ handle: item.authorHandle }}
-                              className="font-medium hover:underline"
+                              className="inline-flex min-h-6 items-center font-medium hover:underline"
                             >
                               {item.authorName}
                             </Link>
@@ -642,7 +655,7 @@ export function ProjectActivityTab({
                                       kind,
                                     })
                                   }
-                                  className="rounded-full border border-border/60 px-2 py-0.5 text-[10px] text-muted-foreground transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground disabled:cursor-default disabled:opacity-60"
+                                  className="inline-flex min-h-6 items-center rounded-full border border-border/60 px-2 py-0.5 text-[10px] pointer-coarse:min-h-10 text-muted-foreground transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground disabled:cursor-default disabled:opacity-60"
                                 >
                                   {already
                                     ? `✓ ${RECOGNITION_LABELS[kind]}`

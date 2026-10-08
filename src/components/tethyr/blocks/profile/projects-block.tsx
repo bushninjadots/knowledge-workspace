@@ -16,7 +16,7 @@ import { registerBlock } from "@/lib/block-registry";
 import { contributionRoleVerb } from "@/lib/contribution-role";
 import { useProjectOpenWork, hasOpenWork, type ProjectOpenWork } from "@/hooks/use-profile-work";
 import { OpenWorkBadge } from "@/components/tethyr/open-work-badge";
-import { PROJECT_STATUS_LABEL, type ProjectStatus } from "@/components/tethyr/profile/types";
+import { projectStatusWord } from "@/lib/project-status";
 import {
   getProfileProjectPresentation,
   PROFILE_PROJECT_PRESENTATIONS,
@@ -31,6 +31,7 @@ type ProjectRow = {
     title: string;
     description: string | null;
     status: string;
+    stage?: string | null;
     progress_percent: number;
     cover_url: string | null;
   } | null;
@@ -61,7 +62,7 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
       const { data: memberships } = await supabase
         .from("project_contributors")
         .select(
-          "project_id, role, projects(id, title, description, status, progress_percent, cover_url)",
+          "project_id, role, projects(id, title, description, status, stage, progress_percent, cover_url)",
         )
         .eq("profile_id", profileId)
         .limit(projectLimit);
@@ -162,6 +163,7 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
       title: string;
       description: string | null;
       status: string;
+      stage?: string | null;
       progress_percent: number;
     },
     role: string,
@@ -179,7 +181,7 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
         <OpenWorkBadge openWork={openWork} projectId={project.id} />
         {showStatus && (
           <span className="rounded-full bg-surface-sunken px-2 py-0.5 text-[11px] leading-snug text-muted-foreground">
-            {PROJECT_STATUS_LABEL[project.status as ProjectStatus] ?? project.status}
+            {projectStatusWord(project.status, project.stage)}
           </span>
         )}
         {showProgress && project.progress_percent > 0 && (
@@ -213,7 +215,7 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
                 {contributionRoleVerb(role)}
                 {showStatus && project.status ? (
                   <span className="ml-2 text-muted-foreground/70">
-                    {PROJECT_STATUS_LABEL[project.status as ProjectStatus] ?? project.status}
+                    {projectStatusWord(project.status, project.stage)}
                   </span>
                 ) : null}
               </p>
@@ -321,8 +323,7 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
               <OpenWorkBadge openWork={openWork} projectId={featured.project.id} />
               {showStatus && (
                 <span className="rounded-full bg-surface-sunken px-2 py-0.5 text-[11px] leading-snug text-muted-foreground">
-                  {PROJECT_STATUS_LABEL[featured.project.status as ProjectStatus] ??
-                    featured.project.status}
+                  {projectStatusWord(featured.project.status, featured.project.stage)}
                 </span>
               )}
               {showProgress && featured.project.progress_percent > 0 && (

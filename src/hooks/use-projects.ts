@@ -752,15 +752,17 @@ export function useCreateProjectNeed() {
 export function useFillProjectNeed() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { id: string; projectId: string }) => {
+    /** `filled: false` reopens a need (the undo for an accidental fill). */
+    mutationFn: async (input: { id: string; projectId: string; filled?: boolean }) => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      const filled = input.filled ?? true;
       const { error } = await sb
         .from("project_needs")
-        .update({ is_filled: true, filled_by: user.id })
+        .update({ is_filled: filled, filled_by: filled ? user.id : null })
         .eq("id", input.id);
       if (error) throw error;
     },

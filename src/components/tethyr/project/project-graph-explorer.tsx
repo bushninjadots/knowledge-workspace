@@ -182,7 +182,7 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
         </div>
         <button
           type="button"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          className="inline-flex min-h-6 items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground pointer-coarse:min-h-10"
           aria-expanded={expanded}
           onClick={() => setExpanded((value) => !value)}
         >
@@ -205,7 +205,7 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
                 aria-pressed={mode === value}
                 onClick={() => setMode(value)}
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs transition-colors",
+                  "inline-flex min-h-6 items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs transition-colors pointer-coarse:min-h-10",
                   mode === value
                     ? "border-user-accent-border bg-accent text-foreground"
                     : "border-border/70 text-muted-foreground hover:border-border-strong hover:text-foreground",
@@ -424,7 +424,7 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
                       aria-pressed={browseView === value}
                       onClick={() => setBrowseView(value)}
                       className={cn(
-                        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs transition-colors",
+                        "inline-flex min-h-6 items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs transition-colors pointer-coarse:min-h-10",
                         browseView === value
                           ? "border-user-accent-border bg-accent text-foreground"
                           : "border-border/70 text-muted-foreground hover:border-border-strong hover:text-foreground",
@@ -467,7 +467,7 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
                         aria-pressed={active}
                         onClick={() => toggleType(type)}
                         className={cn(
-                          "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs transition-colors",
+                          "inline-flex min-h-6 items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs transition-colors pointer-coarse:min-h-10",
                           active
                             ? "border-user-accent-border bg-accent text-foreground"
                             : "border-border/70 text-muted-foreground hover:border-border-strong hover:text-foreground",
@@ -496,7 +496,7 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
                         aria-pressed={active}
                         onClick={() => toggleEdgeType(type)}
                         className={cn(
-                          "rounded-full border px-2.5 py-0.5 text-xs transition-colors",
+                          "inline-flex min-h-6 items-center rounded-full border px-2.5 py-0.5 text-xs transition-colors pointer-coarse:min-h-10",
                           active
                             ? "border-user-accent-border bg-accent text-foreground"
                             : "border-border/70 text-muted-foreground hover:border-border-strong hover:text-foreground",
@@ -517,7 +517,7 @@ export function ProjectGraphExplorer({ input }: { input: ProjectGraphInput }) {
                   <button
                     type="button"
                     onClick={clearFilters}
-                    className="underline underline-offset-4 transition-colors hover:text-foreground"
+                    className="inline-flex min-h-6 items-center underline underline-offset-4 transition-colors hover:text-foreground pointer-coarse:min-h-10"
                   >
                     Clear filters
                   </button>

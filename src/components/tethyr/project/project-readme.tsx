@@ -462,67 +462,73 @@ export function ProjectReadmeTab({
             </div>
           )}
 
-          <h2 className="mt-6 flex items-center gap-2 text-sm font-medium text-foreground/80">
-            <Wrench className="h-4 w-4 text-muted-foreground" />
-            Tools
-            {isOwner && !addingTool && tools.length < 12 && (
-              <button
-                onClick={() => setAddingTool(true)}
-                className="inline-flex items-center gap-1 rounded-full border border-border/60 px-2.5 py-0.5 text-[11px] text-muted-foreground transition-lift hover:text-foreground"
-              >
-                <Plus className="h-3 w-3" />
-                Add
-              </button>
-            )}
-          </h2>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            {tools.map((t) => (
-              <span
-                key={t}
-                className="group inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/40 px-3 py-1 text-xs text-muted-foreground"
-              >
-                {t}
-                {isOwner && (
+          {/* Visitors only see Tools when there are some; the owner gets the
+              prompt to add them. */}
+          {(isOwner || tools.length > 0) && (
+            <>
+              <h2 className="mt-6 flex items-center gap-2 text-sm font-medium text-foreground/80">
+                <Wrench className="h-4 w-4 text-muted-foreground" />
+                Tools
+                {isOwner && !addingTool && tools.length < 12 && (
                   <button
-                    onClick={() => toggleTool(t)}
-                    aria-label={`Remove ${t}`}
-                    className="opacity-0 transition-fade group-hover:opacity-100 hover:text-destructive"
+                    onClick={() => setAddingTool(true)}
+                    className="inline-flex items-center gap-1 rounded-full border border-border/60 px-2.5 py-0.5 text-[11px] text-muted-foreground transition-lift hover:text-foreground"
                   >
-                    <X className="h-3 w-3" />
+                    <Plus className="h-3 w-3" />
+                    Add
                   </button>
                 )}
-              </span>
-            ))}
-            {addingTool && (
-              <span className="inline-flex items-center gap-1.5">
-                <input
-                  value={toolDraft}
-                  onChange={(e) => setToolDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && toolDraft.trim()) toggleTool(toolDraft.trim());
-                    if (e.key === "Escape") setAddingTool(false);
-                  }}
-                  autoFocus
-                  placeholder="e.g. Figma, VS Code, Docker"
-                  className="w-44 rounded-full border border-border/60 bg-background px-3 py-1 text-xs outline-none focus:border-primary/50"
-                  aria-label="Add a tool"
-                />
-                <button
-                  onClick={() => toolDraft.trim() && toggleTool(toolDraft.trim())}
-                  className="rounded-full bg-primary px-2.5 py-1 text-[11px] font-medium text-background"
-                >
-                  Add
-                </button>
-              </span>
-            )}
-            {tools.length === 0 && !addingTool && (
-              <p className="text-xs text-muted-foreground">
-                {isOwner
-                  ? "Add the tools used to build and manage this project."
-                  : "No tools listed."}
-              </p>
-            )}
-          </div>
+              </h2>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                {tools.map((t) => (
+                  <span
+                    key={t}
+                    className="group inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/40 px-3 py-1 text-xs text-muted-foreground"
+                  >
+                    {t}
+                    {isOwner && (
+                      <button
+                        onClick={() => toggleTool(t)}
+                        aria-label={`Remove ${t}`}
+                        className="opacity-0 transition-fade group-hover:opacity-100 hover:text-destructive"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    )}
+                  </span>
+                ))}
+                {addingTool && (
+                  <span className="inline-flex items-center gap-1.5">
+                    <input
+                      value={toolDraft}
+                      onChange={(e) => setToolDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && toolDraft.trim()) toggleTool(toolDraft.trim());
+                        if (e.key === "Escape") setAddingTool(false);
+                      }}
+                      autoFocus
+                      placeholder="e.g. Figma, VS Code, Docker"
+                      className="w-44 rounded-full border border-border/60 bg-background px-3 py-1 text-xs outline-none focus:border-primary/50"
+                      aria-label="Add a tool"
+                    />
+                    <button
+                      onClick={() => toolDraft.trim() && toggleTool(toolDraft.trim())}
+                      className="rounded-full bg-primary px-2.5 py-1 text-[11px] font-medium text-background"
+                    >
+                      Add
+                    </button>
+                  </span>
+                )}
+                {tools.length === 0 && !addingTool && (
+                  <p className="text-xs text-muted-foreground">
+                    {isOwner
+                      ? "Add the tools used to build and manage this project."
+                      : "No tools listed."}
+                  </p>
+                )}
+              </div>
+            </>
+          )}
         </section>
       )}
 

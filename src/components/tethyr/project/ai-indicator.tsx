@@ -70,7 +70,7 @@ export function AiIndicator({
           type="button"
           onClick={handleToggle}
           disabled={toggle.isPending}
-          className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] transition-lift ${
+          className={`inline-flex min-h-6 shrink-0 items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] transition-lift pointer-coarse:min-h-10 ${
             aiUserTagged
               ? "border-[var(--ai)]/30 bg-[var(--ai)]/10 text-[var(--ai)]"
               : "border-border/60 bg-background/40 text-muted-foreground hover:border-border-strong hover:text-foreground"

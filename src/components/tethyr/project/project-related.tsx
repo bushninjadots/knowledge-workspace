@@ -36,7 +36,10 @@ export function RelatedProjectsSection({
   if (!isPending && (!data || data.length === 0)) return null;
 
   return (
-    <section aria-labelledby="project-related-heading" className="content-safe mt-5">
+    <section
+      aria-labelledby="project-related-heading"
+      className="content-safe mt-10 border-t border-border/60 pt-8"
+    >
       <div className="flex items-baseline gap-2">
         <Compass className="mb-1 h-4 w-4 self-end text-muted-foreground" aria-hidden="true" />
         <h2

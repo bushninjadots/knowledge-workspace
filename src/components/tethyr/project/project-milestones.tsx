@@ -145,7 +145,7 @@ export function MilestonesTimeline({
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="text-base font-semibold tracking-tight text-foreground">Roadmap</h3>
             <Badge variant="secondary" className="rounded-full text-[10px]">
-              {doneCount}/{milestones.length} complete
+              {doneCount} of {milestones.length} milestone{milestones.length === 1 ? "" : "s"} done
             </Badge>
           </div>
           <p className="mt-1 max-w-xl text-xs leading-relaxed text-muted-foreground">
@@ -219,8 +219,8 @@ export function MilestonesTimeline({
               aria-pressed={view === "all"}
               className={
                 view === "all"
-                  ? "text-xs font-medium text-foreground"
-                  : "text-xs text-muted-foreground hover:text-foreground"
+                  ? "inline-flex min-h-6 items-center text-xs font-medium text-foreground pointer-coarse:min-h-10"
+                  : "inline-flex min-h-6 items-center text-xs text-muted-foreground hover:text-foreground pointer-coarse:min-h-10"
               }
             >
               All work
@@ -232,8 +232,8 @@ export function MilestonesTimeline({
               aria-pressed={view === "active"}
               className={
                 view === "active"
-                  ? "text-xs font-medium text-foreground"
-                  : "text-xs text-muted-foreground hover:text-foreground"
+                  ? "inline-flex min-h-6 items-center text-xs font-medium text-foreground pointer-coarse:min-h-10"
+                  : "inline-flex min-h-6 items-center text-xs text-muted-foreground hover:text-foreground pointer-coarse:min-h-10"
               }
             >
               Now & next
@@ -268,14 +268,17 @@ export function MilestonesTimeline({
           )}
         </div>
       ) : (
-        <div className="mt-5 -mx-1 overflow-x-auto px-1 pb-2" aria-label="Project roadmap board">
+        <div className="mt-5 -mx-1 px-1 pb-2 md:overflow-x-auto" aria-label="Project roadmap board">
           <DndContext
             sensors={sensors}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
             onDragCancel={() => setDragMilestone(null)}
           >
-            <div className="grid min-w-[48rem] grid-cols-3 gap-3">
+            {/* Phones stack the columns: side by side they scrolled sideways
+                and an empty "Up next" filled the screen while the work in
+                motion sat off to the right. */}
+            <div className="grid grid-cols-1 gap-3 md:min-w-[48rem] md:grid-cols-3">
               {COLUMNS.map(({ status, label, icon }) => (
                 <MilestoneColumn
                   key={status}
@@ -419,7 +422,7 @@ function MilestoneColumn({
     <section
       ref={setNodeRef}
       aria-labelledby={`roadmap-${status}`}
-      className={`flex min-h-44 flex-col rounded-lg p-3 transition-colors ${
+      className={`flex min-h-24 flex-col rounded-lg p-3 transition-colors md:min-h-44 ${
         isOver
           ? "bg-surface-elevated/70 ring-1 ring-inset ring-[var(--user-accent-border,var(--border-strong))]"
           : "bg-background/45"

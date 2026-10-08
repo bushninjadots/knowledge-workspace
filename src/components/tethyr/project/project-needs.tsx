@@ -94,7 +94,16 @@ export function ProjectNeeds({
   const handleFill = async (n: ProjectNeedRow) => {
     try {
       await fillNeed.mutateAsync({ id: n.id, projectId });
-      toast.success("Marked as filled");
+      // One click on a small icon closes a need, so it can be put back.
+      toast.success("Marked as filled", {
+        action: {
+          label: "Undo",
+          onClick: () =>
+            void fillNeed
+              .mutateAsync({ id: n.id, projectId, filled: false })
+              .catch(() => toast.error("Couldn't reopen that need")),
+        },
+      });
     } catch {
       toast.error("Failed to mark filled");
     }

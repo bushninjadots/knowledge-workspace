@@ -26,7 +26,7 @@ import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import { useProfileWork, useProjectOpenWork, hasOpenWork } from "@/hooks/use-profile-work";
 import { useProfileRepoSnapshot } from "@/hooks/use-profile-repo-snapshot";
 import { contributionRoleVerb } from "@/lib/contribution-role";
-import { PROJECT_STATUS_LABEL, type ProjectStatus } from "@/components/tethyr/profile/types";
+import { projectStatusWord } from "@/lib/project-status";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PersonPill } from "@/components/tethyr/person-pill";
 import { OpenWorkBadge } from "@/components/tethyr/open-work-badge";
@@ -155,7 +155,7 @@ function WorkRow({
 }) {
   const { data: coverSigned } = useSignedStorageUrl("project-media", project.cover_url);
   const src = coverSigned ?? (project.cover_url?.startsWith("http") ? project.cover_url : null);
-  const status = PROJECT_STATUS_LABEL[project.status as ProjectStatus] ?? project.status;
+  const status = projectStatusWord(project.status, project.stage);
 
   return (
     <li className="group relative">
@@ -241,6 +241,7 @@ type ProfileWorkProjectRow = {
   title: string;
   description: string | null;
   status: string;
+  stage?: string | null;
   cover_url: string | null;
   role: string;
 };

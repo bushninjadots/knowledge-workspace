@@ -16,6 +16,7 @@ export function PersonPill({
   avatarSrc,
   size = "md",
   className,
+  alwaysShowName = false,
 }: {
   handle?: string | null;
   name?: string | null;
@@ -24,6 +25,9 @@ export function PersonPill({
   avatarSrc?: string | null;
   size?: "sm" | "md" | "lg";
   className?: string;
+  /** Keep the name on phones too (it is avatar-only there by default) —
+   *  for places where who it is matters, like a project's creator. */
+  alwaysShowName?: boolean;
 }) {
   const sizeCls =
     size === "sm"
@@ -42,6 +46,8 @@ export function PersonPill({
         className,
       )}
       title={caption ? `${name ?? handle ?? ""}: ${caption}` : (name ?? undefined)}
+      // On phones the name text is hidden, so the link names the person itself.
+      ariaLabel={caption ? `${name ?? handle ?? ""}, ${caption}` : (name ?? handle ?? undefined)}
     >
       <span
         className={cn(
@@ -65,7 +71,12 @@ export function PersonPill({
           </span>
         )}
       </span>
-      <span className="hidden min-w-0 flex-col gap-0.5 leading-tight sm:flex">
+      <span
+        className={cn(
+          "min-w-0 flex-col gap-0.5 leading-tight",
+          alwaysShowName ? "flex" : "hidden sm:flex",
+        )}
+      >
         <span className="truncate text-xs font-medium text-foreground group-hover:text-[var(--user-accent-text,var(--trust))]">
           {name ?? handle ?? "Unknown"}
         </span>

@@ -62,7 +62,7 @@ function useRoleApplications(roleId: string) {
 
 export function ApplyToRoleButton({
   roleId,
-  projectId: _projectId,
+  projectId,
   isOwner,
   meId,
   myStatus,
@@ -190,6 +190,8 @@ export function ApplyToRoleButton({
     return (
       <Link
         to="/login"
+        // Back to this project after signing in, like the other sign-in links.
+        search={{ redirect: `/projects/${projectId}` }}
         className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/40 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-lift hover:border-ai/40 hover:text-ai"
       >
         <HandHeart className="h-3 w-3" />
@@ -233,7 +235,7 @@ export function ApplyToRoleButton({
           variant="link"
           size="sm"
           onClick={() => setShowGuidance(!showGuidance)}
-          className="h-auto justify-start p-0 text-[11px]"
+          className="h-auto min-h-6 justify-start p-0 text-[11px] pointer-coarse:min-h-10"
         >
           {showGuidance ? "Hide application guidance" : "What makes a useful application?"}
         </Button>

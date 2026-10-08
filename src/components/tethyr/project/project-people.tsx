@@ -126,7 +126,7 @@ export function ProjectPeopleTab({
                     <button
                       type="button"
                       onClick={onOpenNeeds}
-                      className="inline-flex items-center gap-1 font-medium text-[var(--user-accent-text,var(--trust))] underline-offset-2 hover:underline"
+                      className="inline-flex min-h-6 items-center gap-1 font-medium text-[var(--user-accent-text,var(--trust))] underline-offset-2 hover:underline pointer-coarse:min-h-10"
                     >
                       <Zap className="h-3 w-3" />
                       {openNeedCount} open need{openNeedCount !== 1 ? "s" : ""}
@@ -282,7 +282,7 @@ export function ProjectPeopleTab({
                     )}
                     {c.contribution_score > 0 && (
                       <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary tabular-nums">
-                        {c.contribution_score} pts
+                        {c.contribution_score} {c.contribution_score === 1 ? "pt" : "pts"}
                       </span>
                     )}
                     <div className="hidden min-w-0 flex-wrap items-center gap-1 md:flex">
@@ -336,7 +336,7 @@ export function ProjectPeopleTab({
           )}
         </div>
         <OpenRolesSection roles={openRoles} projectId={projectId} isOwner={isOwner} />
-        {openRoles.length === 0 && !isContributor && (
+        {unfilledRoles.length === 0 && !isContributor && !isOwner && (
           <div className="rounded-xl bg-surface-elevated/30 p-4 text-center">
             <HandHeart className="mx-auto h-6 w-6 text-muted-foreground/40" />
             <p className="mt-2 text-sm text-muted-foreground">

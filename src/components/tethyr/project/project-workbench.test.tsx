@@ -191,7 +191,9 @@ describe("Project Workbench", () => {
     expect(await screen.findByRole("option", { name: "Demo first" })).toBeInTheDocument();
   });
 
-  it("surfaces the current season as a chip", () => {
+  // The project header carries the one status word; a second "season"
+  // chip here contradicted it ("Planning" above, "Building" here).
+  it("does not repeat a status chip of its own", () => {
     renderWithProviders(
       <ProjectWorkbench
         project={makeProject({ season: "prototype" })}
@@ -204,8 +206,8 @@ describe("Project Workbench", () => {
         onAction={vi.fn()}
       />,
     );
-
-    expect(screen.getByText("Prototype")).toBeInTheDocument();
+    expect(screen.queryByText("Prototype")).toBeNull();
+    expect(screen.queryByText("Building")).toBeNull();
   });
 
   it("shows visible saved feedback after a preset change", () => {

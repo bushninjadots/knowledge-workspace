@@ -92,6 +92,9 @@ export function ResourcesSection({
     }
   };
 
+  // Visitors don't need an empty "Resources" box; the owner keeps it to add one.
+  if (!isOwner && resources.length === 0) return null;
+
   return (
     <div className="rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
       <div className="mb-4 flex items-center justify-between">

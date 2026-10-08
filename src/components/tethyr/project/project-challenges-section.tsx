@@ -21,6 +21,12 @@ export function ProjectChallengesSection({
   challenges: ProjectChallenge[];
   canCreate: boolean;
 }) {
+  // Visitors can't start one, so an empty section is noise for them.
+  if (challenges.length === 0 && !canCreate) return null;
+  const now = Date.now();
+  const ended = (c: ProjectChallenge) => !!c.end_date && new Date(c.end_date).getTime() < now;
+  // Open challenges first; finished ones stay listed as evidence, marked so.
+  const ordered = [...challenges].sort((a, b) => Number(ended(a)) - Number(ended(b)));
   return (
     <section
       id="project-challenges"
@@ -52,7 +58,7 @@ export function ProjectChallengesSection({
         </p>
       ) : (
         <ul className="mt-4 divide-y divide-border/50">
-          {challenges.map((c) => (
+          {ordered.map((c) => (
             <li key={c.id}>
               <Link
                 to="/challenges/$id"
@@ -62,8 +68,10 @@ export function ProjectChallengesSection({
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{c.title}</p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    {c.difficulty}
-                    {c.end_date ? ` · ends ${new Date(c.end_date).toLocaleDateString()}` : ""}
+                    <span className="capitalize">{c.difficulty}</span>
+                    {c.end_date
+                      ? ` · ${ended(c) ? "ended" : "ends"} ${new Date(c.end_date).toLocaleDateString()}`
+                      : ""}
                   </p>
                 </div>
                 <span className="shrink-0 rounded-full border border-border/60 px-2 py-0.5 text-[11px] capitalize text-muted-foreground">

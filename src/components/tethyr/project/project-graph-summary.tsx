@@ -2,6 +2,8 @@ import { Network } from "lucide-react";
 import { buildProjectGraph, type ProjectGraphInput } from "@/lib/project-graph";
 import { useGraphTheme } from "@/hooks/use-graph-theme";
 import { ProjectGraphExplorer } from "./project-graph-explorer";
+import { GraphNodeGlyph } from "@/components/tethyr/graph/graph-node-glyph";
+import { GRAPH_NODE_TYPE_LABELS } from "@/lib/graph-model";
 
 /** The project itself plus at least one other node — otherwise the summary is
  *  just a project counting itself, and the section hides (the graph spec's
@@ -22,7 +24,6 @@ function ProjectGraphSummaryBody({ input }: { input: ProjectGraphInput }) {
     result[node.type] = (result[node.type] ?? 0) + 1;
     return result;
   }, {});
-  const relationships = graph.edges.length;
   const connectedNodes = graph.nodes
     .filter((node) => node.id !== `project:${input.project.id}`)
     .slice(0, theme.nodeLimit);
@@ -62,10 +63,12 @@ function ProjectGraphSummaryBody({ input }: { input: ProjectGraphInput }) {
           <dt className="text-muted-foreground">Skills</dt>
           <dd className="font-medium tabular-nums">{counts.skill ?? 0}</dd>
         </div>
-        {counts.milestone ? (
+        {/* The project's own milestones, as on the roadmap. The graph also
+            files activity history under "milestone", which inflated this. */}
+        {input.milestones?.length ? (
           <div>
             <dt className="text-muted-foreground">Milestones</dt>
-            <dd className="font-medium tabular-nums">{counts.milestone}</dd>
+            <dd className="font-medium tabular-nums">{input.milestones.length}</dd>
           </div>
         ) : null}
         {counts.repository ? (
@@ -82,14 +85,10 @@ function ProjectGraphSummaryBody({ input }: { input: ProjectGraphInput }) {
         ) : null}
         {counts.project > 1 ? (
           <div>
-            <dt className="text-muted-foreground">Lineage</dt>
+            <dt className="text-muted-foreground">Related projects</dt>
             <dd className="font-medium tabular-nums">{counts.project - 1}</dd>
           </div>
         ) : null}
-        <div>
-          <dt className="text-muted-foreground">Relationships</dt>
-          <dd className="font-medium tabular-nums">{relationships}</dd>
-        </div>
       </dl>
       {parentNode ? (
         <div className="mt-5 border-l-2 border-primary/40 pl-4">
@@ -121,8 +120,16 @@ function ProjectGraphSummaryBody({ input }: { input: ProjectGraphInput }) {
             className="border border-border/70 px-2.5 py-1 text-xs"
             style={{ borderRadius: theme.nodeRadius }}
           >
-            <span className="text-muted-foreground">{node.type.replace("_", " ")}</span>{" "}
-            <span className="font-medium">{node.label}</span>
+            {/* An icon for the kind of thing, not a raw type word
+                ("person Maya Chen"); the name is said for screen readers. */}
+            <GraphNodeGlyph
+              type={node.type}
+              className="mr-1 inline align-[-2px] text-muted-foreground"
+            />
+            <span className="sr-only">{GRAPH_NODE_TYPE_LABELS[node.type]}: </span>
+            <span className="font-medium" title={GRAPH_NODE_TYPE_LABELS[node.type]}>
+              {node.label}
+            </span>
           </li>
         ))}
       </ul>

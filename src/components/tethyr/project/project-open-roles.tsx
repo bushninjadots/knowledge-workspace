@@ -62,6 +62,10 @@ export function OpenRolesSection({
   };
 
   const unfilledRoles = roles.filter((r) => !r.is_filled);
+  // Visitors only see roles they can apply to; the empty state is the
+  // People section's "no open roles right now" line. The owner keeps the box
+  // to add one.
+  if (!isOwner && unfilledRoles.length === 0) return null;
 
   return (
     <div className="rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
@@ -119,7 +123,7 @@ export function OpenRolesSection({
         </div>
       )}
 
-      {unfilledRoles.length === 0 && roles.length === 0 ? (
+      {unfilledRoles.length === 0 ? (
         <p className="text-sm text-muted-foreground">No open roles yet.</p>
       ) : (
         <div className="space-y-2">

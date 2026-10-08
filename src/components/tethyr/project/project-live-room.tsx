@@ -99,113 +99,118 @@ export function ProjectLiveRoom({
         </div>
       </div>
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,240px)_1fr]">
-        <PresenceRail occupants={occupants} meId={me?.userId ?? null} />
+      {/* Signed out and nobody here: the heading, its line and "Sign in to
+          jump in" say it all; two empty panels add nothing. */}
+      {(me || occupants.length > 0) && (
+        <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,240px)_1fr]">
+          <PresenceRail occupants={occupants} meId={me?.userId ?? null} />
 
-        <div className="min-w-0">
-          {joined ? (
-            <div className="flex h-full flex-col rounded-xl border border-[var(--user-accent-border,var(--border))] bg-surface/40">
-              <div
-                ref={scrollRef}
-                className="max-h-72 min-h-40 flex-1 overflow-y-auto px-4 py-3"
-                aria-live="polite"
-              >
-                {messages.length === 0 ? (
-                  <p className="py-6 text-center text-xs text-muted-foreground">
-                    The scratch board is empty. Say what you&apos;re working on to get things going.
-                  </p>
-                ) : (
-                  <ul className="space-y-3">
-                    {messages.map((m) => (
-                      <li key={m.id} className="text-sm">
-                        <span
-                          className={
-                            m.userId === me?.userId
-                              ? "font-medium text-[var(--user-accent-text,var(--primary))]"
-                              : "font-medium text-foreground"
-                          }
-                        >
-                          {m.userId === me?.userId ? "You" : m.name}
-                        </span>
-                        <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground">
-                          {new Date(m.at).toLocaleTimeString(undefined, {
-                            hour: "numeric",
-                            minute: "2-digit",
-                          })}
-                        </span>
-                        <p className="mt-0.5 whitespace-pre-wrap break-words text-foreground/90">
-                          {m.text}
-                        </p>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-
-              <form
-                onSubmit={handleSend}
-                className="flex items-center gap-2 border-t border-border/50 px-3 py-2.5"
-              >
-                <input
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (
-                      e.key === "Enter" &&
-                      !e.shiftKey &&
-                      !e.nativeEvent.isComposing &&
-                      e.keyCode !== 229
-                    ) {
-                      handleSend(e);
-                    }
-                  }}
-                  placeholder="Think out loud, share a link, pair up…"
-                  maxLength={500}
-                  className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
-                  aria-label="Room message"
-                />
-                <button
-                  type="submit"
-                  disabled={!draft.trim()}
-                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[var(--user-accent,var(--primary))] text-[var(--user-accent-foreground,var(--background))] transition-fade hover:opacity-90 disabled:opacity-40"
-                  aria-label="Send message"
+          <div className="min-w-0">
+            {joined ? (
+              <div className="flex h-full flex-col rounded-xl border border-[var(--user-accent-border,var(--border))] bg-surface/40">
+                <div
+                  ref={scrollRef}
+                  className="max-h-72 min-h-40 flex-1 overflow-y-auto px-4 py-3"
+                  aria-live="polite"
                 >
-                  <Send className="h-3.5 w-3.5" />
-                </button>
-              </form>
+                  {messages.length === 0 ? (
+                    <p className="py-6 text-center text-xs text-muted-foreground">
+                      The scratch board is empty. Say what you&apos;re working on to get things
+                      going.
+                    </p>
+                  ) : (
+                    <ul className="space-y-3">
+                      {messages.map((m) => (
+                        <li key={m.id} className="text-sm">
+                          <span
+                            className={
+                              m.userId === me?.userId
+                                ? "font-medium text-[var(--user-accent-text,var(--primary))]"
+                                : "font-medium text-foreground"
+                            }
+                          >
+                            {m.userId === me?.userId ? "You" : m.name}
+                          </span>
+                          <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+                            {new Date(m.at).toLocaleTimeString(undefined, {
+                              hour: "numeric",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                          <p className="mt-0.5 whitespace-pre-wrap break-words text-foreground/90">
+                            {m.text}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
 
-              <div className="flex items-center justify-between gap-3 border-t border-border/50 px-3 py-2">
-                <span className="text-[11px] text-muted-foreground">
-                  Live &amp; unsaved — capture anything worth keeping in a session.
-                </span>
-                {canStartSession && onStartSession && (
+                <form
+                  onSubmit={handleSend}
+                  className="flex items-center gap-2 border-t border-border/50 px-3 py-2.5"
+                >
+                  <input
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (
+                        e.key === "Enter" &&
+                        !e.shiftKey &&
+                        !e.nativeEvent.isComposing &&
+                        e.keyCode !== 229
+                      ) {
+                        handleSend(e);
+                      }
+                    }}
+                    placeholder="Think out loud, share a link, pair up…"
+                    maxLength={500}
+                    className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
+                    aria-label="Room message"
+                  />
                   <button
-                    type="button"
-                    onClick={onStartSession}
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border/60 px-3 py-1 text-[11px] font-medium text-muted-foreground transition-lift hover:text-foreground"
+                    type="submit"
+                    disabled={!draft.trim()}
+                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[var(--user-accent,var(--primary))] text-[var(--user-accent-foreground,var(--background))] transition-fade hover:opacity-90 disabled:opacity-40"
+                    aria-label="Send message"
                   >
-                    <CalendarPlus className="h-3 w-3" />
-                    Turn into a session
+                    <Send className="h-3.5 w-3.5" />
                   </button>
-                )}
+                </form>
+
+                <div className="flex items-center justify-between gap-3 border-t border-border/50 px-3 py-2">
+                  <span className="text-[11px] text-muted-foreground">
+                    Live &amp; unsaved — capture anything worth keeping in a session.
+                  </span>
+                  {canStartSession && onStartSession && (
+                    <button
+                      type="button"
+                      onClick={onStartSession}
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border/60 px-3 py-1 text-[11px] font-medium text-muted-foreground transition-lift hover:text-foreground"
+                    >
+                      <CalendarPlus className="h-3 w-3" />
+                      Turn into a session
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="flex h-full min-h-40 flex-col items-start justify-center rounded-xl border border-dashed border-border/60 bg-surface/20 px-5 py-6">
-              <p className="text-sm font-medium text-foreground">
-                {isLive
-                  ? `${liveCount} ${liveCount === 1 ? "person is" : "people are"} working in here right now.`
-                  : "No one is in the room yet."}
-              </p>
-              <p className="mt-1 max-w-md text-sm text-muted-foreground">
-                {isLive
-                  ? "Jump in to see the shared scratch board and co-work in real time."
-                  : "Be the first to open a working window — anyone watching the project can join you."}
-              </p>
-            </div>
-          )}
+            ) : (
+              <div className="flex h-full min-h-40 flex-col items-start justify-center rounded-xl border border-dashed border-border/60 bg-surface/20 px-5 py-6">
+                <p className="text-sm font-medium text-foreground">
+                  {isLive
+                    ? `${liveCount} ${liveCount === 1 ? "person is" : "people are"} working in here right now.`
+                    : "No one is in the room yet."}
+                </p>
+                <p className="mt-1 max-w-md text-sm text-muted-foreground">
+                  {isLive
+                    ? "Jump in to see the shared scratch board and co-work in real time."
+                    : "Be the first to open a working window — anyone watching the project can join you."}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </section>
   );
 }

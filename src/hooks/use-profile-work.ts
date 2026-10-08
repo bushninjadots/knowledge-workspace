@@ -30,6 +30,7 @@ type ProfileWorkProject = {
   title: string;
   description: string | null;
   status: string;
+  stage?: string | null;
   progress_percent: number;
   cover_url: string | null;
   role: string;
@@ -61,6 +62,7 @@ type MembershipRow = {
     title: string;
     description: string | null;
     status: string;
+    stage?: string | null;
     progress_percent: number;
     cover_url: string | null;
   } | null;
@@ -84,7 +86,7 @@ async function fetchWork(profileId: string): Promise<ProfileWorkEvidence> {
   const { data: memberships, error } = await supabase
     .from("project_contributors")
     .select(
-      "project_id, role, projects(id, title, description, status, progress_percent, cover_url)",
+      "project_id, role, projects(id, title, description, status, stage, progress_percent, cover_url)",
     )
     .eq("profile_id", profileId)
     .limit(MAX_PROJECTS);
@@ -101,6 +103,7 @@ async function fetchWork(profileId: string): Promise<ProfileWorkEvidence> {
       title: r.projects.title,
       description: r.projects.description,
       status: r.projects.status,
+      stage: r.projects.stage ?? null,
       progress_percent: r.projects.progress_percent ?? 0,
       cover_url: r.projects.cover_url,
       role: r.role,

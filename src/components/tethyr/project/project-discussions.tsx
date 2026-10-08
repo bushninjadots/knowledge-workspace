@@ -108,7 +108,7 @@ function DiscussionThread({
             <Link
               to="/u/$handle"
               params={{ handle: discussion.author?.handle ?? "unknown" }}
-              className="hover:underline"
+              className="inline-flex min-h-6 items-center hover:underline"
             >
               {name}
             </Link>
@@ -140,7 +140,7 @@ function DiscussionThread({
         variant="ghost"
         onClick={() => setOpen(!open)}
         aria-expanded={open}
-        className="mt-3 h-auto px-0 text-xs text-muted-foreground hover:text-foreground"
+        className="mt-3 h-auto min-h-6 px-0 text-xs text-muted-foreground hover:text-foreground pointer-coarse:min-h-10"
       >
         {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
         <MessageCircle className="h-3 w-3" />
@@ -231,10 +231,13 @@ export function ProjectDiscussions({
     }
   };
 
+  // Only the team can start a thread; an empty box tells visitors nothing.
+  if (!isContributor && discussions.length === 0) return null;
+
   return (
     <div className="rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-sm font-medium text-foreground/80">Discussion</h3>
+        <h3 className="text-sm font-medium text-foreground/80">Team threads</h3>
         {isContributor && (
           <Button
             type="button"

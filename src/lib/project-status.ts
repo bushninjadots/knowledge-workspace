@@ -68,3 +68,19 @@ export function statusDotClass(status?: string | null): string {
       return "bg-trust";
   }
 }
+
+const STATUS_WORD: Partial<Record<string, string>> = {
+  active: "Active",
+  planning: "Planning",
+  paused: "Paused",
+  completed: "Completed",
+};
+
+/**
+ * The status word every surface shows (project header, profile cards, the
+ * basic profile): the canonical lifecycle word, falling back to the plain
+ * status when there is no stage ("Active").
+ */
+export function projectStatusWord(status?: string | null, stage?: string | null): string | null {
+  return canonicalProjectStatus(status, stage) ?? STATUS_WORD[status ?? ""] ?? status ?? null;
+}

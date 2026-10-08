@@ -23,11 +23,13 @@ describe("ProjectGraphSummary", () => {
     expect(valueFor("People")).toBe("1");
     expect(valueFor("Skills")).toBe("1");
     expect(valueFor("Milestones")).toBe("1");
-    expect(valueFor("Relationships")).toBe("3");
-    expect(screen.getByRole("list", { name: "Connected nodes" })).toHaveTextContent("person Ari");
-    expect(screen.getByRole("list", { name: "Connected nodes" })).toHaveTextContent(
-      "skill TypeScript",
-    );
+    // Graph-internal counts and raw type words ("person Ari") are not shown;
+    // each node carries its kind as an icon plus a screen-reader label.
+    expect(screen.queryByText("Relationships")).toBeNull();
+    const nodes = screen.getByRole("list", { name: "Connected nodes" });
+    expect(nodes).toHaveTextContent("People: Ari");
+    expect(nodes).toHaveTextContent("Skills: TypeScript");
+    expect(nodes).not.toHaveTextContent("person Ari");
   });
 
   it("renders nothing for a project with no relationships", () => {

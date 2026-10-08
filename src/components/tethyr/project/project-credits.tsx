@@ -146,7 +146,7 @@ function CreditLine({ credit }: { credit: ProjectCredit }) {
         <Link
           to="/u/$handle"
           params={{ handle: credit.handle }}
-          className="font-medium text-foreground underline-offset-2 hover:underline"
+          className="inline-flex min-h-6 items-center font-medium text-foreground underline-offset-2 hover:underline"
         >
           {credit.display_name}
         </Link>

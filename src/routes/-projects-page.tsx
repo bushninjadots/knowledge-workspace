@@ -141,7 +141,12 @@ export function ProjectPage() {
   const searchParams = useSearch({ strict: false }) as Record<string, string | undefined>;
   const tabParam = searchParams.tab;
 
-  const [tab, setTabState] = useState<ProjectTab | null>(() => (isTab(tabParam) ? tabParam : null));
+  const [postRequest, setPostRequest] = useState(0);
+  // Activity is open by default: the tabs sit under the README, and with
+  // nothing selected they left an empty band there.
+  const [tab, setTabState] = useState<ProjectTab | null>(() =>
+    isTab(tabParam) ? tabParam : "activity",
+  );
 
   // Keep the tab in sync with the URL (back/forward, deep links).
   useEffect(() => {
@@ -172,8 +177,17 @@ export function ProjectPage() {
         params: { id },
         search: next ? { tab: next } : undefined,
         replace: true,
+        // Only the URL changes; the router's reset-to-top on navigation sent
+        // people away from the tab they had just opened.
+        resetScroll: false,
       });
-      if (opts?.scrollToTop !== false) window.scrollTo({ top: 0, behavior: "smooth" });
+      // The tabs live mid-page; jumping to the top took people away from the
+      // content they just opened. Bring the tabs into view only if needed.
+      if (opts?.scrollToTop !== false) {
+        document
+          .getElementById("project-workspace-tabs")
+          ?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
     },
     [navigate, id],
   );
@@ -691,7 +705,9 @@ export function ProjectPage() {
         onPostUpdate={
           isOwner || isContributor
             ? () => {
+                // Opens the update form itself, not just the Activity list.
                 setTab("activity", { scrollToTop: false });
+                setPostRequest((n) => n + 1);
                 setTimeout(() => scrollToSection("project-activity"), 80);
               }
             : undefined
@@ -759,7 +775,12 @@ export function ProjectPage() {
           {/* Files + activity live right under the README so the workspace tools
               (upload files, see what changed) are reachable without scrolling
               past the whole story. */}
-          <div role="group" aria-label="Project files and activity" className="mt-6">
+          <div
+            id="project-workspace-tabs"
+            role="group"
+            aria-label="Project files and activity"
+            className="mt-6 scroll-mt-20"
+          >
             <ProjectTabs active={tab} onSelect={setTab} counts={{ files: projectFiles.length }} />
           </div>
 
@@ -790,6 +811,7 @@ export function ProjectPage() {
                     isContributor={isContributor}
                     isOwner={isOwner}
                     openWeeklyPrompt={searchParams.focus === "weekly"}
+                    postRequest={postRequest}
                   />
                 </Suspense>
               </section>
@@ -988,7 +1010,7 @@ export function ProjectPage() {
                   Conversation
                 </h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Questions, feedback, and updates from the team.
+                  The team&rsquo;s threads, and what the community is saying about this project.
                 </p>
                 <div className="mt-4 space-y-6">
                   <Suspense fallback={<Skeleton className="h-32" />}>
