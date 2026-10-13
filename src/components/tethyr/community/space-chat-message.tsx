@@ -1,5 +1,5 @@
 import { memo, useState } from "react";
-import { MessageCircle } from "lucide-react";
+import { CheckCircle2, MessageCircle } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { timeAgo } from "@/lib/time";
 import { useComments, type PostWithAuthor } from "@/hooks/use-community";
@@ -44,6 +44,12 @@ export const SpaceChatMessage = memo(function SpaceChatMessage({
               {authorName}
             </Link>
             <span className="text-[11px] text-muted-foreground">{timeAgo(post.created_at)}</span>
+            {post.stats.solved && (
+              <span className="inline-flex items-center gap-1 self-center rounded-full bg-trust/15 px-1.5 py-0 text-[11px] font-medium text-trust">
+                <CheckCircle2 className="h-3 w-3" aria-hidden />
+                Solved
+              </span>
+            )}
           </div>
           <p className="mt-0.5 whitespace-pre-wrap break-words text-sm leading-relaxed text-foreground/90">
             {post.body}
@@ -69,11 +75,7 @@ export const SpaceChatMessage = memo(function SpaceChatMessage({
           </div>
           {showComments && (
             <div className="mt-2">
-              <CommentThreadInline
-                postId={post.id}
-                comments={comments}
-                isQuestion={post.type === "question"}
-              />
+              <CommentThreadInline post={post} comments={comments} />
             </div>
           )}
         </div>

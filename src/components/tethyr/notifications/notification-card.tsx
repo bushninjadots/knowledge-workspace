@@ -21,6 +21,7 @@ import {
   UserX,
   Swords,
   Flag,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -67,6 +68,9 @@ const NOTIFICATION_CONFIG: Record<NotificationType, { icon: typeof MessageCircle
     join_rejected: { icon: UserX, color: "text-destructive" },
     post_report: { icon: Flag, color: "text-warning" },
     report_resolved: { icon: Flag, color: "text-trust" },
+    solution: { icon: CheckCircle, color: "text-trust" },
+    thanks: { icon: Heart, color: "text-caution" },
+    skill_match: { icon: Sparkles, color: "text-ai" },
   };
 
 const FALLBACK_CONFIG = { icon: MessageCircle, color: "text-muted-foreground" };

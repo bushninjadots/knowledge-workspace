@@ -798,7 +798,18 @@ export function ProjectPage() {
                     />
                   </Suspense>
                   <Suspense fallback={<Skeleton className="h-24" />}>
-                    <ProjectCommunityPosts projectId={id} />
+                    <ProjectCommunityPosts
+                      projectId={id}
+                      canAsk={isContributor}
+                      project={{
+                        id,
+                        title: project.title,
+                        description: project.description,
+                        status: project.status,
+                        stage: project.stage,
+                        skills,
+                      }}
+                    />
                   </Suspense>
                 </div>
               </section>

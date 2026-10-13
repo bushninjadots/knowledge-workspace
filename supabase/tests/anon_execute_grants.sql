@@ -62,6 +62,8 @@ SELECT set_eq(
       -- Read RPCs behind public surfaces; all SECURITY INVOKER except the
       -- space member counts, which the landing page reads signed out.
       ('community_space_member_counts()'),
+      -- SECURITY INVOKER: public help (solutions, thanks) on public profiles.
+      ('community_help_summary(p_profile_id uuid)'),
       ('discussion_reply_counts(p_discussion_ids uuid[])'),
       ('get_layout_lineage(start_id uuid)'),
       ('post_engagement_counts(p_post_ids uuid[])'),

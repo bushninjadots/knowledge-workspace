@@ -47,6 +47,7 @@ describe("fetchPostEngagement", () => {
           offers: 0,
           comment_count: 3,
           user_actions: ["like", "save"],
+          solved: true,
         },
       ],
       error: null,
@@ -65,6 +66,7 @@ describe("fetchPostEngagement", () => {
       offers: 0,
       comment_count: 3,
       myActions: ["like", "save"],
+      solved: true,
     });
   });
 
@@ -89,7 +91,10 @@ describe("fetchPostEngagement", () => {
     fake.supabase.from.mockImplementation((table: string) => ({
       select: () => ({
         in: () =>
-          Promise.resolve({ data: table === "post_actions" ? actions : [{ post_id: "post-1" }] }),
+          Promise.resolve({
+            data:
+              table === "post_actions" ? actions : [{ post_id: "post-1", is_best_answer: false }],
+          }),
       }),
     }));
 
@@ -103,6 +108,7 @@ describe("fetchPostEngagement", () => {
       offers: 0,
       comment_count: 1,
       myActions: ["save"],
+      solved: false,
     });
   });
 

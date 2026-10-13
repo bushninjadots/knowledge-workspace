@@ -210,6 +210,65 @@ export type Database = {
           },
         ];
       };
+      community_kudos: {
+        Row: {
+          comment_id: string;
+          created_at: string;
+          giver_id: string;
+          id: string;
+          post_id: string;
+          reason: string;
+          recipient_id: string;
+        };
+        Insert: {
+          comment_id: string;
+          created_at?: string;
+          giver_id: string;
+          id?: string;
+          post_id: string;
+          reason: string;
+          recipient_id: string;
+        };
+        Update: {
+          comment_id?: string;
+          created_at?: string;
+          giver_id?: string;
+          id?: string;
+          post_id?: string;
+          reason?: string;
+          recipient_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "community_kudos_comment_id_fkey";
+            columns: ["comment_id"];
+            isOneToOne: false;
+            referencedRelation: "comments";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "community_kudos_giver_id_fkey";
+            columns: ["giver_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "community_kudos_post_id_fkey";
+            columns: ["post_id"];
+            isOneToOne: false;
+            referencedRelation: "posts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "community_kudos_recipient_id_fkey";
+            columns: ["recipient_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       community_space_join_requests: {
         Row: {
           created_at: string;
@@ -3502,6 +3561,7 @@ export type Database = {
           posts: number;
         }[];
       };
+      community_help_summary: { Args: { p_profile_id: string }; Returns: Json };
       community_space_member_counts: {
         Args: never;
         Returns: {
@@ -3611,6 +3671,10 @@ export type Database = {
         };
         Returns: undefined;
       };
+      mark_solution: {
+        Args: { p_comment_id: string; p_on?: boolean };
+        Returns: undefined;
+      };
       mark_space_read: { Args: { p_space_id: string }; Returns: undefined };
       match_creators: {
         Args: { p_limit?: number; p_user_id: string };
@@ -3659,6 +3723,10 @@ export type Database = {
           saves: number;
           user_actions: string[];
         }[];
+      };
+      post_type_is_ask: {
+        Args: { p_type: Database["public"]["Enums"]["post_type"] };
+        Returns: boolean;
       };
       posts_images_are_valid: { Args: { p_images: string[] }; Returns: boolean };
       project_ai_tag_count: { Args: { p_project_id: string }; Returns: number };
@@ -3758,6 +3826,10 @@ export type Database = {
         }[];
       };
       space_topics_valid: { Args: { p_topics: string[] }; Returns: boolean };
+      thank_reply: {
+        Args: { p_comment_id: string; p_reason: string };
+        Returns: string;
+      };
       toggle_template_star: {
         Args: { target_layout_id: string };
         Returns: boolean;

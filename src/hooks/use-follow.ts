@@ -229,6 +229,7 @@ export function useFollowingFeed() {
           saves: engagement.get(p.id)?.saves ?? 0,
           offers: engagement.get(p.id)?.offers ?? 0,
           comment_count: engagement.get(p.id)?.comment_count ?? 0,
+          solved: engagement.get(p.id)?.solved ?? false,
         },
         myActions: engagement.get(p.id)?.myActions ?? [],
       }));

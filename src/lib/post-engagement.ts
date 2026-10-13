@@ -9,6 +9,8 @@ type PostEngagement = {
   offers: number;
   comment_count: number;
   myActions: string[];
+  /** An ask with a reply its author marked as the solution. */
+  solved: boolean;
 };
 
 /** One row of the `post_engagement_counts` aggregate. */
@@ -20,6 +22,7 @@ type EngagementCountRow = {
   offers: number | string;
   comment_count: number | string;
   user_actions: string[] | null;
+  solved?: boolean | null;
 };
 
 /**
@@ -58,6 +61,7 @@ export async function fetchPostEngagement(
         offers: Number(row.offers),
         comment_count: Number(row.comment_count),
         myActions: row.user_actions ?? [],
+        solved: !!row.solved,
       });
     }
     return result;
@@ -65,7 +69,7 @@ export async function fetchPostEngagement(
 
   const [{ data: rawActions }, { data: rawComments }] = await Promise.all([
     sb.from("post_actions").select("post_id, action, user_id").in("post_id", postIds),
-    sb.from("comments").select("post_id").in("post_id", postIds),
+    sb.from("comments").select("post_id, is_best_answer").in("post_id", postIds),
   ]);
   const resolvedUserId =
     userId === undefined ? (await supabase.auth.getUser()).data.user?.id : userId;
@@ -78,6 +82,7 @@ export async function fetchPostEngagement(
       offers: 0,
       comment_count: 0,
       myActions: [],
+      solved: false,
     });
   }
   for (const action of (rawActions ?? []) as {
@@ -93,9 +98,11 @@ export async function fetchPostEngagement(
     if (action.action === "offer") engagement.offers++;
     if (action.user_id === resolvedUserId) engagement.myActions.push(action.action);
   }
-  for (const comment of (rawComments ?? []) as { post_id: string }[]) {
+  for (const comment of (rawComments ?? []) as { post_id: string; is_best_answer: boolean }[]) {
     const engagement = result.get(comment.post_id);
-    if (engagement) engagement.comment_count++;
+    if (!engagement) continue;
+    engagement.comment_count++;
+    if (comment.is_best_answer) engagement.solved = true;
   }
   return result;
 }

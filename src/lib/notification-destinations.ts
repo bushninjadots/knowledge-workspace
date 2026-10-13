@@ -2,6 +2,7 @@ import type { NotificationType } from "@/hooks/use-notifications";
 
 type NotificationInput = {
   type: NotificationType;
+  entity_type?: string | null;
   entity_id: string | null;
   metadata: Record<string, unknown>;
 };
@@ -10,6 +11,7 @@ type NotificationDestination =
   | { to: "/messages" }
   | { to: "/messages"; search: { c: string } }
   | { to: "/community" }
+  | { to: "/community"; search: { post: string; space?: string } }
   | { to: "/sessions" }
   | { to: "/sessions/$id"; params: { id: string } }
   | { to: "/profile" }
@@ -42,7 +44,15 @@ export function getNotificationDestination(
     }
     case "comment":
     case "mention":
-      return { to: "/community" };
+    case "solution":
+    case "thanks":
+    case "skill_match": {
+      // Open the post itself; a space post also needs its space to render in.
+      const postId = notification.entity_type === "post" ? entity_id : null;
+      if (!postId) return { to: "/community" };
+      const space = typeof metadata.space_slug === "string" ? metadata.space_slug : null;
+      return { to: "/community", search: space ? { post: postId, space } : { post: postId } };
+    }
     case "session_invite":
     case "session_update":
       return entity_id ? { to: "/sessions/$id", params: { id: entity_id } } : { to: "/sessions" };

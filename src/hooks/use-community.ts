@@ -139,6 +139,8 @@ export type PostWithAuthor = PostRow & {
     saves: number;
     offers: number;
     comment_count: number;
+    /** An ask whose author marked a reply as the solution. */
+    solved: boolean;
   };
   myActions: string[]; // actions the current user has taken
 };
@@ -184,7 +186,7 @@ export type UpdatePostInput = {
 // ============================================================
 
 export const POSTS_KEY = ["posts"] as const;
-const COMMENTS_KEY = (postId: string) => ["comments", postId] as const;
+export const COMMENTS_KEY = (postId: string) => ["comments", postId] as const;
 
 // ============================================================
 // Hooks
@@ -230,6 +232,7 @@ async function hydratePosts(rawPosts: PostRow[]): Promise<PostWithAuthor[]> {
       saves: engagement.get(p.id)?.saves ?? 0,
       offers: engagement.get(p.id)?.offers ?? 0,
       comment_count: engagement.get(p.id)?.comment_count ?? 0,
+      solved: engagement.get(p.id)?.solved ?? false,
     },
     myActions: engagement.get(p.id)?.myActions ?? [],
   }));
@@ -516,7 +519,7 @@ export function useUpdateComment() {
  * Apply an optimistic engagement toggle to one hydrated post.
  * Returns the same object when the post doesn't match (cheap identity check).
  */
-const ACTION_STATS_KEY: Record<string, keyof PostWithAuthor["stats"]> = {
+const ACTION_STATS_KEY: Record<string, Exclude<keyof PostWithAuthor["stats"], "solved">> = {
   like: "likes",
   helpful: "helpful",
   save: "saves",
@@ -528,7 +531,8 @@ function applyToggleToPost(
   input: { postId: string; action: string; isActive: boolean },
 ): PostWithAuthor {
   if (post.id !== input.postId) return post;
-  const statsKey = ACTION_STATS_KEY[input.action] ?? input.action;
+  const statsKey = ACTION_STATS_KEY[input.action];
+  if (!statsKey) return post;
   const delta = input.isActive ? -1 : 1;
   const alreadyMine = post.myActions.includes(input.action);
   return {

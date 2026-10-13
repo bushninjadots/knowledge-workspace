@@ -49,6 +49,9 @@ export const TYPE_CATEGORY: Record<NotificationType, NotificationCategory> = {
   achievement: "achievement",
   post_report: "moderation",
   report_resolved: "moderation",
+  solution: "reputation",
+  thanks: "reputation",
+  skill_match: "community",
 };
 
 /**

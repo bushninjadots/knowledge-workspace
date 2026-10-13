@@ -14,6 +14,7 @@ const SpaceChatComposer = lazy(() =>
 import { CommunityHeader, type SortMode } from "@/components/tethyr/community/community-header";
 import { CommunityFeedList } from "@/components/tethyr/community/community-feed-list";
 import { CommunityFeedSplitView } from "@/components/tethyr/community/community-feed-split-view";
+import { isAsk } from "@/hooks/use-community-help";
 import { SpaceHeader, type SpaceSortMode } from "@/components/tethyr/community/space-header";
 import { CommunityGraphSummary } from "@/components/tethyr/community/community-graph-summary";
 import { CommunityPulse } from "@/components/tethyr/community/community-pulse";
@@ -292,7 +293,12 @@ export function CommunityFeed({
       const ordered = [...pinned, ...regular];
       if (spaceSortMode === "latest") return ordered;
       if (spaceSortMode === "unanswered") {
-        return ordered.filter((post) => post.title.trim() && post.stats.comment_count === 0);
+        // Asks stay here until someone's reply is marked as the solution.
+        return ordered.filter((post) =>
+          isAsk(post.type)
+            ? !post.stats.solved
+            : post.title.trim() && post.stats.comment_count === 0,
+        );
       }
       return [...ordered].sort((a, b) => {
         if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1;

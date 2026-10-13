@@ -272,6 +272,12 @@ export function PostCard({
             >
               {POST_TYPE_LABEL[post.type]}
             </span>
+            {post.stats.solved && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-trust/15 px-1.5 py-0 text-[11px] font-medium text-trust">
+                <CheckCircle2 className="h-3 w-3" aria-hidden />
+                Solved
+              </span>
+            )}
             {/* One type tag. The category pill and a flair that only repeats
                 the type ("Project update" · "Projects" · "Update") said it thrice. */}
             {post.space_id && (
@@ -370,7 +376,7 @@ export function PostCard({
       {/* Type-specific top strip */}
       {post.type === "question" && questionData && (
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          {!!questionData.solved && (
+          {!!questionData.solved && !post.stats.solved && (
             <span className="inline-flex items-center gap-1 rounded-full border border-trust/40 bg-trust/10 px-2 py-0.5 text-[11px] font-medium text-trust">
               <CheckCircle2 className="h-3 w-3" /> Solved
             </span>
@@ -672,13 +678,7 @@ export function PostCard({
         </DropdownMenu>
       </div>
 
-      {showComments && (
-        <CommentThreadInline
-          postId={post.id}
-          comments={comments}
-          isQuestion={post.type === "question"}
-        />
-      )}
+      {showComments && <CommentThreadInline post={post} comments={comments} />}
 
       <ShareSpaceDialog
         open={shareDialogOpen}

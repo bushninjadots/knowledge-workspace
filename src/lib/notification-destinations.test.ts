@@ -64,6 +64,24 @@ describe("notification destinations", () => {
     ).toEqual({ to: "/projects/$id", params: { id: "project-1" } });
   });
 
+  it("opens the post for community help, in its space when it has one", () => {
+    expect(
+      getNotificationDestination(
+        notification("solution", { entity_type: "post", entity_id: "post-1" }),
+      ),
+    ).toEqual({ to: "/community", search: { post: "post-1" } });
+    expect(
+      getNotificationDestination(
+        notification("thanks", {
+          entity_type: "post",
+          entity_id: "post-1",
+          metadata: { space_slug: "design-guild" },
+        }),
+      ),
+    ).toEqual({ to: "/community", search: { post: "post-1", space: "design-guild" } });
+    expect(getNotificationDestination(notification("comment"))).toEqual({ to: "/community" });
+  });
+
   it("covers every declared notification type", () => {
     const types: NotificationType[] = [
       "message",
@@ -93,6 +111,9 @@ describe("notification destinations", () => {
       "join_rejected",
       "post_report",
       "report_resolved",
+      "solution",
+      "thanks",
+      "skill_match",
     ];
 
     for (const type of types) {

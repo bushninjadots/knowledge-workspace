@@ -267,7 +267,14 @@ describe("useFollowingFeed", () => {
     const [post] = feed;
     expect(post.id).toBe("p1");
     expect(post.author).toMatchObject({ handle: "ada", display_name: "Ada" });
-    expect(post.stats).toEqual({ likes: 2, helpful: 1, saves: 0, offers: 0, comment_count: 2 });
+    expect(post.stats).toEqual({
+      likes: 2,
+      helpful: 1,
+      saves: 0,
+      offers: 0,
+      comment_count: 2,
+      solved: false,
+    });
     expect(post.myActions).toEqual(["like"]);
   });
 
@@ -290,7 +297,14 @@ describe("useFollowingFeed", () => {
       creator_title: "Member",
       category: "General",
     });
-    expect(feed[0].stats).toEqual({ likes: 0, helpful: 0, saves: 0, offers: 0, comment_count: 0 });
+    expect(feed[0].stats).toEqual({
+      likes: 0,
+      helpful: 0,
+      saves: 0,
+      offers: 0,
+      comment_count: 0,
+      solved: false,
+    });
     expect(feed[0].myActions).toEqual([]);
   });
 

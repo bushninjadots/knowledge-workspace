@@ -33,7 +33,10 @@ export type NotificationType =
   | "join_approved"
   | "join_rejected"
   | "post_report"
-  | "report_resolved";
+  | "report_resolved"
+  | "solution"
+  | "thanks"
+  | "skill_match";
 
 export interface Notification {
   id: string;

@@ -16,7 +16,7 @@ function post(partial: Partial<PostWithAuthor> & { id: string }): PostWithAuthor
     created_at: new Date(NOW - 60_000).toISOString(),
     skills: [],
     myActions: [],
-    stats: { likes: 0, helpful: 0, saves: 0, offers: 0, comment_count: 0 },
+    stats: { likes: 0, helpful: 0, saves: 0, offers: 0, comment_count: 0, solved: false },
     author: { display_name: "Sam", handle: "sam", creator_title: null, avatar_url: null },
     ...partial,
   } as unknown as PostWithAuthor;
@@ -44,7 +44,7 @@ describe("summarizePulse", () => {
         post({
           id: "2",
           type: "help_request",
-          stats: { likes: 0, helpful: 0, saves: 0, offers: 0, comment_count: 2 },
+          stats: { likes: 0, helpful: 0, saves: 0, offers: 0, comment_count: 2, solved: false },
         }),
         post({ id: "3", type: "question" }),
       ],

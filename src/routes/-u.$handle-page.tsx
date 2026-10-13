@@ -26,6 +26,7 @@ import { PageShell } from "@/components/tethyr/page/page-shell";
 import { useProfilePage } from "@/hooks/use-profile-page";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { ProfileWorkEvidence } from "@/components/tethyr/profile/work-evidence";
+import { ProfileCommunityHelp } from "@/components/tethyr/profile/community-help";
 import { ProfileGraphSummary } from "@/components/tethyr/profile/profile-graph-summary";
 import { themeTokensToStyle } from "@/lib/theme-tokens";
 import { useTheme as useAppTheme } from "@/lib/theme";
@@ -390,6 +391,8 @@ function BasicProfile({
       <div className="mt-2">
         <ProfileGraphSummary profileId={profile.id} name={name} />
       </div>
+
+      <ProfileCommunityHelp profileId={profile.id} name={name} />
 
       {/* 4 — metadata, demoted to a footnote below a rule */}
       {hasMetadata && (
