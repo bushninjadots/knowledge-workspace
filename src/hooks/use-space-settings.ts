@@ -31,6 +31,7 @@ export function useUpdateSpace() {
       welcome_message?: string | null;
       avatar_url?: string | null;
       banner_url?: string | null;
+      weekly_thread?: boolean;
     }) => {
       const { id, ...updates } = input;
       const { error } = await sb

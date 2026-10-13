@@ -10,6 +10,7 @@ import { MemberAvatar } from "@/components/tethyr/member-avatar";
 import { useSpaceMembers, type CommunitySpace } from "@/hooks/use-community-spaces";
 import { blockMarkdownToHtml } from "@/lib/block-markdown";
 import { useSpaceAccent } from "@/components/tethyr/community/space-media";
+import { SpaceSessionsCard } from "@/components/tethyr/community/space-sessions";
 import { safeHref } from "@/lib/validators";
 
 function Card({
@@ -158,6 +159,8 @@ export const SpaceAbout = memo(function SpaceAbout({
       </Card>
 
       <SpaceHomeLink space={space} />
+
+      <SpaceSessionsCard space={space} />
 
       {(space.links?.length ?? 0) > 0 && (
         <Card title="Links" icon={<Link2 className="h-3.5 w-3.5 text-muted-foreground" />}>

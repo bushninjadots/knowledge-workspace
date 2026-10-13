@@ -367,6 +367,7 @@ export type Database = {
           topics: string[];
           updated_at: string;
           visibility: string;
+          weekly_thread: boolean;
           welcome_message: string | null;
         };
         Insert: {
@@ -391,6 +392,7 @@ export type Database = {
           topics?: string[];
           updated_at?: string;
           visibility?: string;
+          weekly_thread?: boolean;
           welcome_message?: string | null;
         };
         Update: {
@@ -415,6 +417,7 @@ export type Database = {
           topics?: string[];
           updated_at?: string;
           visibility?: string;
+          weekly_thread?: boolean;
           welcome_message?: string | null;
         };
         Relationships: [
@@ -2993,6 +2996,13 @@ export type Database = {
         };
         Relationships: [
           {
+            foreignKeyName: "sessions_community_id_fkey";
+            columns: ["community_id"];
+            isOneToOne: false;
+            referencedRelation: "community_spaces";
+            referencedColumns: ["id"];
+          },
+          {
             foreignKeyName: "sessions_organizer_id_fkey";
             columns: ["organizer_id"];
             isOneToOne: false;
@@ -3587,6 +3597,10 @@ export type Database = {
         Args: { p_reason?: string; p_space_id: string; p_user_id: string };
         Returns: undefined;
       };
+      can_join_space_session: {
+        Args: { p_session_id: string; p_user_id: string };
+        Returns: boolean;
+      };
       community_daily_activity: {
         Args: { p_days: number; p_since: string };
         Returns: {
@@ -3618,6 +3632,7 @@ export type Database = {
           reply_count: number;
         }[];
       };
+      ensure_weekly_thread: { Args: { p_space_id: string }; Returns: string };
       explore_open_role_counts: {
         Args: { p_project_ids: string[] };
         Returns: {

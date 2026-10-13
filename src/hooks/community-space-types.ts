@@ -24,6 +24,8 @@ export type CommunitySpace = {
   team_id?: string | null;
   challenge_id?: string | null;
   project_id?: string | null;
+  /** Start a pinned "What did you ship this week?" thread each week. */
+  weekly_thread?: boolean;
   visibility: SpaceVisibility;
   join_type: SpaceJoinType;
   rules: string[];

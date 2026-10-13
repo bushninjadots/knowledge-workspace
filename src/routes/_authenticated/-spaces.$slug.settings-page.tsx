@@ -129,6 +129,8 @@ export function SpaceSettingsPage() {
   const unbanMember = useUnbanMember();
 
   const [identity, setIdentity] = useState<IdentityDraft>(EMPTY_IDENTITY);
+  const [weeklyThread, setWeeklyThread] = useState(false);
+  useEffect(() => setWeeklyThread(!!space?.weekly_thread), [space?.weekly_thread]);
   const patchIdentity = (patch: Partial<IdentityDraft>) =>
     setIdentity((current) => ({ ...current, ...patch }));
   // The page takes the colour being chosen (or the banner's, on Auto).
@@ -340,6 +342,47 @@ export function SpaceSettingsPage() {
           onChange={patchIdentity}
           linkProblems={linkProblems}
         />
+
+        <section className="community-card p-5">
+          <h2 className="text-sm font-semibold">Rituals</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Regular moments that give people a reason to come back.
+          </p>
+          <label className="mt-4 flex cursor-pointer items-start gap-3">
+            <input
+              type="checkbox"
+              className="mt-0.5 h-4 w-4 accent-[var(--community-tint)]"
+              checked={weeklyThread}
+              disabled={!isOwner}
+              onChange={(e) => {
+                const on = e.target.checked;
+                setWeeklyThread(on); // shown at once; rolled back if the save fails
+                updateSpace.mutate(
+                  { id: space.id, weekly_thread: on },
+                  {
+                    onSuccess: () =>
+                      toast.success(on ? "Weekly ship thread on" : "Weekly ship thread off"),
+                    onError: (err) => {
+                      setWeeklyThread(!on);
+                      toast.error(friendlyError(err, "Couldn't save"));
+                    },
+                  },
+                );
+              }}
+            />
+            <span>
+              <span className="block text-sm font-medium">Weekly ship thread</span>
+              <span className="block text-xs text-muted-foreground">
+                Every week, a pinned &ldquo;What did you ship this week?&rdquo; thread starts in the
+                space the first time a member opens it.
+              </span>
+            </span>
+          </label>
+          <p className="mt-3 text-xs text-muted-foreground">
+            You and your moderators can also schedule sessions — a critique hour, a co-working block
+            — from the space&apos;s Coming up card.
+          </p>
+        </section>
 
         <section className="community-card p-5">
           <h2 className="text-sm font-semibold">Visibility</h2>

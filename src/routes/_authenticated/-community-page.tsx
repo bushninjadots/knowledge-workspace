@@ -8,6 +8,7 @@ import { CommunityRightSidebar } from "@/components/tethyr/community/right-sideb
 import { CommunityFeed } from "@/components/tethyr/community/community-feed";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useSpaceAccent } from "@/components/tethyr/community/space-media";
+import { useWeeklyThread } from "@/hooks/use-space-rituals";
 import { cn } from "@/lib/utils";
 import {
   useCommunitySpace,
@@ -89,6 +90,7 @@ export function CommunityPage() {
   }, []);
 
   const openPulse = useCallback(() => setPulseOpen(true), []);
+  useWeeklyThread(activeSpace);
   // Inside a space the page wears the space's colour (its pick, or its banner's).
   const spaceTint = useSpaceAccent({
     accent_color: activeSpace?.accent_color ?? null,
