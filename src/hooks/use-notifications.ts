@@ -268,6 +268,34 @@ export function useDeleteNotification() {
 
 // ---------- Realtime subscription (singleton per user) ----------
 
+/** A new notification row as Realtime delivers it. */
+export type NotificationInsert = {
+  id: string;
+  user_id: string;
+  actor_id: string | null;
+  type: NotificationType;
+  title: string;
+  body: string | null;
+  entity_type: string | null;
+  entity_id: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+};
+
+const insertListeners = new Set<(row: NotificationInsert) => void>();
+
+/**
+ * Hear every notification as it arrives on the shared per-user channel (used
+ * by the message popups). Returns an unsubscribe function. The channel itself
+ * is owned by useNotificationRealtime, so mount that alongside.
+ */
+export function onNotificationInsert(listener: (row: NotificationInsert) => void) {
+  insertListeners.add(listener);
+  return () => {
+    insertListeners.delete(listener);
+  };
+}
+
 let activeChannel: ReturnType<typeof supabase.channel> | null = null;
 let activeUserId: string | null = null;
 let refCount = 0;
@@ -301,10 +329,12 @@ export function useNotificationRealtime() {
           table: "notifications",
           filter: `user_id=eq.${meId}`,
         },
-        () => {
+        (payload) => {
           qc.invalidateQueries({ queryKey: NOTIFICATIONS_KEY });
           qc.invalidateQueries({ queryKey: UNREAD_COUNT_KEY });
           qc.invalidateQueries({ queryKey: BY_CATEGORY_KEY });
+          const row = payload.new as NotificationInsert | undefined;
+          if (row?.id) for (const listener of insertListeners) listener(row);
         },
       );
       channel.subscribe();

@@ -22,6 +22,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { useSiteAccentStyle } from "@/hooks/use-site-accent-style";
 import { useUserPalette } from "@/lib/dominant-color";
 import { MobilePrimaryNav } from "./mobile-primary-nav";
+import { MessagePopups } from "./message-popups";
 import { BackgroundLayer } from "./background-layer";
 import { appearanceStyle } from "@/lib/background-themes";
 import { EmailVerificationBanner } from "./email-verification-banner";
@@ -141,6 +142,7 @@ export function AuthenticatedShell() {
           <Outlet />
         </main>
         <MobilePrimaryNav onOpenMore={() => setOpen(true)} />
+        <MessagePopups />
 
         {/* Scroll-to-top */}
         {showScrollTop && (

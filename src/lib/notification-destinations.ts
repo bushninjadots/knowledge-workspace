@@ -8,6 +8,7 @@ type NotificationInput = {
 
 type NotificationDestination =
   | { to: "/messages" }
+  | { to: "/messages"; search: { c: string } }
   | { to: "/community" }
   | { to: "/sessions" }
   | { to: "/sessions/$id"; params: { id: string } }
@@ -34,8 +35,11 @@ export function getNotificationDestination(
   const { type, entity_id, metadata } = notification;
 
   switch (type) {
-    case "message":
-      return { to: "/messages" };
+    case "message": {
+      // Open the conversation itself, not just the inbox.
+      const connectionId = entity_id ?? (metadata.connection_id as string | undefined);
+      return connectionId ? { to: "/messages", search: { c: connectionId } } : { to: "/messages" };
+    }
     case "comment":
     case "mention":
       return { to: "/community" };

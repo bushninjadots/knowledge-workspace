@@ -50,6 +50,14 @@ describe("notification destinations", () => {
     ).toEqual({ to: "/teams/$slug", params: { slug: "my-crew" } });
   });
 
+  it("opens the conversation a message belongs to", () => {
+    expect(getNotificationDestination(notification("message", { entity_id: "conn-1" }))).toEqual({
+      to: "/messages",
+      search: { c: "conn-1" },
+    });
+    expect(getNotificationDestination(notification("message"))).toEqual({ to: "/messages" });
+  });
+
   it("routes project recognition back to the project", () => {
     expect(
       getNotificationDestination(notification("project_recognition", { entity_id: "project-1" })),
