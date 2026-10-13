@@ -60,6 +60,8 @@ import { ShareSpaceDialog } from "@/components/tethyr/community/share-space-dial
 import { CommentThreadInline } from "@/components/tethyr/community/post-comments";
 import { timeAgo } from "@/lib/time";
 import { OfferHelpDialog, ReportPostDialog, PollWidget } from "./post-card-actions";
+import { MemberAvatar } from "@/components/tethyr/member-avatar";
+import { skillKey, skillKeyMap } from "@/lib/skill-key";
 
 const RESOURCE_ICON: Record<string, typeof FileText> = {
   Article: FileText,
@@ -69,6 +71,16 @@ const RESOURCE_ICON: Record<string, typeof FileText> = {
   Book: BookMarked,
   Tool: Wrench,
 };
+
+/** A flair like "Update" on a Project update adds nothing the type tag hasn't said. */
+export function flairRepeatsType(flair: string, typeLabel: string | undefined) {
+  if (!typeLabel) return false;
+  const f = flair.trim().toLowerCase();
+  const label = typeLabel.toLowerCase();
+  if (f === label) return true;
+  // "Update" on "Project update", "Collab" on "Collaboration request".
+  return f.length >= 3 && !f.includes(" ") && label.split(/\s+/).some((word) => word.startsWith(f));
+}
 
 export const TYPE_ACCENT: Record<PostType, string> = {
   showcase: "text-trust",
@@ -195,7 +207,6 @@ export function PostCard({
 
   const authorName = post.author.display_name || post.author.handle || "Unknown";
   const authorTitle = post.author.creator_title || post.author.category || "Member";
-  const initial = authorName.charAt(0).toUpperCase();
 
   const questionData = post.question_data as Record<string, unknown> | null;
   const achievementData = post.achievement_data as Record<string, unknown> | null;
@@ -209,12 +220,12 @@ export function PostCard({
 
   // Skills in this post that the viewer is actively growing ("skills I'm
   // growing") — surfaces a "match" chip instead of the old empty constant.
-  const learningSkillNames = new Set(
-    skillCatalog
-      .filter((s) => (me?.learnIds ?? []).includes(s.id))
-      .map((s) => s.name.toLowerCase()),
+  const learningSkills = skillKeyMap(
+    skillCatalog.filter((s) => (me?.learnIds ?? []).includes(s.id)),
   );
-  const matchedSkills = post.skills.filter((s) => learningSkillNames.has(s.toLowerCase()));
+  const matchedSkills = post.skills
+    .filter((s) => learningSkills.has(skillKey(s)))
+    .map((s) => learningSkills.get(skillKey(s)) ?? s);
 
   return (
     <article
@@ -224,9 +235,7 @@ export function PostCard({
     >
       {/* Header */}
       <div className="flex items-start gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-foreground text-sm font-semibold text-background">
-          {initial}
-        </div>
+        <MemberAvatar name={authorName} avatarPath={post.author.avatar_url} className="h-11 w-11" />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <HoverCard>
@@ -242,9 +251,7 @@ export function PostCard({
               </HoverCardTrigger>
               <HoverCardContent className="w-64" side="top">
                 <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-foreground text-sm font-semibold text-background">
-                    {initial}
-                  </div>
+                  <MemberAvatar name={authorName} avatarPath={post.author.avatar_url} />
                   <div className="min-w-0">
                     <p className="text-sm font-medium">{authorName}</p>
                     <p className="text-xs text-muted-foreground">{authorTitle}</p>
@@ -269,16 +276,14 @@ export function PostCard({
             >
               {POST_TYPE_LABEL[post.type]}
             </span>
-            {post.space_id ? (
+            {/* One type tag. The category pill and a flair that only repeats
+                the type ("Project update" · "Projects" · "Update") said it thrice. */}
+            {post.space_id && (
               <span className="rounded-full border border-ai/40 bg-ai/10 px-1.5 py-0 text-[11px] uppercase tracking-wider text-ai">
                 Space
               </span>
-            ) : (
-              <span className="rounded-full border border-border/60 px-1.5 py-0 text-[11px] uppercase tracking-wider">
-                {post.community}
-              </span>
             )}
-            {post.flair && (
+            {post.flair && !flairRepeatsType(post.flair, POST_TYPE_LABEL[post.type]) && (
               <span
                 className={`rounded-full border px-1.5 py-0 text-[11px] font-medium ${flairClasses(post.flair)}`}
               >
@@ -495,24 +500,50 @@ export function PostCard({
         </div>
       )}
 
-      {post.type === "project_update" && projectData && (
-        <div className="mt-3 rounded-xl border border-border/60 bg-background/40 p-3">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Progress</span>
-            <span>{String(projectData.progress ?? 0)}%</span>
-          </div>
-          <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-surface-elevated">
-            <div
-              className="h-full rounded-full bg-foreground"
-              style={{ width: `${Number(projectData.progress ?? 0)}%` }}
-            />
-          </div>
-          <div className="mt-2 flex gap-4 text-xs text-muted-foreground">
-            <span>{String(projectData.contributors ?? 0)} contributors</span>
-            <span>{String(projectData.feedback ?? 0)} feedback notes</span>
-          </div>
-        </div>
-      )}
+      {post.type === "project_update" &&
+        projectData &&
+        (() => {
+          // Only what's real: an empty "0% · 0 contributors · 0 feedback notes"
+          // block read as broken, not as progress.
+          const progress = Number(projectData.progress ?? 0);
+          const contributors = Number(projectData.contributors ?? 0);
+          const feedback = Number(projectData.feedback ?? 0);
+          if (progress <= 0 && contributors <= 0 && feedback <= 0) return null;
+          return (
+            <div className="mt-3 rounded-xl border border-border/60 bg-background/40 p-3">
+              {progress > 0 && (
+                <>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>Progress</span>
+                    <span className="numeric">{progress}%</span>
+                  </div>
+                  <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-surface-elevated">
+                    <div
+                      className="h-full rounded-full bg-[var(--user-accent,var(--foreground))]"
+                      style={{ width: `${Math.min(100, progress)}%` }}
+                    />
+                  </div>
+                </>
+              )}
+              {(contributors > 0 || feedback > 0) && (
+                <div
+                  className={`flex gap-4 text-xs text-muted-foreground ${progress > 0 ? "mt-2" : ""}`}
+                >
+                  {contributors > 0 && (
+                    <span>
+                      {contributors} contributor{contributors === 1 ? "" : "s"}
+                    </span>
+                  )}
+                  {feedback > 0 && (
+                    <span>
+                      {feedback} feedback note{feedback === 1 ? "" : "s"}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
       {post.type === "resource" && resourceData && (
         <div className="mt-3 flex items-center gap-2 rounded-xl border border-border/60 bg-background/40 p-3 text-sm">
@@ -605,7 +636,8 @@ export function PostCard({
               className="ml-auto inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 transition-colors hover:bg-surface-elevated hover:text-foreground"
             >
               <MoreHorizontal className="h-3.5 w-3.5" />
-              More
+              {/* Label drops on narrow columns so the action row stays one line. */}
+              <span className="hidden @sm:inline">More</span>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-44">

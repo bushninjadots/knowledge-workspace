@@ -1,8 +1,6 @@
-// Community navigation catalog — the destination set rendered in the sidebar
-// rail (desktop) and the mobile nav sheet. Post-type views remain valid for
-// deep links and are surfaced as secondary filters in the feed header.
-import type { LucideIcon } from "lucide-react";
-import { Bookmark, Home, UserRound, Users } from "lucide-react";
+// Community views. The page tabs (community-tabs.tsx) show For you,
+// Following, Spaces and Saved; post-type views stay valid for deep links
+// (?nav=help) and are the type chips in the feed header.
 
 export type CommunityNavId =
   | "home"
@@ -19,34 +17,3 @@ export type CommunityNavId =
   | "showcase"
   | "tip"
   | "discussion";
-
-interface CommunityNavItem {
-  id: string;
-  label: string;
-  icon: LucideIcon;
-  /** External destination (rendered as a Link, e.g. the profile page). */
-  href?: string;
-}
-
-interface CommunityNavGroup {
-  label: string;
-  items: CommunityNavItem[];
-}
-
-export const COMMUNITY_NAV_GROUPS: CommunityNavGroup[] = [
-  {
-    label: "Feed",
-    items: [
-      { id: "home", label: "Home feed", icon: Home },
-      { id: "following", label: "Following", icon: UserRound },
-    ],
-  },
-  {
-    label: "Discover",
-    items: [{ id: "communities", label: "Communities", icon: Users }],
-  },
-  {
-    label: "You",
-    items: [{ id: "saved", label: "Saved", icon: Bookmark }],
-  },
-];

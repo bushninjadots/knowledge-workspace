@@ -1,8 +1,26 @@
 import { memo } from "react";
-import { Search, SlidersHorizontal, X, BookmarkCheck } from "lucide-react";
+import {
+  ArrowDownUp,
+  BookmarkCheck,
+  ChevronDown,
+  Search,
+  SlidersHorizontal,
+  X,
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { DISCOVERY_FILTERS, type DiscoveryFocus } from "@/lib/community-data";
-import type { CommunityNavId } from "@/components/tethyr/community/left-sidebar";
+import type { CommunityNavId } from "@/data/mocks/community-nav";
 
 export type SortMode = "latest" | "hot" | "helpful" | "offers" | "recommended";
 
@@ -14,15 +32,16 @@ const SORT_OPTIONS: { label: string; value: SortMode }[] = [
   { label: "Most offers", value: "offers" },
 ];
 
+// Ordered by what most needs a response, then what people share.
 const POST_TYPE_FILTERS: { label: string; value: CommunityNavId }[] = [
-  { label: "All posts", value: "home" },
-  { label: "Showcases", value: "showcase" },
-  { label: "Questions", value: "questions" },
-  { label: "Discussions", value: "discussion" },
-  { label: "Resources", value: "resources" },
-  { label: "Project updates", value: "projects" },
+  { label: "Everything", value: "home" },
   { label: "Help requests", value: "help" },
   { label: "Collaborations", value: "collab" },
+  { label: "Questions", value: "questions" },
+  { label: "Showcases", value: "showcase" },
+  { label: "Project updates", value: "projects" },
+  { label: "Discussions", value: "discussion" },
+  { label: "Resources", value: "resources" },
   { label: "Tips", value: "tip" },
 ];
 
@@ -45,9 +64,9 @@ function FilterBadge({ label, onRemove }: { label: string; onRemove: () => void 
 function navTitle(nav: CommunityNavId): string {
   switch (nav) {
     case "home":
-      return "Community Feed";
+      return "Community";
     case "communities":
-      return "Communities";
+      return "Spaces";
     case "help":
       return "Help Requests";
     case "collab":
@@ -82,7 +101,7 @@ function navDescription(nav: CommunityNavId): string {
     case "home":
       return "Find work worth responding to, share progress, and leave useful context.";
     case "communities":
-      return "Find a room for the conversations you want to keep building.";
+      return "Smaller rooms around a craft — join one to post, reply and keep up.";
     case "help":
       return "People who need a hand with something real.";
     case "collab":
@@ -113,10 +132,10 @@ function navDescription(nav: CommunityNavId): string {
 }
 
 /**
- * Memoized presentational header: title block, search, active-filter badges and
- * the sticky sort/focus controls. All props are controlled by the feed owner,
- * so the header re-renders only when a control value or the result count
- * actually changes.
+ * Memoized presentational header: title, search, and one row of feed controls
+ * (post-type chips, a Sort menu and a Filters menu). All props are controlled
+ * by the feed owner, so the header re-renders only when a control value or
+ * the result count actually changes.
  */
 export const CommunityHeader = memo(function CommunityHeader({
   nav,
@@ -132,7 +151,6 @@ export const CommunityHeader = memo(function CommunityHeader({
   sortMode,
   onSortModeChange,
   onNavChange,
-  onOpenTrending,
 }: {
   nav: CommunityNavId;
   searchQuery: string;
@@ -147,60 +165,162 @@ export const CommunityHeader = memo(function CommunityHeader({
   sortMode: SortMode;
   onSortModeChange: (value: SortMode) => void;
   onNavChange: (value: CommunityNavId) => void;
-  onOpenTrending: () => void;
 }) {
-  const showFeedControls = nav !== "communities" && nav !== "challenges" && !isSearching;
+  const showFeedControls =
+    nav !== "communities" && nav !== "challenges" && nav !== "following" && !isSearching;
+  // Type chips live on the main feed; the type views keep them so you can hop
+  // between types without going back to "All".
+  const typeView = POST_TYPE_FILTERS.some((filter) => filter.value === nav);
+  const narrowCount = (focusFilter !== "all" ? 1 : 0) + (mySkillsOnly ? 1 : 0);
+  const sortLabel = SORT_OPTIONS.find((option) => option.value === sortMode)?.label ?? "Latest";
 
   return (
-    <header className="mb-8">
-      <div className="flex items-start justify-between gap-4">
-        <div className="relative pl-4">
-          <span className="absolute left-0 top-1 h-[calc(100%-0.25rem)] w-1 rounded-full bg-[var(--user-accent,var(--primary))]/60" />
-          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-primary/60">
-            Community
-          </p>
-          <h1 className="font-display text-2xl font-semibold tracking-tight">{navTitle(nav)}</h1>
+    <header className="mb-6">
+      <div className="flex flex-col gap-4 @3xl:flex-row @3xl:items-end @3xl:justify-between">
+        <div className="min-w-0">
+          <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-[1.75rem]">
+            {navTitle(nav)}
+          </h1>
           <p className="mt-1 max-w-lg text-sm text-muted-foreground">{navDescription(nav)}</p>
         </div>
-        <button
-          type="button"
-          onClick={onOpenTrending}
-          className="flex min-h-11 items-center gap-2 rounded-lg border card-border bg-surface px-3 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring xl:hidden"
-        >
-          <SlidersHorizontal className="h-4 w-4" />
-          Trending
-        </button>
-      </div>
-
-      <div className="relative mt-5">
-        <Search
-          className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-          aria-hidden="true"
-        />
-        <Input
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          aria-label="Search the community"
-          placeholder="Search projects, skills, people, or ideas..."
-          className="h-10 rounded-md border-border/60 bg-surface pl-9 pr-9 text-sm focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
-        />
-        {isSearching && (
-          <button
-            type="button"
-            onClick={() => onSearchChange("")}
-            aria-label="Clear search"
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground"
-          >
-            <X className="h-4 w-4" />
-          </button>
+        {nav !== "communities" && (
+          <div className="relative w-full @3xl:w-80">
+            <Search
+              className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden="true"
+            />
+            <Input
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              aria-label="Search the community"
+              placeholder="Search posts, skills, people…"
+              className="h-10 rounded-lg border-border/60 bg-surface pl-9 pr-9 text-sm"
+            />
+            {isSearching && (
+              <button
+                type="button"
+                onClick={() => onSearchChange("")}
+                aria-label="Clear search"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
         )}
       </div>
 
       {isSearching && (
-        <p className="mt-2 text-xs text-muted-foreground" aria-live="polite">
+        <p className="mt-3 text-xs text-muted-foreground" aria-live="polite">
           {resultCount} result{resultCount !== 1 ? "s" : ""} for &quot;{searchQuery}&quot;
         </p>
       )}
+
+      {showFeedControls && (
+        <div className="mt-5 flex items-center gap-2">
+          {(nav === "home" || typeView) && (
+            <div
+              className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto pr-6 scrollbar-none [mask-image:linear-gradient(to_right,black_calc(100%-2rem),transparent)]"
+              role="group"
+              aria-label="Post types"
+            >
+              {POST_TYPE_FILTERS.map((filter) => {
+                const active = nav === filter.value;
+                return (
+                  <button
+                    key={filter.value}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => onNavChange(filter.value)}
+                    className={cn(
+                      "shrink-0 rounded-full border px-3 py-1.5 text-xs transition-colors duration-150",
+                      active
+                        ? "border-[var(--user-accent-border,var(--border-strong))] bg-[var(--user-accent-subtle,var(--surface-elevated))] font-medium text-[var(--user-accent-text,var(--foreground))]"
+                        : "border-transparent text-muted-foreground hover:bg-surface-elevated/60 hover:text-foreground",
+                    )}
+                  >
+                    {filter.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          <div className="ml-auto flex shrink-0 items-center gap-1.5">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border/60 bg-surface px-2.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                  aria-label={`Sort: ${sortLabel}`}
+                >
+                  <ArrowDownUp className="h-3.5 w-3.5" aria-hidden />
+                  <span className="hidden @lg:inline">{sortLabel}</span>
+                  <ChevronDown className="h-3 w-3" aria-hidden />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuLabel className="text-xs">Sort posts</DropdownMenuLabel>
+                <DropdownMenuRadioGroup
+                  value={sortMode}
+                  onValueChange={(value) => onSortModeChange(value as SortMode)}
+                >
+                  {SORT_OPTIONS.map((option) => (
+                    <DropdownMenuRadioItem key={option.value} value={option.value}>
+                      {option.label}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className={cn(
+                    "inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs transition-colors",
+                    narrowCount > 0
+                      ? "border-[var(--user-accent-border,var(--border-strong))] bg-[var(--user-accent-subtle,var(--surface-elevated))] text-[var(--user-accent-text,var(--foreground))]"
+                      : "border-border/60 bg-surface text-muted-foreground hover:text-foreground",
+                  )}
+                  aria-label={narrowCount ? `Filters, ${narrowCount} on` : "Filters"}
+                >
+                  <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden />
+                  <span className="hidden @lg:inline">Filters</span>
+                  {narrowCount > 0 && (
+                    <span className="numeric rounded-full bg-[var(--user-accent,var(--primary))] px-1.5 text-[10px] font-semibold text-[var(--user-accent-foreground,var(--primary-foreground))]">
+                      {narrowCount}
+                    </span>
+                  )}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="max-h-[70vh] w-56 overflow-y-auto">
+                <DropdownMenuCheckboxItem
+                  checked={mySkillsOnly}
+                  onCheckedChange={(checked) => onMySkillsOnlyChange(checked === true)}
+                  onSelect={(event) => event.preventDefault()}
+                >
+                  <BookmarkCheck className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+                  Only my skills
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs">Focus</DropdownMenuLabel>
+                <DropdownMenuRadioGroup
+                  value={focusFilter}
+                  onValueChange={(value) => onFocusFilterChange(value as DiscoveryFocus | "all")}
+                >
+                  <DropdownMenuRadioItem value="all">Any focus</DropdownMenuRadioItem>
+                  {DISCOVERY_FILTERS.map((focus) => (
+                    <DropdownMenuRadioItem key={focus} value={focus}>
+                      {focus}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      )}
+
       {!isSearching && activeFilterCount > 0 && (
         <div className="mt-3 flex flex-wrap items-center gap-1.5">
           {focusFilter !== "all" && (
@@ -213,7 +333,7 @@ export const CommunityHeader = memo(function CommunityHeader({
             <FilterBadge label="My skills only" onRemove={() => onMySkillsOnlyChange(false)} />
           )}
           {sortMode !== "latest" && (
-            <FilterBadge label={`Sort: ${sortMode}`} onRemove={() => onSortModeChange("latest")} />
+            <FilterBadge label={`Sort: ${sortLabel}`} onRemove={() => onSortModeChange("latest")} />
           )}
           {activeFilterCount > 1 && (
             <button
@@ -228,93 +348,6 @@ export const CommunityHeader = memo(function CommunityHeader({
               Clear all
             </button>
           )}
-        </div>
-      )}
-
-      {showFeedControls && (
-        <div className="sticky top-12 z-20 -mx-2 mb-5 space-y-2 border-b border-border/40 bg-background/95 px-2 py-3">
-          {/* Row 1: sort + my-skills */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
-            <button
-              type="button"
-              aria-pressed={mySkillsOnly}
-              onClick={() => onMySkillsOnlyChange(!mySkillsOnly)}
-              className={`shrink-0 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors duration-150 ${
-                mySkillsOnly
-                  ? "bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent-text,var(--primary))]"
-                  : "text-muted-foreground hover:bg-surface-elevated/40 hover:text-foreground"
-              }`}
-            >
-              <BookmarkCheck className="mr-1 inline h-3 w-3" />
-              My skills
-            </button>
-            <span className="h-3 w-px shrink-0 bg-border/40" />
-            {SORT_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                aria-pressed={sortMode === opt.value}
-                onClick={() => onSortModeChange(opt.value)}
-                className={`shrink-0 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors duration-150 ${
-                  sortMode === opt.value
-                    ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] text-[var(--user-accent-text,var(--primary))]"
-                    : "text-muted-foreground hover:bg-surface-elevated/40 hover:text-foreground"
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Row 2: focus chips */}
-          <div className="flex flex-wrap gap-1.5">
-            <button
-              type="button"
-              aria-pressed={focusFilter === "all"}
-              onClick={() => onFocusFilterChange("all")}
-              className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] transition-colors duration-150 ${
-                focusFilter === "all"
-                  ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] text-[var(--user-accent-text,var(--primary))] font-medium"
-                  : "text-muted-foreground hover:bg-surface-elevated/30 hover:text-foreground"
-              }`}
-            >
-              Any focus
-            </button>
-            {DISCOVERY_FILTERS.map((f) => (
-              <button
-                key={f}
-                type="button"
-                aria-pressed={focusFilter === f}
-                onClick={() => onFocusFilterChange(focusFilter === f ? "all" : f)}
-                className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] transition-colors duration-150 ${
-                  focusFilter === f
-                    ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] text-[var(--user-accent-text,var(--primary))] font-medium"
-                    : "text-muted-foreground hover:bg-surface-elevated/30 hover:text-foreground"
-                }`}
-              >
-                {f}
-              </button>
-            ))}
-          </div>
-
-          {/* Post types stay secondary to the feed itself. */}
-          <div className="flex flex-wrap gap-1.5" aria-label="Post type filters">
-            {POST_TYPE_FILTERS.map((filter) => (
-              <button
-                key={filter.value}
-                type="button"
-                aria-pressed={nav === filter.value}
-                onClick={() => onNavChange(filter.value)}
-                className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] transition-colors duration-150 ${
-                  nav === filter.value
-                    ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] text-[var(--user-accent-text,var(--primary))] font-medium"
-                    : "text-muted-foreground hover:bg-surface-elevated/30 hover:text-foreground"
-                }`}
-              >
-                {filter.label}
-              </button>
-            ))}
-          </div>
         </div>
       )}
     </header>

@@ -2,11 +2,11 @@ import { memo } from "react";
 import { MessageCircle, X } from "lucide-react";
 import { useComments, type PostWithAuthor } from "@/hooks/use-community";
 import { POST_TYPE_LABEL } from "@/lib/community-data";
-import { CommentThreadInline } from "@/components/tethyr/community/post-comments";
 import { PostCard } from "@/components/tethyr/community/post-card";
-import type { CommunityNavId } from "@/components/tethyr/community/left-sidebar";
+import type { CommunityNavId } from "@/data/mocks/community-nav";
 import type { SortMode } from "@/components/tethyr/community/community-header";
 import type { CommunitySpace } from "@/hooks/use-community-spaces";
+import { skillKey } from "@/lib/skill-key";
 
 function PostRowCompact({
   post,
@@ -126,11 +126,11 @@ export function CommunityFeedSplitView({
     !!activeSpace && (activeSpace.my_role === "owner" || activeSpace.my_role === "moderator");
   const overlap =
     sortMode === "recommended"
-      ? selectedPost.skills.filter((skill) => mySkillNames.has(skill.toLowerCase())).length
+      ? selectedPost.skills.filter((skill) => mySkillNames.has(skillKey(skill))).length
       : undefined;
 
   return (
-    <div className="hidden min-h-[min(72vh,760px)] grid-cols-[minmax(20rem,26rem)_minmax(0,1fr)] overflow-hidden rounded-xl border border-border/60 bg-surface/30 lg:grid">
+    <div className="hidden min-h-[min(72vh,760px)] grid-cols-[minmax(15rem,19rem)_minmax(0,1fr)] overflow-hidden rounded-xl border border-border/60 bg-surface/30 @3xl:grid">
       <aside className="min-h-0 overflow-y-auto border-r border-border/60" aria-label="Posts">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border/60 bg-surface px-4 py-3">
           <div>
@@ -183,11 +183,6 @@ export function CommunityFeedSplitView({
             canModerate={canModerate}
             reportCount={canModerate ? (reportedPostCounts?.get(selectedPost.id) ?? 0) : undefined}
             dimThreshold={activeSpace?.report_auto_dim_threshold ?? 3}
-          />
-          <CommentThreadInline
-            postId={selectedPost.id}
-            comments={comments}
-            isQuestion={selectedPost.type === "question"}
           />
         </div>
       </section>

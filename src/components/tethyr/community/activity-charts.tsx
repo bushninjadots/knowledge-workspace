@@ -123,9 +123,9 @@ export const ActivityCharts = memo(function ActivityCharts() {
           Activity will appear here as people join spaces and start posting.
         </p>
       ) : (
-        <div className="flex flex-col gap-5 sm:flex-row sm:gap-8">
+        <div className="flex flex-col gap-5 @xl:flex-row @xl:gap-8">
           <MiniBarChart data={activity} color="var(--trust)" label="joins" icon={UserPlus} />
-          <div className="hidden sm:block w-px bg-border/40" />
+          <div className="hidden w-px bg-border/40 @xl:block" />
           <MiniBarChart data={activity} color="var(--primary)" label="posts" icon={MessageSquare} />
         </div>
       )}

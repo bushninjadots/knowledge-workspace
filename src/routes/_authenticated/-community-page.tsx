@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSearch } from "@tanstack/react-router";
-import {
-  CommunityLeftSidebar,
-  type CommunityNavId,
-} from "@/components/tethyr/community/left-sidebar";
+import { PenLine } from "lucide-react";
+import type { CommunityNavId } from "@/data/mocks/community-nav";
+import { CommunityTabs } from "@/components/tethyr/community/community-tabs";
 import { CommunityRightSidebar } from "@/components/tethyr/community/right-sidebar";
 import { CommunityFeed } from "@/components/tethyr/community/community-feed";
-import { MobileBottomNav } from "@/components/tethyr/community/mobile-bottom-nav";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import {
   useCommunitySpace,
@@ -24,8 +22,7 @@ export function CommunityPage() {
 
   const [nav, setNav] = useState<CommunityNavId>("home");
   const [searchQuery, setSearchQuery] = useState("");
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [mobileTrendingOpen, setMobileTrendingOpen] = useState(false);
+  const [pulseOpen, setPulseOpen] = useState(false);
   const [activeSpaceSlug, setActiveSpaceSlug] = useState<string | null>(null);
   const [composerPresetType, setComposerPresetType] = useState<string | null>(null);
 
@@ -51,8 +48,8 @@ export function CommunityPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deepLinkedNav]);
 
-  // Empty states and the mobile FAB drop the user straight into the composer
-  // (optionally with the post type pre-selected).
+  // Empty states and the phone compose button drop the user straight into the
+  // composer (optionally with the post type pre-selected).
   const focusComposer = useCallback((presetType?: string) => {
     setNav("home");
     setSearchQuery("");
@@ -73,39 +70,32 @@ export function CommunityPage() {
 
   const closeSpace = useCallback(() => setActiveSpaceSlug(null), []);
 
-  const openTrending = useCallback(() => setMobileTrendingOpen(true), []);
-  const openSidebar = useCallback(() => setMobileSidebarOpen(true), []);
-  const closeSidebar = useCallback(() => setMobileSidebarOpen(false), []);
-  const selectFromDrawer = useCallback((id: CommunityNavId) => {
+  // Picking a tab always leaves an open space (the Spaces tab lists them all).
+  const selectTab = useCallback((id: CommunityNavId) => {
+    setActiveSpaceSlug(null);
     setNav(id);
-    setMobileSidebarOpen(false);
   }, []);
+
+  // Trending skills in the rail narrow the feed instead of leaving the page.
+  const searchSkill = useCallback((skill: string) => {
+    setActiveSpaceSlug(null);
+    setNav("home");
+    setSearchQuery(skill);
+    setPulseOpen(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  const openPulse = useCallback(() => setPulseOpen(true), []);
 
   return (
     <div className="animate-room-enter min-h-screen bg-noise">
-      <div className="mx-auto px-4 pt-4 md:px-8 md:pt-8">
-        <div className="mb-5 flex items-center justify-between gap-4 border-b border-border/50 pb-4 lg:hidden">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary/70">
-              Tethyr
-            </p>
-            <p className="mt-1 text-sm font-medium text-foreground">
-              Build in public, with people.
-            </p>
-          </div>
-          <span className="text-xs text-muted-foreground">Community</span>
-        </div>
-      </div>
-      <div className="mx-auto flex gap-6 px-4 pb-24 md:px-8 lg:pb-8 xl:pr-72">
-        <CommunityLeftSidebar active={nav} onSelect={setNav} className="hidden lg:block" />
-
-        <div className="min-w-0 flex-1">
-          <MobileBottomNav
+      <div className="mx-auto grid w-full max-w-[1180px] gap-8 px-4 pb-28 pt-5 md:px-8 md:pb-12 md:pt-8 xl:grid-cols-[minmax(0,1fr)_17rem]">
+        <div className="@container min-w-0">
+          <CommunityTabs
             active={nav}
-            onSelect={setNav}
-            onPost={focusComposer}
-            onOpenSidebar={openSidebar}
-            position="top"
+            inSpace={!!activeSpace}
+            onSelect={selectTab}
+            onOpenPulse={openPulse}
           />
           <CommunityFeed
             nav={nav}
@@ -119,37 +109,37 @@ export function CommunityPage() {
             focusComposer={focusComposer}
             deepLinkedPostId={deepLinkedPostId}
             onBackSpace={closeSpace}
-            onOpenTrending={openTrending}
             onOpenSpace={openSpace}
           />
         </div>
+
+        <CommunityRightSidebar sticky onSkillSelect={searchSkill} onOpenSpace={openSpace} />
       </div>
 
-      <CommunityRightSidebar fixed />
+      {/* Phones: keep writing one tap away. Sits above the shell's scroll-to-top. */}
+      <button
+        type="button"
+        onClick={() => focusComposer()}
+        aria-label="Write a post"
+        className="fixed bottom-[calc(8.25rem+env(safe-area-inset-bottom))] right-4 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--user-accent,var(--primary))] text-[var(--user-accent-foreground,var(--primary-foreground))] shadow-lg transition-transform active:scale-95 md:hidden"
+      >
+        <PenLine className="h-5 w-5" aria-hidden />
+      </button>
 
-      <Drawer open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
+      <Drawer open={pulseOpen} onOpenChange={setPulseOpen}>
         <DrawerContent className="max-h-[85vh]">
           <DrawerHeader>
-            <DrawerTitle>Navigation</DrawerTitle>
+            <DrawerTitle>Pulse</DrawerTitle>
           </DrawerHeader>
           <div className="overflow-y-auto px-4 pb-6">
-            <CommunityLeftSidebar
-              active={nav}
-              onSelect={selectFromDrawer}
-              onNavigate={closeSidebar}
-              className="w-full"
+            <CommunityRightSidebar
+              mobile
+              onSkillSelect={searchSkill}
+              onOpenSpace={(space) => {
+                setPulseOpen(false);
+                openSpace(space);
+              }}
             />
-          </div>
-        </DrawerContent>
-      </Drawer>
-
-      <Drawer open={mobileTrendingOpen} onOpenChange={setMobileTrendingOpen}>
-        <DrawerContent className="max-h-[85vh]">
-          <DrawerHeader>
-            <DrawerTitle>Trending & Discover</DrawerTitle>
-          </DrawerHeader>
-          <div className="overflow-y-auto px-4 pb-6">
-            <CommunityRightSidebar mobile />
           </div>
         </DrawerContent>
       </Drawer>

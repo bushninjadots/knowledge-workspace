@@ -40,10 +40,8 @@ export const CommunitiesSection = memo(function CommunitiesSection({
 
   return (
     <div>
-      <ActivityCharts />
-
-      <div className="mb-5 flex items-center justify-between gap-3">
-        <div className="relative flex-1">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div className="relative w-full min-w-0 @xl:w-auto @xl:flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={search}
@@ -86,7 +84,7 @@ export const CommunitiesSection = memo(function CommunitiesSection({
         </div>
       </div>
       {isLoading ? (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+        <div className="grid gap-3 @xl:grid-cols-2 @4xl:grid-cols-3">
           {[1, 2, 3, 4, 5].map((i) => (
             <div
               key={i}
@@ -110,7 +108,7 @@ export const CommunitiesSection = memo(function CommunitiesSection({
               {search.trim() && ` matching "${search}"`}
             </p>
           )}
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+          <div className="grid gap-3 @xl:grid-cols-2 @4xl:grid-cols-3">
             {sortedSpaces.map((space: CommunitySpace) => (
               <CommunityCard key={space.id} space={space} onClick={() => onOpenSpace(space)} />
             ))}
@@ -118,6 +116,9 @@ export const CommunitiesSection = memo(function CommunitiesSection({
         </>
       )}
       <CreateSpaceDialog open={createOpen} onOpenChange={setCreateOpen} />
+      <div className="mt-8">
+        <ActivityCharts />
+      </div>
     </div>
   );
 });

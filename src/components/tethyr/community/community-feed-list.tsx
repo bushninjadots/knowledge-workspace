@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { PostCard } from "@/components/tethyr/community/post-card";
 import { SpaceChatMessage } from "@/components/tethyr/community/space-chat-message";
 import { useComments, type PostWithAuthor } from "@/hooks/use-community";
-import type { CommunityNavId } from "@/components/tethyr/community/left-sidebar";
+import type { CommunityNavId } from "@/data/mocks/community-nav";
 import type { CommunitySpace } from "@/hooks/use-community-spaces";
 import type { SortMode } from "@/components/tethyr/community/community-header";
+import { skillKey } from "@/lib/skill-key";
 
 /**
  * Memoized so the heavy PostCard (markdown parsing, hover cards, comments)
@@ -302,7 +303,7 @@ export const CommunityFeedList = memo(function CommunityFeedList({
         const isFirstUnread = firstUnreadIndex >= 0 && index === firstUnreadIndex;
         const overlap =
           sortMode === "recommended"
-            ? post.skills.filter((s) => mySkillNames.has(s.toLowerCase())).length
+            ? post.skills.filter((s) => mySkillNames.has(skillKey(s))).length
             : undefined;
         // Native space posts can be removed by the space's owners/moderators;
         // shared posts belong to another space and are handled via unshare.

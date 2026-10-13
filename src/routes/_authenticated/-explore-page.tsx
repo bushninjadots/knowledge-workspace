@@ -44,6 +44,7 @@ import {
 } from "@/data/mocks/catalog";
 import { useExploreData } from "./-explore-data";
 import { ExploreStat, DiscoverSidebar, LoadMoreButton, type Tab } from "./-explore-sidebar";
+import { skillKey, skillKeyMap } from "@/lib/skill-key";
 
 // Code-split module: the interactive page for its route. See the route
 // file for the eager surface (loader/head) and the lazyRouteComponent wire-up.
@@ -141,15 +142,12 @@ export function ExplorePage() {
     setPersistTabs((prev) => new Set(prev).add(tab));
   }, [tab]);
 
-  // Build user skill names for matching
+  // Keys (see skill-key.ts) for every skill the user teaches or learns —
+  // roles and needs are tagged with slugs, members with names.
   const mySkillNames = useMemo(() => {
-    const names = new Set<string>();
-    if (!me) return names;
+    if (!me) return new Set<string>();
     const allIds = new Set([...(me.teachIds ?? []), ...(me.learnIds ?? [])]);
-    for (const skill of skills) {
-      if (allIds.has(skill.id)) names.add(skill.name.toLowerCase());
-    }
-    return names;
+    return new Set(skillKeyMap(skills.filter((skill) => allIds.has(skill.id))).keys());
   }, [me, skills]);
 
   const {
@@ -240,8 +238,8 @@ export function ExplorePage() {
     // Skill-match sorting
     if (oppSort === "match" && mySkillNames.size > 0) {
       list = [...list].sort((a, b) => {
-        const aMatch = a.skills.filter((s) => mySkillNames.has(s.toLowerCase())).length;
-        const bMatch = b.skills.filter((s) => mySkillNames.has(s.toLowerCase())).length;
+        const aMatch = a.skills.filter((s) => mySkillNames.has(skillKey(s))).length;
+        const bMatch = b.skills.filter((s) => mySkillNames.has(skillKey(s))).length;
         return bMatch - aMatch;
       });
     }
@@ -475,13 +473,13 @@ export function ExplorePage() {
                             {n.skills?.name && (
                               <span
                                 className={`mt-1 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] ${
-                                  mySkillNames.has(n.skills.name.toLowerCase())
+                                  mySkillNames.has(skillKey(n.skills.name))
                                     ? "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent-text,var(--primary))]"
                                     : "border-[var(--user-accent,var(--ai))]/30 bg-[var(--user-accent,var(--ai))]/5 text-[var(--user-accent-text,var(--ai))]"
                                 }`}
                               >
                                 {n.skills.name}
-                                {mySkillNames.has(n.skills.name.toLowerCase()) && (
+                                {mySkillNames.has(skillKey(n.skills.name)) && (
                                   <BadgeCheck className="h-3 w-3" />
                                 )}
                               </span>
@@ -559,8 +557,7 @@ export function ExplorePage() {
                     {filteredOpportunities.map((opportunity, i) => {
                       const skillMatchCount =
                         oppSort === "match"
-                          ? opportunity.skills.filter((s) => mySkillNames.has(s.toLowerCase()))
-                              .length
+                          ? opportunity.skills.filter((s) => mySkillNames.has(skillKey(s))).length
                           : 0;
                       return (
                         <Card
@@ -609,7 +606,7 @@ export function ExplorePage() {
                             <div className="mt-4 flex flex-wrap gap-1.5">
                               {opportunity.skills.length > 0 ? (
                                 opportunity.skills.map((skill) => {
-                                  const isMySkill = mySkillNames.has(skill.toLowerCase());
+                                  const isMySkill = mySkillNames.has(skillKey(skill));
                                   return (
                                     <span
                                       key={skill}

@@ -61,6 +61,8 @@ import { validateFeedbackRequest, validatePollDraft } from "@/lib/community-vali
 import { validateImageFile } from "@/lib/validators";
 import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes";
 import { CharCount, insertMarkdown } from "./composer-parts";
+import { cn } from "@/lib/utils";
+import { MemberAvatar } from "@/components/tethyr/member-avatar";
 
 const ACTION_ICON: Record<string, typeof Rocket> = {
   showcase: Rocket,
@@ -114,6 +116,9 @@ export function ComposerBar({
   const [draft, setDraft] = useState(editingPost?.body ?? "");
   const [images, setImages] = useState<string[]>(editingPost?.images ?? []);
   const [focused, setFocused] = useState(false);
+  // Opens on first focus and stays open until the post is sent or editing is
+  // cancelled: collapsing on blur moved the toolbar under the pointer.
+  const [engaged, setEngaged] = useState(false);
   const [showAttachPanel, setShowAttachPanel] = useState(false);
   const [attachedProject, setAttachedProject] = useState<{
     projectId?: string;
@@ -183,8 +188,17 @@ export function ComposerBar({
   }, [editingPost?.id]);
 
   const name = me?.profile?.display_name || me?.profile?.handle || "You";
-  const initial = name.charAt(0).toUpperCase();
   const isEditing = !!editingPost;
+  // At rest the composer is one line; anything in progress keeps it open.
+  const expanded =
+    engaged ||
+    isEditing ||
+    !!draft.trim() ||
+    !!title.trim() ||
+    !!type ||
+    images.length > 0 ||
+    showAttachPanel ||
+    !!targetSpaceId;
   const isSubmitting = createPost.isPending || updatePost.isPending;
 
   // Guard in-progress posts from being lost to a navigation or tab close.
@@ -455,6 +469,7 @@ export function ComposerBar({
       setShowLinkInput(false);
       setTargetSpaceId(null);
       setShowAttachPanel(false);
+      setEngaged(false);
       if (draftKey) localStorage.removeItem(draftKey);
       onCancelEdit?.();
     } catch (err: unknown) {
@@ -465,9 +480,10 @@ export function ComposerBar({
 
   return (
     <div
-      className={`card-border rounded-lg border bg-surface px-4 py-3.5 sm:px-5 sm:py-4 ${
-        focused ? "shadow-[0_0_0_1px_oklch(0.92_0.23_142/20%)]" : ""
-      }`}
+      className={cn(
+        "card-border rounded-xl border bg-surface px-4 py-3.5 transition-shadow sm:px-5 sm:py-4",
+        focused && "ring-1 ring-[var(--user-accent-border,var(--ring))]",
+      )}
     >
       {isEditing && (
         <div className="mb-3 flex items-center justify-between rounded-xl bg-surface-elevated px-3 py-2">
@@ -484,28 +500,38 @@ export function ComposerBar({
       )}
 
       <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-trust text-sm font-semibold text-background">
-          {initial}
-        </div>
+        <MemberAvatar name={name} avatarPath={me?.profile?.avatar_url} />
         <div className="min-w-0 flex-1">
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value.slice(0, 200))}
-            onFocus={() => setFocused(true)}
-            placeholder="Title (optional)"
-            aria-label="Post title"
-            className="mb-2 w-full rounded-xl border-none bg-transparent text-sm font-semibold text-foreground placeholder:text-muted-foreground focus:outline-none"
-          />
+          {expanded && (
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value.slice(0, 200))}
+              onFocus={() => setFocused(true)}
+              placeholder="Title (optional)"
+              aria-label="Post title"
+              className="mb-2 w-full rounded-xl border-none bg-transparent text-sm font-semibold text-foreground placeholder:text-muted-foreground focus:outline-none"
+            />
+          )}
           <Textarea
             ref={textareaRef}
             id="community-composer-textarea"
             value={draft}
             onChange={(e) => setDraft(e.target.value.slice(0, MAX_CHARS))}
-            onFocus={() => setFocused(true)}
+            onFocus={() => {
+              setFocused(true);
+              setEngaged(true);
+            }}
             onBlur={() => setFocused(false)}
-            placeholder="What are you building or learning today?"
-            rows={focused || draft.length > 80 ? 5 : 2}
-            className="min-h-16 resize-none rounded-xl border-border/60 bg-background/40 transition-colors text-sm"
+            placeholder={
+              expanded
+                ? "What are you building or learning today?"
+                : "Share what you're working on…"
+            }
+            rows={expanded ? 5 : 1}
+            className={cn(
+              "resize-none rounded-xl border-border/60 bg-background/40 text-sm transition-colors",
+              expanded ? "min-h-28" : "min-h-11",
+            )}
           />
           {focused && (
             <div className="mt-1.5 flex items-center justify-end gap-1.5">
@@ -595,7 +621,7 @@ export function ComposerBar({
       )}
 
       {/* Post-to-space picker + link + flair (Reddit-style meta row) */}
-      {(focused || !!type || !!flair || showLinkInput || !!targetSpaceId || isEditing) && (
+      {(expanded || !!flair || showLinkInput) && (
         <div className="mt-3 space-y-2 rounded-xl border border-border/50 bg-background/30 p-3">
           {/* Destination picker */}
           {!spaceId && (
@@ -727,200 +753,202 @@ export function ComposerBar({
         </div>
       )}
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          multiple
-          className="hidden"
-          onChange={onFileChange}
-        />
-        <button
-          onClick={handleImageUpload}
-          disabled={images.length >= 4}
-          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/60 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95 disabled:opacity-40"
-        >
-          <ImagePlus className="h-3.5 w-3.5" />
-          Image
-        </button>
-        <button
-          type="button"
-          onClick={handleH1}
-          onMouseDown={keepTextareaFocus}
-          aria-label="Heading 1"
-          title="Heading 1"
-          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
-        >
-          <Heading1 className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          onClick={handleH2}
-          onMouseDown={keepTextareaFocus}
-          aria-label="Heading 2"
-          title="Heading 2"
-          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
-        >
-          <Heading2 className="h-3.5 w-3.5" />
-        </button>
-        <div className="mx-0.5 h-4 w-px bg-border/60" />
-        <button
-          type="button"
-          onClick={handleBold}
-          onMouseDown={keepTextareaFocus}
-          aria-label="Bold"
-          title="Bold"
-          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
-        >
-          <Bold className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          onClick={handleItalic}
-          onMouseDown={keepTextareaFocus}
-          aria-label="Italic"
-          title="Italic"
-          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
-        >
-          <Italic className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          onClick={handleStrikethrough}
-          onMouseDown={keepTextareaFocus}
-          aria-label="Strikethrough"
-          title="Strikethrough"
-          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
-        >
-          <Strikethrough className="h-3.5 w-3.5" />
-        </button>
-        <div className="mx-0.5 h-4 w-px bg-border/60" />
-        <button
-          type="button"
-          onClick={handleBulletList}
-          onMouseDown={keepTextareaFocus}
-          aria-label="Bullet list"
-          title="Bullet list"
-          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
-        >
-          <List className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          onClick={handleNumberedList}
-          onMouseDown={keepTextareaFocus}
-          aria-label="Numbered list"
-          title="Numbered list"
-          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
-        >
-          <ListOrdered className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          onClick={handleBlockquote}
-          onMouseDown={keepTextareaFocus}
-          aria-label="Blockquote"
-          title="Blockquote"
-          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
-        >
-          <Quote className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          onClick={handleLink}
-          onMouseDown={keepTextareaFocus}
-          aria-label="Insert link"
-          title="Insert link"
-          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
-        >
-          <Link2 className="h-3.5 w-3.5" />
-        </button>
-        <div className="mx-0.5 h-4 w-px bg-border/60" />
-        <button
-          onClick={() => setShowAttachPanel((v) => !v)}
-          className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1.5 text-xs transition-colors active:scale-95 ${
-            showAttachPanel || attachedProject
-              ? "border-primary bg-primary/10 text-primary"
-              : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
-          }`}
-        >
-          <Paperclip className="h-3.5 w-3.5" />
-          Project
-        </button>
-        <div className="mx-1 h-4 w-px bg-border/60" />
-        {PRIMARY_ACTIONS.map((a) => {
-          const Icon = ACTION_ICON[a.type] ?? HelpCircle;
-          const active = type === a.type;
-          return (
-            <button
-              key={a.type}
-              onClick={() => setType(active ? null : a.type)}
-              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-colors active:scale-95 ${
-                active
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
-              }`}
-            >
-              <Icon className="h-3.5 w-3.5" />
-              {a.label}
-            </button>
-          );
-        })}
+      {expanded && (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={onFileChange}
+          />
+          <button
+            onClick={handleImageUpload}
+            disabled={images.length >= 4}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/60 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95 disabled:opacity-40"
+          >
+            <ImagePlus className="h-3.5 w-3.5" />
+            Image
+          </button>
+          <button
+            type="button"
+            onClick={handleH1}
+            onMouseDown={keepTextareaFocus}
+            aria-label="Heading 1"
+            title="Heading 1"
+            className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+          >
+            <Heading1 className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={handleH2}
+            onMouseDown={keepTextareaFocus}
+            aria-label="Heading 2"
+            title="Heading 2"
+            className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+          >
+            <Heading2 className="h-3.5 w-3.5" />
+          </button>
+          <div className="mx-0.5 h-4 w-px bg-border/60" />
+          <button
+            type="button"
+            onClick={handleBold}
+            onMouseDown={keepTextareaFocus}
+            aria-label="Bold"
+            title="Bold"
+            className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+          >
+            <Bold className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={handleItalic}
+            onMouseDown={keepTextareaFocus}
+            aria-label="Italic"
+            title="Italic"
+            className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+          >
+            <Italic className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={handleStrikethrough}
+            onMouseDown={keepTextareaFocus}
+            aria-label="Strikethrough"
+            title="Strikethrough"
+            className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+          >
+            <Strikethrough className="h-3.5 w-3.5" />
+          </button>
+          <div className="mx-0.5 h-4 w-px bg-border/60" />
+          <button
+            type="button"
+            onClick={handleBulletList}
+            onMouseDown={keepTextareaFocus}
+            aria-label="Bullet list"
+            title="Bullet list"
+            className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+          >
+            <List className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={handleNumberedList}
+            onMouseDown={keepTextareaFocus}
+            aria-label="Numbered list"
+            title="Numbered list"
+            className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+          >
+            <ListOrdered className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={handleBlockquote}
+            onMouseDown={keepTextareaFocus}
+            aria-label="Blockquote"
+            title="Blockquote"
+            className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+          >
+            <Quote className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={handleLink}
+            onMouseDown={keepTextareaFocus}
+            aria-label="Insert link"
+            title="Insert link"
+            className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+          >
+            <Link2 className="h-3.5 w-3.5" />
+          </button>
+          <div className="mx-0.5 h-4 w-px bg-border/60" />
+          <button
+            onClick={() => setShowAttachPanel((v) => !v)}
+            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1.5 text-xs transition-colors active:scale-95 ${
+              showAttachPanel || attachedProject
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
+            }`}
+          >
+            <Paperclip className="h-3.5 w-3.5" />
+            Project
+          </button>
+          <div className="mx-1 h-4 w-px bg-border/60" />
+          {PRIMARY_ACTIONS.map((a) => {
+            const Icon = ACTION_ICON[a.type] ?? HelpCircle;
+            const active = type === a.type;
+            return (
+              <button
+                key={a.type}
+                onClick={() => setType(active ? null : a.type)}
+                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-colors active:scale-95 ${
+                  active
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {a.label}
+              </button>
+            );
+          })}
 
-        {/* Every other post type lives behind a single "More" menu. */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1.5 text-xs transition-colors active:scale-95 ${
-                type && MORE_ACTIONS.some((a) => a.type === type)
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
-              }`}
-            >
-              {type && MORE_ACTIONS.some((a) => a.type === type) ? (
-                <>
-                  {(() => {
-                    const Icon = ACTION_ICON[type] ?? HelpCircle;
-                    return <Icon className="h-3.5 w-3.5" />;
-                  })()}
-                  {MORE_ACTIONS.find((a) => a.type === type)?.label}
-                </>
-              ) : (
-                <>
-                  More
-                  <ChevronDown className="h-3 w-3" />
-                </>
-              )}
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="max-h-80 w-56 overflow-y-auto">
-            {MORE_ACTIONS.map((a) => {
-              const Icon = ACTION_ICON[a.type] ?? HelpCircle;
-              const active = type === a.type;
-              return (
-                <DropdownMenuItem key={a.type} onClick={() => setType(active ? null : a.type)}>
-                  <Icon className="mr-2 h-3.5 w-3.5" />
-                  <span className="flex-1">{a.label}</span>
-                  {active && <Check className="h-3.5 w-3.5 text-primary" />}
-                </DropdownMenuItem>
-              );
-            })}
-          </DropdownMenuContent>
-        </DropdownMenu>
+          {/* Every other post type lives behind a single "More" menu. */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1.5 text-xs transition-colors active:scale-95 ${
+                  type && MORE_ACTIONS.some((a) => a.type === type)
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
+                }`}
+              >
+                {type && MORE_ACTIONS.some((a) => a.type === type) ? (
+                  <>
+                    {(() => {
+                      const Icon = ACTION_ICON[type] ?? HelpCircle;
+                      return <Icon className="h-3.5 w-3.5" />;
+                    })()}
+                    {MORE_ACTIONS.find((a) => a.type === type)?.label}
+                  </>
+                ) : (
+                  <>
+                    More
+                    <ChevronDown className="h-3 w-3" />
+                  </>
+                )}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="max-h-80 w-56 overflow-y-auto">
+              {MORE_ACTIONS.map((a) => {
+                const Icon = ACTION_ICON[a.type] ?? HelpCircle;
+                const active = type === a.type;
+                return (
+                  <DropdownMenuItem key={a.type} onClick={() => setType(active ? null : a.type)}>
+                    <Icon className="mr-2 h-3.5 w-3.5" />
+                    <span className="flex-1">{a.label}</span>
+                    {active && <Check className="h-3.5 w-3.5 text-primary" />}
+                  </DropdownMenuItem>
+                );
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-        <div className="mx-1 h-4 w-px bg-border/60" />
-        <Button
-          type="button"
-          size="sm"
-          className="ml-auto"
-          onClick={submit}
-          disabled={!draft.trim() || !type || isSubmitting}
-        >
-          {isSubmitting ? "..." : isEditing ? "Save" : "Post"}
-        </Button>
-      </div>
+          <div className="mx-1 h-4 w-px bg-border/60" />
+          <Button
+            type="button"
+            size="sm"
+            className="ml-auto"
+            onClick={submit}
+            disabled={!draft.trim() || !type || isSubmitting}
+          >
+            {isSubmitting ? "..." : isEditing ? "Save" : "Post"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

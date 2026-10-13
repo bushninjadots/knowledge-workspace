@@ -16,9 +16,11 @@ import { CommunityFeedList } from "@/components/tethyr/community/community-feed-
 import { CommunityFeedSplitView } from "@/components/tethyr/community/community-feed-split-view";
 import { SpaceHeader, type SpaceSortMode } from "@/components/tethyr/community/space-header";
 import { CommunityGraphSummary } from "@/components/tethyr/community/community-graph-summary";
+import { CommunityPulse } from "@/components/tethyr/community/community-pulse";
+import { HelpMatches, findHelpMatches } from "@/components/tethyr/community/help-matches";
 import { ChallengesSection } from "@/components/tethyr/community/challenges-section";
 import { CommunitiesSection } from "@/components/tethyr/community/communities-section";
-import type { CommunityNavId } from "@/components/tethyr/community/left-sidebar";
+import type { CommunityNavId } from "@/data/mocks/community-nav";
 import {
   useInfinitePosts,
   flattenPosts,
@@ -33,6 +35,7 @@ import { useSpaceReadState } from "@/hooks/use-space-read-state";
 import { useSpaceTyping } from "@/hooks/use-space-typing";
 import type { DiscoveryFocus } from "@/lib/community-data";
 import { useSpaceReportedPostCounts, type CommunitySpace } from "@/hooks/use-community-spaces";
+import { skillKey, skillKeyMap } from "@/lib/skill-key";
 
 const NAV_TO_POST_TYPE: Partial<Record<CommunityNavId, string>> = {
   projects: "project_update",
@@ -63,7 +66,6 @@ export function CommunityFeed({
   focusComposer,
   deepLinkedPostId,
   onBackSpace,
-  onOpenTrending,
   onOpenSpace,
 }: {
   nav: CommunityNavId;
@@ -77,7 +79,6 @@ export function CommunityFeed({
   focusComposer: (presetType?: string) => void;
   deepLinkedPostId?: string;
   onBackSpace: () => void;
-  onOpenTrending: () => void;
   onOpenSpace: (space: CommunitySpace) => void;
 }) {
   const navigate = useNavigate();
@@ -179,18 +180,24 @@ export function CommunityFeed({
     }
   }, [deepLinkedPostId]);
 
-  // Build a set of skill NAMES the user teaches or learns
+  // Keys (see skill-key.ts) for every skill the user teaches or learns.
   const mySkillNames = useMemo(() => {
-    const names = new Set<string>();
-    if (!me) return names;
+    if (!me) return new Set<string>();
     const allUserSkillIds = new Set([...(me.teachIds ?? []), ...(me.learnIds ?? [])]);
-    for (const skill of skillCatalog) {
-      if (allUserSkillIds.has(skill.id)) {
-        names.add(skill.name.toLowerCase());
-      }
-    }
-    return names;
+    return new Set(
+      skillKeyMap(skillCatalog.filter((skill) => allUserSkillIds.has(skill.id))).keys(),
+    );
   }, [me, skillCatalog]);
+
+  // Skills the member teaches — what "You could help" matches asks against.
+  const teachSkillNames = useMemo(() => {
+    const teachIds = new Set(me?.teachIds ?? []);
+    return skillKeyMap(skillCatalog.filter((skill) => teachIds.has(skill.id)));
+  }, [me, skillCatalog]);
+  const helpMatches = useMemo(
+    () => findHelpMatches(posts, teachSkillNames, me?.userId ?? null),
+    [posts, teachSkillNames, me],
+  );
 
   const activeFilterCount = [
     focusFilter !== "all" ? 1 : 0,
@@ -266,6 +273,11 @@ export function CommunityFeed({
     [me, posts, toggleAction],
   );
 
+  const offerHelp = useCallback(
+    (postId: string) => handleToggleAction(postId, "offer"),
+    [handleToggleAction],
+  );
+
   const clearSearch = useCallback(() => onSearchChange(""), [onSearchChange]);
   const goHome = useCallback(() => onNavChange("home"), [onNavChange]);
 
@@ -307,7 +319,7 @@ export function CommunityFeed({
     }
 
     if (mySkillsOnly && mySkillNames.size > 0) {
-      list = list.filter((p) => p.skills.some((s) => mySkillNames.has(s.toLowerCase())));
+      list = list.filter((p) => p.skills.some((s) => mySkillNames.has(skillKey(s))));
     }
 
     if (searchQuery.trim()) {
@@ -338,8 +350,8 @@ export function CommunityFeed({
       list = [...list].sort((a, b) => (hotScore.get(b.id) ?? 0) - (hotScore.get(a.id) ?? 0));
     } else if (sortMode === "recommended" && mySkillNames.size > 0) {
       list = [...list].sort((a, b) => {
-        const aOverlap = a.skills.filter((s) => mySkillNames.has(s.toLowerCase())).length;
-        const bOverlap = b.skills.filter((s) => mySkillNames.has(s.toLowerCase())).length;
+        const aOverlap = a.skills.filter((s) => mySkillNames.has(skillKey(s))).length;
+        const bOverlap = b.skills.filter((s) => mySkillNames.has(skillKey(s))).length;
         if (bOverlap !== aOverlap) return bOverlap - aOverlap;
         return b.stats.likes - a.stats.likes;
       });
@@ -393,6 +405,7 @@ export function CommunityFeed({
   const isSearching = searchQuery.trim().length > 0;
   const showComposer = (nav === "home" && !isSearching) || !!editingPost;
   const isSpaceMember = activeSpace?.is_member === true;
+  const showHomeExtras = nav === "home" && !activeSpace && !isSearching && !editingPost;
   // Inside a joined space the composer is a lightweight room message — just
   // type and hit Enter. The full composer is still used when editing a post.
   const showChatComposer = showComposer && isSpaceMember && !!activeSpace && !editingPost;
@@ -435,7 +448,6 @@ export function CommunityFeed({
           sortMode={sortMode}
           onSortModeChange={setSortMode}
           onNavChange={onNavChange}
-          onOpenTrending={onOpenTrending}
         />
       )}
 
@@ -478,7 +490,13 @@ export function CommunityFeed({
             />
           )}
 
+          {showHomeExtras && <CommunityPulse posts={posts} onNavChange={onNavChange} />}
+
           {composer && <div className="mb-6">{composer}</div>}
+
+          {showHomeExtras && (
+            <HelpMatches matches={helpMatches} onOffer={offerHelp} onOpen={selectPost} />
+          )}
 
           {activeSpace && typingNames.length > 0 && (
             <div className="mb-3 flex items-center gap-2 px-1 text-xs text-muted-foreground">
@@ -519,7 +537,7 @@ export function CommunityFeed({
                 onLoadMore={() => fetchNextPage()}
               />
             )}
-          <div className={selectedPostId && !activeSpace ? "lg:hidden" : ""}>
+          <div className={selectedPostId && !activeSpace ? "@3xl:hidden" : ""}>
             <CommunityFeedList
               lastReadAt={activeSpace ? lastReadAt : null}
               posts={visiblePosts}

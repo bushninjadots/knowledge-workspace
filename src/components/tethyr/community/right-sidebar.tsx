@@ -9,7 +9,7 @@ import {
   Star,
   Target,
   ArrowRight,
-  BookOpen,
+  Users,
 } from "lucide-react";
 import { useChallenges } from "@/hooks/use-challenges";
 import { useTrendingSkills, useCurrentUser } from "@/hooks/use-current-user";
@@ -17,7 +17,7 @@ import { useInfinitePosts, flattenPosts } from "@/hooks/use-community";
 import type { DiscoverableSkill } from "@/hooks/use-current-user";
 import { essentialSteps } from "@/lib/profile-completeness";
 import { Button } from "@/components/ui/button";
-import { safeHref } from "@/lib/validators";
+import { useCommunitySpaces, type CommunitySpace } from "@/hooks/use-community-spaces";
 
 function RailCard({
   title,
@@ -88,10 +88,16 @@ function DigestRow({
  */
 export const CommunityRightSidebar = memo(function CommunityRightSidebar({
   mobile = false,
-  fixed = false,
+  sticky = false,
+  onSkillSelect,
+  onOpenSpace,
 }: {
   mobile?: boolean;
-  fixed?: boolean;
+  /** Desktop: a sticky column in the page grid (hidden below xl). */
+  sticky?: boolean;
+  /** Narrow the feed to a skill instead of leaving the page. */
+  onSkillSelect?: (skill: string) => void;
+  onOpenSpace?: (space: CommunitySpace) => void;
 }) {
   const { data: challenges = [] } = useChallenges("active");
   const { data: trendingSkills = [], isLoading: isLoadingSkills } = useTrendingSkills();
@@ -113,23 +119,19 @@ export const CommunityRightSidebar = memo(function CommunityRightSidebar({
     : [];
   const essentialsDone = essentials.filter((step) => step.done).length;
   const nextEssential = essentials.find((step) => !step.done) ?? null;
-  const resources = (me?.projects ?? [])
-    .flatMap((project) =>
-      (project.resources ?? [])
-        .slice(0, 2)
-        .map((resource) => ({ ...resource, projectId: project.id, projectTitle: project.title })),
-    )
-    .slice(0, 4);
+  const { data: spaces = [] } = useCommunitySpaces();
+  const mySpaces = spaces.filter((space) => space.is_member).slice(0, 5);
 
   return (
     <aside
-      className={`${
+      aria-label="Community pulse"
+      className={
         mobile
           ? "flex flex-col gap-3"
-          : fixed
-            ? "fixed right-4 top-12 z-20 hidden h-[calc(100vh-3rem)] w-60 flex-col gap-3 overflow-y-auto py-4 md:right-8 xl:flex"
+          : sticky
+            ? "sticky top-16 hidden max-h-[calc(100vh-5rem)] flex-col gap-3 self-start overflow-y-auto pb-4 xl:flex"
             : "hidden w-72 shrink-0 flex-col gap-3 xl:flex"
-      }`}
+      }
     >
       {/* Today — one digest instead of three separate widgets */}
       <RailCard title="Today" icon={<Target className="h-3.5 w-3.5 text-primary" />}>
@@ -203,48 +205,62 @@ export const CommunityRightSidebar = memo(function CommunityRightSidebar({
           </p>
         ) : (
           <div className="flex flex-wrap gap-1.5">
-            {trendingSkills.slice(0, 6).map((skill: DiscoverableSkill) => (
-              <Link key={skill.id} to="/skills/$slug" params={{ slug: skill.slug }}>
-                <span className="inline-flex items-center rounded-full border border-border/50 bg-surface-elevated/40 px-2 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:border-trust/40 hover:bg-trust/10 hover:text-trust">
+            {trendingSkills.slice(0, 6).map((skill: DiscoverableSkill) =>
+              onSkillSelect ? (
+                <button
+                  key={skill.id}
+                  type="button"
+                  onClick={() => onSkillSelect(skill.name)}
+                  title={`Show posts about ${skill.name}`}
+                  className="inline-flex items-center rounded-full border border-border/50 bg-surface-elevated/40 px-2 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:border-trust/40 hover:bg-trust/10 hover:text-trust"
+                >
                   #{skill.name}
-                </span>
-              </Link>
-            ))}
+                </button>
+              ) : (
+                <Link key={skill.id} to="/skills/$slug" params={{ slug: skill.slug }}>
+                  <span className="inline-flex items-center rounded-full border border-border/50 bg-surface-elevated/40 px-2 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:border-trust/40 hover:bg-trust/10 hover:text-trust">
+                    #{skill.name}
+                  </span>
+                </Link>
+              ),
+            )}
           </div>
         )}
       </RailCard>
 
-      <RailCard title="Useful resources" icon={<BookOpen className="h-3.5 w-3.5 text-ai" />}>
-        {resources.length === 0 ? (
+      {/* Your rooms — one click back into the spaces you joined. */}
+      <RailCard title="Your spaces" icon={<Users className="h-3.5 w-3.5 text-ai" />}>
+        {mySpaces.length === 0 ? (
           <p className="px-1 text-xs leading-relaxed text-muted-foreground">
-            Project guides, references, and tools shared by builders will appear here.
+            Spaces are smaller rooms around a craft. Join one from the Spaces tab.
           </p>
         ) : (
-          <div className="space-y-1">
-            {resources.map((resource, index) => (
-              <a
-                key={`${resource.projectId}-${index}`}
-                href={safeHref(resource.url)}
-                target="_blank"
-                rel="noreferrer"
-                className="group block rounded-lg px-2 py-2 transition-colors hover:bg-surface-elevated/60"
+          <div className="flex flex-col">
+            {mySpaces.map((space) => (
+              <button
+                key={space.id}
+                type="button"
+                onClick={() => onOpenSpace?.(space)}
+                className="group flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-surface-elevated/60"
               >
-                <span className="block truncate text-xs font-medium group-hover:text-primary">
-                  {resource.title}
+                <span
+                  aria-hidden
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-ai/10 text-xs font-semibold text-ai"
+                >
+                  {space.name.charAt(0).toUpperCase()}
                 </span>
-                <span className="block truncate text-[11px] text-muted-foreground">
-                  From {resource.projectTitle}
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-xs font-medium text-foreground group-hover:text-primary">
+                    {space.name}
+                  </span>
+                  <span className="block truncate text-[11px] text-muted-foreground">
+                    {space.member_count ?? 0} member{space.member_count === 1 ? "" : "s"}
+                  </span>
                 </span>
-              </a>
+              </button>
             ))}
           </div>
         )}
-        <Link
-          to="/library"
-          className="mt-2 inline-flex items-center gap-1 px-2 text-xs font-medium text-primary hover:underline"
-        >
-          Open Library <ArrowRight className="h-3 w-3" />
-        </Link>
       </RailCard>
 
       {/* One clear CTA while the first-session essentials are open. */}

@@ -7,6 +7,7 @@ import {
   Hourglass,
   ShieldAlert,
   MessageCircle,
+  ChevronDown,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
@@ -93,7 +94,7 @@ export function SpaceHeader({
 
   return (
     <div className="mb-8">
-      {/* Breadcrumb — Communities / space name */}
+      {/* Breadcrumb — Spaces / space name */}
       <nav
         aria-label="Breadcrumb"
         className="mb-3 flex items-center gap-1.5 text-xs text-muted-foreground"
@@ -103,7 +104,7 @@ export function SpaceHeader({
           onClick={onBack}
           className="rounded px-1 py-0.5 transition-colors hover:bg-surface-elevated hover:text-foreground"
         >
-          Communities
+          Spaces
         </button>
         <span aria-hidden className="text-muted-foreground/50">
           /
@@ -114,7 +115,7 @@ export function SpaceHeader({
       {/* Space header — tinted background band by space type */}
       <div
         className="rounded-xl border border-border/40 p-5"
-        style={{ background: `color-mix(in oklch, ${accentColor} 5%, var(--background))` }}
+        style={{ background: `color-mix(in oklch, ${accentColor} 5%, var(--surface))` }}
       >
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-4">
@@ -224,9 +225,19 @@ export function SpaceHeader({
       )}
 
       {space.rules && space.rules.length > 0 && (
-        <div className="mt-3 rounded-lg bg-surface-elevated/20 p-4">
-          <p className="section-label mb-2">Community rules</p>
-          <ol className="space-y-1.5">
+        // Open for people deciding whether to join; folded for members.
+        <details
+          open={!space.is_member}
+          className="group mt-3 rounded-lg bg-surface-elevated/20 [&_summary::-webkit-details-marker]:hidden"
+        >
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-2.5">
+            <span className="section-label">Room rules · {space.rules.length}</span>
+            <ChevronDown
+              className="h-3.5 w-3.5 text-muted-foreground transition-transform group-open:rotate-180"
+              aria-hidden
+            />
+          </summary>
+          <ol className="space-y-1.5 px-4 pb-4">
             {space.rules.map((rule, i) => (
               <li key={i} className="flex items-start gap-2 text-sm text-foreground/80">
                 <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-surface-elevated text-[10px] font-semibold text-muted-foreground">
@@ -236,11 +247,11 @@ export function SpaceHeader({
               </li>
             ))}
           </ol>
-        </div>
+        </details>
       )}
 
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-        <span className="section-label">Room view</span>
+        <span className="section-label">Conversation</span>
         <div
           role="group"
           aria-label="Sort room discussion"

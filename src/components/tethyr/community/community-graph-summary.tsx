@@ -1,4 +1,4 @@
-import { Network } from "lucide-react";
+import { ChevronDown, Network } from "lucide-react";
 import { useSpaceMembers } from "@/hooks/use-space-members";
 import {
   buildCommunityGraph,
@@ -52,58 +52,52 @@ export function CommunityGraphSummary({
   const counts = getCommunityGraphCounts(graph);
   const connectedNodes = graph.nodes.filter((n) => n.type !== "community").slice(0, 12);
 
+  // Collapsed by default: the room's conversation comes first; who's in it
+  // and how it connects is one click away.
   return (
-    <section
-      aria-labelledby="community-graph-heading"
-      className="mt-4 rounded-xl bg-surface-elevated/30 p-4"
-    >
-      <div className="flex items-start gap-3">
-        <Network className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-        <div>
-          <h3 id="community-graph-heading" className="font-display text-sm font-semibold">
-            {space.name} in the graph
-          </h3>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            The people and conversations connected through this space.
-          </p>
+    <details className="group mb-5 rounded-xl bg-surface-elevated/30 [&_summary::-webkit-details-marker]:hidden">
+      <summary className="flex cursor-pointer list-none items-center gap-3 rounded-xl px-4 py-3 text-sm transition-colors hover:bg-surface-elevated/40">
+        <Network className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+        <span className="font-medium">Who&apos;s here</span>
+        <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
+          {[
+            counts.person ? `${counts.person} ${counts.person === 1 ? "person" : "people"}` : null,
+            counts.discussion
+              ? `${counts.discussion} discussion${counts.discussion === 1 ? "" : "s"}`
+              : null,
+            `${graph.edges.length} connection${graph.edges.length === 1 ? "" : "s"}`,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+        </span>
+        <ChevronDown
+          className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
+          aria-hidden="true"
+        />
+      </summary>
+      <div className="px-4 pb-4">
+        <ul aria-label="Connected nodes" className="flex flex-wrap gap-1.5">
+          {connectedNodes.map((node) => (
+            <li
+              key={node.id}
+              className="rounded-full border border-border/70 px-2 py-0.5 text-[11px]"
+            >
+              <GraphNodeGlyph
+                type={node.type}
+                className="mr-1 inline align-[-2px] text-muted-foreground"
+              />
+              <span className="text-muted-foreground">{node.type.replace("_", " ")}</span>{" "}
+              <span className="font-medium">{node.label}</span>
+            </li>
+          ))}
+        </ul>
+        <div className="mt-4">
+          <h4 className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+            Connections outline
+          </h4>
+          <GraphTreeView graph={graph} rootId={`community:${space.id}`} />
         </div>
       </div>
-      <dl className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs">
-        {counts.person ? (
-          <div>
-            <dt className="text-muted-foreground">People</dt>
-            <dd className="font-medium tabular-nums">{counts.person}</dd>
-          </div>
-        ) : null}
-        {counts.discussion ? (
-          <div>
-            <dt className="text-muted-foreground">Discussions</dt>
-            <dd className="font-medium tabular-nums">{counts.discussion}</dd>
-          </div>
-        ) : null}
-        <div>
-          <dt className="text-muted-foreground">Relationships</dt>
-          <dd className="font-medium tabular-nums">{graph.edges.length}</dd>
-        </div>
-      </dl>
-      <ul aria-label="Connected nodes" className="mt-3 flex flex-wrap gap-1.5">
-        {connectedNodes.map((node) => (
-          <li key={node.id} className="border border-border/70 px-2 py-0.5 text-[11px]">
-            <GraphNodeGlyph
-              type={node.type}
-              className="mr-1 inline align-[-2px] text-muted-foreground"
-            />
-            <span className="text-muted-foreground">{node.type.replace("_", " ")}</span>{" "}
-            <span className="font-medium">{node.label}</span>
-          </li>
-        ))}
-      </ul>
-      <div className="mt-4">
-        <h4 className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
-          Connections outline
-        </h4>
-        <GraphTreeView graph={graph} rootId={`community:${space.id}`} />
-      </div>
-    </section>
+    </details>
   );
 }
