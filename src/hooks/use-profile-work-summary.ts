@@ -48,7 +48,7 @@ async function fetchProfileWorkSummary(profileId: string): Promise<ProfileWorkSu
       .neq("profile_id", profileId)
       .limit(200);
     const byPerson = new Map<string, ProfileCollaborator & { projects: Set<string> }>();
-    for (const row of (data ?? []) as unknown as CollaboratorRow[]) {
+    for (const row of (data ?? []) as CollaboratorRow[]) {
       const entry = byPerson.get(row.profile_id) ?? {
         profileId: row.profile_id,
         name: row.profile?.display_name || row.profile?.handle || "Member",

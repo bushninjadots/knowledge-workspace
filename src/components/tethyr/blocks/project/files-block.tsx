@@ -21,7 +21,7 @@ function ProjectFilesBlock({ config, context }: BlockProps) {
         .select("uploaded_files")
         .eq("id", projectId)
         .maybeSingle();
-      const files = (project?.uploaded_files ?? []) as unknown as {
+      const files = (project?.uploaded_files ?? []) as {
         name?: string;
         size?: number;
         uploaded_at?: string;

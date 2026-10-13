@@ -39,7 +39,7 @@ export function useProfileReadme(profileId: string | null) {
         .eq("id", profileId)
         .maybeSingle();
       if (!data) return null;
-      const row = data as unknown as Omit<ProfileReadme, "readme_source"> & {
+      const row = data as Omit<ProfileReadme, "readme_source"> & {
         readme_source?: unknown;
       };
       return { ...row, readme_source: parseReadmeSource(row.readme_source) };

@@ -37,7 +37,7 @@ function ProjectTimelineBlock({ config, context }: BlockProps) {
         .eq("project_id", projectId)
         .order("created_at", { ascending: false })
         .limit(30);
-      return (d ?? []) as unknown as TimelineRow[];
+      return (d ?? []) as TimelineRow[];
     },
     enabled: !!projectId,
   });

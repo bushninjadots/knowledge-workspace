@@ -28,7 +28,7 @@ function ProfileBioBlock({ config, context }: BlockProps) {
         .select("bio")
         .eq("id", profileId)
         .maybeSingle();
-      return data as unknown as BioData | null;
+      return data as BioData | null;
     },
     enabled: !!profileId,
   });

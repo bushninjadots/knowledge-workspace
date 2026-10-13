@@ -26,7 +26,7 @@ function ProfileExperienceBlock({ config, context }: BlockProps) {
         .select("years_experience, teaching_style")
         .eq("id", profileId)
         .maybeSingle();
-      return d as unknown as ExpData | null;
+      return d as ExpData | null;
     },
     enabled: !!profileId,
   });

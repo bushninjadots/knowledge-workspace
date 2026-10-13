@@ -117,7 +117,7 @@ export function jsonLd(...schemas: Record<string, unknown>[]) {
   // <script type="application/ld+json"> tags — cast at the helper boundary.
   return schemas.map((schema) => ({
     "script:ld+json": schema,
-  })) as unknown as MetaTag[];
+  })) as MetaTag[];
 }
 
 /**

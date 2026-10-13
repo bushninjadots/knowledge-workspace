@@ -85,7 +85,7 @@ export function ProfileMediaControls({
         .select("display_name, handle, creator_title, banner_caption")
         .eq("id", ownerId)
         .maybeSingle();
-      return data as unknown as IdentityRow | null;
+      return data as IdentityRow | null;
     },
     enabled: !!ownerId,
   });

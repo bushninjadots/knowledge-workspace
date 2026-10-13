@@ -54,7 +54,7 @@ function ProjectHeroBlock({ config, context }: BlockProps) {
         .eq("id", projectId)
         .maybeSingle();
       if (error || !data) return null;
-      return data as unknown as ProjectHeroData;
+      return data as ProjectHeroData;
     },
     enabled: !!projectId,
   });

@@ -39,7 +39,7 @@ export function useThemePresets() {
         .select("id, name, description, tokens")
         .order("name", { ascending: true });
       if (error) throw error;
-      const rows = (data ?? []) as unknown as (ThemeRecord & {
+      const rows = (data ?? []) as (ThemeRecord & {
         id: string;
         name: string;
         description?: string | null;
@@ -106,7 +106,7 @@ export function useTheme(themeId: string | null | undefined) {
         return {};
       }
 
-      const theme = data as unknown as ThemeRecord;
+      const theme = data as ThemeRecord;
       return (theme.tokens ?? {}) as ThemeTokens;
     },
     staleTime: 30 * 1000, // 30s — theme queries should refetch promptly after mutations.

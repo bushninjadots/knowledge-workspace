@@ -93,7 +93,7 @@ async function fetchWork(profileId: string): Promise<ProfileWorkEvidence> {
 
   if (error) throw error;
 
-  const rows = (memberships ?? []) as unknown as MembershipRow[];
+  const rows = (memberships ?? []) as MembershipRow[];
   const projects: ProfileWorkProject[] = rows
     .filter((r): r is MembershipRow & { projects: NonNullable<MembershipRow["projects"]> } =>
       Boolean(r.projects),
@@ -129,7 +129,7 @@ async function fetchWork(profileId: string): Promise<ProfileWorkEvidence> {
   // Collapse to one entry per person, keeping how many projects they share.
   // Two people on three projects are collaborators, not three rows.
   const byPerson = new Map<string, ProfileWorkCollaborator>();
-  for (const row of (crew ?? []) as unknown as CrewRow[]) {
+  for (const row of (crew ?? []) as CrewRow[]) {
     if (!row.profile?.handle) continue; // unaddressable person — not linkable
     const existing = byPerson.get(row.profile_id);
     if (existing) {

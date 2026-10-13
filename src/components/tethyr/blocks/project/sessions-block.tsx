@@ -26,7 +26,7 @@ function ProjectSessionsBlock({ config, context }: BlockProps) {
         .eq("project_id", projectId)
         .order("starts_at", { ascending: false })
         .limit(15);
-      return (d ?? []) as unknown as SessionRow[];
+      return (d ?? []) as SessionRow[];
     },
     enabled: !!projectId,
   });

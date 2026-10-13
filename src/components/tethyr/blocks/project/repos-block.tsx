@@ -35,17 +35,15 @@ function ProjectReposBlock({ config, context }: BlockProps) {
         .select("id, provider, url, metadata")
         .eq("project_id", projectId)
         .order("provider");
-      return ((d ?? []) as unknown as (RepoRow & { metadata?: RepoMetadata | null })[]).map(
-        (repo) => ({
-          ...repo,
-          // Prefer the cached full_name so stars/lang-cased names survive URL
-          // normalization; fall back to parsing the stored URL.
-          name:
-            repo.metadata?.full_name ??
-            (repo.url ?? "").replace(/^https?:\/\//, "").replace(/\/$/, ""),
-          stars: repo.stars ?? repo.metadata?.stargazers_count ?? null,
-        }),
-      );
+      return ((d ?? []) as (RepoRow & { metadata?: RepoMetadata | null })[]).map((repo) => ({
+        ...repo,
+        // Prefer the cached full_name so stars/lang-cased names survive URL
+        // normalization; fall back to parsing the stored URL.
+        name:
+          repo.metadata?.full_name ??
+          (repo.url ?? "").replace(/^https?:\/\//, "").replace(/\/$/, ""),
+        stars: repo.stars ?? repo.metadata?.stargazers_count ?? null,
+      }));
     },
     enabled: isProject,
   });

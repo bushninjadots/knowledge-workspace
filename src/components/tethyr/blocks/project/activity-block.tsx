@@ -39,7 +39,7 @@ function ProjectActivityBlock({ config, context }: BlockProps) {
         .eq("project_id", projectId)
         .order("created_at", { ascending: false })
         .limit(20);
-      return (data ?? []) as unknown as ActivityRow[];
+      return (data ?? []) as ActivityRow[];
     },
     enabled: !!projectId,
   });

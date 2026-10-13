@@ -1213,9 +1213,7 @@ function GSectionBand({
             // settled with the same rule). Guides mark edges that line up.
             onDrag={(current, _old, item, placeholder) => {
               if (!item) return;
-              const others = (current as unknown as LayoutGridItem[]).filter(
-                (other) => other.i !== item.i,
-              );
+              const others = (current as LayoutGridItem[]).filter((other) => other.i !== item.i);
               let { x, y } = item;
               if (snapToBlocks) {
                 const snapped = snapGridPlacement(
@@ -1240,9 +1238,7 @@ function GSectionBand({
             }}
             onResize={(current, _old, item) => {
               if (!item) return;
-              const others = (current as unknown as LayoutGridItem[]).filter(
-                (other) => other.i !== item.i,
-              );
+              const others = (current as LayoutGridItem[]).filter((other) => other.i !== item.i);
               const box = { x: item.x, y: item.y, w: item.w, h: item.h };
               setGesture({ kind: "resize", item: box, guides: alignedEdges(box, others) });
             }}
@@ -1268,7 +1264,7 @@ function GSectionBand({
                 );
                 return;
               }
-              const committed = (current as unknown as LayoutGridItem[]).map((item) => ({
+              const committed = (current as LayoutGridItem[]).map((item) => ({
                 i: item.i,
                 x: item.x,
                 y: item.y,

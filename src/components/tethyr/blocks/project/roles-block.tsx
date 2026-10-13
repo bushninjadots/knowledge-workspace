@@ -25,7 +25,7 @@ function ProjectRolesBlock({ config, context }: BlockProps) {
         .select("id,title,description,skills,is_filled")
         .eq("project_id", projectId)
         .order("created_at", { ascending: false });
-      return (d ?? []) as unknown as RoleRow[];
+      return (d ?? []) as RoleRow[];
     },
     enabled: !!projectId,
   });

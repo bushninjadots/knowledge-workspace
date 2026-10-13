@@ -389,7 +389,7 @@ export const syncAllGithub = createServerFn({ method: "POST" })
       .select("team_id, teams(id, social_links)")
       .eq("profile_id", userId)
       .eq("role", "lead");
-    for (const row of (leads ?? []) as unknown as Array<{
+    for (const row of (leads ?? []) as Array<{
       teams: { id: string; social_links: Record<string, string> | null } | null;
     }>) {
       if (!row.teams?.social_links?.github) continue;
@@ -403,7 +403,7 @@ export const syncAllGithub = createServerFn({ method: "POST" })
       .select("readme, readme_source")
       .eq("id", userId)
       .maybeSingle();
-    const profile = profileRow as unknown as {
+    const profile = profileRow as {
       readme: string | null;
       readme_source: { repo?: string } | null;
     } | null;
@@ -441,7 +441,7 @@ export const refreshTeamGithub = createServerFn({ method: "POST" })
     const { refreshTeamSnapshot } = await import("./github-refresh");
     const ok = await refreshTeamSnapshot(
       supabaseAdmin,
-      team as unknown as { id: string; social_links: Record<string, string> | null },
+      team as { id: string; social_links: Record<string, string> | null },
     );
     return ok ? { ok: true as const } : { ok: false as const, reason: "unavailable" as const };
   });

@@ -20,9 +20,9 @@ import {
   type RepoMeta,
 } from "./github";
 import { parseGithubSource, type GithubSource } from "./github-source";
+import type { Database, Json } from "@/integrations/supabase/types";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Admin = SupabaseClient<any>;
+type Admin = SupabaseClient<Database>;
 
 /**
  * Tethyr's own read-only token for PUBLIC GitHub data (env GITHUB_PUBLIC_TOKEN),
@@ -123,7 +123,8 @@ export async function refreshRepoSnapshots(
     if (activity.notFound) delete metadata.commit_activity;
     const { error } = await admin
       .from("project_repositories")
-      .update({ metadata, updated_at: new Date().toISOString() })
+      // Built from GitHub API JSON plus the stored JSON, so it serializes as-is.
+      .update({ metadata: metadata as Json, updated_at: new Date().toISOString() })
       .eq("id", repo.id);
     if (!error && (meta || activity.weeks)) refreshed += 1;
   }

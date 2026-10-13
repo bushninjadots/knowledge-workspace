@@ -26,7 +26,7 @@ function ProjectDiscussionsBlock({ config, context }: BlockProps) {
         .eq("project_id", projectId)
         .order("created_at", { ascending: false })
         .limit(20);
-      return (d ?? []) as unknown as DiscussionRow[];
+      return (d ?? []) as DiscussionRow[];
     },
     enabled: !!projectId,
   });

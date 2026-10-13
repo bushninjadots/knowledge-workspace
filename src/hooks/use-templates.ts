@@ -270,7 +270,7 @@ export function useForkTemplate() {
           name: `${source.name === templateName ? source.name : templateName} (fork)`.slice(0, 80),
           description: source.description,
           category: source.category,
-          sections: source.sections as unknown as NonNullable<Json>,
+          sections: source.sections as NonNullable<Json>,
           is_template: false,
           theme_id: source.theme_id,
           created_by: user.id,

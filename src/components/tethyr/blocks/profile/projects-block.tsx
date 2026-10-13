@@ -66,7 +66,7 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
         )
         .eq("profile_id", profileId)
         .limit(projectLimit);
-      const rows = (memberships ?? []) as unknown as ProjectRow[];
+      const rows = (memberships ?? []) as ProjectRow[];
       const projectIds = rows.map((r) => r.project_id).filter(Boolean);
       const collaborators = new Map<string, CollaboratorRow[]>();
       if (projectIds.length > 0) {
@@ -75,7 +75,7 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
           .select("project_id, profile_id, profile:profiles(display_name, handle, avatar_url)")
           .in("project_id", projectIds)
           .neq("profile_id", profileId);
-        for (const row of (crew ?? []) as unknown as Array<{
+        for (const row of (crew ?? []) as Array<{
           project_id: string;
           profile_id: string;
           profile: CollaboratorRow["profile"];

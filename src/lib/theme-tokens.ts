@@ -328,7 +328,7 @@ export function themeTokensToStyle(tokens: ThemeTokens, scheme?: ThemeScheme): R
     // would otherwise read dark-on-dark on dark/tinted themes.
     (vars as Record<string, string>)["color"] = fg;
   }
-  return vars as unknown as React.CSSProperties;
+  return vars as React.CSSProperties;
 }
 
 /** Recursively merge `overrides` over `base`. Plain objects merge key-by-key;

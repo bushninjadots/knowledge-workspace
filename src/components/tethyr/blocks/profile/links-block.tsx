@@ -27,7 +27,7 @@ function ProfileLinksBlock({ context, config }: BlockProps) {
         .select("portfolio_links, social_links")
         .eq("id", profileId)
         .maybeSingle();
-      return d as unknown as LinksData | null;
+      return d as LinksData | null;
     },
     enabled: !!profileId,
   });

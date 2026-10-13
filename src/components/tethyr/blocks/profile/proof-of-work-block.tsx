@@ -65,9 +65,7 @@ async function fetchEvidence(profileId: string): Promise<Evidence[]> {
   const titleOf = (row: unknown) =>
     ((row as { projects?: { title?: string } | null }).projects?.title ?? null) as string | null;
 
-  const shelf = ((profile.data?.evidence_shelf ?? []) as unknown as ShelfItem[]).filter(
-    (s) => s?.title,
-  );
+  const shelf = ((profile.data?.evidence_shelf ?? []) as ShelfItem[]).filter((s) => s?.title);
   const shelfProjects = new Set(shelf.map((s) => s.project_id).filter(Boolean));
   shelf.forEach((s, i) =>
     out.push({

@@ -123,7 +123,7 @@ export function usePage({ ownerId, ownerType, includeDraft = false }: FetchPageP
       if (error) throw error;
       if (!row) return null;
 
-      const pageRow = row as unknown as PageRow;
+      const pageRow = row as PageRow;
 
       // Query 2: Get the layout sections.
       const { data: layoutRow } = await supabase
@@ -197,7 +197,7 @@ export function usePage({ ownerId, ownerType, includeDraft = false }: FetchPageP
         // Deep-merge theme_overrides on top of base theme tokens so partial
         // customizations (a radius change, a single font) layer onto the theme
         // instead of replacing whole groups and dropping sibling tokens.
-        const baseTokens = (themeRow as unknown as ThemeRow | null)?.tokens ?? {};
+        const baseTokens = (themeRow as ThemeRow | null)?.tokens ?? {};
         const overrides = (themeOverrides ?? {}) as ThemeTokens;
         theme = deepMergeTokens(baseTokens as ThemeTokens, overrides);
       }

@@ -30,7 +30,7 @@ function ProjectEvidenceBlock({ config, context }: BlockProps) {
         .select("gallery")
         .eq("id", projectId)
         .maybeSingle();
-      const gallery = (project?.gallery ?? []) as unknown as {
+      const gallery = (project?.gallery ?? []) as {
         url: string;
         caption?: string;
         type: "image" | "video";

@@ -70,7 +70,7 @@ export function useProfileRepoSnapshot(projectIds: string[] | null | undefined) 
 
       const byProject = new Map<string, RepoSnapshot>();
       const weeksList: CommitActivityWeek[][] = [];
-      for (const row of (data ?? []) as unknown as SafeRepoRow[]) {
+      for (const row of (data ?? []) as SafeRepoRow[]) {
         const snapshot = toSnapshot(row);
         byProject.set(snapshot.projectId, snapshot);
         if (snapshot.commitActivity) weeksList.push(snapshot.commitActivity);

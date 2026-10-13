@@ -50,8 +50,8 @@ function ProfileSkillsBlock({ context, config }: BlockProps) {
           .eq("profile_id", profileId),
       ]);
       return {
-        teach: (teachRes.data ?? []) as unknown as SkillRow[],
-        learn: (learnRes.data ?? []) as unknown as SkillRow[],
+        teach: (teachRes.data ?? []) as SkillRow[],
+        learn: (learnRes.data ?? []) as SkillRow[],
       };
     },
     enabled: !!profileId,

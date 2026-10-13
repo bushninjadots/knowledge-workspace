@@ -4,10 +4,10 @@
 // everything GitHub powers across Tethyr with a way to each. Elsewhere a
 // small status chip links here instead of repeating the form.
 //
-// GithubIdentitySync connects GitHub on its own when someone signs in with
-// GitHub (or links it), unless they disconnected it before.
+// GithubIdentitySync (github-identity-sync.tsx) connects GitHub on its own
+// when someone signs in with GitHub (or links it), unless they disconnected it.
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -26,13 +26,7 @@ import { Button } from "@/components/ui/button";
 import { GitHubConnect } from "@/components/tethyr/profile/github-connect";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthUser } from "@/hooks/use-current-user";
-import {
-  GITHUB_SETTINGS,
-  githubIdentityHandle,
-  useConnectGitHub,
-  useConnectedAccounts,
-  useGithubConnection,
-} from "@/hooks/use-github";
+import { GITHUB_SETTINGS, useGithubConnection } from "@/hooks/use-github";
 import { useProfileReadme } from "@/hooks/use-profile-readme";
 import { cn } from "@/lib/utils";
 import { syncedAgo } from "./github-sync-button";
@@ -369,29 +363,6 @@ export function GitHubStatusChip({ className }: { className?: string }) {
       </span>
     </Link>
   );
-}
-
-/**
- * Connects GitHub automatically for someone who signed in with GitHub (or
- * linked it from Settings): their GitHub username is already known, so
- * there's nothing to type. Skipped for anyone who disconnected GitHub.
- */
-export function GithubIdentitySync() {
-  const { data: user } = useAuthUser();
-  const { data: accounts, isSuccess } = useConnectedAccounts();
-  const connect = useConnectGitHub({ silent: true });
-  const tried = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!user || !isSuccess || tried.current === user.id) return;
-    const handle = githubIdentityHandle(user);
-    if (!handle || user.user_metadata?.github_autoconnect === false) return;
-    if ((accounts ?? []).some((a) => a.provider === "github")) return;
-    tried.current = user.id;
-    connect.mutate(handle);
-  }, [user, accounts, isSuccess, connect]);
-
-  return null;
 }
 
 const NUDGE_DISMISSED_KEY = "tethyr-github-nudge-dismissed";

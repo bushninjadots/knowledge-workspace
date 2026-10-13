@@ -23,7 +23,7 @@ function ProfileToolsBlock({ config, context }: BlockProps) {
         .select("favourite_tools, software_stack")
         .eq("id", profileId)
         .maybeSingle();
-      return d as unknown as ToolsData | null;
+      return d as ToolsData | null;
     },
     enabled: !!profileId,
   });

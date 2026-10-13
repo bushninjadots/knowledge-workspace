@@ -41,7 +41,7 @@ function ProjectStatusBlock({ context }: BlockProps) {
         .select("status, stage, progress_percent, season, tools")
         .eq("id", projectId)
         .maybeSingle();
-      return data as unknown as StatusData | null;
+      return data as StatusData | null;
     },
     enabled: !!projectId,
   });

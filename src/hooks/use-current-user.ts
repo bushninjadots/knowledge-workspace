@@ -227,7 +227,7 @@ async function fetchCurrentUser(): Promise<CurrentUserData | null> {
     background?.mode === "image" ? background.image_url : null,
   );
 
-  const projects = (projectsRes.data ?? []) as unknown as ProjectRow[];
+  const projects = (projectsRes.data ?? []) as ProjectRow[];
 
   // Cover signing + project skills both depend on the projects list — run them together.
   const coverUrls: Record<string, string> = {};

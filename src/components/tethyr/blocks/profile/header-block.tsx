@@ -83,7 +83,7 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
         )
         .eq("id", profileId)
         .maybeSingle();
-      return data as unknown as ProfileHeaderData | null;
+      return data as ProfileHeaderData | null;
     },
     enabled: !!profileId,
   });

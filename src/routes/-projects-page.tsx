@@ -346,7 +346,7 @@ export function ProjectPage() {
         .eq("project_id", id);
 
       const contributors = (
-        (contributorsRes.data ?? []) as unknown as {
+        (contributorsRes.data ?? []) as {
           profile_id: string;
           role: string;
           contribution_score: number;
@@ -359,12 +359,12 @@ export function ProjectPage() {
           role: r.role as Contributor["role"],
           contribution_score: r.contribution_score ?? 0,
           skills_used: r.skills_used ?? [],
-          profile: (r.profiles as unknown as Contributor["profile"]) ?? null,
+          profile: (r.profiles as Contributor["profile"]) ?? null,
         }))
         .sort((a, b) => ROLE_ORDER[a.role] - ROLE_ORDER[b.role]) as Contributor[];
 
       const skills = (skillsRes ?? [])
-        .map((r) => r.skills as unknown as SkillLite | null)
+        .map((r) => r.skills as SkillLite | null)
         .filter((s): s is SkillLite => !!s);
 
       let coverSigned: string | null = null;
@@ -426,7 +426,7 @@ export function ProjectPage() {
             parentRow = legacy.data;
           }
         }
-        const parent = parentRow as unknown as {
+        const parent = parentRow as {
           id: string;
           title: string;
           visibility?: string | null;
@@ -469,7 +469,7 @@ export function ProjectPage() {
       }
 
       return {
-        project: project as unknown as ProjectDetail,
+        project: project as ProjectDetail,
         contributors,
         skills,
         coverSigned,
@@ -535,7 +535,7 @@ export function ProjectPage() {
         .filter("metadata->>project_id", "eq", id)
         .order("created_at", { ascending: true });
       if (error) return [];
-      return (rows ?? []) as unknown as ProjectContributionLogEntry[];
+      return (rows ?? []) as ProjectContributionLogEntry[];
     },
     enabled: !!id,
   });

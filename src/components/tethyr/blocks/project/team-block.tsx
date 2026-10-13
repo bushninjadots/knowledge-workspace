@@ -38,7 +38,7 @@ function ProjectTeamBlock({ config, context }: BlockProps) {
         .select("profile_id, role, profiles(id, display_name, handle, avatar_url, background)")
         .eq("project_id", projectId)
         .order("role", { ascending: true });
-      const rows = (data ?? []) as unknown as ContributorRow[];
+      const rows = (data ?? []) as ContributorRow[];
       // avatars is a private bucket — render signed URLs, never raw paths.
       const avatarTargets = rows.filter((r) => r.profiles?.avatar_url);
       if (avatarTargets.length > 0) {

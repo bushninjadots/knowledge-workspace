@@ -49,7 +49,7 @@ function ProjectAboutBlock({ config, context }: BlockProps) {
         .select("description, vision, readme")
         .eq("id", ownerId)
         .maybeSingle();
-      return (data as unknown as ProjectAboutData | null) ?? null;
+      return (data as ProjectAboutData | null) ?? null;
     },
     enabled: isProject,
   });

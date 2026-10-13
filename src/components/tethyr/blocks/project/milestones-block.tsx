@@ -32,7 +32,7 @@ function ProjectMilestonesBlock({ config, context }: BlockProps) {
         .select("id,title,description,status,due_date")
         .eq("project_id", projectId)
         .order("created_at");
-      return (d ?? []) as unknown as MilestoneRow[];
+      return (d ?? []) as MilestoneRow[];
     },
     enabled: !!projectId,
   });

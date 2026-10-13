@@ -55,7 +55,7 @@ function ProfileGalleryBlock({ config, context }: BlockProps) {
         .select("evidence_shelf")
         .eq("id", profileId)
         .maybeSingle();
-      return (profile?.evidence_shelf ?? []) as unknown as ShelfItem[];
+      return (profile?.evidence_shelf ?? []) as ShelfItem[];
     },
     enabled: !!profileId,
   });

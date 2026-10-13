@@ -57,7 +57,7 @@ function ProfileCollaboratorsBlock({ config, context }: BlockProps) {
       // Dedupe by person, preferring the strongest shared role (creator wins,
       // then the most recent shared project).
       const byPerson = new Map<string, CollaboratorRow>();
-      for (const row of (data ?? []) as unknown as CollaboratorRow[]) {
+      for (const row of (data ?? []) as CollaboratorRow[]) {
         const existing = byPerson.get(row.profile_id);
         if (!existing || (row.role === "creator" && existing.role !== "creator")) {
           byPerson.set(row.profile_id, row);
