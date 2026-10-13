@@ -73,7 +73,7 @@ export function CommunityCard({ space, onClick }: { space: CommunitySpace; onCli
   // avoids nested interactive elements and gives keyboard users one clear
   // target for opening the space.
   return (
-    <Card className="group relative flex w-full flex-col overflow-hidden p-5 text-left transition-spatial duration-150 hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))]">
+    <Card className="group relative flex w-full flex-col overflow-hidden bg-card p-5 text-left transition-spatial duration-150 hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))]">
       <span
         className="absolute inset-x-0 top-0 h-0.5 opacity-60 transition-opacity group-hover:opacity-100"
         style={{ background: accentColor }}

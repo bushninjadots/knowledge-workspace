@@ -88,8 +88,13 @@ export function CommunityPage() {
   const openPulse = useCallback(() => setPulseOpen(true), []);
 
   return (
-    <div className="animate-room-enter min-h-screen bg-noise">
-      <div className="mx-auto grid w-full max-w-[1180px] gap-8 px-4 pb-28 pt-5 md:px-8 md:pb-12 md:pt-8 xl:grid-cols-[minmax(0,1fr)_17rem]">
+    <div className="animate-room-enter relative min-h-screen bg-noise">
+      {/* A soft glow of the member's accent behind the header — identity, not decoration. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-80 bg-[radial-gradient(55%_100%_at_25%_0%,color-mix(in_oklab,var(--user-accent,var(--primary))_16%,transparent),transparent_75%)]"
+      />
+      <div className="relative mx-auto grid w-full max-w-[1180px] gap-8 px-4 pb-28 pt-5 md:px-8 md:pb-12 md:pt-8 xl:grid-cols-[minmax(0,1fr)_17rem]">
         <div className="@container min-w-0">
           <CommunityTabs
             active={nav}

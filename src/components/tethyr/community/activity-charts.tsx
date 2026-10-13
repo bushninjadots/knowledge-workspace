@@ -111,7 +111,7 @@ export const ActivityCharts = memo(function ActivityCharts() {
   const isEmpty = totalJoins === 0 && totalPosts === 0;
 
   return (
-    <section className="mb-6 rounded-xl bg-surface-elevated/30 p-4">
+    <section className="community-card mb-6 p-4">
       <div className="mb-3.5 flex items-center gap-1.5 px-1">
         <TrendingUp className="h-3.5 w-3.5 text-primary" />
         <p className="section-label">Community Activity</p>

@@ -115,7 +115,9 @@ export function SpaceHeader({
       {/* Space header — tinted background band by space type */}
       <div
         className="rounded-xl border border-border/40 p-5"
-        style={{ background: `color-mix(in oklch, ${accentColor} 5%, var(--surface))` }}
+        style={{
+          background: `linear-gradient(120deg, color-mix(in oklch, ${accentColor} 16%, var(--card)) 0%, var(--card) 70%)`,
+        }}
       >
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-4">
@@ -228,7 +230,7 @@ export function SpaceHeader({
         // Open for people deciding whether to join; folded for members.
         <details
           open={!space.is_member}
-          className="group mt-3 rounded-lg bg-surface-elevated/20 [&_summary::-webkit-details-marker]:hidden"
+          className="community-card group mt-3 [&_summary::-webkit-details-marker]:hidden"
         >
           <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-2.5">
             <span className="section-label">Room rules · {space.rules.length}</span>

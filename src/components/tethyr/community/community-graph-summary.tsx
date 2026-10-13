@@ -55,7 +55,7 @@ export function CommunityGraphSummary({
   // Collapsed by default: the room's conversation comes first; who's in it
   // and how it connects is one click away.
   return (
-    <details className="group mb-5 rounded-xl bg-surface-elevated/30 [&_summary::-webkit-details-marker]:hidden">
+    <details className="community-card group mb-5 [&_summary::-webkit-details-marker]:hidden">
       <summary className="flex cursor-pointer list-none items-center gap-3 rounded-xl px-4 py-3 text-sm transition-colors hover:bg-surface-elevated/40">
         <Network className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
         <span className="font-medium">Who&apos;s here</span>

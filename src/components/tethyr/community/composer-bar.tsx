@@ -480,8 +480,12 @@ export function ComposerBar({
 
   return (
     <div
+      style={{
+        backgroundImage:
+          "linear-gradient(135deg, color-mix(in oklab, var(--user-accent, var(--primary)) 12%, transparent) 0%, transparent 55%)",
+      }}
       className={cn(
-        "card-border rounded-xl border bg-surface px-4 py-3.5 transition-shadow sm:px-5 sm:py-4",
+        "community-card px-4 py-3.5 transition-shadow sm:px-5 sm:py-4",
         focused && "ring-1 ring-[var(--user-accent-border,var(--ring))]",
       )}
     >

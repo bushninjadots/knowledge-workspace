@@ -904,6 +904,15 @@
   z-index: -1;
 }
 
+/* Community surfaces: one opaque card for every box on the page (posts,
+   composer, rails, spaces) so they read crisply over any site backdrop.
+   Follows the member's card-border colour and width. */
+@utility community-card {
+  background-color: var(--card);
+  border: var(--card-border-width, 1px) solid var(--card-border-color, var(--border));
+  border-radius: var(--radius-xl);
+}
+
 @utility card-border {
   border-color: var(--card-border-color, var(--user-accent-border, var(--border)));
 }

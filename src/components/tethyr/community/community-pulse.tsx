@@ -51,7 +51,7 @@ export const CommunityPulse = memo(function CommunityPulse({
         <button
           type="button"
           onClick={() => onNavChange("help")}
-          className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-surface/70 px-2.5 py-1 transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
+          className="inline-flex items-center gap-1.5 rounded-full border border-[color-mix(in_oklab,var(--caution)_45%,var(--border))] bg-[color-mix(in_oklab,var(--caution)_10%,var(--card))] px-2.5 py-1 transition-colors hover:text-foreground"
         >
           <HandHeart className="h-3.5 w-3.5" aria-hidden />
           <span className="numeric font-medium text-foreground">{unanswered}</span>

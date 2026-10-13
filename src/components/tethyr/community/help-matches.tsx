@@ -1,11 +1,12 @@
 // "You could help": open asks from other people that need a skill you teach.
 // Discovery that ends in an action (product rule 4) — one click offers help,
 // the same `offer` toggle the post card's "Offer help" uses.
-import { memo } from "react";
+import { memo, type CSSProperties } from "react";
 import { HandHeart, Check } from "lucide-react";
 import type { PostWithAuthor } from "@/hooks/use-community";
 import { POST_TYPE_LABEL } from "@/lib/community-data";
 import { cn } from "@/lib/utils";
+import { TONE_TEXT } from "@/lib/post-tone";
 import { skillKey } from "@/lib/skill-key";
 
 const ASK_TYPES = new Set([
@@ -50,10 +51,11 @@ export const HelpMatches = memo(function HelpMatches({
   return (
     <section
       aria-labelledby="help-matches-title"
-      className="mb-6 rounded-xl border border-[var(--user-accent-border,var(--border))]/70 bg-[var(--user-accent-subtle,var(--surface))]/40 p-4"
+      style={{ "--post-tone": "var(--caution)" } as CSSProperties}
+      className="community-card mb-6 border-[color-mix(in_oklab,var(--caution)_45%,var(--border))] bg-[color-mix(in_oklab,var(--caution)_8%,var(--card))] p-4"
     >
       <div className="mb-3 flex items-center gap-2">
-        <HandHeart className="h-4 w-4 text-[var(--user-accent-text,var(--primary))]" aria-hidden />
+        <HandHeart className={`h-4 w-4 ${TONE_TEXT}`} aria-hidden />
         <h2 id="help-matches-title" className="text-sm font-semibold">
           You could help
         </h2>
@@ -66,7 +68,7 @@ export const HelpMatches = memo(function HelpMatches({
           return (
             <li
               key={post.id}
-              className="flex items-center gap-3 rounded-lg bg-surface/80 px-3 py-2.5"
+              className="flex items-center gap-3 rounded-lg border border-border/50 bg-card px-3 py-2.5"
             >
               <button
                 type="button"
@@ -78,9 +80,7 @@ export const HelpMatches = memo(function HelpMatches({
                 </span>
                 <span className="mt-0.5 block truncate text-xs text-muted-foreground">
                   {name} · {POST_TYPE_LABEL[post.type]} ·{" "}
-                  <span className="text-[var(--user-accent-text,var(--primary))]">
-                    {skills.join(", ")}
-                  </span>
+                  <span className={`font-medium ${TONE_TEXT}`}>{skills.join(", ")}</span>
                 </span>
               </button>
               <button

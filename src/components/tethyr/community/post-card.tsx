@@ -62,6 +62,7 @@ import { timeAgo } from "@/lib/time";
 import { OfferHelpDialog, ReportPostDialog, PollWidget } from "./post-card-actions";
 import { MemberAvatar } from "@/components/tethyr/member-avatar";
 import { skillKey, skillKeyMap } from "@/lib/skill-key";
+import { postToneStyle, TONE_CHIP, TONE_TEXT } from "@/lib/post-tone";
 
 const RESOURCE_ICON: Record<string, typeof FileText> = {
   Article: FileText,
@@ -82,38 +83,23 @@ export function flairRepeatsType(flair: string, typeLabel: string | undefined) {
   return f.length >= 3 && !f.includes(" ") && label.split(/\s+/).some((word) => word.startsWith(f));
 }
 
+/** Type colour as a text class, matching POST_TONE (lib/post-tone.ts). Used
+ *  where a single label is coloured without a card (e.g. the landing feed). */
 export const TYPE_ACCENT: Record<PostType, string> = {
+  help_request: "text-[color-mix(in_oklab,var(--caution)_70%,var(--foreground))]",
+  feedback_request: "text-[color-mix(in_oklab,var(--caution)_70%,var(--foreground))]",
+  question: "text-learning",
+  tutorial: "text-learning",
+  resource: "text-learning",
+  collaboration_request: "text-ai",
+  open_role: "text-ai",
+  lesson_learned: "text-ai",
+  poll: "text-ai",
   showcase: "text-trust",
-  question: "text-primary",
   project_update: "text-trust",
-  tutorial: "text-ai",
-  resource: "text-ai",
+  progress_update: "text-trust",
   achievement: "text-trust",
   discussion: "text-muted-foreground",
-  help_request: "text-primary",
-  collaboration_request: "text-ai",
-  progress_update: "text-trust",
-  lesson_learned: "text-ai",
-  feedback_request: "text-primary",
-  open_role: "text-trust",
-  poll: "text-ai",
-};
-
-const TYPE_BORDER: Record<PostType, string> = {
-  showcase: "border-l-trust",
-  question: "border-l-primary",
-  project_update: "border-l-trust",
-  tutorial: "border-l-ai",
-  resource: "border-l-ai",
-  achievement: "border-l-trust",
-  discussion: "border-l-muted-foreground/40",
-  help_request: "border-l-primary",
-  collaboration_request: "border-l-ai",
-  progress_update: "border-l-trust",
-  lesson_learned: "border-l-ai",
-  feedback_request: "border-l-primary",
-  open_role: "border-l-trust",
-  poll: "border-l-ai",
 };
 
 export const TYPE_ICON: Record<PostType, typeof Heart> = {
@@ -229,8 +215,18 @@ export function PostCard({
 
   return (
     <article
-      className={`content-safe min-w-0 card-border rounded-lg border border-l-[3px] bg-surface px-4 py-3.5 sm:px-5 sm:py-4 transition-lift duration-150 ${TYPE_BORDER[post.type]} ${
-        autoDimmed ? "opacity-70 saturate-50" : highlighted ? "ring-2 ring-primary/50" : ""
+      style={{
+        ...postToneStyle(post.type),
+        // A faint wash of the post's colour in the top corner.
+        backgroundImage:
+          "linear-gradient(135deg, color-mix(in oklab, var(--post-tone) 11%, transparent) 0%, transparent 48%)",
+      }}
+      className={`content-safe community-card min-w-0 border-l-[3px] border-l-[color-mix(in_oklab,var(--post-tone)_75%,transparent)] px-4 py-3.5 transition-lift duration-150 sm:px-5 sm:py-4 ${
+        autoDimmed
+          ? "opacity-70 saturate-50"
+          : highlighted
+            ? "ring-2 ring-[var(--user-accent,var(--ring))]/60"
+            : ""
       }`}
     >
       {/* Header */}
@@ -272,7 +268,7 @@ export function PostCard({
             <span aria-hidden>·</span>
             {/* Type reads as data — mono tag + left accent bar */}
             <span
-              className={`font-mono text-[10px] font-medium uppercase tracking-wider ${TYPE_ACCENT[post.type]}`}
+              className={`rounded-sm px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider ${TONE_TEXT} ${TONE_CHIP}`}
             >
               {POST_TYPE_LABEL[post.type]}
             </span>
