@@ -93,7 +93,15 @@ export function useRestoreSpace() {
       members: Record<string, unknown>[];
       posts: Record<string, unknown>[];
     }) => {
-      const { id: _omit, ...spaceRow } = payload.space;
+      // A restored space comes back unlinked: links are only set server-side
+      // (open_linked_space), and the client can't write those columns.
+      const {
+        id: _omit,
+        team_id: _team,
+        challenge_id: _challenge,
+        project_id: _project,
+        ...spaceRow
+      } = payload.space;
       const { data: recreated, error } = await sb
         .from("community_spaces")
         .insert(spaceRow as never)

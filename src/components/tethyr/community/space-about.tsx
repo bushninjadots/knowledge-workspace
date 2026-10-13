@@ -4,7 +4,7 @@
 import { memo, useMemo } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Crown, ExternalLink, Info, Link2, ScrollText, Shield } from "lucide-react";
+import { Crown, ExternalLink, Info, Link2, MessagesSquare, ScrollText, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { MemberAvatar } from "@/components/tethyr/member-avatar";
 import { useSpaceMembers, type CommunitySpace } from "@/hooks/use-community-spaces";
@@ -29,6 +29,71 @@ function Card({
       </h2>
       {children}
     </section>
+  );
+}
+
+/** What a linked space belongs to: its team, challenge or project. */
+function useSpaceHome(space: CommunitySpace) {
+  return useQuery({
+    queryKey: ["space-home", space.team_id, space.challenge_id, space.project_id],
+    enabled: !!(space.team_id || space.challenge_id || space.project_id),
+    staleTime: 10 * 60 * 1000,
+    queryFn: async () => {
+      if (space.team_id) {
+        const { data } = await supabase
+          .from("teams")
+          .select("name, slug")
+          .eq("id", space.team_id)
+          .maybeSingle();
+        return data ? { kind: "Crew", name: data.name, team: data.slug } : null;
+      }
+      if (space.challenge_id) {
+        const { data } = await supabase
+          .from("challenges")
+          .select("title")
+          .eq("id", space.challenge_id)
+          .maybeSingle();
+        return data ? { kind: "Challenge", name: data.title, challenge: space.challenge_id } : null;
+      }
+      const { data } = await supabase
+        .from("projects")
+        .select("title")
+        .eq("id", space.project_id as string)
+        .maybeSingle();
+      return data ? { kind: "Project", name: data.title, project: space.project_id } : null;
+    },
+  });
+}
+
+function SpaceHomeLink({ space }: { space: CommunitySpace }) {
+  const { data: home } = useSpaceHome(space);
+  if (!home) return null;
+  const className = "font-medium text-foreground hover:underline";
+  return (
+    <Card
+      title={`${home.kind} space`}
+      icon={<MessagesSquare className="h-3.5 w-3.5 text-muted-foreground" />}
+    >
+      <p className="text-sm text-muted-foreground">
+        The room for{" "}
+        {"team" in home && home.team ? (
+          <Link to="/teams/$slug" params={{ slug: home.team }} className={className}>
+            {home.name}
+          </Link>
+        ) : "challenge" in home && home.challenge ? (
+          <Link to="/challenges/$id" params={{ id: home.challenge }} className={className}>
+            {home.name}
+          </Link>
+        ) : "project" in home && home.project ? (
+          <Link to="/projects/$id" params={{ id: home.project }} className={className}>
+            {home.name}
+          </Link>
+        ) : (
+          home.name
+        )}
+        . Its people join automatically.
+      </p>
+    </Card>
   );
 }
 
@@ -91,6 +156,8 @@ export const SpaceAbout = memo(function SpaceAbout({
           </p>
         )}
       </Card>
+
+      <SpaceHomeLink space={space} />
 
       {(space.links?.length ?? 0) > 0 && (
         <Card title="Links" icon={<Link2 className="h-3.5 w-3.5 text-muted-foreground" />}>

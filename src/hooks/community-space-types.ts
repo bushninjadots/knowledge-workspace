@@ -19,6 +19,11 @@ export type CommunitySpace = {
   topics?: string[];
   links?: SpaceLink[];
   welcome_message?: string | null;
+  /** What the space belongs to, if anything (20261014110000_linked_spaces).
+   *  Set only by open_linked_space(). */
+  team_id?: string | null;
+  challenge_id?: string | null;
+  project_id?: string | null;
   visibility: SpaceVisibility;
   join_type: SpaceJoinType;
   rules: string[];

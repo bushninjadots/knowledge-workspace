@@ -1,4 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
+import { LinkedSpaceCard } from "@/components/tethyr/community/linked-space-card";
 import { useState, useRef } from "react";
 import { TeamGitHub, refreshCrewGithub } from "./team-github";
 import { Link } from "@tanstack/react-router";
@@ -153,6 +154,8 @@ export function TeamPage({
           </div>
         </div>
       </header>
+
+      <LinkedSpaceCard kind="team" id={team.id} canStart={isLead} className="mb-10" />
 
       {/* Shipped work — the flagship */}
       <section aria-labelledby="shipped-work" className="mb-10">

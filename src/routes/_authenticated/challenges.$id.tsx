@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { LinkedSpaceCard } from "@/components/tethyr/community/linked-space-card";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Trophy,
@@ -352,6 +353,8 @@ function ChallengeDetailPage() {
             )}
           </div>
         </div>
+
+        <LinkedSpaceCard kind="challenge" id={challenge.id} canStart={isCreator} />
 
         {/* Progress & Actions Section if Joined */}
         {challenge.is_joined && challenge.my_participation && (

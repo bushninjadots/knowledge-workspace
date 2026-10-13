@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { LinkedSpaceCard } from "@/components/tethyr/community/linked-space-card";
 import { useParams, useNavigate, useSearch } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useDominantColor, withAlpha } from "@/lib/dominant-color";
@@ -797,6 +798,7 @@ export function ProjectPage() {
                       isOwner={isOwner}
                     />
                   </Suspense>
+                  <LinkedSpaceCard kind="project" id={id} canStart={isOwner} />
                   <Suspense fallback={<Skeleton className="h-24" />}>
                     <ProjectCommunityPosts
                       projectId={id}

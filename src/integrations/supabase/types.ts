@@ -350,6 +350,7 @@ export type Database = {
           accent_color: string | null;
           avatar_url: string | null;
           banner_url: string | null;
+          challenge_id: string | null;
           created_at: string;
           created_by: string;
           description: string;
@@ -357,10 +358,12 @@ export type Database = {
           join_type: string;
           links: Json;
           name: string;
+          project_id: string | null;
           report_auto_dim_threshold: number;
           rules: string[];
           slug: string;
           tagline: string | null;
+          team_id: string | null;
           topics: string[];
           updated_at: string;
           visibility: string;
@@ -371,6 +374,7 @@ export type Database = {
           accent_color?: string | null;
           avatar_url?: string | null;
           banner_url?: string | null;
+          challenge_id?: string | null;
           created_at?: string;
           created_by: string;
           description?: string;
@@ -378,10 +382,12 @@ export type Database = {
           join_type?: string;
           links?: Json;
           name: string;
+          project_id?: string | null;
           report_auto_dim_threshold?: number;
           rules?: string[];
           slug: string;
           tagline?: string | null;
+          team_id?: string | null;
           topics?: string[];
           updated_at?: string;
           visibility?: string;
@@ -392,6 +398,7 @@ export type Database = {
           accent_color?: string | null;
           avatar_url?: string | null;
           banner_url?: string | null;
+          challenge_id?: string | null;
           created_at?: string;
           created_by?: string;
           description?: string;
@@ -399,10 +406,12 @@ export type Database = {
           join_type?: string;
           links?: Json;
           name?: string;
+          project_id?: string | null;
           report_auto_dim_threshold?: number;
           rules?: string[];
           slug?: string;
           tagline?: string | null;
+          team_id?: string | null;
           topics?: string[];
           updated_at?: string;
           visibility?: string;
@@ -410,10 +419,31 @@ export type Database = {
         };
         Relationships: [
           {
+            foreignKeyName: "community_spaces_challenge_id_fkey";
+            columns: ["challenge_id"];
+            isOneToOne: true;
+            referencedRelation: "challenges";
+            referencedColumns: ["id"];
+          },
+          {
             foreignKeyName: "community_spaces_created_by_fkey";
             columns: ["created_by"];
             isOneToOne: false;
             referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "community_spaces_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: true;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "community_spaces_team_id_fkey";
+            columns: ["team_id"];
+            isOneToOne: true;
+            referencedRelation: "teams";
             referencedColumns: ["id"];
           },
         ];
@@ -3531,6 +3561,10 @@ export type Database = {
         };
         Returns: undefined;
       };
+      add_space_members: {
+        Args: { p_space_id: string; p_user_ids: string[] };
+        Returns: undefined;
+      };
       apply_studio_composition: {
         Args: {
           p_composition_id: string;
@@ -3712,6 +3746,10 @@ export type Database = {
         Args: { p_bucket: string; p_name: string };
         Returns: boolean;
       };
+      open_linked_space: {
+        Args: { p_id: string; p_kind: string };
+        Returns: Json;
+      };
       post_engagement_counts: {
         Args: { p_post_ids: string[] };
         Returns: {
@@ -3721,6 +3759,7 @@ export type Database = {
           offers: number;
           post_id: string;
           saves: number;
+          solved: boolean;
           user_actions: string[];
         }[];
       };
@@ -3849,6 +3888,7 @@ export type Database = {
         Args: { p_space_id: string; p_user_id: string };
         Returns: undefined;
       };
+      unique_space_slug: { Args: { p_name: string }; Returns: string };
       unread_message_counts: {
         Args: never;
         Returns: {
