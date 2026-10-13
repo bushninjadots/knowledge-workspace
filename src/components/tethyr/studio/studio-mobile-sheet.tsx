@@ -21,12 +21,9 @@ import { IconButton, WidthStepper } from "./studio-controls";
 import { GStyleSections } from "./g-customize-panel";
 import { BlockIcon } from "./block-icon";
 import type { GStudioSurfaceProps } from "./g-studio-surface";
-import {
-  BLOCK_CATEGORY_ORDER,
-  BLOCK_CATEGORY_LABELS,
-  GBlockInspector,
-  dedupeSharedReadmeBlocks,
-} from "./studio-rail";
+import { BLOCK_CATEGORY_ORDER, BLOCK_CATEGORY_LABELS } from "./block-categories";
+import { dedupeSharedReadmeBlocks } from "./rail-block-palette";
+import { GBlockInspector } from "./studio-rail";
 
 const MOBILE_SHEET_TABS: Array<["arrange" | "add" | "feel" | "block", string]> = [
   ["arrange", "Arrange"],

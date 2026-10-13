@@ -10,15 +10,11 @@ import { toast } from "sonner";
 import { ProjectDialog } from "@/components/tethyr/profile";
 import { BackgroundPickerDialog } from "@/components/tethyr/profile/background-picker-dialog";
 import { CURRENT_USER_KEY, useSkillsCatalog } from "@/hooks/use-current-user";
-import {
-  arrangeGrid,
-  overlapsGridItems,
-  sectionLabel,
-  type GridArrangement,
-} from "@/lib/studio-grid";
-import type { StudioCommand } from "@/lib/studio-commands";
+import { overlapsGridItems } from "@/lib/studio-grid";
 import { StudioCommandPalette } from "./studio-command-palette";
-import { dedupeSharedReadmeBlocks } from "./studio-rail";
+import { buildStudioCommands } from "./studio-command-list";
+import { useStudioLayoutOps } from "./use-studio-layout-ops";
+import { describePublishChanges } from "@/lib/studio-publish-summary";
 import {
   GStudioSurface,
   type GStudioConfig,
@@ -35,7 +31,6 @@ import {
   useRollbackPageVersion,
   useUpdatePageTheme,
 } from "@/hooks/use-page-editor";
-import { createBlockInstance, getAllBlocks, getBlock } from "@/lib/block-registry";
 import { StarterPicker, type StudioStarter } from "@/components/tethyr/studio/starter-picker";
 import { applyStarter, starterConfig } from "@/data/starters";
 import {
@@ -51,33 +46,17 @@ import {
   type CardBorderPreference,
   type ProfileBackground,
 } from "@/lib/background-themes";
-import type {
-  AreaAppearance,
-  BlockConfig,
-  LayoutBlockInstance,
-  LayoutGridItem,
-  LayoutSection,
-  PageLayout,
-} from "@/lib/page-blocks";
+import type { LayoutGridItem, PageLayout } from "@/lib/page-blocks";
 import { DEFAULT_STUDIO_CONFIG, normalizeStudioConfig } from "@/lib/studio-config";
 import { resolveLook, setLookValue } from "@/lib/visual-language";
 import { createDefaultProfileLayout } from "@/lib/default-layouts";
 import "@/components/tethyr/blocks/register-all";
 import {
-  makeId,
   blockSize,
-  firstFreePosition,
-  nextGridItem,
-  placeDuplicateGridItem,
-  normalizeGridItem,
   normalizeLayout,
   cloneLayout,
-  sameGrid,
   fromTethyrConfig,
   toTethyrConfig,
-  preferredGridWidth,
-  seedGridFromLayout,
-  withFittedGrid,
   publicLayoutSignature,
 } from "@/lib/studio-layout";
 import {
@@ -146,7 +125,6 @@ export function CreationStudio({
   const [dragType, setDragType] = useState<string | null>(null);
   const [paletteTarget, setPaletteTarget] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [gridInteraction, setGridInteraction] = useState(false);
   const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const [restoreTarget, setRestoreTarget] = useState<number | null>(null);
@@ -443,49 +421,40 @@ export function CreationStudio({
     });
   }, []);
 
-  /** One style patch on several blocks, as a single undo step. */
-  const applyBlockStyle = useCallback(
-    (blockIds: string[], patch: Partial<LayoutBlockInstance>, message?: string) => {
-      if (!layout || blockIds.length === 0) return;
-      const ids = new Set(blockIds);
-      commit({
-        sections: layout.sections.map((section) => ({
-          ...section,
-          blocks: section.blocks.map((block) =>
-            ids.has(block.id) ? { ...block, ...patch } : block,
-          ),
-        })),
-      });
-      if (blockIds.length > 1) {
-        toastUndoable(message ?? `Style applied to ${blockIds.length} blocks`);
-      }
-    },
-    [commit, layout, toastUndoable],
-  );
-
-  const updateBlock = useCallback(
-    (blockId: string, patch: Partial<LayoutBlockInstance>) => {
-      if (!layout) return;
-      commit(
-        {
-          sections: layout.sections.map((section) => ({
-            ...section,
-            blocks: section.blocks.map((block) =>
-              block.id === blockId ? { ...block, ...patch } : block,
-            ),
-          })),
-        },
-        undefined,
-        `block:${blockId}:${Object.keys(patch).sort().join(",")}`,
-      );
-    },
-    [commit, layout],
-  );
-
-  const updateBlockConfig = useCallback(
-    (blockId: string, nextConfig: BlockConfig) => updateBlock(blockId, { config: nextConfig }),
-    [updateBlock],
-  );
+  const {
+    applyBlockStyle,
+    updateBlock,
+    updateBlockConfig,
+    addBlock,
+    removeBlock,
+    duplicateBlock,
+    moveBlock,
+    moveToSection,
+    removeBlocks,
+    groupIntoArea,
+    addSection,
+    moveSection,
+    toggleSection,
+    removeSection,
+    renameSection,
+    setSectionLayout,
+    arrangeBlocks,
+    setSectionAppearance,
+    applyGrid,
+    fitGrid,
+    commitGrid,
+    beginGridInteraction,
+    endGridInteraction,
+  } = useStudioLayoutOps({
+    layout,
+    config,
+    commit,
+    dispatch,
+    touchedGridRef,
+    setSelectedBlockIds,
+    setRenameFocusId,
+    toastUndoable,
+  });
 
   /** Save the page theme now (themes aren't part of the draft save). */
   const persistTheme = useCallback(
@@ -545,546 +514,6 @@ export function CreationStudio({
       }),
     [edit],
   );
-
-  const addBlock = useCallback(
-    (type: string, targetSectionId?: string, placement?: LayoutGridItem) => {
-      if (!layout) return;
-      const created = createBlockInstance(type);
-      if (!created) return;
-      const next = cloneLayout(layout);
-      let section = next.sections.find((candidate) => candidate.id === targetSectionId);
-      if (!section) section = next.sections[next.sections.length - 1];
-      if (!section) {
-        section = {
-          id: `section-${Date.now()}`,
-          position: 0,
-          layout: "full",
-          blocks: [],
-          grid: [],
-        };
-        next.sections.push(section);
-      }
-      const block: LayoutBlockInstance = {
-        id: makeId("block"),
-        type: created.type,
-        position: section.blocks.length,
-        config: created.config,
-        visible: true,
-      };
-      section.blocks.push(block);
-      const [defaultW, defaultH, minW, minH] = blockSize(type);
-      section.grid = [
-        ...(section.grid ?? []),
-        placement
-          ? normalizeGridItem(
-              { ...placement, i: block.id },
-              block.id,
-              defaultW,
-              defaultH,
-              minW,
-              minH,
-            )
-          : nextGridItem(
-              block.id,
-              section.grid ?? [],
-              preferredGridWidth(section.layout, section.blocks.length - 1, minW),
-              defaultH,
-              minW,
-              minH,
-            ),
-      ];
-      touchedGridRef.current.add(section.id);
-      commit(next);
-      setSelectedBlockIds([block.id]);
-      // Bring the new block into view (it lands at the bottom of its area)
-      // and focus it, so it's obvious where it went.
-      window.setTimeout(() => {
-        const el = document.querySelector<HTMLElement>(`[data-block-id="${CSS.escape(block.id)}"]`);
-        el?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-        el?.focus({ preventScroll: true });
-      }, 60);
-    },
-    [commit, layout],
-  );
-
-  const removeBlock = useCallback(
-    (blockId: string) => {
-      if (!layout) return;
-      const next = cloneLayout(layout);
-      for (const section of next.sections) {
-        if (section.blocks.some((b) => b.id === blockId)) {
-          touchedGridRef.current.add(section.id);
-        }
-      }
-      commit({
-        sections: next.sections.map((section) => ({
-          ...section,
-          blocks: section.blocks.filter((block) => block.id !== blockId),
-          grid: section.grid?.filter((item) => item.i !== blockId),
-        })),
-      });
-      setSelectedBlockIds([]);
-      toastUndoable("Block removed");
-    },
-    [commit, layout, toastUndoable],
-  );
-
-  const duplicateBlock = useCallback(
-    (blockId: string) => {
-      if (!layout) return;
-      const next = cloneLayout(layout);
-      for (const section of next.sections) {
-        const sourceIndex = section.blocks.findIndex((block) => block.id === blockId);
-        if (sourceIndex < 0) continue;
-        const source = section.blocks[sourceIndex];
-        const duplicate: LayoutBlockInstance = {
-          ...source,
-          id: makeId("block"),
-          position: sourceIndex + 1,
-          config: { ...source.config },
-        };
-        section.blocks.splice(sourceIndex + 1, 0, duplicate);
-        section.blocks.forEach((block, index) => {
-          block.position = index;
-        });
-        const sourceGrid = section.grid?.find((item) => item.i === source.id);
-        section.grid = placeDuplicateGridItem(
-          section.grid ?? [],
-          sourceGrid,
-          duplicate.id,
-          blockSize(source.type),
-        );
-        touchedGridRef.current.add(section.id);
-        commit(next);
-        setSelectedBlockIds([duplicate.id]);
-        return;
-      }
-    },
-    [commit, layout],
-  );
-
-  const moveBlock = useCallback(
-    (blockId: string, direction: -1 | 1) => {
-      if (!layout) return;
-      const next = cloneLayout(layout);
-      for (const section of next.sections) {
-        const index = section.blocks.findIndex((block) => block.id === blockId);
-        const target = index + direction;
-        if (index < 0 || target < 0 || target >= section.blocks.length) continue;
-        [section.blocks[index], section.blocks[target]] = [
-          section.blocks[target],
-          section.blocks[index],
-        ];
-        section.blocks.forEach((block, blockIndex) => {
-          block.position = blockIndex;
-        });
-        // Rebuild the moved block's grid slot so the reorder is visible on the
-        // canvas; other blocks keep their existing positions.
-        if (section.grid && section.grid.length > 0) {
-          const movedBlock = section.blocks[index];
-          const [w, h, minW, minH] = blockSize(movedBlock.type);
-          const others = section.grid.filter((item) => item.i !== movedBlock.id);
-          const { x, y } = firstFreePosition(movedBlock.id, others, w, h);
-          section.grid = [
-            ...others,
-            normalizeGridItem({ i: movedBlock.id, x, y, w, h }, movedBlock.id, w, h, minW, minH),
-          ];
-          touchedGridRef.current.add(section.id);
-        }
-        commit(next);
-        return;
-      }
-    },
-    [commit, layout],
-  );
-
-  const moveToSection = useCallback(
-    (blockId: string, targetSectionId: string, placement?: { col: number; row: number }) => {
-      if (!layout) return;
-      const next = cloneLayout(layout);
-      const sourceSection = next.sections.find((section) =>
-        section.blocks.some((block) => block.id === blockId),
-      );
-      const targetSection = next.sections.find((section) => section.id === targetSectionId);
-      if (!sourceSection || !targetSection || sourceSection.id === targetSection.id) return;
-      const blockIndex = sourceSection.blocks.findIndex((block) => block.id === blockId);
-      const [block] = sourceSection.blocks.splice(blockIndex, 1);
-      if (!block) return;
-      block.position = targetSection.blocks.length;
-      targetSection.blocks.push(block);
-      const sourceGridItem = sourceSection.grid?.find((item) => item.i === blockId);
-      sourceSection.grid = sourceSection.grid?.filter((item) => item.i !== blockId);
-      const [defaultW, defaultH, minW, minH] = blockSize(block.type);
-      const w = Math.max(minW, Math.min(12, sourceGridItem?.w ?? defaultW));
-      const h = Math.max(minH, sourceGridItem?.h ?? defaultH);
-      const existing = targetSection.grid ?? [];
-      const dropped =
-        placement !== undefined
-          ? normalizeGridItem(
-              { i: block.id, x: placement.col, y: placement.row, w, h },
-              block.id,
-              w,
-              h,
-              minW,
-              minH,
-            )
-          : nextGridItem(block.id, existing, w, h, minW, minH);
-      if (existing.some((item) => overlapsGridItems(dropped, item))) {
-        const { x: freeX, y: freeY } = firstFreePosition(block.id, existing, dropped.w, dropped.h);
-        dropped.x = freeX;
-        dropped.y = freeY;
-      }
-      targetSection.grid = [...existing, dropped];
-      touchedGridRef.current.add(sourceSection.id);
-      touchedGridRef.current.add(targetSection.id);
-      next.sections.forEach((section) =>
-        section.blocks.forEach((item, index) => (item.position = index)),
-      );
-      commit(next);
-    },
-    [commit, layout],
-  );
-
-  /** Remove several blocks as one undo step. Locked blocks stay put. */
-  const removeBlocks = useCallback(
-    (blockIds: string[]) => {
-      if (!layout) return;
-      const locked = new Set(
-        layout.sections
-          .flatMap((s) => s.blocks)
-          .filter((b) => b.locked)
-          .map((b) => b.id),
-      );
-      const ids = new Set(blockIds.filter((id) => !locked.has(id)));
-      if (ids.size === 0) {
-        toast("Locked blocks can't be removed — unlock them first.");
-        return;
-      }
-      for (const section of layout.sections) {
-        if (section.blocks.some((b) => ids.has(b.id))) touchedGridRef.current.add(section.id);
-      }
-      commit({
-        sections: layout.sections.map((section) => ({
-          ...section,
-          blocks: section.blocks
-            .filter((block) => !ids.has(block.id))
-            .map((block, index) => ({ ...block, position: index })),
-          grid: section.grid?.filter((item) => !ids.has(item.i)),
-        })),
-      });
-      const kept = blockIds.length - ids.size;
-      setSelectedBlockIds(blockIds.filter((id) => locked.has(id)));
-      toastUndoable(
-        `${ids.size} block${ids.size === 1 ? "" : "s"} removed` +
-          (kept ? ` — ${kept} locked kept` : ""),
-      );
-    },
-    [commit, layout, toastUndoable],
-  );
-
-  /** Move the selected blocks into a new area placed after the first one's. */
-  const groupIntoArea = useCallback(
-    (blockIds: string[]) => {
-      if (!layout) return;
-      const next = cloneLayout(layout);
-      const ids = new Set(blockIds);
-      const moving: Array<{ block: LayoutBlockInstance; item?: LayoutGridItem }> = [];
-      let afterIndex = -1;
-      next.sections.forEach((section, sectionIndex) => {
-        const taken = section.blocks.filter(
-          (block) => ids.has(block.id) && !block.locked && block.type !== "profile-header",
-        );
-        if (taken.length === 0) return;
-        if (taken.some((block) => block.id === blockIds[0]) || afterIndex < 0) {
-          afterIndex = sectionIndex;
-        }
-        const takenIds = new Set(taken.map((block) => block.id));
-        const grid = section.grid ?? [];
-        moving.push(
-          ...[...taken]
-            .map((block) => ({ block, item: grid.find((item) => item.i === block.id) }))
-            .sort(
-              (a, b) => (a.item?.y ?? 0) - (b.item?.y ?? 0) || (a.item?.x ?? 0) - (b.item?.x ?? 0),
-            ),
-        );
-        section.blocks = section.blocks.filter((block) => !takenIds.has(block.id));
-        section.grid = grid.filter((item) => !takenIds.has(item.i));
-        touchedGridRef.current.add(section.id);
-      });
-      if (moving.length === 0) {
-        toast("Locked blocks and the header stay where they are.");
-        return;
-      }
-      const id = makeId("section");
-      const grid: LayoutGridItem[] = [];
-      for (const { block, item } of moving) {
-        const [defaultW, defaultH, minW, minH] = blockSize(block.type);
-        grid.push(
-          nextGridItem(block.id, grid, item?.w ?? defaultW, item?.h ?? defaultH, minW, minH),
-        );
-      }
-      next.sections.splice(afterIndex + 1, 0, {
-        id,
-        position: 0,
-        layout: "full",
-        title: `Area ${next.sections.length + 1}`,
-        visible: true,
-        blocks: moving.map(({ block }, index) => ({ ...block, position: index })),
-        grid,
-      });
-      next.sections.forEach((section, index) => {
-        section.position = index;
-        section.blocks.forEach((block, blockIndex) => (block.position = blockIndex));
-      });
-      touchedGridRef.current.add(id);
-      commit(next);
-      setRenameFocusId(id);
-      toastUndoable(`Moved ${moving.length} blocks into a new area`);
-    },
-    [commit, layout, toastUndoable],
-  );
-
-  const addSection = useCallback(() => {
-    if (!layout) return;
-    const next = cloneLayout(layout);
-    const id = makeId("section");
-    next.sections.push({
-      id,
-      position: next.sections.length,
-      layout: "full",
-      title: `Area ${next.sections.length + 1}`,
-      visible: true,
-      blocks: [],
-      grid: [],
-    });
-    commit(next);
-    setSelectedBlockIds([]);
-    setRenameFocusId(id);
-    // Keep the new area in view so the rename happens where you can see it.
-    setTimeout(
-      () =>
-        document
-          .getElementById("studio-add-section")
-          ?.scrollIntoView({ behavior: "smooth", block: "center" }),
-      0,
-    );
-  }, [commit, layout]);
-
-  const moveSection = useCallback(
-    (sectionId: string, direction: -1 | 1) => {
-      if (!layout) return;
-      const sections = cloneLayout(layout).sections;
-      const index = sections.findIndex((section) => section.id === sectionId);
-      const target = index + direction;
-      if (index < 0 || target < 0 || target >= sections.length) return;
-      [sections[index], sections[target]] = [sections[target], sections[index]];
-      commit({ sections });
-    },
-    [commit, layout],
-  );
-
-  const toggleSection = useCallback(
-    (sectionId: string) => {
-      if (!layout) return;
-      commit({
-        sections: layout.sections.map((section) =>
-          section.id === sectionId ? { ...section, visible: section.visible === false } : section,
-        ),
-      });
-    },
-    [commit, layout],
-  );
-
-  const removeSection = useCallback(
-    (sectionId: string) => {
-      if (!layout) return;
-      const section = layout.sections.find((candidate) => candidate.id === sectionId);
-      // Only empty areas: blocks are never removed as a side effect.
-      if (!section || section.blocks.length > 0) return;
-      commit({
-        sections: layout.sections
-          .filter((candidate) => candidate.id !== sectionId)
-          .map((candidate, index) => ({ ...candidate, position: index })),
-      });
-      toastUndoable("Area removed");
-    },
-    [commit, layout, toastUndoable],
-  );
-
-  const renameSection = useCallback(
-    (sectionId: string, title: string) => {
-      if (!layout || !title.trim()) return;
-      const clean = title.trim().slice(0, 40);
-      // Leaving the rename box unchanged isn't an edit (or an undo step).
-      if (layout.sections.find((section) => section.id === sectionId)?.title === clean) return;
-      commit({
-        sections: layout.sections.map((section) =>
-          section.id === sectionId ? { ...section, title: clean } : section,
-        ),
-      });
-    },
-    [commit, layout],
-  );
-
-  const setSectionLayout = useCallback(
-    (sectionId: string, newLayout: LayoutSection["layout"]) => {
-      if (!layout) return;
-      const next = cloneLayout(layout);
-      const section = next.sections.find((candidate) => candidate.id === sectionId);
-      if (!section || section.layout === newLayout) return;
-      section.layout = newLayout;
-      section.grid = seedGridFromLayout(section, newLayout);
-      section.blocks.forEach((block, index) => (block.position = index));
-      touchedGridRef.current.add(sectionId);
-      commit(next);
-      setSelectedBlockIds([]);
-      toastUndoable("Area layout changed — blocks were rearranged");
-    },
-    [commit, layout, toastUndoable],
-  );
-
-  /** The layout with one area's grid replaced, or null when nothing changes. */
-  /** `base` with one area's grid replaced, or null when nothing changes. */
-  const gridOn = useCallback(
-    (base: PageLayout, sectionId: string, nextGrid: LayoutGridItem[]): PageLayout | null => {
-      const layout = base;
-      const section = layout.sections.find((candidate) => candidate.id === sectionId);
-      if (!section) return null;
-      const validIds = new Set(section.blocks.map((block) => block.id));
-      const normalized = nextGrid
-        .filter((item) => item.i !== "__dropping-elem__" && validIds.has(item.i))
-        .map((item) =>
-          normalizeGridItem(item, item.i, item.w, item.h, item.minW ?? 2, item.minH ?? 2),
-        );
-      if (sameGrid(section.grid ?? [], normalized)) return null;
-      touchedGridRef.current.add(sectionId);
-      const positions = new Map(normalized.map((item, index) => [item.i, { item, index }]));
-      return {
-        ...layout,
-        sections: layout.sections.map((candidate) =>
-          candidate.id !== sectionId
-            ? candidate
-            : {
-                ...candidate,
-                grid: normalized,
-                blocks: candidate.blocks.map((block) => {
-                  const position = positions.get(block.id);
-                  return position
-                    ? {
-                        ...block,
-                        position: position.index,
-                        span: position.item.w,
-                        height: position.item.h,
-                      }
-                    : block;
-                }),
-              },
-        ),
-      };
-    },
-    [],
-  );
-  const layoutWithGrid = useCallback(
-    (sectionId: string, nextGrid: LayoutGridItem[]) =>
-      layout ? gridOn(layout, sectionId, nextGrid) : null,
-    [gridOn, layout],
-  );
-
-  /** Lay the selection out relative to the first block picked. */
-  const arrangeBlocks = useCallback(
-    (blockIds: string[], how: GridArrangement) => {
-      if (!layout || blockIds.length < 2) return;
-      const anchorId = blockIds[0];
-      const anchor = layout.sections
-        .flatMap((section) => section.grid ?? [])
-        .find((item) => item.i === anchorId);
-      if (!anchor) return;
-      const locked = new Set(
-        layout.sections
-          .flatMap((s) => s.blocks)
-          .filter((b) => b.locked)
-          .map((b) => b.id),
-      );
-      const ids = new Set(blockIds.filter((id) => !locked.has(id)));
-      let next: PageLayout = layout;
-      let changed = false;
-      for (const section of layout.sections) {
-        // Tops and rows only mean something inside one area.
-        const sameArea = section.grid?.some((item) => item.i === anchorId);
-        if ((how === "align-top" || how === "row") && !sameArea) continue;
-        const arranged = arrangeGrid(section.grid ?? [], ids, anchor, how);
-        if (!arranged) continue;
-        // Locked blocks only move if a selected block now sits on them.
-        const updated = gridOn(next, section.id, arranged);
-        if (updated) {
-          next = updated;
-          changed = true;
-        }
-      }
-      if (!changed) {
-        toast(how === "row" ? "Those blocks can't share one row." : "Already lined up.");
-        return;
-      }
-      commit(next);
-      toastUndoable(`Arranged ${blockIds.length} blocks`);
-    },
-    [commit, gridOn, layout, toastUndoable],
-  );
-
-  // Live grid updates: drag/resize frames (history was recorded when the
-  // gesture began) and content auto-fit (deliberately not an undo step).
-  const setSectionAppearance = useCallback(
-    (sectionId: string, patch: AreaAppearance) => {
-      if (!layout) return;
-      commit(
-        {
-          sections: layout.sections.map((section) =>
-            section.id === sectionId
-              ? { ...section, appearance: { ...section.appearance, ...patch } }
-              : section,
-          ),
-        },
-        undefined,
-        `area:${sectionId}`,
-      );
-    },
-    [commit, layout],
-  );
-
-  // Applied to the latest layout, not the one this callback closed over: a
-  // drop's snap correction arrives a tick after the drop itself, and against
-  // the stale layout a snap back to the starting cell looked like "no change"
-  // and was dropped — which is why Snap appeared to do nothing.
-  const applyGrid = useCallback(
-    (sectionId: string, nextGrid: LayoutGridItem[]) => {
-      dispatch({ type: "adjust", update: (current) => gridOn(current, sectionId, nextGrid) });
-    },
-    [gridOn],
-  );
-
-  // Content auto-fit: patch the working layout and the saved baseline alike,
-  // so measuring heights never marks the draft dirty, autosaves, or marks an
-  // area as hand-arranged (which would change how the public page lays it out).
-  const fitGrid = useCallback((sectionId: string, fitted: LayoutGridItem[]) => {
-    dispatch({ type: "fit", sectionId, grid: fitted, apply: withFittedGrid });
-  }, []);
-
-  // Discrete grid edits (the width stepper) are their own undo step.
-  const commitGrid = useCallback(
-    (sectionId: string, nextGrid: LayoutGridItem[]) => {
-      const next = layoutWithGrid(sectionId, nextGrid);
-      if (next) commit(next);
-    },
-    [commit, layoutWithGrid],
-  );
-
-  const beginGridInteraction = useCallback(() => {
-    if (gridInteraction || !layout || !config) return;
-    setGridInteraction(true);
-    dispatch({ type: "checkpoint", arranged: [...touchedGridRef.current], now: Date.now() });
-  }, [config, gridInteraction, layout]);
-
-  const endGridInteraction = useCallback(() => setGridInteraction(false), []);
 
   /** After undo/redo: the theme is saved on the server straight away, and the
    *  hand-arranged areas are tracked outside the document; bring both along. */
@@ -1450,44 +879,11 @@ export function CreationStudio({
 
   /** What will change for visitors when this draft goes live — shown in the
    *  publish dialog so publishing is deliberate, not blind. */
-  const publishChanges = useMemo(() => {
-    if (!layout) return [];
-    if (!latestPublishedLayout) return ["First publish — your Studio goes live."];
-    const current = normalizeLayout(layout);
-    const previous = normalizeLayout(latestPublishedLayout);
-    const lines: string[] = [];
-    const currentSectionIds = new Set(current.sections.map((s) => s.id));
-    const previousSectionIds = new Set(previous.sections.map((s) => s.id));
-    const addedSections = current.sections.filter((s) => !previousSectionIds.has(s.id)).length;
-    const removedSections = previous.sections.filter((s) => !currentSectionIds.has(s.id)).length;
-    if (addedSections) lines.push(`Added ${addedSections} area${addedSections === 1 ? "" : "s"}`);
-    if (removedSections)
-      lines.push(`Removed ${removedSections} area${removedSections === 1 ? "" : "s"}`);
-    const blockCounts = (sections: PageLayout["sections"]) => {
-      const map = new Map<string, number>();
-      for (const section of sections) {
-        for (const block of section.blocks) {
-          const label = getBlock(block.type)?.label ?? block.type;
-          map.set(label, (map.get(label) ?? 0) + 1);
-        }
-      }
-      return map;
-    };
-    const currentBlocks = blockCounts(current.sections);
-    const previousBlocks = blockCounts(previous.sections);
-    for (const [label, count] of currentBlocks) {
-      const delta = count - (previousBlocks.get(label) ?? 0);
-      if (delta > 0) lines.push(`Added ${delta} ${label} block${delta === 1 ? "" : "s"}`);
-    }
-    for (const [label, count] of previousBlocks) {
-      const delta = count - (currentBlocks.get(label) ?? 0);
-      if (delta > 0) lines.push(`Removed ${delta} ${label} block${delta === 1 ? "" : "s"}`);
-    }
-    if (themeChanged) lines.push("Changed theme");
-    if (appearanceChanged) lines.push("Updated appearance");
-    if (lines.length === 0) lines.push("Arrangement changes");
-    return lines.slice(0, 4);
-  }, [appearanceChanged, latestPublishedLayout, layout, themeChanged]);
+  const publishChanges = useMemo(
+    () =>
+      describePublishChanges({ layout, latestPublishedLayout, themeChanged, appearanceChanged }),
+    [appearanceChanged, latestPublishedLayout, layout, themeChanged],
+  );
 
   const chooseStarter = useCallback(
     (starter: StudioStarter) => {
@@ -1611,237 +1007,59 @@ export function CreationStudio({
     return ids;
   }, [forkTemplate.isPending, forkTemplate.variables]);
 
-  // Everything the command palette (Ctrl/⌘+J) can do, built from the same
-  // handlers the toolbar, rail and keyboard use.
-  const commands = useMemo<StudioCommand[]>(() => {
-    if (!layout) return [];
-    const list: StudioCommand[] = [];
-    const add = (command: StudioCommand) => list.push(command);
-    const selected = selectedBlockId ? findBlock(selectedBlockId) : undefined;
-    if (mode === "edit" && selectedBlockIds.length > 1) {
-      const ids = selectedBlockIds;
-      const count = `${ids.length} blocks`;
-      add({
-        id: "multi-group",
-        label: "Group selection into a new area",
-        group: "Selection",
-        run: () => groupIntoArea(ids),
-      });
-      add({
-        id: "multi-width",
-        label: "Match widths",
-        group: "Selection",
-        keywords: "size",
-        run: () => arrangeBlocks(ids, "match-width"),
-      });
-      add({
-        id: "multi-height",
-        label: "Match heights",
-        group: "Selection",
-        keywords: "size",
-        run: () => arrangeBlocks(ids, "match-height"),
-      });
-      add({
-        id: "multi-left",
-        label: "Align left edges",
-        group: "Selection",
-        run: () => arrangeBlocks(ids, "align-left"),
-      });
-      add({
-        id: "multi-top",
-        label: "Align tops",
-        group: "Selection",
-        run: () => arrangeBlocks(ids, "align-top"),
-      });
-      add({
-        id: "multi-row",
-        label: "Put side by side",
-        group: "Selection",
-        keywords: "row",
-        run: () => arrangeBlocks(ids, "row"),
-      });
-      add({
-        id: "multi-hide",
-        label: `Hide ${count}`,
-        group: "Selection",
-        run: () => applyBlockStyle(ids, { visible: false }, `Hid ${count}`),
-      });
-      add({
-        id: "multi-show",
-        label: `Show ${count}`,
-        group: "Selection",
-        run: () => applyBlockStyle(ids, { visible: true }, `Showing ${count}`),
-      });
-      add({
-        id: "multi-remove",
-        label: `Remove ${count}`,
-        group: "Selection",
-        keywords: "delete",
-        shortcut: "Del",
-        run: () => removeBlocks(ids),
-      });
-    } else if (mode === "edit" && selected) {
-      const name = getBlock(selected.type)?.label ?? selected.type;
-      add({
-        id: "sel-duplicate",
-        label: `Duplicate ${name}`,
-        group: "Selection",
-        keywords: "copy",
-        shortcut: "Ctrl+D",
-        run: () => duplicateBlock(selected.id),
-      });
-      add({
-        id: "sel-visible",
-        label: `${selected.visible === false ? "Show" : "Hide"} ${name}`,
-        group: "Selection",
-        run: () => updateBlock(selected.id, { visible: selected.visible === false }),
-      });
-      add({
-        id: "sel-lock",
-        label: `${selected.locked ? "Unlock" : "Lock"} ${name}`,
-        group: "Selection",
-        keywords: "pin",
-        run: () => updateBlock(selected.id, { locked: !selected.locked }),
-      });
-      if (!selected.locked) {
-        add({
-          id: "sel-remove",
-          label: `Remove ${name}`,
-          group: "Selection",
-          keywords: "delete",
-          shortcut: "Del",
-          run: () => removeBlock(selected.id),
-        });
-      }
-    }
-    if (selectedBlockIds.length > 0) {
-      add({
-        id: "sel-clear",
-        label: "Clear selection",
-        group: "Selection",
-        keywords: "deselect",
-        shortcut: "Esc",
-        run: () => setSelectedBlockIds([]),
-      });
-    }
-    add({ id: "undo", label: "Undo", group: "Page", shortcut: "Ctrl+Z", run: undo });
-    add({ id: "redo", label: "Redo", group: "Page", shortcut: "Ctrl+Shift+Z", run: redo });
-    add({
-      id: "save",
-      label: "Save now",
-      group: "Page",
-      shortcut: "Ctrl+S",
-      run: () => void save(),
-    });
-    add({
-      id: "publish",
-      label: "Publish",
-      group: "Page",
-      keywords: "go live",
-      run: requestPublish,
-    });
-    add({
-      id: "mode",
-      label: mode === "edit" ? "Preview the page" : "Back to editing",
-      group: "Page",
-      keywords: "edit preview",
-      run: () => {
-        setMode(mode === "edit" ? "preview" : "edit");
-        if (mode === "edit" && dirty) void save({ announce: false });
-      },
-    });
-    add({
-      id: "device",
-      label: device === "desktop" ? "Show the phone layout" : "Show the desktop layout",
-      group: "Page",
-      keywords: "mobile device",
-      run: () => setDevice(device === "desktop" ? "mobile" : "desktop"),
-    });
-    if (mode === "edit") {
-      add({
-        id: "area",
-        label: "Add an area",
-        group: "Page",
-        keywords: "section",
-        run: addSection,
-      });
-    }
-    add({
-      id: "templates",
-      label: "Browse templates",
-      group: "Page",
-      keywords: "starter",
-      run: () => setIntroStarterOpen(true),
-    });
-    add({
-      id: "background",
-      label: "Background and appearance",
-      group: "Page",
-      keywords: "backdrop pattern",
-      run: () => setAppearanceOpen(true),
-    });
-    if (mode === "edit") {
-      const target = selectedBlockId
-        ? layout.sections.find((section) => section.blocks.some((b) => b.id === selectedBlockId))
-            ?.id
-        : undefined;
-      const used = new Set(layout.sections.flatMap((section) => section.blocks.map((b) => b.type)));
-      for (const block of getAllBlocks()) {
-        if (block.ownerContext === "project" || !dedupeSharedReadmeBlocks(block.type, used))
-          continue;
-        add({
-          id: `add-${block.type}`,
-          label: `Add ${block.label}`,
-          group: "Add a block",
-          keywords: block.description,
-          run: () => addBlock(block.type, target),
-        });
-      }
-    }
-    for (const section of layout.sections) {
-      for (const block of section.blocks) {
-        add({
-          id: `go-${block.id}`,
-          label: `${getBlock(block.type)?.label ?? block.type} · ${sectionLabel(section)}`,
-          group: "Go to a block",
-          keywords: "select find",
-          run: () => {
-            setMode("edit");
-            setSelectedBlockIds([block.id]);
-            window.setTimeout(() => {
-              const el = document.querySelector<HTMLElement>(
-                `[data-block-id="${CSS.escape(block.id)}"]`,
-              );
-              el?.scrollIntoView({ behavior: "smooth", block: "center" });
-              el?.focus({ preventScroll: true });
-            }, 60);
-          },
-        });
-      }
-    }
-    return list;
-  }, [
-    addBlock,
-    addSection,
-    applyBlockStyle,
-    arrangeBlocks,
-    device,
-    dirty,
-    duplicateBlock,
-    findBlock,
-    groupIntoArea,
-    layout,
-    mode,
-    redo,
-    removeBlock,
-    removeBlocks,
-    requestPublish,
-    save,
-    selectedBlockId,
-    selectedBlockIds,
-    undo,
-    updateBlock,
-  ]);
+  // Everything the command palette (Ctrl/⌘+J) can do: studio-command-list.ts.
+  const commands = useMemo(
+    () =>
+      buildStudioCommands({
+        layout,
+        mode,
+        device,
+        dirty,
+        selectedBlockId,
+        selectedBlockIds,
+        findBlock,
+        setMode,
+        setDevice,
+        setSelectedBlockIds,
+        setIntroStarterOpen,
+        setAppearanceOpen,
+        undo,
+        redo,
+        save,
+        requestPublish,
+        addBlock,
+        addSection,
+        updateBlock,
+        duplicateBlock,
+        removeBlock,
+        removeBlocks,
+        groupIntoArea,
+        arrangeBlocks,
+        applyBlockStyle,
+      }),
+    [
+      addBlock,
+      addSection,
+      applyBlockStyle,
+      arrangeBlocks,
+      device,
+      dirty,
+      duplicateBlock,
+      findBlock,
+      groupIntoArea,
+      layout,
+      mode,
+      redo,
+      removeBlock,
+      removeBlocks,
+      requestPublish,
+      save,
+      selectedBlockId,
+      selectedBlockIds,
+      undo,
+      updateBlock,
+    ],
+  );
 
   // Conflict resolution. "Load latest" discards this tab's unsaved edits;
   // "Keep mine" adopts the remote timestamp and saves over it.
