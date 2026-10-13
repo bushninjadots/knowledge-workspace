@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import { useSearch } from "@tanstack/react-router";
 import { PenLine } from "lucide-react";
 import type { CommunityNavId } from "@/data/mocks/community-nav";
@@ -7,6 +7,8 @@ import { SpaceAbout } from "@/components/tethyr/community/space-about";
 import { CommunityRightSidebar } from "@/components/tethyr/community/right-sidebar";
 import { CommunityFeed } from "@/components/tethyr/community/community-feed";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { useSpaceAccent } from "@/components/tethyr/community/space-media";
+import { cn } from "@/lib/utils";
 import {
   useCommunitySpace,
   useCommunitySpacePosts,
@@ -87,13 +89,32 @@ export function CommunityPage() {
   }, []);
 
   const openPulse = useCallback(() => setPulseOpen(true), []);
+  // Inside a space the page wears the space's colour (its pick, or its banner's).
+  const spaceTint = useSpaceAccent({
+    accent_color: activeSpace?.accent_color ?? null,
+    visibility: activeSpace?.visibility ?? "public",
+    join_type: activeSpace?.join_type ?? "auto",
+    banner_url: activeSpace?.banner_url ?? null,
+  });
 
   return (
-    <div className="animate-room-enter relative min-h-screen bg-noise">
-      {/* A soft glow of the member's accent behind the header — identity, not decoration. */}
+    <div
+      className="animate-room-enter relative min-h-screen bg-noise"
+      // The room's colour: the member's accent on the feed, the space's own
+      // colour inside a space. Cards, the header glow and the hairlines take it.
+      style={
+        {
+          "--community-tint": activeSpace ? spaceTint : "var(--user-accent, var(--primary))",
+        } as CSSProperties
+      }
+    >
+      {/* A soft glow of the room's colour behind the header — identity, not decoration. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-80 bg-[radial-gradient(55%_100%_at_25%_0%,color-mix(in_oklab,var(--user-accent,var(--primary))_16%,transparent),transparent_75%)]"
+        className={cn(
+          "pointer-events-none absolute inset-x-0 top-0 bg-[radial-gradient(55%_100%_at_25%_0%,color-mix(in_oklab,var(--community-tint)_16%,transparent),transparent_75%)]",
+          activeSpace ? "h-[32rem]" : "h-80",
+        )}
       />
       <div className="relative mx-auto grid w-full max-w-[1180px] gap-8 px-4 pb-28 pt-5 md:px-8 md:pb-12 md:pt-8 xl:grid-cols-[minmax(0,1fr)_17rem]">
         <div className="@container min-w-0">

@@ -52,7 +52,7 @@ export const HelpMatches = memo(function HelpMatches({
     <section
       aria-labelledby="help-matches-title"
       style={{ "--post-tone": "var(--caution)" } as CSSProperties}
-      className="community-card mb-6 border-[color-mix(in_oklab,var(--caution)_45%,var(--border))] bg-[color-mix(in_oklab,var(--caution)_8%,var(--card))] p-4"
+      className="community-card mb-6 border-[color-mix(in_oklab,var(--caution)_45%,var(--border))] [--community-tint:var(--caution)] p-4"
     >
       <div className="mb-3 flex items-center gap-2">
         <HandHeart className={`h-4 w-4 ${TONE_TEXT}`} aria-hidden />
@@ -68,7 +68,7 @@ export const HelpMatches = memo(function HelpMatches({
           return (
             <li
               key={post.id}
-              className="flex items-center gap-3 rounded-lg border border-border/50 bg-card px-3 py-2.5"
+              className="flex items-center gap-3 rounded-lg border border-border/50 community-well px-3 py-2.5"
             >
               <button
                 type="button"

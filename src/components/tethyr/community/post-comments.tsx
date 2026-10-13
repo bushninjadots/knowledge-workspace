@@ -80,7 +80,7 @@ function CommentNode({
   return (
     <div
       className={`rounded-xl p-3 ${
-        comment.is_best_answer ? "border border-trust/30 bg-trust/5" : "bg-background/40"
+        comment.is_best_answer ? "border border-trust/30 bg-trust/5" : "community-well"
       }`}
     >
       <div className="flex items-start gap-2.5">
@@ -182,7 +182,7 @@ function CommentEditor({
         onChange={(e) => setText(e.target.value.slice(0, 2000))}
         rows={3}
         autoFocus
-        className="w-full resize-y rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm text-foreground focus:border-primary/50 focus:outline-none"
+        className="w-full resize-y rounded-xl border border-border/60 community-well px-3 py-2 text-sm text-foreground focus:border-primary/50 focus:outline-none"
       />
       <div className="flex gap-2">
         <Button
@@ -239,7 +239,7 @@ function CommentComposer({
         }}
         placeholder={parentId ? "Write a reply..." : "Write a comment..."}
         autoFocus={autoFocus}
-        className="flex-1 rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
+        className="flex-1 rounded-xl border border-border/60 community-well px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
       />
       <Button
         type="button"

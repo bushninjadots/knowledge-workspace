@@ -221,7 +221,7 @@ function PassedSubmissionLink({ url, reviewedAt }: { url: string; reviewedAt?: s
         href={href}
         target="_blank"
         rel="noreferrer"
-        className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background/40 px-2.5 py-1 text-[11px] text-foreground transition-colors hover:border-primary/40"
+        className="inline-flex items-center gap-1.5 rounded-lg border border-border community-well px-2.5 py-1 text-[11px] text-foreground transition-colors hover:border-primary/40"
       >
         <FileText className="h-3 w-3" />
         {label}

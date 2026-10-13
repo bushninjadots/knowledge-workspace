@@ -1,6 +1,6 @@
+import type { CSSProperties } from "react";
 import { Users, UserPlus, Hourglass, Check, Lock, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import {
@@ -10,8 +10,11 @@ import {
   useCancelJoinRequest,
   type CommunitySpace,
 } from "@/hooks/use-community-spaces";
-import { SpaceAvatar, SpaceBanner } from "@/components/tethyr/community/space-media";
-import { spaceAccent } from "@/lib/space-identity";
+import {
+  SpaceAvatar,
+  SpaceBanner,
+  useSpaceAccent,
+} from "@/components/tethyr/community/space-media";
 
 export function CommunityCard({ space, onClick }: { space: CommunitySpace; onClick?: () => void }) {
   const joinSpace = useJoinSpace();
@@ -60,7 +63,7 @@ export function CommunityCard({ space, onClick }: { space: CommunitySpace; onCli
         : "Join";
   const ButtonIcon = space.is_member ? Check : space.has_pending_request ? Hourglass : UserPlus;
 
-  const accentColor = spaceAccent(space);
+  const accentColor = useSpaceAccent(space);
   const kindLabel =
     space.visibility === "private" ? "Private" : space.join_type === "review" ? "Approval" : "Open";
 
@@ -68,7 +71,11 @@ export function CommunityCard({ space, onClick }: { space: CommunitySpace; onCli
   // avoids nested interactive elements and gives keyboard users one clear
   // target for opening the space.
   return (
-    <Card className="group relative flex w-full flex-col overflow-hidden bg-card p-0 text-left transition-spatial duration-150 hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))]">
+    <div
+      // Each space's card takes that space's colour.
+      style={{ "--community-tint": accentColor } as CSSProperties}
+      className="community-card content-safe group relative flex w-full min-w-0 flex-col overflow-hidden p-0 text-left transition-spatial duration-150 hover:-translate-y-0.5 hover:border-[color-mix(in_oklab,var(--community-tint)_45%,var(--border))]"
+    >
       <button
         type="button"
         onClick={() => onClick?.()}
@@ -81,7 +88,7 @@ export function CommunityCard({ space, onClick }: { space: CommunitySpace; onCli
             name={space.name}
             path={space.avatar_url}
             accent={accentColor}
-            className="-mt-7 h-14 w-14 text-xl ring-4 ring-[var(--card)]"
+            className="-mt-7 h-14 w-14 text-xl ring-4 ring-[color-mix(in_oklab,var(--community-tint,var(--primary))_8%,var(--surface))]"
           />
           <span
             className="mb-0.5 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium"
@@ -138,6 +145,6 @@ export function CommunityCard({ space, onClick }: { space: CommunitySpace; onCli
           {buttonLabel}
         </Button>
       </div>
-    </Card>
+    </div>
   );
 }

@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { MemberAvatar } from "@/components/tethyr/member-avatar";
 import { useSpaceMembers, type CommunitySpace } from "@/hooks/use-community-spaces";
 import { blockMarkdownToHtml } from "@/lib/block-markdown";
-import { spaceAccent } from "@/lib/space-identity";
+import { useSpaceAccent } from "@/components/tethyr/community/space-media";
 import { safeHref } from "@/lib/validators";
 
 function Card({
@@ -39,7 +39,7 @@ export const SpaceAbout = memo(function SpaceAbout({
   space: CommunitySpace;
   mobile?: boolean;
 }) {
-  const accent = spaceAccent(space);
+  const accent = useSpaceAccent(space);
   const aboutHtml = useMemo(
     () => (space.about?.trim() ? blockMarkdownToHtml(space.about) : null),
     [space.about],
@@ -176,7 +176,7 @@ export const SpaceAbout = memo(function SpaceAbout({
                 <span
                   className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold"
                   style={{
-                    background: `color-mix(in oklab, ${accent} 16%, var(--card))`,
+                    background: `color-mix(in oklab, ${accent} 20%, transparent)`,
                     color: `color-mix(in oklab, ${accent} 75%, var(--foreground))`,
                   }}
                 >

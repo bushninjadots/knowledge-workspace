@@ -533,7 +533,7 @@ export function ComposerBar({
             }
             rows={expanded ? 5 : 1}
             className={cn(
-              "resize-none rounded-xl border-border/60 bg-background/40 text-sm transition-colors",
+              "resize-none rounded-xl border-border/60 community-well text-sm transition-colors",
               expanded ? "min-h-28" : "min-h-11",
             )}
           />
@@ -598,7 +598,7 @@ export function ComposerBar({
                   className={`rounded-full border px-2.5 py-1 text-[11px] transition-lift ${
                     selected
                       ? "border-primary bg-primary/10 text-primary"
-                      : "border-border/60 bg-background/40 text-muted-foreground hover:text-foreground"
+                      : "border-border/60 community-well text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   {selected && <Check className="mr-1 inline h-3 w-3" />}
@@ -626,7 +626,7 @@ export function ComposerBar({
 
       {/* Post-to-space picker + link + flair (Reddit-style meta row) */}
       {(expanded || !!flair || showLinkInput) && (
-        <div className="mt-3 space-y-2 rounded-xl border border-border/50 bg-background/30 p-3">
+        <div className="mt-3 space-y-2 rounded-xl border border-border/50 community-well p-3">
           {/* Destination picker */}
           {!spaceId && (
             <div className="flex flex-wrap items-center gap-2">
@@ -641,7 +641,7 @@ export function ComposerBar({
                     className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] transition-colors active:scale-95 ${
                       targetSpaceId
                         ? "border-ai/40 bg-ai/10 text-ai"
-                        : "border-border bg-background/60 text-muted-foreground hover:text-foreground"
+                        : "border-border community-well text-muted-foreground hover:text-foreground"
                     }`}
                   >
                     <Users className="h-3 w-3" />
@@ -682,7 +682,7 @@ export function ComposerBar({
               className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] transition-colors active:scale-95 ${
                 showLinkInput
                   ? "border-primary bg-primary/10 text-primary"
-                  : "border-border bg-background/60 text-muted-foreground hover:text-foreground"
+                  : "border-border community-well text-muted-foreground hover:text-foreground"
               }`}
             >
               <Link2 className="h-3 w-3" />
@@ -694,7 +694,7 @@ export function ComposerBar({
                 onChange={(e) => setLinkUrl(e.target.value.slice(0, 500))}
                 placeholder="https://…  (optional URL this post links to)"
                 aria-label="Link URL"
-                className="min-w-0 flex-1 rounded-lg border border-border/60 bg-background/60 px-2.5 py-1 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:outline-none"
+                className="min-w-0 flex-1 rounded-lg border border-border/60 community-well px-2.5 py-1 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:outline-none"
               />
             )}
             <span className="ml-auto inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
@@ -708,7 +708,7 @@ export function ComposerBar({
                   className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] transition-colors active:scale-95 ${
                     flair
                       ? `border-transparent ${flairClasses(flair)}`
-                      : "border-border bg-background/60 text-muted-foreground hover:text-foreground"
+                      : "border-border community-well text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   {flair ?? "Add flair"}
@@ -770,7 +770,7 @@ export function ComposerBar({
           <button
             onClick={handleImageUpload}
             disabled={images.length >= 4}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/60 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95 disabled:opacity-40"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border community-well px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95 disabled:opacity-40"
           >
             <ImagePlus className="h-3.5 w-3.5" />
             Image
@@ -781,7 +781,7 @@ export function ComposerBar({
             onMouseDown={keepTextareaFocus}
             aria-label="Heading 1"
             title="Heading 1"
-            className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+            className="inline-flex items-center rounded-full border border-border community-well px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
           >
             <Heading1 className="h-3.5 w-3.5" />
           </button>
@@ -791,7 +791,7 @@ export function ComposerBar({
             onMouseDown={keepTextareaFocus}
             aria-label="Heading 2"
             title="Heading 2"
-            className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+            className="inline-flex items-center rounded-full border border-border community-well px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
           >
             <Heading2 className="h-3.5 w-3.5" />
           </button>
@@ -802,7 +802,7 @@ export function ComposerBar({
             onMouseDown={keepTextareaFocus}
             aria-label="Bold"
             title="Bold"
-            className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+            className="inline-flex items-center rounded-full border border-border community-well px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
           >
             <Bold className="h-3.5 w-3.5" />
           </button>
@@ -812,7 +812,7 @@ export function ComposerBar({
             onMouseDown={keepTextareaFocus}
             aria-label="Italic"
             title="Italic"
-            className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+            className="inline-flex items-center rounded-full border border-border community-well px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
           >
             <Italic className="h-3.5 w-3.5" />
           </button>
@@ -822,7 +822,7 @@ export function ComposerBar({
             onMouseDown={keepTextareaFocus}
             aria-label="Strikethrough"
             title="Strikethrough"
-            className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+            className="inline-flex items-center rounded-full border border-border community-well px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
           >
             <Strikethrough className="h-3.5 w-3.5" />
           </button>
@@ -833,7 +833,7 @@ export function ComposerBar({
             onMouseDown={keepTextareaFocus}
             aria-label="Bullet list"
             title="Bullet list"
-            className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+            className="inline-flex items-center rounded-full border border-border community-well px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
           >
             <List className="h-3.5 w-3.5" />
           </button>
@@ -843,7 +843,7 @@ export function ComposerBar({
             onMouseDown={keepTextareaFocus}
             aria-label="Numbered list"
             title="Numbered list"
-            className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+            className="inline-flex items-center rounded-full border border-border community-well px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
           >
             <ListOrdered className="h-3.5 w-3.5" />
           </button>
@@ -853,7 +853,7 @@ export function ComposerBar({
             onMouseDown={keepTextareaFocus}
             aria-label="Blockquote"
             title="Blockquote"
-            className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+            className="inline-flex items-center rounded-full border border-border community-well px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
           >
             <Quote className="h-3.5 w-3.5" />
           </button>
@@ -863,7 +863,7 @@ export function ComposerBar({
             onMouseDown={keepTextareaFocus}
             aria-label="Insert link"
             title="Insert link"
-            className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+            className="inline-flex items-center rounded-full border border-border community-well px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
           >
             <Link2 className="h-3.5 w-3.5" />
           </button>
@@ -873,7 +873,7 @@ export function ComposerBar({
             className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1.5 text-xs transition-colors active:scale-95 ${
               showAttachPanel || attachedProject
                 ? "border-primary bg-primary/10 text-primary"
-                : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
+                : "border-border community-well text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
             }`}
           >
             <Paperclip className="h-3.5 w-3.5" />
@@ -890,7 +890,7 @@ export function ComposerBar({
                 className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-colors active:scale-95 ${
                   active
                     ? "border-primary bg-primary/10 text-primary"
-                    : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
+                    : "border-border community-well text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
                 }`}
               >
                 <Icon className="h-3.5 w-3.5" />
@@ -907,7 +907,7 @@ export function ComposerBar({
                 className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1.5 text-xs transition-colors active:scale-95 ${
                   type && MORE_ACTIONS.some((a) => a.type === type)
                     ? "border-primary bg-primary/10 text-primary"
-                    : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
+                    : "border-border community-well text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
                 }`}
               >
                 {type && MORE_ACTIONS.some((a) => a.type === type) ? (

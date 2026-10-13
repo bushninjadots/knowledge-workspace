@@ -376,7 +376,7 @@ export function PostCard({
             </span>
           )}
           {!!questionData.difficulty && (
-            <span className="rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[11px] text-muted-foreground">
+            <span className="rounded-full border border-border/60 community-well px-2 py-0.5 text-[11px] text-muted-foreground">
               {`${questionData.difficulty}`}
             </span>
           )}
@@ -402,7 +402,7 @@ export function PostCard({
             <HandHeart className="h-3 w-3" /> Needs help with {String(helpData.skill_needed)}
           </span>
           {!!helpData.difficulty && (
-            <span className="rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[11px] text-muted-foreground">
+            <span className="rounded-full border border-border/60 community-well px-2 py-0.5 text-[11px] text-muted-foreground">
               {`${helpData.difficulty}`}
             </span>
           )}
@@ -444,7 +444,7 @@ export function PostCard({
           href={safeHref(post.link_url)}
           target="_blank"
           rel="noopener noreferrer"
-          className="group mt-2 flex items-center gap-3 rounded-xl border card-border bg-background/40 p-3 transition-colors hover:border-primary/40 hover:bg-primary/5"
+          className="group mt-2 flex items-center gap-3 rounded-xl border card-border community-well p-3 transition-colors hover:border-primary/40 hover:bg-primary/5"
         >
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-elevated">
             <Link2 className="h-4 w-4 text-primary" />
@@ -506,7 +506,7 @@ export function PostCard({
           const feedback = Number(projectData.feedback ?? 0);
           if (progress <= 0 && contributors <= 0 && feedback <= 0) return null;
           return (
-            <div className="mt-3 rounded-xl border border-border/60 bg-background/40 p-3">
+            <div className="mt-3 rounded-xl border border-border/60 community-well p-3">
               {progress > 0 && (
                 <>
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -542,7 +542,7 @@ export function PostCard({
         })()}
 
       {post.type === "resource" && resourceData && (
-        <div className="mt-3 flex items-center gap-2 rounded-xl border border-border/60 bg-background/40 p-3 text-sm">
+        <div className="mt-3 flex items-center gap-2 rounded-xl border border-border/60 community-well p-3 text-sm">
           {(() => {
             const Icon = RESOURCE_ICON[String(resourceData.kind)] ?? FileText;
             return <Icon className="h-4 w-4 text-ai" />;
@@ -561,7 +561,7 @@ export function PostCard({
             {feedbackTags.map((tag) => (
               <span
                 key={tag}
-                className="rounded-full border border-primary/30 bg-background/50 px-2.5 py-1 text-[11px] text-primary"
+                className="rounded-full border border-primary/30 community-well px-2.5 py-1 text-[11px] text-primary"
               >
                 {tag}
               </span>
@@ -590,7 +590,7 @@ export function PostCard({
           {post.skills.map((s) => (
             <span
               key={s}
-              className="rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[11px] text-muted-foreground"
+              className="rounded-full border border-border/60 community-well px-2 py-0.5 text-[11px] text-muted-foreground"
             >
               {s}
             </span>

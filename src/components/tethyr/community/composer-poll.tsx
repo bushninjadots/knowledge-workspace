@@ -26,7 +26,7 @@ export function ComposerPoll({
         onChange={(e) => onQuestionChange(e.target.value.slice(0, 200))}
         placeholder="Ask a question…"
         aria-label="Poll question"
-        className="mb-3 w-full rounded-lg border border-border/60 bg-background/60 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:outline-none"
+        className="mb-3 w-full rounded-lg border border-border/60 community-well px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:outline-none"
       />
       <div className="space-y-2">
         {options.map((opt, i) => (
@@ -43,7 +43,7 @@ export function ComposerPoll({
               }}
               placeholder={`Option ${i + 1}…`}
               aria-label={`Poll option ${i + 1}`}
-              className="flex-1 rounded-lg border border-border/60 bg-background/60 px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:outline-none"
+              className="flex-1 rounded-lg border border-border/60 community-well px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:outline-none"
             />
             {options.length > 2 && (
               <button
@@ -64,7 +64,7 @@ export function ComposerPoll({
           value={endsAt}
           onChange={(e) => onEndsAtChange(e.target.value)}
           aria-label="Poll end date"
-          className="rounded-lg border border-border/60 bg-background/60 px-3 py-1.5 text-xs text-foreground focus:border-primary/50 focus:outline-none"
+          className="rounded-lg border border-border/60 community-well px-3 py-1.5 text-xs text-foreground focus:border-primary/50 focus:outline-none"
         />
         {endsAt && (
           <button

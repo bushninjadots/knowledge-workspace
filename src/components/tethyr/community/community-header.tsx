@@ -194,7 +194,7 @@ export const CommunityHeader = memo(function CommunityHeader({
               onChange={(e) => onSearchChange(e.target.value)}
               aria-label="Search the community"
               placeholder="Search posts, skills, people…"
-              className="h-10 rounded-lg border-border/60 bg-surface pl-9 pr-9 text-sm"
+              className="h-10 rounded-lg border-border/60 community-well pl-9 pr-9 text-sm"
             />
             {isSearching && (
               <button
@@ -250,7 +250,7 @@ export const CommunityHeader = memo(function CommunityHeader({
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border/60 bg-surface px-2.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                  className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border/60 community-well px-2.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
                   aria-label={`Sort: ${sortLabel}`}
                 >
                   <ArrowDownUp className="h-3.5 w-3.5" aria-hidden />
@@ -280,7 +280,7 @@ export const CommunityHeader = memo(function CommunityHeader({
                     "inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs transition-colors",
                     narrowCount > 0
                       ? "border-[var(--user-accent-border,var(--border-strong))] bg-[var(--user-accent-subtle,var(--surface-elevated))] text-[var(--user-accent-text,var(--foreground))]"
-                      : "border-border/60 bg-surface text-muted-foreground hover:text-foreground",
+                      : "border-border/60 community-well text-muted-foreground hover:text-foreground",
                   )}
                   aria-label={narrowCount ? `Filters, ${narrowCount} on` : "Filters"}
                 >

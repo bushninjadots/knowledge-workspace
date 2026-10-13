@@ -24,8 +24,12 @@ import {
   type CommunitySpace,
   type SpaceMemberRole,
 } from "@/hooks/use-community-spaces";
-import { SpaceAvatar, SpaceBanner } from "@/components/tethyr/community/space-media";
-import { isHexColor, spaceAccent } from "@/lib/space-identity";
+import {
+  SpaceAvatar,
+  SpaceBanner,
+  useSpaceAccent,
+} from "@/components/tethyr/community/space-media";
+import { isHexColor } from "@/lib/space-identity";
 import { onColour } from "@/lib/site-appearance";
 
 export type SpaceSortMode = "latest" | "top" | "unanswered";
@@ -91,7 +95,7 @@ export function SpaceHeader({
 
   const canManage = myRole === "owner" || myRole === "moderator";
 
-  const accentColor = spaceAccent(space);
+  const accentColor = useSpaceAccent(space);
 
   return (
     <div className="mb-8">
@@ -123,18 +127,28 @@ export function SpaceHeader({
               name={space.name}
               path={space.avatar_url}
               accent={accentColor}
-              className="h-20 w-20 text-3xl ring-4 ring-[var(--card)] sm:h-24 sm:w-24"
+              className="h-20 w-20 text-3xl ring-4 ring-[color-mix(in_oklab,var(--community-tint,var(--primary))_8%,var(--surface))] sm:h-24 sm:w-24"
             />
             <div className="flex shrink-0 flex-wrap items-center gap-2 pb-1">
               {canManage && (
                 <>
-                  <Button size="sm" variant="outline" className="rounded-full bg-card" asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="rounded-full community-well"
+                    asChild
+                  >
                     <Link to="/spaces/$slug/reports" params={{ slug: space.slug }}>
                       <ShieldAlert className="mr-1.5 h-3.5 w-3.5" />
                       Reports
                     </Link>
                   </Button>
-                  <Button size="sm" variant="outline" className="rounded-full bg-card" asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="rounded-full community-well"
+                    asChild
+                  >
                     <Link to="/spaces/$slug/settings" params={{ slug: space.slug }}>
                       <Settings className="mr-1.5 h-3.5 w-3.5" />
                       {myRole === "owner" ? "Customize" : "Settings"}
@@ -147,14 +161,14 @@ export function SpaceHeader({
                 variant={space.is_member || space.has_pending_request ? "outline" : "default"}
                 className={
                   space.is_member || space.has_pending_request
-                    ? "rounded-full bg-card"
+                    ? "rounded-full community-well"
                     : "rounded-full"
                 }
                 style={
                   space.is_member || space.has_pending_request
                     ? undefined
-                    : isHexColor(space.accent_color)
-                      ? { background: space.accent_color, color: onColour(space.accent_color) }
+                    : isHexColor(accentColor)
+                      ? { background: accentColor, color: onColour(accentColor) }
                       : undefined
                 }
                 onClick={handleToggleMembership}
@@ -227,7 +241,7 @@ export function SpaceHeader({
                   className="rounded-full border px-2.5 py-0.5 text-xs"
                   style={{
                     borderColor: `color-mix(in oklab, ${accentColor} 35%, var(--border))`,
-                    background: `color-mix(in oklab, ${accentColor} 8%, var(--card))`,
+                    background: `color-mix(in oklab, ${accentColor} 12%, transparent)`,
                   }}
                 >
                   {topic}
@@ -337,7 +351,7 @@ function SpaceWelcome({
       className="community-card mt-3 flex items-start gap-3 p-4"
       style={{
         borderColor: `color-mix(in oklab, ${accent} 40%, var(--border))`,
-        background: `color-mix(in oklab, ${accent} 8%, var(--card))`,
+        background: `color-mix(in oklab, ${accent} 12%, transparent)`,
       }}
     >
       <div className="min-w-0 flex-1">

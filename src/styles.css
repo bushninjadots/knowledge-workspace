@@ -907,10 +907,64 @@
 /* Community surfaces: one opaque card for every box on the page (posts,
    composer, rails, spaces) so they read crisply over any site backdrop.
    Follows the member's card-border colour and width. */
+/* Community and space boxes: a see-through surface, like the Skills lists, so
+   the page's own background (the member's Site appearance) shows through
+   instead of solid slabs sitting on it. `--community-tint` is the room's
+   colour — the member's accent on the feed, the space's colour inside a
+   space — and washes both the fill and the hairline. */
 @utility community-card {
-  background-color: var(--card);
-  border: var(--card-border-width, 1px) solid var(--card-border-color, var(--border));
+  background-color: color-mix(
+    in oklab,
+    color-mix(
+        in oklab,
+        var(--community-tint, var(--user-accent, var(--primary))) 8%,
+        var(--surface)
+      )
+      var(--community-card-opacity, 66%),
+    transparent
+  );
+  border: var(--card-border-width, 1px) solid
+    var(
+      --card-border-color,
+      color-mix(
+        in oklab,
+        var(--community-tint, var(--user-accent, var(--primary))) 22%,
+        var(--border)
+      )
+    );
   border-radius: var(--radius-xl);
+}
+
+/* Inputs and inner boxes inside community cards: a lighter see-through well
+   in the room's colour, instead of near-black `bg-background` slabs. */
+@utility community-well {
+  background-color: color-mix(
+    in oklab,
+    color-mix(
+        in oklab,
+        var(--community-tint, var(--user-accent, var(--primary))) 6%,
+        var(--surface)
+      )
+      45%,
+    transparent
+  );
+}
+
+/* Form fields on community pages (space settings) get the same well, over
+   the shared inputs' solid background. */
+@utility community-fields {
+  & :is(input:not([type="checkbox"], [type="radio"], [type="color"], [type="file"]), textarea) {
+    background-color: color-mix(
+      in oklab,
+      color-mix(
+          in oklab,
+          var(--community-tint, var(--user-accent, var(--primary))) 6%,
+          var(--surface)
+        )
+        45%,
+      transparent
+    );
+  }
 }
 
 @utility card-border {

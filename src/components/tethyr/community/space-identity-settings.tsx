@@ -12,7 +12,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { DragDropFileInput } from "@/components/tethyr/drag-drop-file-input";
 import { useCropConfirm } from "@/components/tethyr/profile/crop-confirm-dialog";
-import { SpaceAvatar, SpaceBanner } from "@/components/tethyr/community/space-media";
+import {
+  SpaceAvatar,
+  SpaceBanner,
+  useBannerPalette,
+  useSpaceAccent,
+} from "@/components/tethyr/community/space-media";
 import type { CommunitySpace } from "@/hooks/use-community-spaces";
 import { useSpaceImage, type SpaceImageKind } from "@/hooks/use-space-settings";
 import { blockMarkdownToHtml } from "@/lib/block-markdown";
@@ -29,7 +34,6 @@ import {
   WELCOME_MAX,
   isHexColor,
   normalizeTopics,
-  spaceAccent,
   type LinkDraft,
 } from "@/lib/space-identity";
 import { validateImageFile } from "@/lib/validators";
@@ -80,7 +84,10 @@ export function SpaceIdentitySettings({
   const [topicInput, setTopicInput] = useState("");
   const [aboutPreview, setAboutPreview] = useState(false);
 
-  const accent = spaceAccent({ ...space, accent_color: draft.accent });
+  // The banner's colours, offered as swatches. With no colour picked, the
+  // space follows its banner's main colour automatically (useSpaceAccent).
+  const bannerColours = useBannerPalette(space.banner_url);
+  const accent = useSpaceAccent({ ...space, accent_color: draft.accent });
   const aboutHtml = useMemo(
     () => (aboutPreview && draft.about.trim() ? blockMarkdownToHtml(draft.about) : null),
     [aboutPreview, draft.about],
@@ -199,14 +206,16 @@ export function SpaceIdentitySettings({
               name={draft.name || space.name}
               path={space.avatar_url}
               accent={accent}
-              className="h-20 w-20 text-3xl ring-4 ring-[var(--card)]"
+              className="h-20 w-20 text-3xl ring-4 ring-[color-mix(in_oklab,var(--community-tint,var(--primary))_8%,var(--surface))]"
             />
             {canEdit && (
               <DragDropFileInput
                 accept="image/*"
                 onFiles={(files) => pick("avatar", files)}
                 disabled={pendingKind !== null}
-                className="absolute -bottom-1 -right-1"
+                // z-20: the avatar is z-10 (it overlaps the banner), and this
+                // button must sit on top of it or clicks land on the picture.
+                className="absolute -bottom-1 -right-1 z-20"
               >
                 <span
                   role="button"
@@ -245,7 +254,7 @@ export function SpaceIdentitySettings({
                 className="rounded-full border px-2.5 py-0.5 text-xs"
                 style={{
                   borderColor: `color-mix(in oklab, ${accent} 35%, var(--border))`,
-                  background: `color-mix(in oklab, ${accent} 8%, var(--card))`,
+                  background: `color-mix(in oklab, ${accent} 12%, transparent)`,
                 }}
               >
                 {topic}
@@ -318,7 +327,7 @@ export function SpaceIdentitySettings({
             </div>
           </div>
           {aboutPreview ? (
-            <div className="min-h-32 rounded-md border border-border/60 bg-background/40 p-3">
+            <div className="min-h-32 rounded-md border border-border/60 community-well p-3">
               {aboutHtml ? (
                 <div
                   className="prose-custom text-sm [&_p]:mb-2"
@@ -367,6 +376,11 @@ export function SpaceIdentitySettings({
               type="button"
               onClick={() => onChange({ accent: null })}
               aria-pressed={!draft.accent}
+              title={
+                bannerColours.length > 0
+                  ? "Follow the banner's main colour"
+                  : "The default colour for this kind of space"
+              }
               className={cn(
                 "h-8 rounded-full border px-3 text-xs transition-colors",
                 !draft.accent
@@ -374,7 +388,7 @@ export function SpaceIdentitySettings({
                   : "border-border/60 text-muted-foreground hover:text-foreground",
               )}
             >
-              Default
+              {bannerColours.length > 0 ? "Auto" : "Default"}
             </button>
             {SPACE_ACCENT_SWATCHES.map((swatch) => (
               <button
@@ -385,7 +399,7 @@ export function SpaceIdentitySettings({
                 aria-label={swatch.label}
                 title={swatch.label}
                 className={cn(
-                  "h-8 w-8 rounded-full ring-offset-2 ring-offset-[var(--card)] transition-shadow",
+                  "h-8 w-8 rounded-full ring-offset-2 ring-offset-[var(--surface)] transition-shadow",
                   draft.accent?.toLowerCase() === swatch.value
                     ? "ring-2 ring-foreground/70"
                     : "hover:ring-2 hover:ring-border",
@@ -393,6 +407,28 @@ export function SpaceIdentitySettings({
                 style={{ background: swatch.value }}
               />
             ))}
+            {bannerColours.length > 0 && (
+              <span className="flex items-center gap-2 border-l border-border/60 pl-2">
+                <span className="text-xs text-muted-foreground">From banner</span>
+                {bannerColours.map((colour) => (
+                  <button
+                    key={colour}
+                    type="button"
+                    onClick={() => onChange({ accent: colour })}
+                    aria-pressed={draft.accent?.toLowerCase() === colour}
+                    aria-label={`Banner colour ${colour}`}
+                    title={colour}
+                    className={cn(
+                      "h-8 w-8 rounded-full ring-offset-2 ring-offset-[var(--surface)] transition-shadow",
+                      draft.accent?.toLowerCase() === colour
+                        ? "ring-2 ring-foreground/70"
+                        : "hover:ring-2 hover:ring-border",
+                    )}
+                    style={{ background: colour }}
+                  />
+                ))}
+              </span>
+            )}
             <label className="inline-flex h-8 items-center gap-2 rounded-full border border-border/60 pl-1 pr-3 text-xs text-muted-foreground">
               <input
                 type="color"
@@ -410,7 +446,7 @@ export function SpaceIdentitySettings({
           <Label htmlFor="space-topic-input">Topics</Label>
           <div
             className={cn(
-              "flex min-h-10 flex-wrap items-center gap-1.5 rounded-md border border-input bg-background px-2 py-1.5",
+              "flex min-h-10 flex-wrap items-center gap-1.5 rounded-md border border-input community-well px-2 py-1.5",
               !canEdit && "opacity-60",
             )}
           >

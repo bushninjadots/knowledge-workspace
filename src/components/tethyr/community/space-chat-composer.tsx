@@ -63,7 +63,7 @@ export function SpaceChatComposer({
   }
 
   return (
-    <div className="card-border rounded-lg border bg-surface px-4 py-3.5 sm:px-5 sm:py-4">
+    <div className="community-card px-4 py-3.5 sm:px-5 sm:py-4">
       <div className="flex items-start gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-foreground text-sm font-semibold text-background">
           {initial}
@@ -86,7 +86,7 @@ export function SpaceChatComposer({
             }}
             placeholder={`Message ${space.name}…`}
             rows={2}
-            className="min-h-12 w-full resize-none rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-[var(--user-accent-border,var(--border-strong))] focus:outline-none"
+            className="min-h-12 w-full resize-none rounded-xl border border-border/60 community-well px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-[var(--user-accent-border,var(--border-strong))] focus:outline-none"
           />
           <div className="mt-1.5 flex items-center justify-between gap-2">
             <p className="text-[11px] text-muted-foreground">

@@ -68,7 +68,7 @@ export function OfferHelpDialog({
           placeholder="e.g. I can take a look at the onboarding flow and suggest fixes…"
           rows={4}
           maxLength={500}
-          className="w-full rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:outline-none"
+          className="w-full rounded-xl border border-border/60 community-well px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:outline-none"
         />
         <div className="text-right text-[11px] text-muted-foreground">{message.length}/500</div>
         <DialogFooter>
@@ -154,7 +154,7 @@ export function ReportPostDialog({
                 className={`rounded-full border px-3 py-1 text-xs transition-lift ${
                   reason === r
                     ? "border-destructive/40 bg-destructive/10 text-destructive"
-                    : "border-border bg-background/40 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
+                    : "border-border community-well text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
                 }`}
               >
                 {r}
@@ -166,7 +166,7 @@ export function ReportPostDialog({
             onChange={(e) => setDetails(e.target.value.slice(0, 500))}
             placeholder="Anything else the moderators should know? (optional)"
             rows={3}
-            className="w-full rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:outline-none"
+            className="w-full rounded-xl border border-border/60 community-well px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:outline-none"
           />
         </div>
         <DialogFooter>
@@ -208,7 +208,7 @@ export function PollWidget({ pollData, postId }: { pollData: PollData; postId: s
   }
 
   return (
-    <div className="mt-3 rounded-xl border card-border bg-background/40 p-4">
+    <div className="mt-3 rounded-xl border card-border community-well p-4">
       <div className="mb-3 flex items-center gap-2">
         <BarChart3 className="h-4 w-4 text-ai" />
         <p className="text-sm font-semibold">{pollData.question}</p>
@@ -227,8 +227,8 @@ export function PollWidget({ pollData, postId }: { pollData: PollData; postId: s
                 isVoted
                   ? "border-ai/40 bg-ai/10 text-ai"
                   : myVote
-                    ? "border-border/60 bg-background/40 text-muted-foreground"
-                    : "border-border/60 bg-background/40 text-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
+                    ? "border-border/60 community-well text-muted-foreground"
+                    : "border-border/60 community-well text-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
               }`}
             >
               <div className="flex items-center justify-between gap-2">

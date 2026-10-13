@@ -265,7 +265,7 @@ export const CommunityRightSidebar = memo(function CommunityRightSidebar({
 
       {/* One clear CTA while the first-session essentials are open. */}
       {nextEssential && (
-        <div className="community-card border-[var(--user-accent-border,var(--border-strong))] bg-[color-mix(in_oklab,var(--user-accent,var(--primary))_7%,var(--card))] p-3.5">
+        <div className="community-card [--community-card-opacity:78%] p-3.5">
           <div className="mb-2 flex items-center justify-between gap-2 px-1">
             <span className="flex items-center gap-1.5">
               <Target className="h-3.5 w-3.5 text-primary" aria-hidden="true" />

@@ -47,11 +47,11 @@ export const CommunitiesSection = memo(function CommunitiesSection({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search spaces..."
-            className="h-10 rounded-lg border card-border bg-surface pr-4 pl-9 text-sm"
+            className="h-10 rounded-lg border card-border community-well pr-4 pl-9 text-sm"
           />
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-0.5 rounded-lg border card-border bg-surface p-0.5">
+          <div className="flex items-center gap-0.5 rounded-lg border card-border community-well p-0.5">
             <button
               onClick={() => setSortMode("popular")}
               className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-lift ${
@@ -86,10 +86,7 @@ export const CommunitiesSection = memo(function CommunitiesSection({
       {isLoading ? (
         <div className="grid gap-3 @xl:grid-cols-2 @4xl:grid-cols-3">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div
-              key={i}
-              className="animate-gentle-pulse rounded-xl border border-border/60 bg-surface h-32 p-5"
-            />
+            <div key={i} className="animate-gentle-pulse community-card h-32 p-5" />
           ))}
         </div>
       ) : spaces.length === 0 ? (

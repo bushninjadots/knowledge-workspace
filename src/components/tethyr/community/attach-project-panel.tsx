@@ -112,7 +112,7 @@ export function AttachProjectPanel({
   }
 
   return (
-    <div className="rounded-xl border border-border/60 bg-background/40 p-3">
+    <div className="rounded-xl border border-border/60 community-well p-3">
       {currentAttachment ? (
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-trust/10 text-trust">

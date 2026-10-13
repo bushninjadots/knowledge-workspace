@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import {
   ArrowLeft,
@@ -57,6 +57,7 @@ import {
   type IdentityDraft,
 } from "@/components/tethyr/community/space-identity-settings";
 import { isHexColor, normalizeLinks, normalizeTopics } from "@/lib/space-identity";
+import { useSpaceAccent } from "@/components/tethyr/community/space-media";
 
 // Code-split module: the interactive page for its route. See the route
 // file for the eager surface (loader/head) and the lazyRouteComponent wire-up.
@@ -130,6 +131,13 @@ export function SpaceSettingsPage() {
   const [identity, setIdentity] = useState<IdentityDraft>(EMPTY_IDENTITY);
   const patchIdentity = (patch: Partial<IdentityDraft>) =>
     setIdentity((current) => ({ ...current, ...patch }));
+  // The page takes the colour being chosen (or the banner's, on Auto).
+  const tint = useSpaceAccent({
+    accent_color: identity.accent,
+    visibility: space?.visibility ?? "public",
+    join_type: space?.join_type ?? "auto",
+    banner_url: space?.banner_url ?? null,
+  });
   const { links: cleanLinks, problems: linkProblems } = useMemo(
     () => normalizeLinks(identity.links),
     [identity.links],
@@ -293,7 +301,15 @@ export function SpaceSettingsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
+    <div
+      className="community-fields mx-auto max-w-3xl px-4 py-8"
+      // The page wears the space's colour, so the preview is the whole page.
+      style={
+        {
+          "--community-tint": tint,
+        } as CSSProperties
+      }
+    >
       <div className="mb-8 flex items-start gap-3">
         <Link
           to="/community"
@@ -557,7 +573,7 @@ export function SpaceSettingsPage() {
         {isOwner && dirty && (
           // Sticky while there are changes: Identity sits at the top of a long
           // page, so Save must not live only at the bottom.
-          <div className="community-card shadow-panel sticky bottom-4 z-10 flex items-center gap-3 px-4 py-3">
+          <div className="community-card shadow-panel sticky bottom-4 z-10 backdrop-blur-md [--community-card-opacity:92%] flex items-center gap-3 px-4 py-3">
             <span className="text-sm text-muted-foreground">You have unsaved changes</span>
             <Button
               type="button"

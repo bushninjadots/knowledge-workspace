@@ -22,10 +22,7 @@ export const ChallengesSection = memo(function ChallengesSection() {
       {isLoading ? (
         <div className="flex flex-col gap-5">
           {[1, 2].map((i) => (
-            <div
-              key={i}
-              className="animate-gentle-pulse rounded-xl border border-border/60 bg-surface h-40 p-6"
-            />
+            <div key={i} className="animate-gentle-pulse community-card h-40 p-6" />
           ))}
         </div>
       ) : challenges.length === 0 ? (
