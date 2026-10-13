@@ -1,6 +1,7 @@
 // Skill hub tabs: the overview, the people lists, and the projects and needs
 // that use the skill. Composed by SkillPage (-skills.$slug-page.tsx).
 
+import { SkillCommunity } from "@/components/tethyr/community/skill-community";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
@@ -88,6 +89,7 @@ export function formatSummary(stats: HubStats) {
 
 export function SkillOverview({
   skillId,
+  skillSlug,
   skillName,
   description,
   tools,
@@ -96,6 +98,7 @@ export function SkillOverview({
   onShowProjects,
 }: {
   skillId: string;
+  skillSlug: string;
   skillName: string;
   description: string | null;
   tools: string[];
@@ -273,6 +276,8 @@ export function SkillOverview({
           </div>
         </section>
       )}
+
+      <SkillCommunity skillSlug={skillSlug} skillName={skillName} />
 
       {/* Related skills */}
       {relatedSkills.data && relatedSkills.data.length > 0 && (

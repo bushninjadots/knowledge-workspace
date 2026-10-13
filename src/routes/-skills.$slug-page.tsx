@@ -124,6 +124,7 @@ export function SkillPage() {
             <h2 className="sr-only">Overview</h2>
             <SkillOverview
               skillId={skill.id}
+              skillSlug={skill.slug}
               skillName={skill.name}
               description={skill.description}
               tools={skill.tools ?? []}
