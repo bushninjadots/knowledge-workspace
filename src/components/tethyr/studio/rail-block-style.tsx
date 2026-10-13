@@ -15,7 +15,7 @@ import {
   BLOCK_INSET_MIN,
   BLOCK_RADIUS_MAX,
   BLOCK_RADIUS_MIN,
-} from "@/lib/studio-config";
+} from "@/lib/studio-block-frame";
 import type { BlockShape } from "@/lib/page-blocks";
 import { findSection } from "@/lib/studio-grid";
 import { Switch } from "./block-fields";

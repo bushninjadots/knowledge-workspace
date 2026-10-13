@@ -2,14 +2,10 @@
 
 import { describe, it, expect } from "vitest";
 import {
-  blockFrameStyle,
-  BLOCK_INSET_DEFAULT_PX,
   DEFAULT_STUDIO_CONFIG,
   normalizeStudioConfig,
   personalityPatch,
-  studioConfigToStyle,
   studioConfigToThemeTokens,
-  studioBackgroundVars,
   structureMaxWidth,
   structureMaxWidthCss,
   densityMetrics,
@@ -22,6 +18,8 @@ import {
   BACKGROUND_OPTIONS,
   type StudioConfig,
 } from "@/lib/studio-config";
+import { studioConfigToStyle, studioBackgroundVars } from "@/lib/studio-config-style";
+import { blockFrameStyle, BLOCK_INSET_DEFAULT_PX } from "@/lib/studio-block-frame";
 
 describe("normalizeStudioConfig", () => {
   it("returns the full default config for null / garbage input", () => {

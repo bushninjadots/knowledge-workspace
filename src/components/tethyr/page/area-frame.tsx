@@ -8,7 +8,7 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import type { LayoutBlockInstance, LayoutGridItem, LayoutSection } from "@/lib/page-blocks";
-import { accentFamilyVars } from "@/lib/studio-config";
+import { accentFamilyVars } from "@/lib/studio-config-style";
 import { isSafeUrl } from "@/lib/validators";
 import { cn } from "@/lib/utils";
 

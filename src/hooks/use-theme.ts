@@ -10,7 +10,8 @@ import type { ThemeTokens } from "@/lib/page-blocks";
 import { themeTokensToVars } from "@/lib/theme-tokens";
 import { useTheme as useAppTheme, THEME_PRESET_STORAGE_KEY } from "@/lib/theme";
 import { DEFAULT_THEME_ID } from "@/lib/constants";
-import { profileScheme, type StudioConfig } from "@/lib/studio-config";
+import { type StudioConfig } from "@/lib/studio-config";
+import { profileScheme } from "@/lib/studio-config-style";
 
 interface ThemeRecord {
   tokens: Json;

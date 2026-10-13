@@ -22,14 +22,16 @@ import type {
 import { themeTokensToStyle } from "@/lib/theme-tokens";
 import { cn } from "@/lib/utils";
 import {
+  structureMaxWidthCss,
+  studioConfigToThemeTokens,
+  type StudioConfig,
+} from "@/lib/studio-config";
+import {
   CARD_SURFACE_STYLE,
   cardFillStyle,
   studioBackgroundVars,
-  structureMaxWidthCss,
-  studioConfigToThemeTokens,
   studioSurfaceStyle,
-  type StudioConfig,
-} from "@/lib/studio-config";
+} from "@/lib/studio-config-style";
 import { type GridArrangement } from "@/lib/studio-grid";
 import { useCardInk } from "@/hooks/use-card-ink";
 import { useMediaQuery } from "@/hooks/use-mobile";

@@ -12,14 +12,13 @@ import { useCreatePage } from "@/hooks/use-page-editor";
 import { useProfileTheme } from "@/hooks/use-theme";
 import { themeTokensToStyle, deepMergeTokens } from "@/lib/theme-tokens";
 import { LookFilters, lookCanvasAttributes } from "./look-canvas";
+import { structureMaxWidth, studioConfigToThemeTokens } from "@/lib/studio-config";
 import {
   CARD_SURFACE_STYLE,
   cardFillStyle,
   studioBackgroundVars,
-  structureMaxWidth,
-  studioConfigToThemeTokens,
   studioSurfaceStyle,
-} from "@/lib/studio-config";
+} from "@/lib/studio-config-style";
 import { PageLayoutRenderer } from "@/components/tethyr/page/page-layout";
 import { friendlyError } from "@/lib/error-message";
 import { useCardInk } from "@/hooks/use-card-ink";

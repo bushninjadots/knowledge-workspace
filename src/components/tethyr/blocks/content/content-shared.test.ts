@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { listItems, safeHref, str } from "./content-shared";
 import { blockTitleText, isBlockTitleHidden } from "../block-title";
-import { blockTitleVars } from "@/lib/studio-config";
+import { blockTitleVars } from "@/lib/studio-config-style";
 
 describe("safeHref", () => {
   it("keeps web links and adds a missing scheme", () => {

@@ -44,7 +44,8 @@ import {
   areaOverlapped,
   overlapAttr,
 } from "@/components/tethyr/page/area-frame";
-import { blockFrameStyle, normalizeStudioConfig } from "@/lib/studio-config";
+import { normalizeStudioConfig } from "@/lib/studio-config";
+import { blockFrameStyle } from "@/lib/studio-block-frame";
 import { useCreatePage, usePublishPage } from "@/hooks/use-page-editor";
 import { shouldRenderSectionInView } from "@/lib/studio-visibility";
 import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
@@ -57,15 +58,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { useCardInk } from "@/hooks/use-card-ink";
 import {
-  CARD_SURFACE_STYLE,
-  cardFillStyle,
-  studioBackgroundVars,
   studioConfigToThemeTokens,
   structureMaxWidth,
-  studioSurfaceStyle,
   DEFAULT_STUDIO_CONFIG,
   type StudioConfig,
 } from "@/lib/studio-config";
+import {
+  CARD_SURFACE_STYLE,
+  cardFillStyle,
+  studioBackgroundVars,
+  studioSurfaceStyle,
+} from "@/lib/studio-config-style";
 import type {
   BlockContext,
   LayoutBlockInstance,

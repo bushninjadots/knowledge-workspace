@@ -23,7 +23,7 @@ import type {
   SectionLayoutType,
 } from "@/lib/page-blocks";
 import { getBlock } from "@/lib/block-registry";
-import { blockFrameStyle } from "@/lib/studio-config";
+import { blockFrameStyle } from "@/lib/studio-block-frame";
 import { isDefinitelyEmptyBlock, shouldRenderSectionInView } from "@/lib/studio-visibility";
 import { reflowAroundHidden } from "@/lib/studio-grid";
 import "@/components/tethyr/blocks/register-all";

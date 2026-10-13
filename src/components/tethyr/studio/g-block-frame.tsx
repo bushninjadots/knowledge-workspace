@@ -26,7 +26,7 @@ import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
 import { getBlock } from "@/lib/block-registry";
 import type { BlockContext, LayoutBlockInstance } from "@/lib/page-blocks";
 import { cn } from "@/lib/utils";
-import { blockFrameStyle } from "@/lib/studio-config";
+import { blockFrameStyle } from "@/lib/studio-block-frame";
 import { IconButton } from "./studio-controls";
 import type { GStudioSurfaceProps } from "./g-studio-surface";
 

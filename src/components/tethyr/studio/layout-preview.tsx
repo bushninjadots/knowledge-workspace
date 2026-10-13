@@ -8,16 +8,15 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { getBlock } from "@/lib/block-registry";
 import type { LayoutBlockInstance, PageLayout } from "@/lib/page-blocks";
+import { studioConfigToThemeTokens, type StudioConfig } from "@/lib/studio-config";
 import {
   CARD_SURFACE_STYLE,
-  blockFrameStyle,
   cardFillStyle,
   studioBackgroundVars,
-  studioConfigToThemeTokens,
   studioSurfaceStyle,
   profileScheme,
-  type StudioConfig,
-} from "@/lib/studio-config";
+} from "@/lib/studio-config-style";
+import { blockFrameStyle } from "@/lib/studio-block-frame";
 import { themeTokensToStyle } from "@/lib/theme-tokens";
 import { useTheme as useAppTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";

@@ -2,11 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   DEFAULT_STUDIO_CONFIG,
   normalizeStudioConfig,
-  profileScheme,
   studioConfigToThemeTokens,
-  studioSurfaceStyle,
   type StudioConfig,
 } from "./studio-config";
+import { profileScheme, studioSurfaceStyle } from "./studio-config-style";
 import {
   ORIGINAL_LOOK,
   SHAPE_RADIUS,
