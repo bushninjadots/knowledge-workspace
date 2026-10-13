@@ -131,8 +131,14 @@ export function blockMarkdownToHtml(md: string): string {
     )
     // Horizontal rule
     .replace(/^---$/gm, "<hr class='my-4 border-border' />")
-    // Unordered lists
+    // Unordered lists: consecutive items become one <ul>, with no line breaks
+    // between items (each newline used to become a <br /> gap).
     .replace(/^- (.+)$/gm, "<li class='ml-4 list-disc text-sm text-foreground'>$1</li>")
+    .replace(/<\/li>\n(?=<li)/g, "</li>")
+    .replace(
+      /((?:<li class='ml-4 list-disc[^']*'>[^\n]*?<\/li>)+)/g,
+      "<ul class='my-2 space-y-1'>$1</ul>",
+    )
     // Paragraphs (double newline)
     .replace(/\n\n/g, "</p><p class='text-sm leading-relaxed text-foreground mb-3'>")
     // Single newlines → <br> within paragraphs

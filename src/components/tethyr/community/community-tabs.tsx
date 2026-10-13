@@ -3,7 +3,7 @@
 // repeated the app sidebar) and the phone tab bar whose floating "+" sat on
 // top of the Following label.
 import { memo } from "react";
-import { Activity, Bookmark, Home, UserRound, Users } from "lucide-react";
+import { Activity, Bookmark, Home, Info, UserRound, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { CommunityNavId } from "@/data/mocks/community-nav";
 
@@ -91,11 +91,15 @@ export const CommunityTabs = memo(function CommunityTabs({
       <button
         type="button"
         onClick={onOpenPulse}
-        aria-label="Pulse: today, trending skills and your spaces"
+        aria-label={inSpace ? "About this space" : "Pulse: today, trending skills and your spaces"}
         className="mb-1.5 inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-surface-elevated/60 hover:text-foreground xl:hidden"
       >
-        <Activity className="h-3.5 w-3.5" aria-hidden />
-        <span className="hidden @lg:inline">Pulse</span>
+        {inSpace ? (
+          <Info className="h-3.5 w-3.5" aria-hidden />
+        ) : (
+          <Activity className="h-3.5 w-3.5" aria-hidden />
+        )}
+        <span className="hidden @lg:inline">{inSpace ? "About" : "Pulse"}</span>
       </button>
     </div>
   );

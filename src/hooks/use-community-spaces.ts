@@ -17,6 +17,7 @@ export {
   SPACE_KEY,
   SPACE_POSTS_KEY,
   type CommunitySpace,
+  type SpaceLink,
   type SpaceMemberRole,
   type SpaceVisibility,
   type SpaceJoinType,
@@ -71,7 +72,7 @@ export function useCommunitySpaces() {
       // Explicit column list for the platform-wide list — every rendered field,
       // skipping internal columns the list never displays.
       const SPACES_LIST_SELECT =
-        "id, name, slug, description, avatar_url, visibility, join_type, rules, report_auto_dim_threshold, created_by, created_at, updated_at" as const;
+        "id, name, slug, description, avatar_url, banner_url, tagline, accent_color, topics, visibility, join_type, rules, report_auto_dim_threshold, created_by, created_at, updated_at" as const;
       const { data: spaces, error } = await sb
         .from("community_spaces")
         .select<typeof SPACES_LIST_SELECT, CommunitySpace>(SPACES_LIST_SELECT)

@@ -2,12 +2,23 @@ export type SpaceMemberRole = "owner" | "moderator" | "member";
 export type SpaceVisibility = "public" | "private";
 export type SpaceJoinType = "auto" | "review";
 
+export type SpaceLink = { label: string; url: string };
+
 export type CommunitySpace = {
   id: string;
   name: string;
   slug: string;
   description: string;
   avatar_url: string | null;
+  /** Owner-set identity (20261013120000_space_identity). Image fields are
+   *  paths in the `banners` / `avatars` buckets. */
+  banner_url?: string | null;
+  tagline?: string | null;
+  about?: string | null;
+  accent_color?: string | null;
+  topics?: string[];
+  links?: SpaceLink[];
+  welcome_message?: string | null;
   visibility: SpaceVisibility;
   join_type: SpaceJoinType;
   rules: string[];

@@ -98,7 +98,7 @@ export function normalizeSiteAppearance(raw: unknown): SiteAppearance {
 }
 
 /** A readable label colour on `hex`. */
-function onColour(hex: string): string {
+export function onColour(hex: string): string {
   const n = Number.parseInt(hex.slice(1), 16);
   const channel = (v: number) => {
     const c = v / 255;

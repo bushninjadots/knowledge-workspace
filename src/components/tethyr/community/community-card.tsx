@@ -10,14 +10,14 @@ import {
   useCancelJoinRequest,
   type CommunitySpace,
 } from "@/hooks/use-community-spaces";
-import { useSignedStorageUrl } from "@/hooks/use-signed-url";
+import { SpaceAvatar, SpaceBanner } from "@/components/tethyr/community/space-media";
+import { spaceAccent } from "@/lib/space-identity";
 
 export function CommunityCard({ space, onClick }: { space: CommunitySpace; onClick?: () => void }) {
   const joinSpace = useJoinSpace();
   const leaveSpace = useLeaveSpace();
   const requestJoin = useRequestToJoinSpace();
   const cancelRequest = useCancelJoinRequest();
-  const { data: avatarUrl } = useSignedStorageUrl("avatars", space.avatar_url);
 
   function handleToggleMembership(e: React.MouseEvent) {
     e.preventDefault();
@@ -60,89 +60,67 @@ export function CommunityCard({ space, onClick }: { space: CommunitySpace; onCli
         : "Join";
   const ButtonIcon = space.is_member ? Check : space.has_pending_request ? Hourglass : UserPlus;
 
-  const initial = space.name.charAt(0).toUpperCase();
-
-  const accentColor =
-    space.visibility === "private"
-      ? "var(--ai)"
-      : space.join_type === "review"
-        ? "var(--primary)"
-        : "var(--trust)";
+  const accentColor = spaceAccent(space);
+  const kindLabel =
+    space.visibility === "private" ? "Private" : space.join_type === "review" ? "Approval" : "Open";
 
   // Keep the open-space action separate from the Join/Leave button. This
   // avoids nested interactive elements and gives keyboard users one clear
   // target for opening the space.
   return (
-    <Card className="group relative flex w-full flex-col overflow-hidden bg-card p-5 text-left transition-spatial duration-150 hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))]">
-      <span
-        className="absolute inset-x-0 top-0 h-0.5 opacity-60 transition-opacity group-hover:opacity-100"
-        style={{ background: accentColor }}
-      />
+    <Card className="group relative flex w-full flex-col overflow-hidden bg-card p-0 text-left transition-spatial duration-150 hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))]">
       <button
         type="button"
         onClick={() => onClick?.()}
-        className="flex w-full items-start gap-3 text-left"
+        className="flex w-full flex-col text-left"
         aria-label={`Open ${space.name}`}
       >
-        <div
-          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-xl font-semibold"
-          style={{
-            background: `color-mix(in oklch, ${accentColor} 12%, transparent)`,
-            color: accentColor,
-          }}
-        >
-          {avatarUrl ? (
-            <img
-              src={avatarUrl}
-              alt=""
-              width="56"
-              height="56"
-              loading="lazy"
-              decoding="async"
-              className="h-full w-full rounded-xl object-cover"
-            />
-          ) : (
-            initial
-          )}
+        <SpaceBanner path={space.banner_url} accent={accentColor} className="h-16 w-full" />
+        <div className="flex w-full items-end gap-3 px-5">
+          <SpaceAvatar
+            name={space.name}
+            path={space.avatar_url}
+            accent={accentColor}
+            className="-mt-7 h-14 w-14 text-xl ring-4 ring-[var(--card)]"
+          />
+          <span
+            className="mb-0.5 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium"
+            style={{
+              background: `color-mix(in oklab, ${accentColor} 14%, transparent)`,
+              color: `color-mix(in oklab, ${accentColor} 75%, var(--foreground))`,
+            }}
+          >
+            {space.visibility === "private" ? (
+              <Lock className="h-2.5 w-2.5" />
+            ) : (
+              <MessageCircle className="h-2.5 w-2.5" />
+            )}
+            {kindLabel}
+          </span>
         </div>
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 px-5 pt-2.5">
           <h3
             className="truncate font-display text-base font-semibold text-foreground transition-colors group-hover:text-primary"
             title={space.name}
           >
             {space.name}
           </h3>
-          <div className="mt-0.5 flex items-center gap-1.5">
-            <span
-              className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium"
-              style={{
-                background: `color-mix(in oklch, ${accentColor} 12%, transparent)`,
-                color: accentColor,
-              }}
-            >
-              {space.visibility === "private" ? (
-                <Lock className="h-2.5 w-2.5" />
-              ) : (
-                <MessageCircle className="h-2.5 w-2.5" />
-              )}
-              {space.visibility === "private"
-                ? "Private"
-                : space.join_type === "review"
-                  ? "Approval"
-                  : "Open"}
-            </span>
-          </div>
-          {space.description && (
+          {(space.tagline || space.description) && (
             <p
-              className="mt-2 line-clamp-2 text-xs leading-relaxed text-muted-foreground"
-              title={space.description ?? undefined}
+              className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground"
+              title={space.tagline || space.description || undefined}
             >
-              {space.description}
+              {space.tagline || space.description}
+            </p>
+          )}
+          {(space.topics?.length ?? 0) > 0 && (
+            <p className="mt-2 truncate text-[11px] text-muted-foreground">
+              {space.topics!.slice(0, 4).join(" · ")}
             </p>
           )}
         </div>
       </button>
-      <div className="mt-4 flex items-center justify-between gap-3">
+      <div className="mt-4 flex items-center justify-between gap-3 px-5 pb-5">
         <div className="flex items-center gap-1.5 text-[11px]">
           <span className="inline-flex items-center gap-1 rounded-full bg-surface-elevated/50 px-2 py-0.5 font-medium text-muted-foreground">
             <Users className="h-3 w-3" />

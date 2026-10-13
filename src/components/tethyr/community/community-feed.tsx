@@ -464,6 +464,7 @@ export function CommunityFeed({
               onBack={onBackSpace}
               sortMode={spaceSortMode}
               onSortModeChange={setSpaceSortMode}
+              postCount={spacePostsLoading ? undefined : spacePosts.length}
             />
           )}
 

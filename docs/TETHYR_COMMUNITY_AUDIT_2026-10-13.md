@@ -128,3 +128,16 @@ Ordered roughly by value for effort. None of these are built yet.
 16. Type colour: the tag and the left border share one hue per type, but `primary` is near-black in the default theme, so help requests and questions read as uncoloured next to green and purple types. Give "asks" (help, question, feedback) their own warm hue so the things that need a response stand out.
 
 Fixed during review: the card's "More" label hides on narrow columns so the action row stays on one line, and the space header panel is tinted from `--surface`, matching the cards, instead of the near-black `--background` in dark mode.
+
+## Follow-up — messaging dock, colour pass, space identity (same day)
+
+- **Messaging dock** (`messaging-dock.tsx`): a Messages launcher in the bottom-right on tablet and up, with a live unread count, a conversation list and a compact thread. New-message popups open threads in it.
+- **Colour pass:** one `community-card` surface for every box, and a hue per kind of post from theme tokens (`lib/post-tone.ts`). Asks use `--caution`, so the things that need a response stand out.
+- **Space identity** (migration `20261013120000_space_identity`, pgTAP `space_identity.sql`):
+  - Owners can set a banner and picture (saved in their own folder of the `avatars` / `banners` buckets, so the existing storage policies cover it).
+  - They can also set a tagline, a markdown About, a welcome note, a colour, up to 8 topics and up to 5 links. Each field has a database CHECK, and links must be http(s).
+  - Settings → "Customize your space" shows a live preview, with a sticky save bar.
+  - The space page gets a forum header (banner, picture, tagline, stats, topics), a dismissible welcome note for members, and an About column (About, links, who runs it, rules).
+  - Spaces cards show the banner, the tagline and the space's colour.
+- **Fixed along the way:** markdown lists rendered with a `<br>` between items and no `<ul>`; the settings page's rule buttons had no accessible names.
+- **Hosted:** the migration still needs applying to the hosted database (`supabase db push`) before the new fields work there.

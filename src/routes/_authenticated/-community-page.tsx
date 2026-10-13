@@ -3,6 +3,7 @@ import { useSearch } from "@tanstack/react-router";
 import { PenLine } from "lucide-react";
 import type { CommunityNavId } from "@/data/mocks/community-nav";
 import { CommunityTabs } from "@/components/tethyr/community/community-tabs";
+import { SpaceAbout } from "@/components/tethyr/community/space-about";
 import { CommunityRightSidebar } from "@/components/tethyr/community/right-sidebar";
 import { CommunityFeed } from "@/components/tethyr/community/community-feed";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
@@ -118,7 +119,11 @@ export function CommunityPage() {
           />
         </div>
 
-        <CommunityRightSidebar sticky onSkillSelect={searchSkill} onOpenSpace={openSpace} />
+        {activeSpace ? (
+          <SpaceAbout space={activeSpace} />
+        ) : (
+          <CommunityRightSidebar sticky onSkillSelect={searchSkill} onOpenSpace={openSpace} />
+        )}
       </div>
 
       {/* Phones: keep writing one tap away. Sits above the shell's scroll-to-top. */}
@@ -134,17 +139,21 @@ export function CommunityPage() {
       <Drawer open={pulseOpen} onOpenChange={setPulseOpen}>
         <DrawerContent className="max-h-[85vh]">
           <DrawerHeader>
-            <DrawerTitle>Pulse</DrawerTitle>
+            <DrawerTitle>{activeSpace ? `About ${activeSpace.name}` : "Pulse"}</DrawerTitle>
           </DrawerHeader>
           <div className="overflow-y-auto px-4 pb-6">
-            <CommunityRightSidebar
-              mobile
-              onSkillSelect={searchSkill}
-              onOpenSpace={(space) => {
-                setPulseOpen(false);
-                openSpace(space);
-              }}
-            />
+            {activeSpace ? (
+              <SpaceAbout space={activeSpace} mobile />
+            ) : (
+              <CommunityRightSidebar
+                mobile
+                onSkillSelect={searchSkill}
+                onOpenSpace={(space) => {
+                  setPulseOpen(false);
+                  openSpace(space);
+                }}
+              />
+            )}
           </div>
         </DrawerContent>
       </Drawer>

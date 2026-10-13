@@ -121,4 +121,14 @@ describe("blockMarkdownToHtml", () => {
     expect(html).not.toMatch(/[\uE000\uE001]/);
     expect(html).toContain("x0y");
   });
+
+  it("groups list items into one list without line breaks between them", () => {
+    const html = blockMarkdownToHtml("Intro\n\n- one\n- two\n- three\n\nAfter");
+    expect(html.match(/<ul/g)).toHaveLength(1);
+    expect(html.match(/<li/g)).toHaveLength(3);
+    expect(html).not.toMatch(/<\/li><br \/>/);
+    expect(html).toContain("After");
+    // The blank line after the list is still a paragraph break, not a <br />.
+    expect(html).not.toMatch(/<\/ul><br \/>/);
+  });
 });

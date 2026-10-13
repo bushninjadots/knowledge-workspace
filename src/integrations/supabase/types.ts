@@ -287,46 +287,67 @@ export type Database = {
       };
       community_spaces: {
         Row: {
+          about: string | null;
+          accent_color: string | null;
           avatar_url: string | null;
+          banner_url: string | null;
           created_at: string;
           created_by: string;
           description: string;
           id: string;
           join_type: string;
+          links: Json;
           name: string;
           report_auto_dim_threshold: number;
           rules: string[];
           slug: string;
+          tagline: string | null;
+          topics: string[];
           updated_at: string;
           visibility: string;
+          welcome_message: string | null;
         };
         Insert: {
+          about?: string | null;
+          accent_color?: string | null;
           avatar_url?: string | null;
+          banner_url?: string | null;
           created_at?: string;
           created_by: string;
           description?: string;
           id?: string;
           join_type?: string;
+          links?: Json;
           name: string;
           report_auto_dim_threshold?: number;
           rules?: string[];
           slug: string;
+          tagline?: string | null;
+          topics?: string[];
           updated_at?: string;
           visibility?: string;
+          welcome_message?: string | null;
         };
         Update: {
+          about?: string | null;
+          accent_color?: string | null;
           avatar_url?: string | null;
+          banner_url?: string | null;
           created_at?: string;
           created_by?: string;
           description?: string;
           id?: string;
           join_type?: string;
+          links?: Json;
           name?: string;
           report_auto_dim_threshold?: number;
           rules?: string[];
           slug?: string;
+          tagline?: string | null;
+          topics?: string[];
           updated_at?: string;
           visibility?: string;
+          welcome_message?: string | null;
         };
         Relationships: [
           {
@@ -3728,6 +3749,7 @@ export type Database = {
           skill_id: string;
         }[];
       };
+      space_links_valid: { Args: { p_links: Json }; Returns: boolean };
       space_reported_post_counts: {
         Args: { p_space_id: string };
         Returns: {
@@ -3735,6 +3757,7 @@ export type Database = {
           reports: number;
         }[];
       };
+      space_topics_valid: { Args: { p_topics: string[] }; Returns: boolean };
       toggle_template_star: {
         Args: { target_layout_id: string };
         Returns: boolean;

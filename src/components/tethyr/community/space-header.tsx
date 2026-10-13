@@ -8,7 +8,10 @@ import {
   ShieldAlert,
   MessageCircle,
   ChevronDown,
+  CalendarDays,
+  X,
 } from "lucide-react";
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -21,7 +24,9 @@ import {
   type CommunitySpace,
   type SpaceMemberRole,
 } from "@/hooks/use-community-spaces";
-import { useSignedStorageUrl } from "@/hooks/use-signed-url";
+import { SpaceAvatar, SpaceBanner } from "@/components/tethyr/community/space-media";
+import { isHexColor, spaceAccent } from "@/lib/space-identity";
+import { onColour } from "@/lib/site-appearance";
 
 export type SpaceSortMode = "latest" | "top" | "unanswered";
 
@@ -31,8 +36,11 @@ export function SpaceHeader({
   onBack,
   sortMode,
   onSortModeChange,
+  postCount,
 }: {
   space: CommunitySpace;
+  /** Threads loaded for the room, shown with the stats. */
+  postCount?: number;
   myRole: SpaceMemberRole | null;
   onBack: () => void;
   sortMode: SpaceSortMode;
@@ -42,7 +50,6 @@ export function SpaceHeader({
   const leaveSpace = useLeaveSpace();
   const requestJoin = useRequestToJoinSpace();
   const cancelRequest = useCancelJoinRequest();
-  const { data: avatarUrl } = useSignedStorageUrl("avatars", space.avatar_url);
 
   function handleToggleMembership() {
     if (space.is_member) {
@@ -82,15 +89,9 @@ export function SpaceHeader({
         : "Join";
   const ButtonIcon = space.is_member ? Check : space.has_pending_request ? Hourglass : UserPlus;
 
-  const initial = space.name.charAt(0).toUpperCase();
   const canManage = myRole === "owner" || myRole === "moderator";
 
-  const accentColor =
-    space.visibility === "private"
-      ? "var(--ai)"
-      : space.join_type === "review"
-        ? "var(--primary)"
-        : "var(--trust)";
+  const accentColor = spaceAccent(space);
 
   return (
     <div className="mb-8">
@@ -112,125 +113,147 @@ export function SpaceHeader({
         <span className="truncate font-medium text-foreground/80">{space.name}</span>
       </nav>
 
-      {/* Space header — tinted background band by space type */}
-      <div
-        className="rounded-xl border border-border/40 p-5"
-        style={{
-          background: `linear-gradient(120deg, color-mix(in oklch, ${accentColor} 16%, var(--card)) 0%, var(--card) 70%)`,
-        }}
-      >
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex min-w-0 items-center gap-4">
-            <div
-              className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl text-2xl font-bold"
-              style={{
-                background: `color-mix(in oklch, ${accentColor} 12%, transparent)`,
-                color: accentColor,
-              }}
-            >
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt=""
-                  width="64"
-                  height="64"
-                  loading="lazy"
-                  decoding="async"
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                initial
+      {/* Forum header: the owner's banner and picture, name, tagline, stats
+          and topics. Everything falls back to the space's colour. */}
+      <div className="community-card overflow-hidden" style={{ padding: 0 }}>
+        <SpaceBanner path={space.banner_url} accent={accentColor} className="h-28 sm:h-36" />
+        <div className="px-5 pb-5">
+          <div className="-mt-10 flex flex-wrap items-end justify-between gap-3 sm:-mt-12">
+            <SpaceAvatar
+              name={space.name}
+              path={space.avatar_url}
+              accent={accentColor}
+              className="h-20 w-20 text-3xl ring-4 ring-[var(--card)] sm:h-24 sm:w-24"
+            />
+            <div className="flex shrink-0 flex-wrap items-center gap-2 pb-1">
+              {canManage && (
+                <>
+                  <Button size="sm" variant="outline" className="rounded-full bg-card" asChild>
+                    <Link to="/spaces/$slug/reports" params={{ slug: space.slug }}>
+                      <ShieldAlert className="mr-1.5 h-3.5 w-3.5" />
+                      Reports
+                    </Link>
+                  </Button>
+                  <Button size="sm" variant="outline" className="rounded-full bg-card" asChild>
+                    <Link to="/spaces/$slug/settings" params={{ slug: space.slug }}>
+                      <Settings className="mr-1.5 h-3.5 w-3.5" />
+                      {myRole === "owner" ? "Customize" : "Settings"}
+                    </Link>
+                  </Button>
+                </>
               )}
-            </div>
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2.5">
-                <h1 className="font-display truncate text-2xl font-semibold tracking-tight">
-                  {space.name}
-                </h1>
-                {space.visibility === "private" && (
-                  <span
-                    className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
-                    style={{
-                      background: `color-mix(in oklch, ${accentColor} 12%, transparent)`,
-                      color: accentColor,
-                    }}
-                  >
-                    <Lock className="h-3 w-3" />
-                    Private
-                  </span>
-                )}
-                {space.is_member && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-trust/10 px-2 py-0.5 text-[11px] font-medium text-trust">
-                    <Check className="h-3 w-3" />
-                    Joined
-                  </span>
-                )}
-              </div>
-              <div className="mt-1.5 flex items-center gap-2">
-                <span className="inline-flex items-center gap-1 rounded-full bg-surface-elevated/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                  <Users className="h-3 w-3" />
-                  {space.member_count ?? 0} {(space.member_count ?? 0) !== 1 ? "members" : "member"}
-                </span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-surface-elevated/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                  <MessageCircle className="h-3 w-3" />
-                  Room discussion
-                </span>
-              </div>
+              <Button
+                size="sm"
+                variant={space.is_member || space.has_pending_request ? "outline" : "default"}
+                className={
+                  space.is_member || space.has_pending_request
+                    ? "rounded-full bg-card"
+                    : "rounded-full"
+                }
+                style={
+                  space.is_member || space.has_pending_request
+                    ? undefined
+                    : isHexColor(space.accent_color)
+                      ? { background: space.accent_color, color: onColour(space.accent_color) }
+                      : undefined
+                }
+                onClick={handleToggleMembership}
+                disabled={joinPending}
+                title={
+                  space.join_type === "review" && !space.is_member
+                    ? "Owner approval required to join"
+                    : undefined
+                }
+              >
+                <ButtonIcon className="mr-1.5 h-3.5 w-3.5" />
+                {buttonLabel}
+              </Button>
             </div>
           </div>
 
-          <div className="flex shrink-0 items-center gap-2">
-            {canManage && (
-              <>
-                <Button size="sm" variant="outline" className="rounded-full" asChild>
-                  <Link to="/spaces/$slug/reports" params={{ slug: space.slug }}>
-                    <ShieldAlert className="mr-1.5 h-3.5 w-3.5" />
-                    Reports
-                  </Link>
-                </Button>
-                <Button size="sm" variant="outline" className="rounded-full" asChild>
-                  <Link to="/spaces/$slug/settings" params={{ slug: space.slug }}>
-                    <Settings className="mr-1.5 h-3.5 w-3.5" />
-                    Settings
-                  </Link>
-                </Button>
-              </>
+          <div className="mt-3 flex flex-wrap items-center gap-2.5">
+            <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-[1.75rem]">
+              {space.name}
+            </h1>
+            {space.visibility === "private" && (
+              <span
+                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
+                style={{
+                  background: `color-mix(in oklab, ${accentColor} 14%, transparent)`,
+                  color: `color-mix(in oklab, ${accentColor} 75%, var(--foreground))`,
+                }}
+              >
+                <Lock className="h-3 w-3" />
+                Private
+              </span>
             )}
-            <Button
-              size="sm"
-              variant={space.is_member || space.has_pending_request ? "outline" : "default"}
-              className="rounded-full"
-              onClick={handleToggleMembership}
-              disabled={joinPending}
-              title={
-                space.join_type === "review" && !space.is_member
-                  ? "Owner approval required to join"
-                  : undefined
-              }
-            >
-              <ButtonIcon className="mr-1.5 h-3.5 w-3.5" />
-              {buttonLabel}
-            </Button>
+            {space.is_member && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-trust/10 px-2 py-0.5 text-[11px] font-medium text-trust">
+                <Check className="h-3 w-3" />
+                Joined
+              </span>
+            )}
           </div>
+          {(space.tagline || space.description) && (
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              {space.tagline || space.description}
+            </p>
+          )}
+
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5">
+              <Users className="h-3.5 w-3.5" aria-hidden />
+              <span className="numeric font-medium text-foreground">{space.member_count ?? 0}</span>
+              {(space.member_count ?? 0) === 1 ? "member" : "members"}
+            </span>
+            {postCount !== undefined && (
+              <span className="inline-flex items-center gap-1.5">
+                <MessageCircle className="h-3.5 w-3.5" aria-hidden />
+                <span className="numeric font-medium text-foreground">{postCount}</span>
+                {postCount === 1 ? "thread" : "threads"}
+              </span>
+            )}
+            <span className="inline-flex items-center gap-1.5">
+              <CalendarDays className="h-3.5 w-3.5" aria-hidden />
+              Since {formatSince(space.created_at)}
+            </span>
+          </div>
+
+          {(space.topics?.length ?? 0) > 0 && (
+            <ul className="mt-3 flex flex-wrap gap-1.5" aria-label="Topics">
+              {space.topics!.map((topic) => (
+                <li
+                  key={topic}
+                  className="rounded-full border px-2.5 py-0.5 text-xs"
+                  style={{
+                    borderColor: `color-mix(in oklab, ${accentColor} 35%, var(--border))`,
+                    background: `color-mix(in oklab, ${accentColor} 8%, var(--card))`,
+                  }}
+                >
+                  {topic}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
 
       {space.join_type === "review" && !space.is_member && !space.has_pending_request && (
-        <p className="mt-1 inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+        <p className="mt-2 inline-flex items-center gap-1 text-[11px] text-muted-foreground">
           <Hourglass className="h-3 w-3" />
           Owner approval required — requests are reviewed before you can post.
         </p>
       )}
 
-      {space.description && (
-        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{space.description}</p>
+      {space.is_member && space.welcome_message && (
+        <SpaceWelcome spaceId={space.id} message={space.welcome_message} accent={accentColor} />
       )}
 
       {space.rules && space.rules.length > 0 && (
         // Open for people deciding whether to join; folded for members.
         <details
           open={!space.is_member}
-          className="community-card group mt-3 [&_summary::-webkit-details-marker]:hidden"
+          className="community-card group mt-3 xl:hidden [&_summary::-webkit-details-marker]:hidden"
         >
           <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-2.5">
             <span className="section-label">Room rules · {space.rules.length}</span>
@@ -281,6 +304,61 @@ export function SpaceHeader({
           ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+function formatSince(iso: string) {
+  return new Date(iso).toLocaleDateString(undefined, { month: "short", year: "numeric" });
+}
+
+const WELCOME_KEY = (spaceId: string) => `tethyr-space-welcome-dismissed:${spaceId}`;
+
+/** The owner's welcome note for members, until they dismiss it. */
+function SpaceWelcome({
+  spaceId,
+  message,
+  accent,
+}: {
+  spaceId: string;
+  message: string;
+  accent: string;
+}) {
+  const [dismissed, setDismissed] = useState(() => {
+    try {
+      return localStorage.getItem(WELCOME_KEY(spaceId)) === "1";
+    } catch {
+      return false;
+    }
+  });
+  if (dismissed) return null;
+  return (
+    <div
+      className="community-card mt-3 flex items-start gap-3 p-4"
+      style={{
+        borderColor: `color-mix(in oklab, ${accent} 40%, var(--border))`,
+        background: `color-mix(in oklab, ${accent} 8%, var(--card))`,
+      }}
+    >
+      <div className="min-w-0 flex-1">
+        <p className="section-label mb-1">Welcome</p>
+        <p className="whitespace-pre-line text-sm leading-relaxed">{message}</p>
+      </div>
+      <button
+        type="button"
+        onClick={() => {
+          setDismissed(true);
+          try {
+            localStorage.setItem(WELCOME_KEY(spaceId), "1");
+          } catch {
+            /* hidden for this visit only */
+          }
+        }}
+        aria-label="Dismiss welcome note"
+        className="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground"
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
     </div>
   );
 }

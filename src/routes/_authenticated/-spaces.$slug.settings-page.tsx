@@ -27,7 +27,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { EmptyState } from "@/components/tethyr/empty-state";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import {
@@ -50,8 +49,14 @@ import {
   type JoinRequestRow,
   type ModerationLogRow,
   type SpaceBan,
+  type CommunitySpace,
 } from "@/hooks/use-community-spaces";
 import { useRestoreSpace } from "@/hooks/use-space-settings";
+import {
+  SpaceIdentitySettings,
+  type IdentityDraft,
+} from "@/components/tethyr/community/space-identity-settings";
+import { isHexColor, normalizeLinks, normalizeTopics } from "@/lib/space-identity";
 
 // Code-split module: the interactive page for its route. See the route
 // file for the eager surface (loader/head) and the lazyRouteComponent wire-up.
@@ -78,6 +83,31 @@ const ROLE_FILTERS: { value: "all" | SpaceMemberRole; label: string }[] = [
 
 const PAGE_SIZE = 10;
 
+const EMPTY_IDENTITY: IdentityDraft = {
+  name: "",
+  tagline: "",
+  description: "",
+  about: "",
+  welcome: "",
+  accent: null,
+  topics: [],
+  links: [],
+};
+
+/** The saved space as an editable draft (used for both init and dirty checks). */
+function identityFromSpace(space: CommunitySpace): IdentityDraft {
+  return {
+    name: space.name,
+    tagline: space.tagline ?? "",
+    description: space.description ?? "",
+    about: space.about ?? "",
+    welcome: space.welcome_message ?? "",
+    accent: isHexColor(space.accent_color) ? space.accent_color : null,
+    topics: space.topics ?? [],
+    links: (space.links ?? []).map((link) => ({ label: link.label, url: link.url })),
+  };
+}
+
 export function SpaceSettingsPage() {
   const { slug } = useParams({ from: "/_authenticated/spaces/$slug/settings" });
   const navigate = useNavigate();
@@ -97,8 +127,13 @@ export function SpaceSettingsPage() {
   const rejectRequest = useRejectJoinRequest();
   const unbanMember = useUnbanMember();
 
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  const [identity, setIdentity] = useState<IdentityDraft>(EMPTY_IDENTITY);
+  const patchIdentity = (patch: Partial<IdentityDraft>) =>
+    setIdentity((current) => ({ ...current, ...patch }));
+  const { links: cleanLinks, problems: linkProblems } = useMemo(
+    () => normalizeLinks(identity.links),
+    [identity.links],
+  );
   const [visibility, setVisibility] = useState<SpaceVisibility>("public");
   const [joinType, setJoinType] = useState<SpaceJoinType>("auto");
   const [rules, setRules] = useState<string[]>([]);
@@ -136,8 +171,7 @@ export function SpaceSettingsPage() {
 
   useEffect(() => {
     if (!space) return;
-    setName(space.name);
-    setDescription(space.description ?? "");
+    setIdentity(identityFromSpace(space));
     setVisibility(space.visibility ?? "public");
     setJoinType(space.join_type ?? "auto");
     setRules(space.rules ?? []);
@@ -189,9 +223,9 @@ export function SpaceSettingsPage() {
     );
   }
 
+  const savedIdentity = identityFromSpace(space);
   const dirty =
-    name.trim() !== space.name ||
-    description.trim() !== (space.description ?? "") ||
+    JSON.stringify(identity) !== JSON.stringify(savedIdentity) ||
     visibility !== (space.visibility ?? "public") ||
     joinType !== (space.join_type ?? "auto") ||
     JSON.stringify(rules) !== JSON.stringify(space.rules ?? []) ||
@@ -200,11 +234,25 @@ export function SpaceSettingsPage() {
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (!space) return;
+    if (linkProblems.length > 0) {
+      toast.error("Fix the highlighted links first");
+      return;
+    }
+    if (!identity.name.trim()) {
+      toast.error("Your space needs a name");
+      return;
+    }
     try {
       await updateSpace.mutateAsync({
         id: space.id,
-        name: name.trim(),
-        description: description.trim(),
+        name: identity.name.trim(),
+        description: identity.description.trim(),
+        tagline: identity.tagline.trim() || null,
+        about: identity.about.trim() || null,
+        welcome_message: identity.welcome.trim() || null,
+        accent_color: identity.accent,
+        topics: normalizeTopics(identity.topics),
+        links: cleanLinks,
         visibility,
         join_type: joinType,
         rules: rules.filter(Boolean),
@@ -256,46 +304,28 @@ export function SpaceSettingsPage() {
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div className="min-w-0">
-          <h1 className="font-display text-2xl font-semibold tracking-tight">Community settings</h1>
+          <h1 className="font-display text-2xl font-semibold tracking-tight">
+            {isOwner ? "Customize your space" : "Space settings"}
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Manage details, visibility, and the moderation team for {space.name}.
+            {isOwner
+              ? `Make ${space.name} your own — its look, its story and how people join.`
+              : `Moderation tools for ${space.name}. Only the owner can change its identity.`}
           </p>
         </div>
       </div>
 
       <form onSubmit={handleSave} className="space-y-10">
-        <section className="rounded-lg border border-border bg-card p-5">
-          <h2 className="text-sm font-semibold">Details</h2>
-          <p className="mt-1 text-xs text-muted-foreground">
-            The name and description shown across the community.
-          </p>
-          <div className="mt-4 space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="space-name">Name</Label>
-              <Input
-                id="space-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                maxLength={50}
-                disabled={!isOwner}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="space-description">Description</Label>
-              <Textarea
-                id="space-description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={4}
-                maxLength={300}
-                disabled={!isOwner}
-              />
-              <p className="text-xs text-muted-foreground">{description.length}/300</p>
-            </div>
-          </div>
-        </section>
+        <SpaceIdentitySettings
+          space={space}
+          ownerId={me?.userId ?? space.created_by}
+          canEdit={isOwner}
+          draft={identity}
+          onChange={patchIdentity}
+          linkProblems={linkProblems}
+        />
 
-        <section className="rounded-lg border border-border bg-card p-5">
+        <section className="community-card p-5">
           <h2 className="text-sm font-semibold">Visibility</h2>
           <p className="mt-1 text-xs text-muted-foreground">
             Control who can discover and read this community.
@@ -320,7 +350,7 @@ export function SpaceSettingsPage() {
           </div>
         </section>
 
-        <section className="rounded-lg border border-border bg-card p-5">
+        <section className="community-card p-5">
           <h2 className="text-sm font-semibold">Joining</h2>
           <p className="mt-1 text-xs text-muted-foreground">
             How new people become members of this community.
@@ -376,6 +406,7 @@ export function SpaceSettingsPage() {
                     setRuleInput("");
                   }
                 }}
+                aria-label="Add rule"
               >
                 <Plus className="h-4 w-4" />
               </Button>
@@ -395,6 +426,7 @@ export function SpaceSettingsPage() {
                       type="button"
                       disabled={!isOwner}
                       onClick={() => setRules(rules.filter((_, j) => j !== i))}
+                      aria-label={`Remove rule ${i + 1}`}
                       className="ml-auto rounded p-0.5 text-muted-foreground hover:text-destructive disabled:opacity-40"
                     >
                       <X className="h-3 w-3" />
@@ -407,7 +439,7 @@ export function SpaceSettingsPage() {
         </section>
 
         {joinType === "review" && (
-          <section className="rounded-lg border border-border bg-card p-5">
+          <section className="community-card p-5">
             <h2 className="text-sm font-semibold flex items-center gap-2">
               <UserPlus className="h-4 w-4" />
               Pending requests ({joinRequests.length})
@@ -480,7 +512,7 @@ export function SpaceSettingsPage() {
           </section>
         )}
 
-        <section className="rounded-lg border border-border bg-card p-5">
+        <section className="community-card p-5">
           <h2 className="text-sm font-semibold flex items-center gap-2">
             <ShieldAlert className="h-4 w-4" />
             Moderation
@@ -522,19 +554,40 @@ export function SpaceSettingsPage() {
           </div>
         </section>
 
-        {isOwner && (
-          <div className="flex items-center gap-3">
-            <Button type="submit" disabled={!name.trim() || !dirty || updateSpace.isPending}>
-              {updateSpace.isPending ? "Saving..." : "Save changes"}
+        {isOwner && dirty && (
+          // Sticky while there are changes: Identity sits at the top of a long
+          // page, so Save must not live only at the bottom.
+          <div className="community-card shadow-panel sticky bottom-4 z-10 flex items-center gap-3 px-4 py-3">
+            <span className="text-sm text-muted-foreground">You have unsaved changes</span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="ml-auto"
+              onClick={() => {
+                setIdentity(identityFromSpace(space));
+                setVisibility(space.visibility ?? "public");
+                setJoinType(space.join_type ?? "auto");
+                setRules(space.rules ?? []);
+                setDimThreshold(space.report_auto_dim_threshold ?? 3);
+              }}
+            >
+              Discard
             </Button>
-            {dirty && <span className="text-xs text-muted-foreground">Unsaved changes</span>}
+            <Button
+              type="submit"
+              size="sm"
+              disabled={!identity.name.trim() || updateSpace.isPending}
+            >
+              {updateSpace.isPending ? "Saving…" : "Save changes"}
+            </Button>
           </div>
         )}
       </form>
 
       {/* Reports inbox — moderation queue lives on its own route so it stays
           reachable from the space header and isn't duplicated inside settings. */}
-      <section className="mt-10 rounded-lg border border-border bg-card p-5">
+      <section className="community-card mt-10 p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-sm font-semibold flex items-center gap-2">
@@ -555,7 +608,7 @@ export function SpaceSettingsPage() {
       </section>
 
       {/* Banned members */}
-      <section className="mt-10 rounded-lg border border-border bg-card p-5">
+      <section className="community-card mt-10 p-5">
         <h2 className="text-sm font-semibold flex items-center gap-2">
           <Shield className="h-4 w-4" />
           Banned members ({spaceBans.length})
@@ -607,7 +660,7 @@ export function SpaceSettingsPage() {
       </section>
 
       {/* Moderation log — audit trail of removals in this space */}
-      <section className="mt-10 rounded-lg border border-border bg-card p-5">
+      <section className="community-card mt-10 p-5">
         <h2 className="text-sm font-semibold flex items-center gap-2">
           <ScrollText className="h-4 w-4" />
           Moderation log
@@ -641,7 +694,7 @@ export function SpaceSettingsPage() {
         </div>
       </section>
 
-      <section className="mt-10 rounded-lg border border-border bg-card p-5">
+      <section className="community-card mt-10 p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="text-sm font-semibold">Moderators &amp; members</h2>
@@ -774,7 +827,7 @@ export function SpaceSettingsPage() {
       </section>
 
       {isOwner && (
-        <section className="mt-10 rounded-lg border border-destructive/40 bg-card p-5">
+        <section className="community-card mt-10 border-destructive/40 p-5">
           <h2 className="text-sm font-semibold text-destructive">Danger zone</h2>
           <p className="mt-1 text-xs text-muted-foreground">
             Deleting a community removes it for everyone. This cannot be undone.

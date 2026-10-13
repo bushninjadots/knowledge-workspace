@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SPACES_KEY } from "@/hooks/community-space-types";
-import type { SpaceVisibility, SpaceJoinType } from "@/hooks/community-space-types";
+import type { SpaceLink, SpaceVisibility, SpaceJoinType } from "@/hooks/community-space-types";
 
 const sb = supabase;
 
@@ -23,6 +23,14 @@ export function useUpdateSpace() {
       join_type?: SpaceJoinType;
       rules?: string[];
       report_auto_dim_threshold?: number;
+      tagline?: string | null;
+      about?: string | null;
+      accent_color?: string | null;
+      topics?: string[];
+      links?: SpaceLink[];
+      welcome_message?: string | null;
+      avatar_url?: string | null;
+      banner_url?: string | null;
     }) => {
       const { id, ...updates } = input;
       const { error } = await sb
@@ -184,6 +192,67 @@ export function useCreateSpace() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: SPACES_KEY });
+    },
+  });
+}
+
+export type SpaceImageKind = "avatar" | "banner";
+
+const SPACE_IMAGE_BUCKET: Record<SpaceImageKind, "avatars" | "banners"> = {
+  avatar: "avatars",
+  banner: "banners",
+};
+
+/**
+ * Upload (or clear) a space's picture or banner. Files go in the owner's own
+ * folder of the existing `avatars` / `banners` buckets — their storage
+ * policies already allow the owner to write and everyone to view — under a
+ * fresh name each time so signed URLs never serve a stale copy. The previous
+ * file is removed afterwards (best effort).
+ */
+export function useSpaceImage() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      spaceId: string;
+      ownerId: string;
+      kind: SpaceImageKind;
+      previousPath: string | null | undefined;
+      /** null clears the image. */
+      file: { payload: File | Blob; ext: string; contentType: string } | null;
+    }) => {
+      const bucket = SPACE_IMAGE_BUCKET[input.kind];
+      let path: string | null = null;
+      if (input.file) {
+        path = `${input.ownerId}/spaces/${input.spaceId}/${input.kind}-${Date.now()}.${input.file.ext}`;
+        const { error: uploadError } = await sb.storage
+          .from(bucket)
+          .upload(path, input.file.payload, { contentType: input.file.contentType });
+        if (uploadError) throw uploadError;
+      }
+      const updatedAt = new Date().toISOString();
+      const { error } = await sb
+        .from("community_spaces")
+        .update(
+          input.kind === "avatar"
+            ? { avatar_url: path, updated_at: updatedAt }
+            : { banner_url: path, updated_at: updatedAt },
+        )
+        .eq("id", input.spaceId);
+      if (error) {
+        if (path) void sb.storage.from(bucket).remove([path]);
+        throw error;
+      }
+      // Only clean up files this feature put in the owner's folder.
+      const previous = input.previousPath;
+      if (previous && previous !== path && previous.startsWith(`${input.ownerId}/`)) {
+        void sb.storage.from(bucket).remove([previous]);
+      }
+      return path;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: SPACES_KEY });
+      qc.invalidateQueries({ queryKey: ["community-space"] });
     },
   });
 }
