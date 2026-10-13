@@ -249,18 +249,21 @@ export type Database = {
       community_space_members: {
         Row: {
           joined_at: string;
+          last_read_at: string | null;
           role: Database["public"]["Enums"]["space_member_role"];
           space_id: string;
           user_id: string;
         };
         Insert: {
           joined_at?: string;
+          last_read_at?: string | null;
           role?: Database["public"]["Enums"]["space_member_role"];
           space_id: string;
           user_id: string;
         };
         Update: {
           joined_at?: string;
+          last_read_at?: string | null;
           role?: Database["public"]["Enums"]["space_member_role"];
           space_id?: string;
           user_id?: string;
@@ -576,6 +579,8 @@ export type Database = {
           is_template: boolean;
           name: string;
           sections: Json;
+          star_count: number;
+          submission_status: string;
           theme_id: string | null;
           type: string;
           updated_at: string;
@@ -591,6 +596,8 @@ export type Database = {
           is_template?: boolean;
           name: string;
           sections?: Json;
+          star_count?: number;
+          submission_status?: string;
           theme_id?: string | null;
           type?: string;
           updated_at?: string;
@@ -606,6 +613,8 @@ export type Database = {
           is_template?: boolean;
           name?: string;
           sections?: Json;
+          star_count?: number;
+          submission_status?: string;
           theme_id?: string | null;
           type?: string;
           updated_at?: string;
@@ -621,6 +630,169 @@ export type Database = {
           },
         ];
       };
+      library_board_cards: {
+        Row: {
+          accent: string | null;
+          archived: boolean;
+          board_id: string;
+          column_id: string;
+          created_at: string;
+          fields: Json;
+          id: string;
+          item_id: string | null;
+          position: number;
+          title: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          accent?: string | null;
+          archived?: boolean;
+          board_id: string;
+          column_id: string;
+          created_at?: string;
+          fields?: Json;
+          id?: string;
+          item_id?: string | null;
+          position?: number;
+          title?: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          accent?: string | null;
+          archived?: boolean;
+          board_id?: string;
+          column_id?: string;
+          created_at?: string;
+          fields?: Json;
+          id?: string;
+          item_id?: string | null;
+          position?: number;
+          title?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "library_board_cards_board_id_fkey";
+            columns: ["board_id"];
+            isOneToOne: false;
+            referencedRelation: "library_boards";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "library_board_cards_column_id_fkey";
+            columns: ["column_id"];
+            isOneToOne: false;
+            referencedRelation: "library_board_columns";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "library_board_cards_item_id_fkey";
+            columns: ["item_id"];
+            isOneToOne: false;
+            referencedRelation: "library_items";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "library_board_cards_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      library_board_columns: {
+        Row: {
+          board_id: string;
+          created_at: string;
+          id: string;
+          is_done: boolean;
+          name: string;
+          position: number;
+          user_id: string;
+          wip_limit: number | null;
+        };
+        Insert: {
+          board_id: string;
+          created_at?: string;
+          id?: string;
+          is_done?: boolean;
+          name: string;
+          position?: number;
+          user_id: string;
+          wip_limit?: number | null;
+        };
+        Update: {
+          board_id?: string;
+          created_at?: string;
+          id?: string;
+          is_done?: boolean;
+          name?: string;
+          position?: number;
+          user_id?: string;
+          wip_limit?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "library_board_columns_board_id_fkey";
+            columns: ["board_id"];
+            isOneToOne: false;
+            referencedRelation: "library_boards";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "library_board_columns_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      library_boards: {
+        Row: {
+          color: string;
+          created_at: string;
+          icon: string;
+          id: string;
+          name: string;
+          position: number;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          color?: string;
+          created_at?: string;
+          icon?: string;
+          id?: string;
+          name: string;
+          position?: number;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          color?: string;
+          created_at?: string;
+          icon?: string;
+          id?: string;
+          name?: string;
+          position?: number;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "library_boards_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       library_collections: {
         Row: {
           color: string | null;
@@ -630,6 +802,7 @@ export type Database = {
           name: string;
           parent_id: string | null;
           position: number;
+          shared: boolean;
           updated_at: string;
           user_id: string;
         };
@@ -641,6 +814,7 @@ export type Database = {
           name: string;
           parent_id?: string | null;
           position?: number;
+          shared?: boolean;
           updated_at?: string;
           user_id: string;
         };
@@ -652,6 +826,7 @@ export type Database = {
           name?: string;
           parent_id?: string | null;
           position?: number;
+          shared?: boolean;
           updated_at?: string;
           user_id?: string;
         };
@@ -717,6 +892,7 @@ export type Database = {
           is_pinned: boolean;
           project_id: string | null;
           reading_progress: number;
+          shared: boolean;
           thumbnail_url: string | null;
           title: string;
           type: Database["public"]["Enums"]["library_item_type"];
@@ -738,6 +914,7 @@ export type Database = {
           is_pinned?: boolean;
           project_id?: string | null;
           reading_progress?: number;
+          shared?: boolean;
           thumbnail_url?: string | null;
           title?: string;
           type?: Database["public"]["Enums"]["library_item_type"];
@@ -759,6 +936,7 @@ export type Database = {
           is_pinned?: boolean;
           project_id?: string | null;
           reading_progress?: number;
+          shared?: boolean;
           thumbnail_url?: string | null;
           title?: string;
           type?: Database["public"]["Enums"]["library_item_type"];
@@ -863,6 +1041,30 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      media_bucket_snapshots: {
+        Row: {
+          bucket: string;
+          byte_count: number;
+          id: number;
+          object_count: number;
+          taken_at: string;
+        };
+        Insert: {
+          bucket: string;
+          byte_count?: number;
+          id?: never;
+          object_count?: number;
+          taken_at?: string;
+        };
+        Update: {
+          bucket?: string;
+          byte_count?: number;
+          id?: never;
+          object_count?: number;
+          taken_at?: string;
+        };
+        Relationships: [];
       };
       messages: {
         Row: {
@@ -1043,8 +1245,64 @@ export type Database = {
           },
         ];
       };
+      page_versions: {
+        Row: {
+          config: Json | null;
+          id: string;
+          layout: Json;
+          note: string | null;
+          page_id: string;
+          published_at: string;
+          published_by: string | null;
+          theme_id: string | null;
+          theme_overrides: Json | null;
+          version: number;
+        };
+        Insert: {
+          config?: Json | null;
+          id?: string;
+          layout?: Json;
+          note?: string | null;
+          page_id: string;
+          published_at?: string;
+          published_by?: string | null;
+          theme_id?: string | null;
+          theme_overrides?: Json | null;
+          version: number;
+        };
+        Update: {
+          config?: Json | null;
+          id?: string;
+          layout?: Json;
+          note?: string | null;
+          page_id?: string;
+          published_at?: string;
+          published_by?: string | null;
+          theme_id?: string | null;
+          theme_overrides?: Json | null;
+          version?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "page_versions_page_id_fkey";
+            columns: ["page_id"];
+            isOneToOne: false;
+            referencedRelation: "pages";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "page_versions_theme_id_fkey";
+            columns: ["theme_id"];
+            isOneToOne: false;
+            referencedRelation: "themes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       pages: {
         Row: {
+          composition_id: string | null;
+          config: Json;
           created_at: string;
           id: string;
           layout_id: string | null;
@@ -1055,8 +1313,11 @@ export type Database = {
           theme_id: string | null;
           theme_overrides: Json | null;
           updated_at: string;
+          vibe_id: string | null;
         };
         Insert: {
+          composition_id?: string | null;
+          config?: Json;
           created_at?: string;
           id?: string;
           layout_id?: string | null;
@@ -1067,8 +1328,11 @@ export type Database = {
           theme_id?: string | null;
           theme_overrides?: Json | null;
           updated_at?: string;
+          vibe_id?: string | null;
         };
         Update: {
+          composition_id?: string | null;
+          config?: Json;
           created_at?: string;
           id?: string;
           layout_id?: string | null;
@@ -1079,6 +1343,7 @@ export type Database = {
           theme_id?: string | null;
           theme_overrides?: Json | null;
           updated_at?: string;
+          vibe_id?: string | null;
         };
         Relationships: [
           {
@@ -1477,9 +1742,10 @@ export type Database = {
           notification_preferences: Json;
           portfolio_links: Json;
           public_background: Json | null;
-          site_appearance: Json | null;
+          readme: string | null;
           readme_source: Json | null;
           reputation_score: number;
+          site_appearance: Json | null;
           social_links: Json;
           software_stack: string[];
           teaching_style: string | null;
@@ -1511,9 +1777,10 @@ export type Database = {
           notification_preferences?: Json;
           portfolio_links?: Json;
           public_background?: Json | null;
-          site_appearance?: Json | null;
+          readme?: string | null;
           readme_source?: Json | null;
           reputation_score?: number;
+          site_appearance?: Json | null;
           social_links?: Json;
           software_stack?: string[];
           teaching_style?: string | null;
@@ -1545,9 +1812,10 @@ export type Database = {
           notification_preferences?: Json;
           portfolio_links?: Json;
           public_background?: Json | null;
-          site_appearance?: Json | null;
+          readme?: string | null;
           readme_source?: Json | null;
           reputation_score?: number;
+          site_appearance?: Json | null;
           social_links?: Json;
           software_stack?: string[];
           teaching_style?: string | null;
@@ -1594,6 +1862,39 @@ export type Database = {
             columns: ["project_id"];
             isOneToOne: false;
             referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      project_ai_tags: {
+        Row: {
+          created_at: string;
+          project_id: string;
+          tagger_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          project_id: string;
+          tagger_id: string;
+        };
+        Update: {
+          created_at?: string;
+          project_id?: string;
+          tagger_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "project_ai_tags_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "project_ai_tags_tagger_id_fkey";
+            columns: ["tagger_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
             referencedColumns: ["id"];
           },
         ];
@@ -1861,6 +2162,65 @@ export type Database = {
           },
         ];
       };
+      project_recognitions: {
+        Row: {
+          created_at: string;
+          giver_id: string;
+          id: string;
+          kind: string;
+          project_activity_id: string;
+          project_id: string;
+          recipient_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          giver_id: string;
+          id?: string;
+          kind: string;
+          project_activity_id: string;
+          project_id: string;
+          recipient_id: string;
+        };
+        Update: {
+          created_at?: string;
+          giver_id?: string;
+          id?: string;
+          kind?: string;
+          project_activity_id?: string;
+          project_id?: string;
+          recipient_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "project_recognitions_giver_id_fkey";
+            columns: ["giver_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "project_recognitions_project_activity_id_fkey";
+            columns: ["project_activity_id"];
+            isOneToOne: false;
+            referencedRelation: "project_activity";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "project_recognitions_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "project_recognitions_recipient_id_fkey";
+            columns: ["recipient_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       project_repositories: {
         Row: {
           created_at: string;
@@ -2022,6 +2382,39 @@ export type Database = {
           },
         ];
       };
+      project_visits: {
+        Row: {
+          last_seen_at: string;
+          project_id: string;
+          user_id: string;
+        };
+        Insert: {
+          last_seen_at?: string;
+          project_id: string;
+          user_id: string;
+        };
+        Update: {
+          last_seen_at?: string;
+          project_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "project_visits_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "project_visits_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       project_watchers: {
         Row: {
           created_at: string;
@@ -2057,11 +2450,16 @@ export type Database = {
       };
       projects: {
         Row: {
+          ai_assisted: boolean;
+          allow_forks: boolean;
           collaboration_brief: Json;
           cover_url: string | null;
           created_at: string;
           description: string | null;
+          fork_count: number;
+          forked_from_project_id: string | null;
           gallery: Json;
+          github_display: Json | null;
           goal: string | null;
           id: string;
           is_featured: boolean;
@@ -2088,11 +2486,16 @@ export type Database = {
           vision: string | null;
         };
         Insert: {
+          ai_assisted?: boolean;
+          allow_forks?: boolean;
           collaboration_brief?: Json;
           cover_url?: string | null;
           created_at?: string;
           description?: string | null;
+          fork_count?: number;
+          forked_from_project_id?: string | null;
           gallery?: Json;
+          github_display?: Json | null;
           goal?: string | null;
           id?: string;
           is_featured?: boolean;
@@ -2119,11 +2522,16 @@ export type Database = {
           vision?: string | null;
         };
         Update: {
+          ai_assisted?: boolean;
+          allow_forks?: boolean;
           collaboration_brief?: Json;
           cover_url?: string | null;
           created_at?: string;
           description?: string | null;
+          fork_count?: number;
+          forked_from_project_id?: string | null;
           gallery?: Json;
+          github_display?: Json | null;
           goal?: string | null;
           id?: string;
           is_featured?: boolean;
@@ -2150,6 +2558,13 @@ export type Database = {
           vision?: string | null;
         };
         Relationships: [
+          {
+            foreignKeyName: "projects_forked_from_project_id_fkey";
+            columns: ["forked_from_project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "projects_profile_id_fkey";
             columns: ["profile_id"];
@@ -2415,6 +2830,7 @@ export type Database = {
           skill_id: string | null;
           starts_at: string | null;
           status: Database["public"]["Enums"]["session_status"];
+          team_id: string | null;
           timezone: string;
           title: string;
           updated_at: string;
@@ -2437,6 +2853,7 @@ export type Database = {
           skill_id?: string | null;
           starts_at?: string | null;
           status?: Database["public"]["Enums"]["session_status"];
+          team_id?: string | null;
           timezone?: string;
           title: string;
           updated_at?: string;
@@ -2459,6 +2876,7 @@ export type Database = {
           skill_id?: string | null;
           starts_at?: string | null;
           status?: Database["public"]["Enums"]["session_status"];
+          team_id?: string | null;
           timezone?: string;
           title?: string;
           updated_at?: string;
@@ -2483,6 +2901,13 @@ export type Database = {
             columns: ["skill_id"];
             isOneToOne: false;
             referencedRelation: "skills";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "sessions_team_id_fkey";
+            columns: ["team_id"];
+            isOneToOne: false;
+            referencedRelation: "teams";
             referencedColumns: ["id"];
           },
         ];
@@ -2733,6 +3158,7 @@ export type Database = {
       teams: {
         Row: {
           avatar_url: string | null;
+          caption: string | null;
           cover_url: string | null;
           created_at: string;
           created_by: string;
@@ -2741,9 +3167,12 @@ export type Database = {
           id: string;
           name: string;
           slug: string;
+          social_links: Json;
+          website_url: string | null;
         };
         Insert: {
           avatar_url?: string | null;
+          caption?: string | null;
           cover_url?: string | null;
           created_at?: string;
           created_by: string;
@@ -2752,9 +3181,12 @@ export type Database = {
           id?: string;
           name: string;
           slug: string;
+          social_links?: Json;
+          website_url?: string | null;
         };
         Update: {
           avatar_url?: string | null;
+          caption?: string | null;
           cover_url?: string | null;
           created_at?: string;
           created_by?: string;
@@ -2763,6 +3195,8 @@ export type Database = {
           id?: string;
           name?: string;
           slug?: string;
+          social_links?: Json;
+          website_url?: string | null;
         };
         Relationships: [
           {
@@ -2770,6 +3204,32 @@ export type Database = {
             columns: ["created_by"];
             isOneToOne: false;
             referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      template_stars: {
+        Row: {
+          created_at: string;
+          layout_id: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          layout_id: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          layout_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "template_stars_layout_id_fkey";
+            columns: ["layout_id"];
+            isOneToOne: false;
+            referencedRelation: "layouts";
             referencedColumns: ["id"];
           },
         ];
@@ -2885,7 +3345,90 @@ export type Database = {
       };
     };
     Views: {
-      [_ in never]: never;
+      media_bucket_growth: {
+        Row: {
+          bucket: string | null;
+          byte_count: number | null;
+          byte_growth_7d: number | null;
+          last_measured_at: string | null;
+          object_count: number | null;
+          object_growth_7d: number | null;
+        };
+        Relationships: [];
+      };
+      project_repositories_public: {
+        Row: {
+          created_at: string | null;
+          id: string | null;
+          project_id: string | null;
+          provider: string | null;
+          updated_at: string | null;
+          url: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          id?: string | null;
+          project_id?: string | null;
+          provider?: string | null;
+          updated_at?: string | null;
+          url?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          id?: string | null;
+          project_id?: string | null;
+          provider?: string | null;
+          updated_at?: string | null;
+          url?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "project_repositories_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      project_repositories_safe: {
+        Row: {
+          created_at: string | null;
+          id: string | null;
+          metadata: Json | null;
+          project_id: string | null;
+          provider: string | null;
+          updated_at: string | null;
+          url: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          id?: string | null;
+          metadata?: Json | null;
+          project_id?: string | null;
+          provider?: string | null;
+          updated_at?: string | null;
+          url?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          id?: string | null;
+          metadata?: Json | null;
+          project_id?: string | null;
+          provider?: string | null;
+          updated_at?: string | null;
+          url?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "project_repositories_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Functions: {
       _create_trigger_if_table_exists: {
@@ -2908,17 +3451,35 @@ export type Database = {
         };
         Returns: undefined;
       };
+      apply_studio_composition: {
+        Args: {
+          p_composition_id: string;
+          p_config: Json;
+          p_layout_id: string;
+          p_page_id: string;
+          p_sections: Json;
+        };
+        Returns: undefined;
+      };
       approve_space_join_request: {
         Args: { p_space_id: string; p_user_id: string };
         Returns: undefined;
       };
       award_earned_achievements: {
-        Args: never;
+        Args: { p_profile_id?: string };
         Returns: Database["public"]["Enums"]["achievement_type"][];
       };
       ban_space_member: {
         Args: { p_reason?: string; p_space_id: string; p_user_id: string };
         Returns: undefined;
+      };
+      community_daily_activity: {
+        Args: { p_days: number; p_since: string };
+        Returns: {
+          day: string;
+          joins: number;
+          posts: number;
+        }[];
       };
       community_space_member_counts: {
         Args: never;
@@ -2935,6 +3496,27 @@ export type Database = {
         };
         Returns: undefined;
       };
+      discussion_reply_counts: {
+        Args: { p_discussion_ids: string[] };
+        Returns: {
+          discussion_id: string;
+          reply_count: number;
+        }[];
+      };
+      explore_open_role_counts: {
+        Args: { p_project_ids: string[] };
+        Returns: {
+          open_roles: number;
+          project_id: string;
+        }[];
+      };
+      explore_session_host_ids: {
+        Args: { p_now?: string; p_profile_ids: string[] };
+        Returns: {
+          organizer_id: string;
+        }[];
+      };
+      fork_project: { Args: { p_project_id: string }; Returns: string };
       get_layout_lineage: {
         Args: { start_id: string };
         Returns: {
@@ -3009,12 +3591,165 @@ export type Database = {
         Returns: undefined;
       };
       mark_space_read: { Args: { p_space_id: string }; Returns: undefined };
+      match_creators: {
+        Args: { p_limit?: number; p_user_id: string };
+        Returns: {
+          availability: Database["public"]["Enums"]["availability_status"];
+          avatar_url: string;
+          category: string;
+          creator_title: string;
+          display_name: string;
+          handle: string;
+          id: string;
+          languages: string[];
+          learn_skills: Json;
+          match_reasons: string[];
+          match_score: number;
+          teach_skills: Json;
+        }[];
+      };
+      match_projects: {
+        Args: { p_limit?: number; p_user_id: string };
+        Returns: {
+          description: string;
+          id: string;
+          looking_for_collaborators: boolean;
+          looking_for_feedback: boolean;
+          profile_id: string;
+          reasons: string[];
+          score: number;
+          skill_ids: string[];
+          stage: Database["public"]["Enums"]["project_stage"];
+          title: string;
+        }[];
+      };
+      media_object_is_referenced: {
+        Args: { p_bucket: string; p_name: string };
+        Returns: boolean;
+      };
+      post_engagement_counts: {
+        Args: { p_post_ids: string[] };
+        Returns: {
+          comment_count: number;
+          helpful: number;
+          likes: number;
+          offers: number;
+          post_id: string;
+          saves: number;
+          user_actions: string[];
+        }[];
+      };
       posts_images_are_valid: { Args: { p_images: string[] }; Returns: boolean };
+      project_ai_tag_count: { Args: { p_project_id: string }; Returns: number };
+      project_ai_user_tagged: {
+        Args: { p_project_id: string };
+        Returns: boolean;
+      };
+      prune_orphaned_media: {
+        Args: {
+          p_bucket?: string;
+          p_dry_run?: boolean;
+          p_min_age_hours?: number;
+        };
+        Returns: {
+          bucket_name: string;
+          candidates: number;
+          mode: string;
+          pruned: number;
+          retained: number;
+        }[];
+      };
+      publish_page_version:
+        | {
+            Args: { _page_id: string };
+            Returns: {
+              config: Json | null;
+              id: string;
+              layout: Json;
+              note: string | null;
+              page_id: string;
+              published_at: string;
+              published_by: string | null;
+              theme_id: string | null;
+              theme_overrides: Json | null;
+              version: number;
+            };
+            SetofOptions: {
+              from: "*";
+              to: "page_versions";
+              isOneToOne: true;
+              isSetofReturn: false;
+            };
+          }
+        | {
+            Args: { _note: string; _page_id: string };
+            Returns: {
+              config: Json | null;
+              id: string;
+              layout: Json;
+              note: string | null;
+              page_id: string;
+              published_at: string;
+              published_by: string | null;
+              theme_id: string | null;
+              theme_overrides: Json | null;
+              version: number;
+            };
+            SetofOptions: {
+              from: "*";
+              to: "page_versions";
+              isOneToOne: true;
+              isSetofReturn: false;
+            };
+          };
+      reconcile_user_achievements: {
+        Args: { p_profile_id?: string };
+        Returns: Database["public"]["Enums"]["achievement_type"][];
+      };
+      record_media_bucket_snapshot: { Args: never; Returns: number };
       reject_space_join_request: {
         Args: { p_space_id: string; p_user_id: string };
         Returns: undefined;
       };
       reseed_default_templates: { Args: never; Returns: number };
+      rollback_page_version: {
+        Args: { _page_id: string; _version: number };
+        Returns: undefined;
+      };
+      show_limit: { Args: never; Returns: number };
+      show_trgm: { Args: { "": string }; Returns: string[] };
+      skill_directory_stats: {
+        Args: { p_skill_ids?: string[] };
+        Returns: {
+          growing_count: number;
+          need_count: number;
+          project_count: number;
+          sharing_count: number;
+          skill_id: string;
+        }[];
+      };
+      space_reported_post_counts: {
+        Args: { p_space_id: string };
+        Returns: {
+          post_id: string;
+          reports: number;
+        }[];
+      };
+      toggle_template_star: {
+        Args: { target_layout_id: string };
+        Returns: boolean;
+      };
+      trending_skills: {
+        Args: { p_limit?: number };
+        Returns: {
+          category: string;
+          description: string;
+          id: string;
+          name: string;
+          slug: string;
+          usage_count: number;
+        }[];
+      };
       unban_space_member: {
         Args: { p_space_id: string; p_user_id: string };
         Returns: undefined;

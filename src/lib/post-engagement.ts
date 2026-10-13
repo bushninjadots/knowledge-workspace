@@ -1,7 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
-import { supabasePending } from "@/lib/supabase-pending-schema";
 
-const sb = supabasePending;
+const sb = supabase;
 
 type PostEngagement = {
   likes: number;

@@ -5,7 +5,6 @@ import { friendlyError } from "@/lib/error-message";
 import { fetchRepoCommitActivityServer, fetchRepoMetaServer } from "@/lib/github-server";
 import { getRepoFullName } from "@/lib/github";
 import type { CommitActivityWeek, RepoMeta } from "@/lib/github";
-import { supabasePending } from "@/lib/supabase-pending-schema";
 
 const sb = supabase;
 
@@ -25,7 +24,7 @@ export function useProjectRepos(projectId: string) {
   return useQuery({
     queryKey: ["project-repos", projectId],
     queryFn: async (): Promise<ProjectRepo[]> => {
-      const { data, error } = await supabasePending
+      const { data, error } = await supabase
         .from("project_repositories_safe")
         .select("id, project_id, url, provider, metadata, created_at, updated_at")
         .eq("project_id", projectId)

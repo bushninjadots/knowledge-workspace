@@ -171,12 +171,20 @@ export const syncGithubProjectActivity = createServerFn({ method: "POST" })
           .replace(/\.git$/, "");
       const commits: GithubCommitLite[] = await fetchRepoCommits(fullName, token ?? undefined);
       checked += commits.length;
-      const { data: existing } = await supabaseAdmin
+      if (!commits.length) continue;
+      // Look up exactly the fetched SHAs. A capped sample of stored rows misses
+      // older commits once a project has many, and one stored SHA in the batch
+      // makes the unique index reject the whole insert.
+      const { data: existing, error: lookupError } = await supabaseAdmin
         .from("project_activity")
         .select("metadata")
         .eq("project_id", data.projectId)
         .eq("kind", "github_commit")
-        .limit(100);
+        .in(
+          "metadata->>external_id",
+          commits.map((commit) => commit.sha),
+        );
+      if (lookupError) throw lookupError;
       const existingShas = new Set(
         (existing ?? [])
           .map((row) => (row.metadata as { external_id?: string } | null)?.external_id)
@@ -206,6 +214,8 @@ export const syncGithubProjectActivity = createServerFn({ method: "POST" })
           created_at: commit.committed_at,
         })),
       );
+      // 23505: a concurrent sync stored the same commits first — nothing lost.
+      if (error && error.code !== "23505") throw error;
       if (!error) added += fresh.length;
     }
     return { added, checked };

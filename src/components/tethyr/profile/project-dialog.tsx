@@ -4,7 +4,6 @@ import { Camera, Check, Github, Loader2, Search as SearchIcon, X } from "lucide-
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
-import { supabasePending } from "@/lib/supabase-pending-schema";
 import { validateImageFile, isSafeUrl } from "@/lib/validators";
 import {
   fetchRepoCommitActivityServer,
@@ -369,7 +368,7 @@ export function ProjectDialog({
     // yet, so it's written through the pending-schema handle. Best-effort: the
     // project itself is already saved.
     if (projectId) {
-      await supabasePending
+      await supabase
         .from("projects")
         .update({ allow_forks: allowForks, ai_assisted: aiAssisted })
         .eq("id", projectId);

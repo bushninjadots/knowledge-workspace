@@ -8,8 +8,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 
 const safeFrom = vi.fn();
-vi.mock("@/lib/supabase-pending-schema", () => ({
-  supabasePending: {
+vi.mock("@/integrations/supabase/client", () => ({
+  supabase: {
     from: (...a: unknown[]) => safeFrom(...a),
   },
 }));

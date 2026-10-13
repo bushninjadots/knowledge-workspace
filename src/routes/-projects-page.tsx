@@ -2,7 +2,6 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react"
 import { notFound, useParams, useNavigate, useSearch } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { supabasePending } from "@/lib/supabase-pending-schema";
 
 const sb = supabase;
 import { useDominantColor, withAlpha } from "@/lib/dominant-color";
@@ -450,19 +449,18 @@ export function ProjectPage() {
       let aiTagCount = 0;
       let aiUserTagged = false;
       {
-        const { data: countRes, error: countErr } = await supabasePending.rpc(
-          "project_ai_tag_count",
-          { p_project_id: id },
-        );
+        const { data: countRes, error: countErr } = await supabase.rpc("project_ai_tag_count", {
+          p_project_id: id,
+        });
         if (!countErr) aiTagCount = (countRes as number) ?? 0;
         // `project_ai_user_tagged` is granted to `authenticated` only (anon is
         // explicitly revoked in 20261001130000), so calling it while signed out
         // is a guaranteed 401. Only ask when there is a session.
         const {
           data: { session },
-        } = await supabasePending.auth.getSession();
+        } = await supabase.auth.getSession();
         if (session) {
-          const { data: taggedRes, error: taggedErr } = await supabasePending.rpc(
+          const { data: taggedRes, error: taggedErr } = await supabase.rpc(
             "project_ai_user_tagged",
             { p_project_id: id },
           );

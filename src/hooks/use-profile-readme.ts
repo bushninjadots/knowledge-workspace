@@ -4,10 +4,11 @@
 // it in either place updates both — including where it came from on GitHub
 // (`profiles.readme_source`), which makes "Sync from GitHub" possible.
 
+import { supabase } from "@/integrations/supabase/client";
+import type { TablesUpdate } from "@/integrations/supabase/types";
 import { useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { supabasePending } from "@/lib/supabase-pending-schema";
 import { friendlyError } from "@/lib/error-message";
 
 export type ReadmeSource = { repo: string; synced_at: string | null };
@@ -32,7 +33,7 @@ export function useProfileReadme(profileId: string | null) {
     queryKey: profileReadmeKey(profileId),
     queryFn: async (): Promise<ProfileReadme | null> => {
       if (!profileId) return null;
-      const { data } = await supabasePending
+      const { data } = await supabase
         .from("profiles")
         .select("readme, social_links, readme_source")
         .eq("id", profileId)
@@ -59,13 +60,13 @@ export function useSaveProfileReadme(profileId: string | null) {
       options: { source?: string | null; message?: string } = {},
     ): Promise<boolean> => {
       if (!profileId) return false;
-      const patch: Record<string, unknown> = { readme: content.trim() || null };
+      const patch: TablesUpdate<"profiles"> = { readme: content.trim() || null };
       if (options.source !== undefined) {
         patch.readme_source = options.source
           ? { repo: options.source, synced_at: new Date().toISOString() }
           : null;
       }
-      const { error } = await supabasePending.from("profiles").update(patch).eq("id", profileId);
+      const { error } = await supabase.from("profiles").update(patch).eq("id", profileId);
       if (error) {
         toast.error(friendlyError(error));
         return false;
@@ -83,7 +84,7 @@ export function useStopReadmeSync(profileId: string | null) {
   const queryClient = useQueryClient();
   return useCallback(async () => {
     if (!profileId) return;
-    const { error } = await supabasePending
+    const { error } = await supabase
       .from("profiles")
       .update({ readme_source: null })
       .eq("id", profileId);

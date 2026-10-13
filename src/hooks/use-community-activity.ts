@@ -1,5 +1,5 @@
+import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { supabasePending } from "@/lib/supabase-pending-schema";
 
 export type ActivityPoint = {
   date: string; // YYYY-MM-DD
@@ -35,7 +35,7 @@ export function useCommunityActivity() {
       since.setDate(since.getDate() - (DAYS - 1));
       const sinceIso = since.toISOString();
 
-      const { data, error } = await supabasePending.rpc("community_daily_activity", {
+      const { data, error } = await supabase.rpc("community_daily_activity", {
         p_since: sinceIso,
         p_days: DAYS,
       });

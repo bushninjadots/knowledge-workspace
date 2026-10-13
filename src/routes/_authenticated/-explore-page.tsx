@@ -36,7 +36,6 @@ import { AvailabilityChip } from "@/components/tethyr/availability-chip";
 import { SegmentedControl } from "@/components/tethyr/segmented-control";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { supabase } from "@/integrations/supabase/client";
-import { supabasePending } from "@/lib/supabase-pending-schema";
 import { isColumnSchemaError } from "@/lib/supabase-errors";
 import { useCurrentUser, useSkillsCatalog } from "@/hooks/use-current-user";
 import {
@@ -496,7 +495,7 @@ export function ExplorePage() {
       // the earlier .in(...).limit(2000) fetch shipped up to 2000 rows to the
       // client just to count them, and a PostgREST count() select is rejected
       // by stacks with aggregates disabled (PGRST123).
-      const { data, error } = await supabasePending.rpc("explore_open_role_counts", {
+      const { data, error } = await supabase.rpc("explore_open_role_counts", {
         p_project_ids: ids,
       });
       if (error) throw error;
@@ -520,7 +519,7 @@ export function ExplorePage() {
       // Distinct organizers server-side — the old .limit(2000) row pull only
       // ever needed the organizer_id set, and a count() select breaks on
       // stacks with PostgREST aggregates disabled.
-      const { data, error } = await supabasePending.rpc("explore_session_host_ids", {
+      const { data, error } = await supabase.rpc("explore_session_host_ids", {
         p_profile_ids: ids,
         p_now: new Date().toISOString(),
       });

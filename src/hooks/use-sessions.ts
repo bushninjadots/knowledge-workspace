@@ -1,5 +1,5 @@
+import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabasePending } from "@/lib/supabase-pending-schema";
 import { useCurrentUser } from "./use-current-user";
 
 /* ───────── Types ───────── */
@@ -110,7 +110,7 @@ const sessionKeys = {
   stats: (userId: string) => [...sessionKeys.all, "stats", userId] as const,
 };
 
-const sb = supabasePending;
+const sb = supabase;
 
 /* ───────── Fetchers ───────── */
 

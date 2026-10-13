@@ -3,9 +3,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { ProjectPresentationPreset } from "@/lib/project-presentation";
 import type { GithubDisplay } from "@/lib/github";
-import { supabasePending } from "@/lib/supabase-pending-schema";
 
-const sb = supabasePending;
+const sb = supabase;
 
 // ============================================================
 // Types
@@ -819,7 +818,7 @@ export function useProjectActivity(projectId: string) {
       const actorIds = [...new Set(rows.map((r) => r.actor_id).filter((a): a is string => !!a))];
       const { data: profiles } =
         actorIds.length > 0
-          ? await supabasePending
+          ? await supabase
               .from("profiles")
               .select("id, display_name, handle, avatar_url")
               .in("id", actorIds)
@@ -997,7 +996,7 @@ export function useUpdateGithubDisplay() {
       // github_display ships in 20260930140000 and isn't in the generated
       // Database types yet — routed through the pending-schema handle until it
       // lands there (same pattern as the other post-generation columns).
-      const { error } = await supabasePending
+      const { error } = await supabase
         .from("projects")
         .update({ github_display: input.display })
         .eq("id", input.projectId);
@@ -1126,7 +1125,7 @@ export function useToggleAiTag() {
           data: { user },
         } = await supabase.auth.getUser();
         if (!user) throw new Error("Not authenticated");
-        const { error } = await supabasePending
+        const { error } = await supabase
           .from("project_ai_tags")
           .insert({ project_id: input.projectId, tagger_id: user.id });
         if (error) throw error;
@@ -1135,7 +1134,7 @@ export function useToggleAiTag() {
           data: { user },
         } = await supabase.auth.getUser();
         if (!user) throw new Error("Not authenticated");
-        const { error } = await supabasePending
+        const { error } = await supabase
           .from("project_ai_tags")
           .delete()
           .eq("project_id", input.projectId)
@@ -1162,7 +1161,7 @@ export function useForkProject() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { projectId: string }) => {
-      const { data, error } = await supabasePending.rpc("fork_project", {
+      const { data, error } = await supabase.rpc("fork_project", {
         p_project_id: input.projectId,
       });
       if (error) throw error;

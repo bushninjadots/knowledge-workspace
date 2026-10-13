@@ -45,47 +45,77 @@ function sanitizeUrl(raw: string): string | null {
   return null;
 }
 
+// Placeholder delimiters (Unicode private-use characters). They never survive
+// into the output: both are stripped from input, so an author cannot forge a
+// stored placeholder.
+const SLOT_OPEN = "\uE000";
+const SLOT_CLOSE = "\uE001";
+const SLOT_PATTERN = /\uE000(\d+)\uE001/g;
+
 /**
  * Render block markdown to safe HTML. Supports headings, bold, italic, inline
  * code, fenced code blocks, links, images, lists, horizontal rules, and
- * paragraphs. Images are handled before links so `![alt](src)` is not consumed
- * by the link rule.
+ * paragraphs.
+ *
+ * Code spans and every link/image URL are swapped for opaque placeholders
+ * before inline formatting runs, then restored at the end. Formatting rules
+ * therefore never see — or inject markup into — a code body or an attribute
+ * value (a URL containing `*x*` keeps its literal `href`).
  */
 export function blockMarkdownToHtml(md: string): string {
-  let html = escapeHtml(md);
+  const slots: string[] = [];
+  // The (escaped) markdown each slot replaced, so a code span that sits inside
+  // a URL or alt text can be put back literally instead of as markup.
+  const sources: string[] = [];
+  const stash = (fragment: string, source = "") => {
+    sources.push(source);
+    return `${SLOT_OPEN}${slots.push(fragment) - 1}${SLOT_CLOSE}`;
+  };
+  const literal = (value: string) =>
+    value.replace(SLOT_PATTERN, (_match, index: string) => sources[Number(index)] ?? "");
+
+  let html = escapeHtml(md.replace(/[\uE000\uE001]/g, ""));
 
   // Code blocks (triple backtick) — the escaped body is safe inside <pre>.
-  html = html.replace(
-    /```(\w*)\n([\s\S]*?)```/g,
-    '<pre class="rounded-lg bg-surface-sunken p-3 text-xs font-mono overflow-x-auto"><code>$2</code></pre>',
+  html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_match, _lang: string, body: string) =>
+    stash(
+      `<pre class="rounded-lg bg-surface-sunken p-3 text-xs font-mono overflow-x-auto"><code>${body}</code></pre>`,
+    ),
   );
   // Inline code
-  html = html.replace(
-    /`([^`]+)`/g,
-    '<code class="rounded bg-surface-sunken px-1 py-0.5 text-xs font-mono">$1</code>',
+  html = html.replace(/`([^`]+)`/g, (match: string, body: string) =>
+    stash(
+      `<code class="rounded bg-surface-sunken px-1 py-0.5 text-xs font-mono">${body}</code>`,
+      match,
+    ),
   );
+
+  // Images (before links so `![alt](url)` is not captured by the link rule).
+  // A blocked image is dropped entirely (renders nothing, not the raw markdown).
+  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_match, alt: string, src: string) => {
+    const url = sanitizeUrl(literal(src));
+    if (!url) return "";
+    // `alt` is already escaped; stash the whole tag so formatting skips it.
+    return stash(`<img src="${url}" alt="${literal(alt)}" class="rounded-lg max-w-full" />`);
+  });
+
+  // Links — text and URL are already escaped; the URL additionally passed the
+  // scheme allowlist, so `href` cannot break out or run script. Only the opening
+  // tag is stashed, so the link text still gets bold/italic. A blocked URL
+  // degrades to plain escaped text (the raw `javascript:` payload never reaches
+  // the DOM).
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_match, text: string, url: string) => {
+    const safeUrl = sanitizeUrl(literal(url));
+    if (!safeUrl) return text;
+    return `${stash(
+      `<a href="${safeUrl}" class="text-primary underline" target="_blank" rel="noopener noreferrer">`,
+    )}${text}${stash("</a>")}`;
+  });
+
   // Bold
   html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
   // Italic
   html = html.replace(/\*([^*]+)\*/g, "<em>$1</em>");
-
-  // Images (before links so `![alt](url)` is not captured by the link rule).
-  // A blocked image is dropped entirely (renders nothing, not the raw markdown).
-  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt: string, src: string) => {
-    const url = sanitizeUrl(src);
-    if (!url) return "";
-    return `<img src="${url}" alt="${escapeHtml(alt)}" class="rounded-lg max-w-full" />`;
-  });
-
-  // Links — text and URL are already escaped; the URL additionally passed the
-  // scheme allowlist, so `href` cannot break out or run script. A blocked URL
-  // degrades to plain escaped text (the markdown syntax is dropped, so the raw
-  // `javascript:` payload never reaches the DOM).
-  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text: string, url: string) => {
-    const safeUrl = sanitizeUrl(url);
-    if (!safeUrl) return text;
-    return `<a href="${safeUrl}" class="text-primary underline" target="_blank" rel="noopener noreferrer">${text}</a>`;
-  });
 
   // Headings
   html = html
@@ -107,6 +137,8 @@ export function blockMarkdownToHtml(md: string): string {
     .replace(/\n\n/g, "</p><p class='text-sm leading-relaxed text-foreground mb-3'>")
     // Single newlines → <br> within paragraphs
     .replace(/\n/g, "<br />");
+
+  html = html.replace(SLOT_PATTERN, (_match, index: string) => slots[Number(index)] ?? "");
 
   // Wrap in paragraph if not already
   if (!html.startsWith("<")) {

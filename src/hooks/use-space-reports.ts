@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { supabasePending } from "@/lib/supabase-pending-schema";
 import type { PostReportRow, ModerationLogRow } from "@/hooks/community-space-types";
 
 const sb = supabase;
@@ -25,7 +24,7 @@ export function useSpaceReportedPostCounts(spaceId: string) {
       // row (the old .limit(1000) fetch shipped up to 1000 rows just to count
       // per post, and a PostgREST count() select breaks on stacks with
       // aggregates disabled).
-      const { data, error } = await supabasePending.rpc("space_reported_post_counts", {
+      const { data, error } = await supabase.rpc("space_reported_post_counts", {
         p_space_id: spaceId,
       });
 

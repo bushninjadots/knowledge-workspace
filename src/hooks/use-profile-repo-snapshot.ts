@@ -10,8 +10,8 @@
 // Everything comes from the cached snapshot written at link/import/sync time;
 // a profile view never calls GitHub. Repos without a cached history simply
 // don't contribute weeks — the graph shows what's known, not a guess.
+import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { supabasePending } from "@/lib/supabase-pending-schema";
 import { mergeCommitActivity } from "@/lib/github";
 import type { CommitActivityWeek } from "@/lib/github";
 
@@ -62,7 +62,7 @@ export function useProfileRepoSnapshot(projectIds: string[] | null | undefined) 
       }
       // The safe view filters by project visibility (security_invoker + RLS),
       // so this read leaks nothing beyond what the caller already resolved.
-      const { data, error } = await supabasePending
+      const { data, error } = await supabase
         .from("project_repositories_safe")
         .select("project_id, metadata")
         .in("project_id", ids);

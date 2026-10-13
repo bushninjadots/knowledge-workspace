@@ -20,10 +20,39 @@ export async function deleteUserAccount(userId: string): Promise<{ ok: true }> {
   return { ok: true as const };
 }
 
+/** How recently the person must have signed in to delete their account. */
+export const RECENT_SIGN_IN_SECONDS = 10 * 60;
+
+/**
+ * When the session's holder last actually authenticated, in epoch seconds.
+ * Supabase records each sign-in method in the JWT's `amr` claim with the time
+ * it happened; unlike `iat`, that timestamp survives token refreshes, so a
+ * session left open for days still reads as an old sign-in.
+ */
+export function lastSignInAt(claims: { amr?: unknown }): number | null {
+  if (!Array.isArray(claims.amr)) return null;
+  const times = claims.amr
+    .map((entry) => (entry as { timestamp?: unknown } | null)?.timestamp)
+    .filter((time): time is number => typeof time === "number");
+  return times.length ? Math.max(...times) : null;
+}
+
+export function signedInRecently(claims: { amr?: unknown }, nowSeconds = Date.now() / 1000) {
+  const at = lastSignInAt(claims);
+  return at !== null && nowSeconds - at <= RECENT_SIGN_IN_SECONDS;
+}
+
 /**
  * Permanently delete the signed-in user's account and all of their data.
- * Destructive and irreversible — the caller must confirm before invoking.
+ * Destructive and irreversible — the caller must confirm before invoking, and
+ * the session must come from a sign-in in the last few minutes, so a stolen or
+ * left-open session cannot wipe the account.
  */
 export const deleteAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => deleteUserAccount(context.userId));
+  .handler(async ({ context }) => {
+    if (!signedInRecently(context.claims as { amr?: unknown })) {
+      return { ok: false as const, reason: "reauth" as const };
+    }
+    return deleteUserAccount(context.userId);
+  });

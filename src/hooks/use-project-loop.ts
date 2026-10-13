@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { supabasePending } from "@/lib/supabase-pending-schema";
 import { isColumnSchemaError } from "@/lib/supabase-errors";
 import type {
   CollaborationBrief,
@@ -154,7 +153,7 @@ export function useMarkProjectVisited() {
       // Visiting and watching are separate choices. A visit only updates the
       // private last-seen cursor; the explicit Watch action controls the
       // member's return shelf.
-      const { error } = await supabasePending.from("project_visits").upsert({
+      const { error } = await supabase.from("project_visits").upsert({
         project_id: projectId,
         user_id: user.id,
         last_seen_at: new Date().toISOString(),
@@ -229,7 +228,7 @@ export function useProjectReturnChanges(limit = 8) {
         .limit(20);
       if (watcherError || !watched?.length) return [];
       const projectIds = watched.map((row) => row.project_id);
-      const { data: visits } = await supabasePending
+      const { data: visits } = await supabase
         .from("project_visits")
         .select("project_id, last_seen_at")
         .eq("user_id", user.id)
@@ -290,7 +289,7 @@ export function useRecognizeProjectActivity() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
-      const { data, error } = await supabasePending
+      const { data, error } = await supabase
         .from("project_recognitions")
         .insert({
           project_activity_id: input.projectActivityId,

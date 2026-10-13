@@ -94,4 +94,31 @@ describe("blockMarkdownToHtml", () => {
     expect(html).toContain("<img ");
     expect(html).not.toContain("!<a ");
   });
+
+  it("keeps formatting markup out of link and image URLs", () => {
+    const html = blockMarkdownToHtml("[a](https://ex.com/*x*/) ![b](https://ex.com/**y**.png)");
+    expect(html).toContain('href="https://ex.com/*x*/"');
+    expect(html).toContain('src="https://ex.com/**y**.png"');
+    expect(html).not.toContain("<em>");
+    expect(html).not.toContain("<strong>");
+  });
+
+  it("does not let a backtick in a URL close the href attribute", () => {
+    const html = blockMarkdownToHtml("[a](https://ex.com/`x`) and `code`");
+    expect(html).toContain('href="https://ex.com/`x`"');
+    expect(html).toContain(">code</code>");
+    expect(html.match(/<code/g)).toHaveLength(1);
+  });
+
+  it("leaves code bodies unformatted but still formats link text", () => {
+    const html = blockMarkdownToHtml("`a *b* c`\n\n[**bold**](https://ex.com)");
+    expect(html).toContain(">a *b* c</code>");
+    expect(html).toContain("<strong>bold</strong></a>");
+  });
+
+  it("strips placeholder delimiter characters from input", () => {
+    const html = blockMarkdownToHtml("x\uE0000\uE001y `z`");
+    expect(html).not.toMatch(/[\uE000\uE001]/);
+    expect(html).toContain("x0y");
+  });
 });

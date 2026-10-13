@@ -5,7 +5,6 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { supabasePending } from "@/lib/supabase-pending-schema";
 import type { Json } from "@/integrations/supabase/types";
 import { deepMergeTokens } from "@/lib/theme-tokens";
 import { normalizeStudioConfig } from "@/lib/studio-config";
@@ -142,7 +141,7 @@ export function usePage({ ownerId, ownerType, includeDraft = false }: FetchPageP
       // RLS. Each version snapshots layout, theme, and appearance config, so
       // visitors see exactly what was published — never the autosaved draft.
       const versionQuery = (columns: string) =>
-        supabasePending
+        supabase
           .from("page_versions")
           .select(columns)
           .eq("page_id", pageRow.id)

@@ -34,7 +34,6 @@ import {
   useGithubConnection,
 } from "@/hooks/use-github";
 import { useProfileReadme } from "@/hooks/use-profile-readme";
-import { supabasePending } from "@/lib/supabase-pending-schema";
 import { cn } from "@/lib/utils";
 import { syncedAgo } from "./github-sync-button";
 import { ProfileReadmeGitHub } from "./profile-readme-github";
@@ -155,13 +154,13 @@ function GitHubUses() {
     queryKey: ["github-uses", userId],
     enabled: !!userId,
     queryFn: async () => {
-      const { data: projects } = await supabasePending
+      const { data: projects } = await supabase
         .from("projects")
         .select("id, title")
         .eq("profile_id", userId as string);
       const ids = ((projects ?? []) as Array<{ id: string; title: string }>).map((p) => p.id);
       const { data: repos } = ids.length
-        ? await supabasePending
+        ? await supabase
             .from("project_repositories_safe")
             .select("project_id")
             .in("project_id", ids)
@@ -170,7 +169,7 @@ function GitHubUses() {
       const withRepo = new Set(
         ((repos ?? []) as Array<{ project_id: string }>).map((r) => r.project_id),
       );
-      const { count: notes } = await supabasePending
+      const { count: notes } = await supabase
         .from("library_items")
         .select("id", { count: "exact", head: true })
         .eq("user_id", userId as string)

@@ -1,6 +1,6 @@
 # Known Issues
 
-> Updated 2026-08-06. The Phase 1 stabilization and Phase 2 coherence passes are complete; entries below are historical resolutions or remaining operational risks.
+> Updated 2026-10-13. The Phase 1 stabilization and Phase 2 coherence passes are complete; entries below are historical resolutions or remaining operational risks.
 
 ## 1. Infinite recursion in RLS policies for `sessions` (RESOLVED)
 
@@ -16,16 +16,17 @@
 
 ---
 
-## 3. Migration history out of sync with remote DB (ACTIVE RISK)
+## 3. Migration history out of sync with remote DB (RESOLVED — guarded)
 
-**Status:** Active. This failure mode has recurred twice — first documented below, then again
-on 2026-09-11 with more damage (see the
-[hosted drift audit](./TETHYR_HOSTED_DRIFT_AUDIT_2026-09-11.md)). Two migrations
-(`20260705022445`, `20260706100000`) are recorded as applied on hosted but their objects are
-absent — including the `connections_immutable` trigger and the `skill-proofs` SELECT policy.
-The root cause is out-of-order application of agent-generated migrations whose timestamps
-don't match the order they were actually pushed. See the audit's "Untrustworthy migration
-history rows" section for the specific row set that must not be trusted.
+**Status:** Resolved in code by `20260912130000_repair_hosted_drift_findings.sql`, which
+restates every object the [hosted drift audit](./TETHYR_HOSTED_DRIFT_AUDIT_2026-09-11.md)
+found missing (F1–F4: the `skill-proofs` SELECT policy, the `connections_immutable` trigger,
+and the rest). Confirm it on hosted with `npm run check:db-drift` before launch — this repo
+cannot see hosted state.
+
+**Background:** two migrations (`20260705022445`, `20260706100000`) were recorded as applied
+on hosted while their objects were absent. The root cause was out-of-order application of
+agent-generated migrations whose timestamps didn't match the order they were pushed.
 
 **Guards now in place:**
 
@@ -41,9 +42,9 @@ history rows" section for the specific row set that must not be trusted.
 rather than no-op'ing. Avoid `IF NOT EXISTS` / `IF EXISTS` and drop-then-recreate patterns —
 they are silently order-dependent, which is exactly how this drift went undetected.
 
-**Until resolved:** any tooling that trusts `supabase_migrations.schema_migrations` (including
-`db push`) will skip the two affected migrations. Only a new forward migration can restore
-their objects.
+**If drift recurs:** tooling that trusts `supabase_migrations.schema_migrations` (including
+`db push`) skips migrations already marked applied. Only a new forward migration can restore
+missing objects — which is what the repair migration above does.
 
 ---
 

@@ -2,7 +2,6 @@
 // Every page reads from the ["current-user"] query — mutations invalidate
 // this key and the whole app re-syncs automatically.
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabasePending } from "@/lib/supabase-pending-schema";
 import { supabase } from "@/integrations/supabase/client";
 import { backgroundImageSignedUrl, type ProfileBackground } from "@/lib/background-themes";
 import { isColumnSchemaError } from "@/lib/supabase-errors";
@@ -105,7 +104,7 @@ async function fetchProfile(userId: string) {
   // Try full column set first; fall back to basic columns if a column is missing.
   let lastError: { message?: string | null; code?: string | null } | null = null;
   for (const cols of [`${PROFILE_COLS_BASIC}, ${PROFILE_COLS_EXTENDED}`, PROFILE_COLS_BASIC]) {
-    const { data, error } = await supabasePending
+    const { data, error } = await supabase
       .from("profiles")
       .select(cols)
       .eq("id", userId)
@@ -182,17 +181,12 @@ async function fetchCurrentUser(): Promise<CurrentUserData | null> {
       ),
       safeQuery(
         "learn skills",
-        () =>
-          supabasePending.from("profile_skills_learn").select("skill_id").eq("profile_id", userId),
+        () => supabase.from("profile_skills_learn").select("skill_id").eq("profile_id", userId),
         { data: [], error: null },
       ),
       safeQuery(
         "wishlist skills",
-        () =>
-          supabasePending
-            .from("profile_skills_wishlist")
-            .select("skill_id")
-            .eq("profile_id", userId),
+        () => supabase.from("profile_skills_wishlist").select("skill_id").eq("profile_id", userId),
         { data: [], error: null },
       ),
       safeQuery(
@@ -335,7 +329,7 @@ export function useSkillsCatalog() {
   return useQuery({
     queryKey: ["skills"],
     queryFn: async () => {
-      const { data, error } = await supabasePending
+      const { data, error } = await supabase
         .from("skills")
         .select("*")
         .order("category")
@@ -351,7 +345,7 @@ export function useTrendingSkills() {
   return useQuery({
     queryKey: ["trending-skills"],
     queryFn: async (): Promise<DiscoverableSkill[]> => {
-      const { data, error } = await supabasePending.rpc("trending_skills", { p_limit: 100 });
+      const { data, error } = await supabase.rpc("trending_skills", { p_limit: 100 });
       if (error) throw error;
 
       return (data ?? []).map(
@@ -397,7 +391,7 @@ export function useSkillDirectoryStats() {
   return useQuery({
     queryKey: ["skill-directory-stats"],
     queryFn: async () => {
-      const { data, error } = await supabasePending.rpc("skill_directory_stats");
+      const { data, error } = await supabase.rpc("skill_directory_stats");
       if (error) throw error;
       const stats: Record<string, SkillActivityCounts> = {};
       for (const row of (data ?? []) as {

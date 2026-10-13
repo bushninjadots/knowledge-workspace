@@ -12,8 +12,8 @@
 // Project-mode rendering keeps the shared safe block renderer (escapes quotes
 // and rejects javascript: URLs).
 
+import { supabase } from "@/integrations/supabase/client";
 import { useCallback, useEffect, useState } from "react";
-import { supabasePending } from "@/lib/supabase-pending-schema";
 import { useQuery } from "@tanstack/react-query";
 import { Pencil } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -44,7 +44,7 @@ function ProjectAboutBlock({ config, context }: BlockProps) {
   const projectQuery = useQuery({
     queryKey: ["project-about", ownerId],
     queryFn: async (): Promise<ProjectAboutData | null> => {
-      const { data } = await supabasePending
+      const { data } = await supabase
         .from("projects")
         .select("description, vision, readme")
         .eq("id", ownerId)

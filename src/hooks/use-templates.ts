@@ -13,7 +13,6 @@
 //   • useDeleteTemplate  — unpublish (is_template = false; the layout stays).
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabasePending } from "@/lib/supabase-pending-schema";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { sanitizeTemplateSections } from "@/lib/template-apply";
@@ -115,7 +114,7 @@ async function joinCreators(
     ...new Set(templates.map((t) => t.createdBy).filter((id): id is string => !!id)),
   ];
   if (creatorIds.length > 0) {
-    const { data: profiles, error } = await supabasePending
+    const { data: profiles, error } = await supabase
       .from("profiles")
       .select("id, handle, display_name")
       .in("id", creatorIds);
@@ -132,7 +131,7 @@ async function joinCreators(
   // Batch-join star status for the current member.
   if (currentUserId && templates.length > 0) {
     const layoutIds = templates.map((t) => t.id);
-    const { data: starRows } = await supabasePending
+    const { data: starRows } = await supabase
       .from("template_stars")
       .select("layout_id")
       .eq("user_id", currentUserId)
@@ -166,7 +165,7 @@ export function usePublicTemplates({ search, sort = "newest" }: BrowseParams = {
       const { data: auth } = await supabase.auth.getUser();
       const currentUserId = auth.user?.id ?? null;
 
-      let query = supabasePending
+      let query = supabase
         .from("layouts")
         .select(TEMPLATE_SELECT)
         .eq("is_template", true)
@@ -202,7 +201,7 @@ export function useMyTemplates(enabled: boolean) {
       const currentUserId = auth.user?.id;
       if (!currentUserId) return [];
 
-      const { data, error } = await supabasePending
+      const { data, error } = await supabase
         .from("layouts")
         .select(TEMPLATE_SELECT)
         .eq("created_by", currentUserId)
@@ -215,7 +214,7 @@ export function useMyTemplates(enabled: boolean) {
 
       // Join fork parents for the rows that are forks.
       const childIds = templates.map((t) => t.id);
-      const { data: forkRows, error: forkError } = await supabasePending
+      const { data: forkRows, error: forkError } = await supabase
         .from("forks")
         .select("parent_layout_id, child_layout_id")
         .in("child_layout_id", childIds);
@@ -256,7 +255,7 @@ export function useForkTemplate() {
       if (!user) throw new Error("Sign in to save a template.");
 
       // 1. Copy the template's structure into a new owned layout.
-      const { data: source, error: sourceError } = await supabasePending
+      const { data: source, error: sourceError } = await supabase
         .from("layouts")
         .select("name, description, category, sections, theme_id")
         .eq("id", templateId)
@@ -265,7 +264,7 @@ export function useForkTemplate() {
       if (sourceError) throw sourceError;
       if (!source) throw new Error("That template no longer exists.");
 
-      const { data: fork, error: insertError } = await supabasePending
+      const { data: fork, error: insertError } = await supabase
         .from("layouts")
         .insert({
           name: `${source.name === templateName ? source.name : templateName} (fork)`.slice(0, 80),
@@ -281,7 +280,7 @@ export function useForkTemplate() {
       if (insertError) throw insertError;
 
       // 2. Record the fork relationship.
-      const { error: forkError } = await supabasePending.from("forks").insert({
+      const { error: forkError } = await supabase.from("forks").insert({
         parent_layout_id: templateId,
         child_layout_id: fork.id,
         creator_id: user.id,
@@ -291,7 +290,7 @@ export function useForkTemplate() {
       // 3. Bump the parent's fork count. Non-critical — a missed count never
       // fails an otherwise-successful fork.
       try {
-        await supabasePending.rpc("increment_fork_count", { layout_id: templateId });
+        await supabase.rpc("increment_fork_count", { layout_id: templateId });
       } catch {
         /* counter is advisory */
       }
@@ -327,7 +326,7 @@ export function usePublishTemplate() {
 
   return useMutation({
     mutationFn: async ({ layoutId, name, description, category }: PublishTemplateParams) => {
-      const { error } = await supabasePending
+      const { error } = await supabase
         .from("layouts")
         .update({
           is_template: false,
@@ -354,7 +353,7 @@ export function useDeleteTemplate() {
 
   return useMutation({
     mutationFn: async ({ layoutId }: { layoutId: string }) => {
-      const { error } = await supabasePending
+      const { error } = await supabase
         .from("layouts")
         .update({ is_template: false, submission_status: "approved" })
         .eq("id", layoutId);
@@ -381,7 +380,7 @@ export function useToggleTemplateStar() {
 
   return useMutation({
     mutationFn: async ({ templateId }: { templateId: string }) => {
-      const { data, error } = await supabasePending.rpc("toggle_template_star", {
+      const { data, error } = await supabase.rpc("toggle_template_star", {
         target_layout_id: templateId,
       });
       if (error) throw error;
@@ -406,7 +405,7 @@ export function useToggleTemplateStar() {
  * subscription to subscribe to.
  */
 export async function fetchTemplateSections(templateId: string) {
-  const { data, error } = await supabasePending
+  const { data, error } = await supabase
     .from("layouts")
     .select("sections, theme_id, name")
     .eq("id", templateId)

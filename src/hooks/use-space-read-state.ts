@@ -2,7 +2,6 @@ import { useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { supabasePending } from "@/lib/supabase-pending-schema";
 
 const SPACE_READ_KEY = (spaceId: string) => ["space-read", spaceId] as const;
 
@@ -23,7 +22,7 @@ export function useSpaceReadState(spaceId: string | null) {
     queryKey: SPACE_READ_KEY(spaceId ?? ""),
     queryFn: async () => {
       if (!spaceId || !meId) return null;
-      const { data, error } = await supabasePending
+      const { data, error } = await supabase
         .from("community_space_members")
         .select("last_read_at")
         .eq("space_id", spaceId)

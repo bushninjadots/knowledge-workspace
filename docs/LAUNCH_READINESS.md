@@ -1,6 +1,6 @@
 # Tethyr Launch Readiness Checklist
 
-> Created: August 20, 2026
+> Created: August 20, 2026 · Reviewed: October 13, 2026 (see `TETHYR_SITE_AUDIT_2026-10-13.md`)
 
 ## Pre-Launch Blockers
 
@@ -13,9 +13,16 @@
   ```bash
   npx supabase secrets set SITE_URL=https://your-production-domain.com
   ```
-- [ ] **Confirm old API keys from commit 784841a are rotated** in Supabase dashboard (Settings → API)
+- [x] ~~Confirm old API keys from commit 784841a are rotated~~ — not needed: that commit only held publishable/anon keys (2026-10-13 audit)
+- [ ] **Set `VITE_PUBLIC_SITE_URL`** to the production origin (currently `http://localhost:5173`). Until `SITE_URL` is set, `fetch-project-preview` falls back to CORS origin `https://tethyr.com`
+- [ ] **App-level rate limits** on posts, messages, comments, connections (`BEFORE INSERT` triggers) and **enforce confirm-email** in hosted Auth
+- [ ] **Encrypt GitHub tokens at rest** with Supabase Vault (tracker #12)
+- [ ] Run `check:db-drift` against hosted, then `build:prod` → `serve:prod` → `qa-audit` / `qa-csp --require-enforced`
 
 ## Already Done
+
+- [x] Account deletion requires a sign-in from the last 10 minutes (password re-entry or fresh OAuth)
+- [x] Markdown block renderer tokenizes code/URLs before formatting
 
 - [x] Sentry error tracking integrated
 - [x] Privacy policy page (`/privacy`)
@@ -40,10 +47,9 @@
 
 - [ ] Add `Sentry.withProfiler` to root route (optional performance tracing)
 - [ ] Fix terminology in `activity-timeline.tsx` and `suggested-creators.tsx`
-- [ ] Delete dead `lovable-error-reporting.ts` file
-- [ ] Rate limiting in app layer (Supabase defaults are minimal)
-- [ ] Split `profile-sections.tsx` monolith (~1,685 lines)
-- [ ] Split `composer-bar.tsx` (~1,058 lines) and `post-card.tsx` (~1,200 lines)
+- [x] Delete dead `lovable-error-reporting.ts` file
+- [x] Split `profile-sections.tsx` monolith
+- [ ] Split `composer-bar.tsx` (~1,000 lines) and `post-card.tsx` (~960 lines); Studio files are larger still (`creation-studio.tsx` 2,046, `g-studio-surface.tsx` 1,677)
 
 ## Sentry Source Maps (Optional, Recommended)
 

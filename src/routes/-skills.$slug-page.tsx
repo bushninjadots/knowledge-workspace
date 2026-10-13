@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { supabasePending } from "@/lib/supabase-pending-schema";
 import { Link, useParams } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -154,7 +153,7 @@ function useHubStats(skillId: string | undefined) {
     enabled: Boolean(skillId),
     queryFn: async (): Promise<HubStats> => {
       const [{ data: stats }, { count: endorseCount }] = await Promise.all([
-        supabasePending.rpc("skill_directory_stats", { p_skill_ids: [skillId!] }),
+        supabase.rpc("skill_directory_stats", { p_skill_ids: [skillId!] }),
         sb
           .from("skill_endorsements")
           .select("id", { count: "exact", head: true })

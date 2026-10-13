@@ -1,5 +1,4 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabasePending } from "@/lib/supabase-pending-schema";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "./use-current-user";
 import { ilikeOrFilter, SEARCH_MIN_LENGTH } from "@/lib/search";
@@ -156,7 +155,7 @@ export function useLibraryItems(filters?: LibraryFilter) {
     enabled: !!userId,
     queryFn: async (): Promise<LibraryItem[]> => {
       if (!userId) return [];
-      let query = supabasePending
+      let query = supabase
         .from("library_items")
         .select("*")
         .eq("user_id", userId)
@@ -191,7 +190,7 @@ export function useProjectLibraryItems(projectId: string | null) {
     enabled: !!userId && !!projectId,
     queryFn: async (): Promise<LibraryItem[]> => {
       if (!userId || !projectId) return [];
-      const { data, error } = await supabasePending
+      const { data, error } = await supabase
         .from("library_items")
         .select("*")
         .eq("project_id", projectId)
@@ -213,7 +212,7 @@ export function useLibraryItem(id: string | null) {
     queryFn: async (): Promise<LibraryItemWithTags | null> => {
       if (!userId || !id) return null;
 
-      const { data: item, error } = await supabasePending
+      const { data: item, error } = await supabase
         .from("library_items")
         .select("*")
         .eq("id", id)
@@ -224,7 +223,7 @@ export function useLibraryItem(id: string | null) {
       if (!item) return null;
 
       // Fetch tags
-      const { data: tagLinks } = await supabasePending
+      const { data: tagLinks } = await supabase
         .from("library_item_tags")
         .select("tag_id, library_tags(*)")
         .eq("item_id", id);
@@ -236,7 +235,7 @@ export function useLibraryItem(id: string | null) {
       // Fetch collection
       let collection: LibraryCollection | null = null;
       if (item.collection_id) {
-        const { data: col } = await supabasePending
+        const { data: col } = await supabase
           .from("library_collections")
           .select("*")
           .eq("id", item.collection_id)
@@ -263,7 +262,7 @@ export function useCreateItem() {
       url?: string;
     }) => {
       if (!me?.userId) throw new Error("Not authenticated");
-      const { data, error } = await supabasePending
+      const { data, error } = await supabase
         .from("library_items")
         .insert({
           user_id: me.userId,
@@ -303,7 +302,7 @@ export function useUpdateItem() {
       github_source?: GithubSource | null;
     }) => {
       const { id, ...updates } = input;
-      const { data, error } = await supabasePending
+      const { data, error } = await supabase
         .from("library_items")
         .update(updates)
         .eq("id", id)
@@ -324,7 +323,7 @@ export function useDeleteItem() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabasePending.from("library_items").delete().eq("id", id);
+      const { error } = await supabase.from("library_items").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -338,10 +337,7 @@ export function useToggleFavorite() {
 
   return useMutation({
     mutationFn: async ({ id, is_favorite }: { id: string; is_favorite: boolean }) => {
-      const { error } = await supabasePending
-        .from("library_items")
-        .update({ is_favorite })
-        .eq("id", id);
+      const { error } = await supabase.from("library_items").update({ is_favorite }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -355,10 +351,7 @@ export function useTogglePin() {
 
   return useMutation({
     mutationFn: async ({ id, is_pinned }: { id: string; is_pinned: boolean }) => {
-      const { error } = await supabasePending
-        .from("library_items")
-        .update({ is_pinned })
-        .eq("id", id);
+      const { error } = await supabase.from("library_items").update({ is_pinned }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -378,10 +371,7 @@ export function useToggleCollectionShared() {
 
   return useMutation({
     mutationFn: async ({ id, shared }: { id: string; shared: boolean }) => {
-      const { error } = await supabasePending
-        .from("library_collections")
-        .update({ shared })
-        .eq("id", id);
+      const { error } = await supabase.from("library_collections").update({ shared }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -403,7 +393,7 @@ export function useSharedLibraryCollection(id: string | null) {
     staleTime: 30_000,
     queryFn: async (): Promise<{ name: string; items: LibraryItem[] } | null> => {
       if (!id) return null;
-      const { data: collection, error } = await supabasePending
+      const { data: collection, error } = await supabase
         .from("library_collections")
         .select("name")
         .eq("id", id)
@@ -411,7 +401,7 @@ export function useSharedLibraryCollection(id: string | null) {
         .maybeSingle();
       if (error) throw error;
       if (!collection) return null;
-      const { data: items, error: itemsError } = await supabasePending
+      const { data: items, error: itemsError } = await supabase
         .from("library_items")
         .select("*")
         .eq("collection_id", id)
@@ -436,7 +426,7 @@ export function useToggleShared() {
 
   return useMutation({
     mutationFn: async ({ id, shared }: { id: string; shared: boolean }) => {
-      const { error } = await supabasePending.from("library_items").update({ shared }).eq("id", id);
+      const { error } = await supabase.from("library_items").update({ shared }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: (_data, variables) => {
@@ -459,7 +449,7 @@ export function useSharedLibraryItem(id: string | null) {
     staleTime: 30_000,
     queryFn: async (): Promise<LibraryItem | null> => {
       if (!id) return null;
-      const { data, error } = await supabasePending
+      const { data, error } = await supabase
         .from("library_items")
         .select("*")
         .eq("id", id)
@@ -482,7 +472,7 @@ export function useLibraryCollections() {
     enabled: !!userId,
     queryFn: async (): Promise<LibraryCollection[]> => {
       if (!userId) return [];
-      const { data, error } = await supabasePending
+      const { data, error } = await supabase
         .from("library_collections")
         .select("*")
         .eq("user_id", userId)
@@ -507,7 +497,7 @@ export function useCreateCollection() {
       if (!me?.userId) throw new Error("Not authenticated");
 
       // Get max position
-      const { data: existing } = await supabasePending
+      const { data: existing } = await supabase
         .from("library_collections")
         .select("position")
         .eq("user_id", me.userId)
@@ -516,7 +506,7 @@ export function useCreateCollection() {
 
       const nextPosition = existing && existing.length > 0 ? existing[0].position + 1 : 0;
 
-      const { data, error } = await supabasePending
+      const { data, error } = await supabase
         .from("library_collections")
         .insert({
           user_id: me.userId,
@@ -543,12 +533,9 @@ export function useDeleteCollection() {
   return useMutation({
     mutationFn: async (id: string) => {
       // Unset collection_id on items in this collection
-      await supabasePending
-        .from("library_items")
-        .update({ collection_id: null })
-        .eq("collection_id", id);
+      await supabase.from("library_items").update({ collection_id: null }).eq("collection_id", id);
 
-      const { error } = await supabasePending.from("library_collections").delete().eq("id", id);
+      const { error } = await supabase.from("library_collections").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -569,7 +556,7 @@ export function useLibraryTags() {
     enabled: !!userId,
     queryFn: async (): Promise<LibraryTag[]> => {
       if (!userId) return [];
-      const { data, error } = await supabasePending
+      const { data, error } = await supabase
         .from("library_tags")
         .select("*")
         .eq("user_id", userId)
@@ -587,7 +574,7 @@ export function useCreateTag() {
   return useMutation({
     mutationFn: async (input: { name: string; color?: string }) => {
       if (!me?.userId) throw new Error("Not authenticated");
-      const { data, error } = await supabasePending
+      const { data, error } = await supabase
         .from("library_tags")
         .insert({
           user_id: me.userId,
@@ -610,7 +597,7 @@ export function useAddTagToItem() {
 
   return useMutation({
     mutationFn: async ({ item_id, tag_id }: { item_id: string; tag_id: string }) => {
-      const { error } = await supabasePending.from("library_item_tags").insert({ item_id, tag_id });
+      const { error } = await supabase.from("library_item_tags").insert({ item_id, tag_id });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -624,7 +611,7 @@ export function useRemoveTagFromItem() {
 
   return useMutation({
     mutationFn: async ({ item_id, tag_id }: { item_id: string; tag_id: string }) => {
-      const { error } = await supabasePending
+      const { error } = await supabase
         .from("library_item_tags")
         .delete()
         .eq("item_id", item_id)
@@ -747,7 +734,7 @@ export function useUploadLibraryFile() {
         content = input.description;
       }
 
-      const { data: item, error: itemError } = await supabasePending
+      const { data: item, error: itemError } = await supabase
         .from("library_items")
         .insert({
           user_id: me.userId,
@@ -791,7 +778,7 @@ export function useLibraryBoards() {
     enabled: !!userId,
     queryFn: async (): Promise<LibraryBoard[]> => {
       if (!userId) return [];
-      const { data, error } = await supabasePending
+      const { data, error } = await supabase
         .from("library_boards")
         .select("*")
         .eq("user_id", userId)
@@ -812,7 +799,7 @@ export function useLibraryBoard(boardId: string | null) {
     enabled: !!userId && !!boardId,
     queryFn: async (): Promise<LibraryBoardData | null> => {
       if (!userId || !boardId) return null;
-      const { data: board, error } = await supabasePending
+      const { data: board, error } = await supabase
         .from("library_boards")
         .select("*")
         .eq("id", boardId)
@@ -823,12 +810,12 @@ export function useLibraryBoard(boardId: string | null) {
 
       const [{ data: columns, error: colErr }, { data: cards, error: cardErr }] = await Promise.all(
         [
-          supabasePending
+          supabase
             .from("library_board_columns")
             .select("*")
             .eq("board_id", boardId)
             .order("position", { ascending: true }),
-          supabasePending
+          supabase
             .from("library_board_cards")
             .select("*")
             .eq("board_id", boardId)
@@ -857,7 +844,7 @@ export function useCreateBoard() {
   return useMutation({
     mutationFn: async (input: { name: string; icon?: string; color?: string }) => {
       if (!me?.userId) throw new Error("Not authenticated");
-      const { data: existing } = await supabasePending
+      const { data: existing } = await supabase
         .from("library_boards")
         .select("position")
         .eq("user_id", me.userId)
@@ -865,7 +852,7 @@ export function useCreateBoard() {
         .limit(1);
       const nextPosition = existing && existing.length > 0 ? existing[0].position + 1 : 0;
 
-      const { data: board, error } = await supabasePending
+      const { data: board, error } = await supabase
         .from("library_boards")
         .insert({
           user_id: me.userId,
@@ -879,7 +866,7 @@ export function useCreateBoard() {
       if (error) throw error;
 
       // Seed the default column set so the board is usable immediately.
-      const { error: colError } = await supabasePending.from("library_board_columns").insert(
+      const { error: colError } = await supabase.from("library_board_columns").insert(
         DEFAULT_BOARD_COLUMNS.map((column, index) => ({
           board_id: board.id,
           user_id: me.userId,
@@ -903,7 +890,7 @@ export function useUpdateBoard() {
 
   return useMutation({
     mutationFn: async ({ id, ...patch }: { id: string } & Partial<LibraryBoard>) => {
-      const { error } = await supabasePending.from("library_boards").update(patch).eq("id", id);
+      const { error } = await supabase.from("library_boards").update(patch).eq("id", id);
       if (error) throw error;
     },
     onSuccess: (_data, variables) => {
@@ -918,7 +905,7 @@ export function useDeleteBoard() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabasePending.from("library_boards").delete().eq("id", id);
+      const { error } = await supabase.from("library_boards").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -940,14 +927,14 @@ export function useCreateColumn() {
       wip_limit?: number | null;
     }) => {
       if (!me?.userId) throw new Error("Not authenticated");
-      const { data: existing } = await supabasePending
+      const { data: existing } = await supabase
         .from("library_board_columns")
         .select("position")
         .eq("board_id", input.board_id)
         .order("position", { ascending: false })
         .limit(1);
       const nextPosition = existing && existing.length > 0 ? existing[0].position + 1 : 0;
-      const { data, error } = await supabasePending
+      const { data, error } = await supabase
         .from("library_board_columns")
         .insert({
           board_id: input.board_id,
@@ -977,10 +964,7 @@ export function useUpdateColumn() {
       board_id: _board_id,
       ...patch
     }: { id: string; board_id: string } & Partial<LibraryBoardColumn>) => {
-      const { error } = await supabasePending
-        .from("library_board_columns")
-        .update(patch)
-        .eq("id", id);
+      const { error } = await supabase.from("library_board_columns").update(patch).eq("id", id);
       if (error) throw error;
     },
     onSuccess: (_data, variables) => {
@@ -994,7 +978,7 @@ export function useDeleteColumn() {
 
   return useMutation({
     mutationFn: async ({ id, board_id: _board_id }: { id: string; board_id: string }) => {
-      const { error } = await supabasePending.from("library_board_columns").delete().eq("id", id);
+      const { error } = await supabase.from("library_board_columns").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: (_data, variables) => {
@@ -1017,14 +1001,14 @@ export function useCreateCard() {
       accent?: string | null;
     }) => {
       if (!me?.userId) throw new Error("Not authenticated");
-      const { data: existing } = await supabasePending
+      const { data: existing } = await supabase
         .from("library_board_cards")
         .select("position")
         .eq("column_id", input.column_id)
         .order("position", { ascending: false })
         .limit(1);
       const nextPosition = existing && existing.length > 0 ? existing[0].position + 1 : 0;
-      const { data, error } = await supabasePending
+      const { data, error } = await supabase
         .from("library_board_cards")
         .insert({
           board_id: input.board_id,
@@ -1060,7 +1044,7 @@ export function useMoveCard() {
       column_id: string;
       position: number;
     }) => {
-      const { error } = await supabasePending
+      const { error } = await supabase
         .from("library_board_cards")
         .update({ column_id: input.column_id, position: input.position })
         .eq("id", input.id);
@@ -1081,10 +1065,7 @@ export function useUpdateCard() {
       board_id: _board_id,
       ...patch
     }: { id: string; board_id: string } & Partial<LibraryBoardCard>) => {
-      const { error } = await supabasePending
-        .from("library_board_cards")
-        .update(patch)
-        .eq("id", id);
+      const { error } = await supabase.from("library_board_cards").update(patch).eq("id", id);
       if (error) throw error;
     },
     onSuccess: (_data, variables) => {
@@ -1098,7 +1079,7 @@ export function useDeleteCard() {
 
   return useMutation({
     mutationFn: async ({ id, board_id: _board_id }: { id: string; board_id: string }) => {
-      const { error } = await supabasePending.from("library_board_cards").delete().eq("id", id);
+      const { error } = await supabase.from("library_board_cards").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: (_data, variables) => {
@@ -1120,7 +1101,7 @@ export function useLibrarySearch(query: string) {
     staleTime: 30_000,
     queryFn: async (): Promise<LibraryItem[]> => {
       if (!userId || trimmed.length < SEARCH_MIN_LENGTH) return [];
-      const { data, error } = await supabasePending
+      const { data, error } = await supabase
         .from("library_items")
         .select("*")
         .eq("user_id", userId)

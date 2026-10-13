@@ -40,7 +40,6 @@ import { timeAgo } from "@/lib/time";
 import { safeHref } from "@/lib/validators";
 import { Button } from "@/components/ui/button";
 import type { ProjectFile } from "./project-files";
-import { supabasePending } from "@/lib/supabase-pending-schema";
 
 type ActivityItem = {
   id: string;
@@ -233,7 +232,7 @@ export function ProjectActivityTab({
   const { data: recognitions = [] } = useQuery({
     queryKey: ["project-recognitions", projectId],
     queryFn: async () => {
-      const { data, error } = await supabasePending
+      const { data, error } = await supabase
         .from("project_recognitions")
         .select("project_activity_id, kind, giver_id")
         .eq("project_id", projectId);

@@ -1,3 +1,4 @@
+import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { GitBranch, ExternalLink, Star } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -5,7 +6,6 @@ import { BlockEmptyState } from "@/components/tethyr/blocks/block-empty-state";
 import { registerBlock } from "@/lib/block-registry";
 import type { BlockProps } from "@/lib/page-blocks";
 import { safeHref } from "@/lib/validators";
-import { supabasePending } from "@/lib/supabase-pending-schema";
 import { listGithubRepos } from "@/lib/github-server";
 
 type RepoRow = {
@@ -30,7 +30,7 @@ function ProjectReposBlock({ config, context }: BlockProps) {
     queryKey: ["project-repos-block", projectId],
     queryFn: async (): Promise<RepoRow[]> => {
       if (!projectId) return [];
-      const { data: d } = await supabasePending
+      const { data: d } = await supabase
         .from("project_repositories_safe")
         .select("id, provider, url, metadata")
         .eq("project_id", projectId)

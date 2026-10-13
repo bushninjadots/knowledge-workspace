@@ -55,7 +55,13 @@ export function SettingsPage() {
 
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [confirmEmail, setConfirmEmail] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [deleting, setDeleting] = useState(false);
+  // Password accounts re-enter their password to delete; OAuth-only accounts
+  // must have signed in within the last few minutes (enforced on the server).
+  const hasPassword = (authUser?.app_metadata?.providers as string[] | undefined)?.includes(
+    "email",
+  );
 
   // Half-typed password/email changes count as unsaved work.
   useUnsavedChangesGuard(
@@ -107,10 +113,29 @@ export function SettingsPage() {
 
   async function handleDeleteAccount() {
     if (!authUser?.email || confirmEmail.trim() !== authUser.email) return;
+    if (hasPassword && !confirmPassword) return;
     setDeleting(true);
     try {
+      if (hasPassword) {
+        // A fresh sign-in is what the server checks for before deleting.
+        const { error } = await supabase.auth.signInWithPassword({
+          email: authUser.email,
+          password: confirmPassword,
+        });
+        if (error) {
+          toast.error("That password isn't right");
+          setDeleting(false);
+          return;
+        }
+      }
       const result = await deleteAccount();
-      if (!result.ok) throw new Error("Account deletion failed");
+      if (!result.ok) {
+        toast.error(
+          "For your security, sign out and sign back in, then delete your account within 10 minutes.",
+        );
+        setDeleting(false);
+        return;
+      }
       await supabase.auth.signOut();
       navigate({ to: "/" });
     } catch (err) {
@@ -387,7 +412,14 @@ export function SettingsPage() {
       </div>
 
       {/* Confirm deletion — typing your email proves you understand what's being removed. */}
-      <Dialog open={deleteOpen} onOpenChange={(open) => !open && setDeleteOpen(false)}>
+      <Dialog
+        open={deleteOpen}
+        onOpenChange={(open) => {
+          if (open) return;
+          setDeleteOpen(false);
+          setConfirmPassword("");
+        }}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Delete your account?</DialogTitle>
@@ -407,6 +439,20 @@ export function SettingsPage() {
               onChange={(e) => setConfirmEmail(e.target.value)}
               placeholder={authUser?.email ?? "you@example.com"}
             />
+            {hasPassword && (
+              <>
+                <Label htmlFor="confirm-delete-password" className="block pt-2">
+                  Your password
+                </Label>
+                <Input
+                  id="confirm-delete-password"
+                  type="password"
+                  autoComplete="current-password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+              </>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteOpen(false)} disabled={deleting}>
@@ -414,7 +460,11 @@ export function SettingsPage() {
             </Button>
             <Button
               variant="destructive"
-              disabled={deleting || confirmEmail.trim() !== (authUser?.email ?? "")}
+              disabled={
+                deleting ||
+                confirmEmail.trim() !== (authUser?.email ?? "") ||
+                (hasPassword && !confirmPassword)
+              }
               onClick={handleDeleteAccount}
               className="gap-1.5"
             >
