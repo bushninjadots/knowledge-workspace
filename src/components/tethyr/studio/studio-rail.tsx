@@ -10,6 +10,7 @@ import { findSection, sectionLabel } from "@/lib/studio-grid";
 import { ProfileMediaControls } from "./profile-media-controls";
 import { HeaderLookControls } from "@/components/tethyr/profile/header-look-controls";
 import { BlockFields } from "./block-fields";
+import { GitHubBlockControls } from "./github-block-controls";
 import { AreaInspector } from "./area-inspector";
 import { BlockIcon } from "./block-icon";
 import { IconButton, WidthStepper } from "./studio-controls";
@@ -162,6 +163,13 @@ export function GBlockInspector({
         </div>
       )}
       {block.type === "profile-header" && me && <HeaderLookControls userId={props.userId} />}
+      {block.type === "profile-github" && (
+        <GitHubBlockControls
+          userId={props.userId}
+          config={block.config}
+          onChange={(config) => props.onUpdateBlockConfig(block.id, config)}
+        />
+      )}
       <BlockFields
         definition={def}
         config={block.config}

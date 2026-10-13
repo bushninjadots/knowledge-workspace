@@ -6,6 +6,8 @@
 //     and crews; see syncAllGithub in github-server.ts)
 //   • the daily job (POST /api/cron/github-refresh, scheduled by pg_cron;
 //     see src/server.ts) for everything.
+// It also caches each connected member's GitHub account (profile_github) for
+// the Studio's GitHub block.
 //
 // Only imported dynamically from server code: it uses the service-role
 // client and members' stored tokens, which never reach the browser.
@@ -20,6 +22,7 @@ import {
   type RepoMeta,
 } from "./github";
 import { parseGithubSource, type GithubSource } from "./github-source";
+import { fetchGithubProfileSnapshot } from "./github-profile";
 import type { Database, Json } from "@/integrations/supabase/types";
 
 type Admin = SupabaseClient<Database>;
@@ -229,6 +232,45 @@ export async function syncLibraryItem(
   return { ok: true, updated: true, source: synced };
 }
 
+export type ProfileGithubResult =
+  "synced" | "not_connected" | "not_found" | "rate_limited" | "failed";
+
+/**
+ * Cache a member's connected GitHub account (public data) for their Studio's
+ * GitHub block — or clear it when they're no longer connected. Their own
+ * token, if stored, only lifts limits and unlocks the contribution calendar
+ * and pinned repos; Tethyr's public token stands in otherwise.
+ */
+export async function refreshProfileGithub(
+  admin: Admin,
+  userId: string,
+): Promise<ProfileGithubResult> {
+  const { data: account } = await admin
+    .from("connected_accounts")
+    .select("username")
+    .eq("user_id", userId)
+    .eq("provider", "github")
+    .maybeSingle();
+  const username = (account?.username as string | undefined)?.trim();
+  if (!username) {
+    await admin.from("profile_github").delete().eq("profile_id", userId);
+    return "not_connected";
+  }
+  const token = (await tokensFor(admin, [userId])).get(userId) ?? publicGithubToken();
+  const result = await fetchGithubProfileSnapshot(username, token);
+  if (!result.ok) return result.reason === "unreachable" ? "failed" : result.reason;
+  const { error } = await admin.from("profile_github").upsert(
+    {
+      profile_id: userId,
+      username,
+      snapshot: result.snapshot as unknown as Json,
+      synced_at: result.snapshot.synced_at,
+    },
+    { onConflict: "profile_id" },
+  );
+  return error ? "failed" : "synced";
+}
+
 /** The daily job: every linked repo (oldest first, capped) and every crew. */
 export async function refreshAllGithub(admin: Admin): Promise<RefreshSummary> {
   const repos = await refreshRepoSnapshots(admin, { max: 200 });
@@ -243,6 +285,25 @@ export async function refreshAllGithub(admin: Admin): Promise<RefreshSummary> {
       social_links: Record<string, string> | null;
     }>) {
       if (await refreshTeamSnapshot(admin, team)) teams += 1;
+    }
+    // Connected accounts, least recently synced first (capped for limits).
+    const { data: accounts } = await admin
+      .from("connected_accounts")
+      .select("user_id")
+      .eq("provider", "github");
+    const { data: synced } = await admin.from("profile_github").select("profile_id, synced_at");
+    const last = new Map(
+      ((synced ?? []) as Array<{ profile_id: string; synced_at: string }>).map((r) => [
+        r.profile_id,
+        Date.parse(r.synced_at),
+      ]),
+    );
+    const due = ((accounts ?? []) as Array<{ user_id: string }>)
+      .map((a) => a.user_id)
+      .sort((a, b) => (last.get(a) ?? 0) - (last.get(b) ?? 0))
+      .slice(0, 50);
+    for (const userId of due) {
+      if ((await refreshProfileGithub(admin, userId)) === "rate_limited") break;
     }
   }
   return { ...repos, teams };

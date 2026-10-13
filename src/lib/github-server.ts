@@ -21,7 +21,7 @@ import {
   type CommitActivityResult,
 } from "./github";
 import type { GithubSource } from "./github-source";
-import { publicGithubToken, type RefreshSummary } from "./github-refresh";
+import { publicGithubToken, type ProfileGithubResult, type RefreshSummary } from "./github-refresh";
 
 async function getStoredToken(userId: string): Promise<string | null> {
   // Dynamic import keeps the service-role client out of the client bundle.
@@ -335,6 +335,8 @@ export const syncLibraryItemFromGithub = createServerFn({ method: "POST" })
   });
 
 export type SyncEverythingResult = {
+  /** The member's own GitHub account snapshot (the Studio's GitHub block). */
+  profile: ProfileGithubResult;
   repos: Omit<RefreshSummary, "teams">;
   notes: { checked: number; updated: number; failed: number };
   teams: { checked: number; refreshed: number };
@@ -353,10 +355,11 @@ export const syncAllGithub = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<SyncEverythingResult> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { refreshRepoSnapshots, refreshTeamSnapshot, syncLibraryItem } =
+    const { refreshProfileGithub, refreshRepoSnapshots, refreshTeamSnapshot, syncLibraryItem } =
       await import("./github-refresh");
     const userId = context.userId;
     const token = await repoToken(userId);
+    const account = await refreshProfileGithub(supabaseAdmin, userId);
 
     const { data: projects } = await supabaseAdmin
       .from("projects")
@@ -416,7 +419,16 @@ export const syncAllGithub = createServerFn({ method: "POST" })
         readme = text === (profile?.readme ?? "").trim() ? "up_to_date" : "has_updates";
       }
     }
-    return { repos, notes, teams, readme };
+    return { profile: account, repos, notes, teams, readme };
+  });
+
+/** Refresh the signed-in member's GitHub account snapshot now. */
+export const syncGithubProfile = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ result: ProfileGithubResult }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { refreshProfileGithub } = await import("./github-refresh");
+    return { result: await refreshProfileGithub(supabaseAdmin, context.userId) };
   });
 
 /** Refresh a crew's GitHub repos now (crew leads, after changing the link). */

@@ -1719,6 +1719,35 @@ export type Database = {
           },
         ];
       };
+      profile_github: {
+        Row: {
+          profile_id: string;
+          snapshot: Json;
+          synced_at: string;
+          username: string;
+        };
+        Insert: {
+          profile_id: string;
+          snapshot: Json;
+          synced_at?: string;
+          username: string;
+        };
+        Update: {
+          profile_id?: string;
+          snapshot?: Json;
+          synced_at?: string;
+          username?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "profile_github_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: true;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       profile_skills_learn: {
         Row: {
           created_at: string;

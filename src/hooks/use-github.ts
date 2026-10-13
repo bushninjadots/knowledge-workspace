@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthUser } from "@/hooks/use-current-user";
 import { friendlyError } from "@/lib/error-message";
-import { hasGithubToken } from "@/lib/github-server";
+import { hasGithubToken, syncGithubProfile } from "@/lib/github-server";
 
 export type ConnectedAccount = {
   id: string;
@@ -143,6 +143,10 @@ export function useConnectGitHub({ silent = false }: { silent?: boolean } = {}) 
       queryClient.invalidateQueries({ queryKey: ["connected-accounts"] });
       queryClient.invalidateQueries({ queryKey: ["current-user"] });
       if (!silent) toast.success("GitHub account connected");
+      // Fetch the account's public snapshot for the Studio's GitHub block.
+      void syncGithubProfile()
+        .then(() => queryClient.invalidateQueries({ queryKey: ["github-profile"] }))
+        .catch(() => undefined);
     },
     onError: (error: Error) => {
       if (!silent) toast.error(friendlyError(error));
@@ -161,6 +165,7 @@ export function useDisconnectGitHub() {
       const { error } = await supabase.from("connected_accounts").delete().eq("provider", "github");
       if (error) throw error;
       if (user) {
+        await supabase.from("profile_github").delete().eq("profile_id", user.id);
         // Remove the mirrored GitHub link from the profile's social links.
         const { data: profile } = await supabase
           .from("profiles")
@@ -178,6 +183,7 @@ export function useDisconnectGitHub() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["connected-accounts"] });
       queryClient.invalidateQueries({ queryKey: ["current-user"] });
+      queryClient.invalidateQueries({ queryKey: ["github-profile"] });
       toast.success("GitHub account disconnected");
     },
   });

@@ -18,7 +18,7 @@ export type RepoReadmeResult = {
 /** These fetches run server-side (in server functions), so cap their duration. */
 const FETCH_TIMEOUT_MS = 10_000;
 
-async function fetchWithTimeout(url: string, init?: RequestInit): Promise<Response | null> {
+export async function fetchWithTimeout(url: string, init?: RequestInit): Promise<Response | null> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {

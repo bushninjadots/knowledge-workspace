@@ -69,8 +69,11 @@ export function CommitGraph({
   weeks,
   ariaLabel,
   className,
+  unit = "commit",
 }: {
   weeks: CommitActivityWeek[];
+  /** What a cell counts: commits (repo stats) or contributions (a GitHub account). */
+  unit?: "commit" | "contribution";
   /** What the grid claims — the panel says "Contribution graph", the profile names the person's repos. */
   ariaLabel: string;
   className?: string;
@@ -81,7 +84,7 @@ export function CommitGraph({
     <div className={cn("space-y-1.5", className)}>
       <p className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
         <CalendarDays className="h-3 w-3" />
-        <span className="tabular-nums">{calendar.total.toLocaleString()}</span> commits in the last
+        <span className="tabular-nums">{calendar.total.toLocaleString()}</span> {unit}s in the last
         year
       </p>
       <div className="overflow-x-auto pb-1">
@@ -103,7 +106,7 @@ export function CommitGraph({
               return (
                 <div key={week || i} className="flex flex-col gap-[3px]">
                   {column.map((cell, j) => {
-                    const label = `${formatCommitCellDate(week, j)}: ${cell.count} commit${cell.count === 1 ? "" : "s"}`;
+                    const label = `${formatCommitCellDate(week, j)}: ${cell.count} ${unit}${cell.count === 1 ? "" : "s"}`;
                     return (
                       // Cells inside role="img" are presentational: the
                       // graph's own label speaks for it; the title is hover.
