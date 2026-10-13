@@ -60,6 +60,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { validateFeedbackRequest, validatePollDraft } from "@/lib/community-validation";
 import { validateImageFile } from "@/lib/validators";
 import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes";
+import { CharCount, insertMarkdown } from "./composer-parts";
 
 const ACTION_ICON: Record<string, typeof Rocket> = {
   showcase: Rocket,
@@ -91,60 +92,6 @@ const MORE_ACTIONS = QUICK_ACTIONS.filter((a) => !PRIMARY_ACTIONS.some((p) => p.
 
 const MAX_CHARS = 2000;
 const DRAFT_KEY = "tethyr-community-draft";
-
-function CharCount({ current, max }: { current: number; max: number }) {
-  const pct = max > 0 ? current / max : 0;
-  const r = 7;
-  const circ = 2 * Math.PI * r;
-  const offset = circ - pct * circ;
-  const warn = pct > 0.85;
-
-  return (
-    <div className="relative h-5 w-5">
-      <svg className="h-5 w-5 -rotate-90" viewBox="0 0 18 18">
-        <circle
-          cx="9"
-          cy="9"
-          r={r}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          className="text-border"
-        />
-        <circle
-          cx="9"
-          cy="9"
-          r={r}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeDasharray={circ}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
-          className={warn ? "text-destructive" : "text-[var(--user-accent-text,var(--trust))]"}
-        />
-      </svg>
-    </div>
-  );
-}
-
-function insertMarkdown(
-  textarea: HTMLTextAreaElement,
-  before: string,
-  after: string,
-  fallback?: string,
-) {
-  const start = textarea.selectionStart;
-  const end = textarea.selectionEnd;
-  const text = textarea.value;
-  const selected = text.slice(start, end) || fallback || "";
-  const newText = text.slice(0, start) + before + selected + after + text.slice(end);
-  return {
-    text: newText,
-    cursorStart: start + before.length,
-    cursorEnd: start + before.length + selected.length,
-  };
-}
 
 export function ComposerBar({
   editingPost,
@@ -382,60 +329,33 @@ export function ComposerBar({
     setImages((prev) => prev.filter((_, i) => i !== index));
   }
 
-  function handleBold() {
-    if (!textareaRef.current) return;
-    const result = insertMarkdown(textareaRef.current, "**", "**", "bold text");
-    setDraft(result.text.slice(0, MAX_CHARS));
-  }
+  // Formatting buttons must not take focus: blurring the textarea on mousedown
+  // collapses it (5 rows -> 2), the toolbar shifts out from under the pointer
+  // and the first click was lost. Keeping focus also keeps the selection the
+  // markdown wraps.
+  const keepTextareaFocus = (event: React.MouseEvent) => event.preventDefault();
 
-  function handleItalic() {
+  /** Wrap the selection (or a placeholder) in markdown and keep the draft
+   *  within the character limit. */
+  function applyMarkdown(before: string, after: string, fallback?: string) {
     if (!textareaRef.current) return;
-    const result = insertMarkdown(textareaRef.current, "_", "_", "italic text");
+    const result = insertMarkdown(textareaRef.current, before, after, fallback);
     setDraft(result.text.slice(0, MAX_CHARS));
   }
-
-  function handleStrikethrough() {
-    if (!textareaRef.current) return;
-    const result = insertMarkdown(textareaRef.current, "~~", "~~", "strikethrough");
-    setDraft(result.text.slice(0, MAX_CHARS));
-  }
-
-  function handleH1() {
-    if (!textareaRef.current) return;
-    const result = insertMarkdown(textareaRef.current, "# ", "", "Heading 1");
-    setDraft(result.text.slice(0, MAX_CHARS));
-  }
-
-  function handleH2() {
-    if (!textareaRef.current) return;
-    const result = insertMarkdown(textareaRef.current, "## ", "", "Heading 2");
-    setDraft(result.text.slice(0, MAX_CHARS));
-  }
-
-  function handleBulletList() {
-    if (!textareaRef.current) return;
-    const result = insertMarkdown(textareaRef.current, "\n- ", "", "list item");
-    setDraft(result.text.slice(0, MAX_CHARS));
-  }
-
-  function handleNumberedList() {
-    if (!textareaRef.current) return;
-    const result = insertMarkdown(textareaRef.current, "\n1. ", "", "list item");
-    setDraft(result.text.slice(0, MAX_CHARS));
-  }
-
-  function handleBlockquote() {
-    if (!textareaRef.current) return;
-    const result = insertMarkdown(textareaRef.current, "> ", "", "quoted text");
-    setDraft(result.text.slice(0, MAX_CHARS));
-  }
+  const handleBold = () => applyMarkdown("**", "**", "bold text");
+  const handleItalic = () => applyMarkdown("_", "_", "italic text");
+  const handleStrikethrough = () => applyMarkdown("~~", "~~", "strikethrough");
+  const handleH1 = () => applyMarkdown("# ", "", "Heading 1");
+  const handleH2 = () => applyMarkdown("## ", "", "Heading 2");
+  const handleBulletList = () => applyMarkdown("\n- ", "", "list item");
+  const handleNumberedList = () => applyMarkdown("\n1. ", "", "list item");
+  const handleBlockquote = () => applyMarkdown("> ", "", "quoted text");
 
   function handleLink() {
     const url = window.prompt("URL:");
     if (!url || !textareaRef.current) return;
     const label = window.prompt("Link text:") || url;
-    const result = insertMarkdown(textareaRef.current, "[", `](${url})`, label);
-    setDraft(result.text.slice(0, MAX_CHARS));
+    applyMarkdown("[", `](${url})`, label);
   }
 
   async function submit() {
@@ -827,6 +747,7 @@ export function ComposerBar({
         <button
           type="button"
           onClick={handleH1}
+          onMouseDown={keepTextareaFocus}
           aria-label="Heading 1"
           title="Heading 1"
           className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
@@ -836,6 +757,7 @@ export function ComposerBar({
         <button
           type="button"
           onClick={handleH2}
+          onMouseDown={keepTextareaFocus}
           aria-label="Heading 2"
           title="Heading 2"
           className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
@@ -846,6 +768,7 @@ export function ComposerBar({
         <button
           type="button"
           onClick={handleBold}
+          onMouseDown={keepTextareaFocus}
           aria-label="Bold"
           title="Bold"
           className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
@@ -855,6 +778,7 @@ export function ComposerBar({
         <button
           type="button"
           onClick={handleItalic}
+          onMouseDown={keepTextareaFocus}
           aria-label="Italic"
           title="Italic"
           className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
@@ -864,6 +788,7 @@ export function ComposerBar({
         <button
           type="button"
           onClick={handleStrikethrough}
+          onMouseDown={keepTextareaFocus}
           aria-label="Strikethrough"
           title="Strikethrough"
           className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
@@ -874,6 +799,7 @@ export function ComposerBar({
         <button
           type="button"
           onClick={handleBulletList}
+          onMouseDown={keepTextareaFocus}
           aria-label="Bullet list"
           title="Bullet list"
           className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
@@ -883,6 +809,7 @@ export function ComposerBar({
         <button
           type="button"
           onClick={handleNumberedList}
+          onMouseDown={keepTextareaFocus}
           aria-label="Numbered list"
           title="Numbered list"
           className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
@@ -892,6 +819,7 @@ export function ComposerBar({
         <button
           type="button"
           onClick={handleBlockquote}
+          onMouseDown={keepTextareaFocus}
           aria-label="Blockquote"
           title="Blockquote"
           className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
@@ -901,6 +829,7 @@ export function ComposerBar({
         <button
           type="button"
           onClick={handleLink}
+          onMouseDown={keepTextareaFocus}
           aria-label="Insert link"
           title="Insert link"
           className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
