@@ -10,10 +10,11 @@ import { toast } from "sonner";
 import { ProjectDialog } from "@/components/tethyr/profile";
 import { BackgroundPickerDialog } from "@/components/tethyr/profile/background-picker-dialog";
 import { CURRENT_USER_KEY, useSkillsCatalog } from "@/hooks/use-current-user";
-import { overlapsGridItems } from "@/lib/studio-grid";
 import { StudioCommandPalette } from "./studio-command-palette";
 import { buildStudioCommands } from "./studio-command-list";
 import { useStudioLayoutOps } from "./use-studio-layout-ops";
+import { useStudioShortcuts } from "./use-studio-shortcuts";
+import { useStudioTemplates } from "./use-studio-templates";
 import { describePublishChanges } from "@/lib/studio-publish-summary";
 import {
   GStudioSurface,
@@ -34,27 +35,17 @@ import {
 import { StarterPicker, type StudioStarter } from "@/components/tethyr/studio/starter-picker";
 import { applyStarter, starterConfig } from "@/data/starters";
 import {
-  fetchTemplateSections,
-  useForkTemplate,
-  usePublishTemplate,
-  usePublicTemplates,
-  type CommunityTemplate,
-} from "@/hooks/use-templates";
-import { applyTemplateSections, sanitizeTemplateSections } from "@/lib/template-apply";
-import {
   withCardBorderPreference,
   type CardBorderPreference,
   type ProfileBackground,
 } from "@/lib/background-themes";
-import type { LayoutGridItem, PageLayout } from "@/lib/page-blocks";
+import type { PageLayout } from "@/lib/page-blocks";
 import { DEFAULT_STUDIO_CONFIG, normalizeStudioConfig } from "@/lib/studio-config";
 import { resolveLook, setLookValue } from "@/lib/visual-language";
 import { createDefaultProfileLayout } from "@/lib/default-layouts";
 import "@/components/tethyr/blocks/register-all";
 import {
-  blockSize,
   normalizeLayout,
-  cloneLayout,
   fromTethyrConfig,
   toTethyrConfig,
   publicLayoutSignature,
@@ -160,10 +151,7 @@ export function CreationStudio({
   const publishPage = usePublishPage();
   const updateTheme = useUpdatePageTheme();
   const rollbackPage = useRollbackPageVersion();
-  const forkTemplate = useForkTemplate();
-  const publishTemplate = usePublishTemplate();
   const page = pageQuery.data;
-  const { data: communityTemplates } = usePublicTemplates();
 
   // The page theme is saved straight away (not with the draft), but it is
   // part of the document so it shows instantly and undo can put it back.
@@ -540,111 +528,23 @@ export function CreationStudio({
 
   undoRef.current = undo;
 
-  // Keyboard shortcuts: undo/redo history and escape to clear block selection.
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement | null;
-      const editable =
-        target &&
-        (target.tagName === "INPUT" ||
-          target.tagName === "TEXTAREA" ||
-          target.tagName === "SELECT" ||
-          target.isContentEditable);
-      const mod = event.metaKey || event.ctrlKey;
-      // Save works from anywhere, mid-typing included (it's what people try).
-      if (mod && event.key.toLowerCase() === "s") {
-        event.preventDefault();
-        saveRef.current();
-        return;
-      }
-      if (mod && event.key.toLowerCase() === "j") {
-        event.preventDefault();
-        // Inside another dialog it only closes the palette, never stacks one.
-        const inDialog = !!target?.closest?.('[role="dialog"]');
-        setCommandsOpen((open) => (inDialog ? false : !open));
-        return;
-      }
-      if (editable || target?.closest?.('[role="dialog"]')) return;
-      if (mod && event.key.toLowerCase() === "z") {
-        event.preventDefault();
-        if (event.shiftKey) redo();
-        else undo();
-      } else if (mod && event.key.toLowerCase() === "y") {
-        event.preventDefault();
-        redo();
-      } else if (event.key === "Escape") {
-        setSelectedBlockIds([]);
-      } else if (mod && event.key.toLowerCase() === "d" && mode === "edit" && selectedBlockId) {
-        event.preventDefault();
-        duplicateBlock(selectedBlockId);
-      } else if (
-        !mod &&
-        mode === "edit" &&
-        selectedBlockId &&
-        (event.key === "Delete" || event.key === "Backspace")
-      ) {
-        event.preventDefault();
-        if (selectedBlockIds.length > 1) return removeBlocks(selectedBlockIds);
-        // Locked blocks ignore the keyboard's destructive and moving keys.
-        if (findBlock(selectedBlockId)?.locked) return;
-        removeBlock(selectedBlockId);
-      } else if (
-        !mod &&
-        mode === "edit" &&
-        layout &&
-        selectedBlockId &&
-        selectedBlockIds.length === 1 &&
-        ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)
-      ) {
-        const section = layout.sections.find((candidate) =>
-          candidate.blocks.some((block) => block.id === selectedBlockId),
-        );
-        const item = section?.grid?.find((gridItem) => gridItem.i === selectedBlockId);
-        if (!section || !item || findBlock(selectedBlockId)?.locked) return;
-        event.preventDefault();
-        const dx = event.key === "ArrowLeft" ? -1 : event.key === "ArrowRight" ? 1 : 0;
-        const dy = event.key === "ArrowUp" ? -1 : event.key === "ArrowDown" ? 1 : 0;
-        let candidate: LayoutGridItem;
-        if (event.shiftKey) {
-          // Shift+arrows resize from the bottom-right corner instead.
-          const [, , minW, minH] = blockSize(findBlock(selectedBlockId)?.type ?? "");
-          const w = Math.max(item.minW ?? minW, Math.min(12 - item.x, item.w + dx));
-          const h = Math.max(item.minH ?? minH, item.h + dy);
-          if (w === item.w && h === item.h) return;
-          candidate = { ...item, w, h };
-        } else {
-          const x = Math.max(0, Math.min(12 - item.w, item.x + dx));
-          const y = Math.max(0, item.y + dy);
-          if (x === item.x && y === item.y) return;
-          candidate = { ...item, x, y };
-        }
-        const others = (section.grid ?? []).filter((gridItem) => gridItem.i !== item.i);
-        if (others.some((other) => overlapsGridItems(candidate, other))) return;
-        const next = cloneLayout(layout);
-        const targetSection = next.sections.find((s) => s.id === section.id);
-        if (!targetSection) return;
-        targetSection.grid = (targetSection.grid ?? []).map((gridItem) =>
-          gridItem.i === item.i ? candidate : gridItem,
-        );
-        touchedGridRef.current.add(section.id);
-        commit(next);
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [
-    commit,
-    duplicateBlock,
-    findBlock,
+  useStudioShortcuts({
     layout,
     mode,
-    redo,
-    removeBlock,
-    removeBlocks,
     selectedBlockId,
     selectedBlockIds,
+    setSelectedBlockIds,
+    setCommandsOpen,
+    saveRef,
+    touchedGridRef,
+    commit,
     undo,
-  ]);
+    redo,
+    findBlock,
+    duplicateBlock,
+    removeBlock,
+    removeBlocks,
+  });
 
   // Replace the draft with a published version via the rollback RPC, then
   // re-seed the editor from the restored row. Without the re-seed the canvas
@@ -903,109 +803,24 @@ export function CreationStudio({
     [commit],
   );
 
-  // ── Community templates ─────────────────────────────────────────────────
-  // Application is client-side through commit() — same non-destructive, one-
-  // undo path as the built-in starters. The fork is what persists a copy to
-  // the member's account; it never touches the live Studio by itself.
-  const applyTemplate = useCallback(
-    (sections: ReturnType<typeof sanitizeTemplateSections>, themeId: string | null) => {
-      if (!layout || !config) return;
-      if (sections.length === 0) {
-        toast.error("That template has no renderable sections.");
-        return;
-      }
-      // One undo step for the sections and the theme together.
-      edit({
-        layout: applyTemplateSections(layout, sections),
-        config: { ...config, starterId: null },
-        ...(themeId ? { themeId } : {}),
-      });
-      if (themeId) persistTheme(themeId);
-    },
-    [config, edit, layout, persistTheme],
-  );
-
-  const applyCommunityTemplate = useCallback(
-    (template: CommunityTemplate) => {
-      void (async () => {
-        try {
-          const fetched = await fetchTemplateSections(template.id);
-          applyTemplate(fetched.sections, fetched.themeId);
-          toast.success(`“${template.name}” applied — one undo puts it back.`);
-        } catch (err) {
-          console.error("[applyTemplate]", err);
-          toast.error("That template could not be applied.");
-        }
-      })();
-    },
-    [applyTemplate],
-  );
-
-  const saveCommunityTemplate = useCallback(
-    (template: CommunityTemplate) => {
-      forkTemplate.mutate(
-        { templateId: template.id, templateName: template.name },
-        {
-          onSuccess: () => toast.success(`“${template.name}” saved to My templates.`),
-          onError: () => toast.error("Could not save that template."),
-        },
-      );
-    },
-    [forkTemplate],
-  );
-
-  const useMyTemplateRow = useCallback(
-    (template: CommunityTemplate) => {
-      applyCommunityTemplate(template);
-    },
-    [applyCommunityTemplate],
-  );
-
-  const shareTemplate = useCallback(
-    (name: string, description: string) => {
-      if (!page?.layoutId) {
-        toast.error("Open your Studio once before submitting it as a template.");
-        return;
-      }
-      const layoutId = page.layoutId;
-      // The template is this layout row, so save pending edits first.
-      void (async () => {
-        if (dirty) await save({ announce: false });
-        publishTemplate.mutate(
-          {
-            layoutId,
-            name,
-            description: description || "A Studio direction shared with the community.",
-          },
-          {
-            onSuccess: () => {
-              setShareTemplateOpen(false);
-              toast.success(
-                "Template submitted for review. It appears in the community once approved.",
-              );
-            },
-            onError: () => toast.error("Could not submit the template."),
-          },
-        );
-      })();
-    },
-    [dirty, page?.layoutId, publishTemplate, save],
-  );
-
-  const savedTemplateIds = useMemo(() => {
-    const ids = new Set<string>();
-    for (const template of communityTemplates ?? []) {
-      if (template.isMine) ids.add(template.id);
-    }
-    return ids;
-  }, [communityTemplates]);
-  const savingTemplateIds = useMemo(() => {
-    const ids = new Set<string>();
-    if (forkTemplate.isPending && forkTemplate.variables) {
-      ids.add(forkTemplate.variables.templateId);
-    }
-    return ids;
-  }, [forkTemplate.isPending, forkTemplate.variables]);
+  const {
+    applyCommunityTemplate,
+    saveCommunityTemplate,
+    useMyTemplateRow,
+    shareTemplate,
+    sharingTemplate,
+    savedTemplateIds,
+    savingTemplateIds,
+  } = useStudioTemplates({
+    layout,
+    config,
+    layoutId: page?.layoutId,
+    dirty,
+    edit,
+    persistTheme,
+    save,
+    setShareTemplateOpen,
+  });
 
   // Everything the command palette (Ctrl/⌘+J) can do: studio-command-list.ts.
   const commands = useMemo(
@@ -1177,7 +992,7 @@ export function CreationStudio({
       <StudioShareTemplateDialog
         open={shareTemplateOpen}
         defaultName={profile?.display_name ? `${profile.display_name}'s Studio` : "My Studio"}
-        pending={publishTemplate.isPending}
+        pending={sharingTemplate}
         onOpenChange={setShareTemplateOpen}
         onSubmit={shareTemplate}
       />
