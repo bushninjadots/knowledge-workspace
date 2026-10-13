@@ -23,6 +23,7 @@ import { useSiteAccentStyle } from "@/hooks/use-site-accent-style";
 import { useUserPalette } from "@/lib/dominant-color";
 import { MobilePrimaryNav } from "./mobile-primary-nav";
 import { MessagePopups } from "./message-popups";
+import { MessagingDock } from "./messaging-dock";
 import { BackgroundLayer } from "./background-layer";
 import { appearanceStyle } from "@/lib/background-themes";
 import { EmailVerificationBanner } from "./email-verification-banner";
@@ -143,12 +144,13 @@ export function AuthenticatedShell() {
         </main>
         <MobilePrimaryNav onOpenMore={() => setOpen(true)} />
         <MessagePopups />
+        <MessagingDock />
 
         {/* Scroll-to-top */}
         {showScrollTop && (
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="fixed bottom-20 right-4 z-50 flex h-10 w-10 items-center justify-center rounded-full border card-border bg-surface transition-spatial hover:scale-105 hover:bg-surface-elevated md:bottom-6 md:right-6"
+            className="fixed bottom-20 right-4 z-50 flex h-10 w-10 items-center justify-center rounded-full border card-border bg-surface transition-spatial hover:scale-105 hover:bg-surface-elevated md:bottom-20 md:right-6"
             aria-label="Scroll to top"
           >
             <ArrowUp className="h-4 w-4 text-muted-foreground" />

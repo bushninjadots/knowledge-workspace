@@ -17,6 +17,7 @@ import { useNotificationPreferences } from "@/hooks/use-notification-preferences
 import { useSendMessage } from "@/hooks/use-messages";
 import { MemberAvatar } from "@/components/tethyr/member-avatar";
 import { cn } from "@/lib/utils";
+import { messageDock, useMessageDock } from "@/lib/message-dock-store";
 
 /** How long an untouched popup stays up. */
 export const POPUP_LIFETIME_MS = 12_000;
@@ -51,8 +52,13 @@ export function MessagePopups() {
   useNotificationRealtime();
   const { mutedCategories } = useNotificationPreferences();
   const location = useLocation();
+  const dock = useMessageDock();
   const openConnection =
-    location.pathname === "/messages" ? ((location.search as { c?: string }).c ?? null) : null;
+    location.pathname === "/messages"
+      ? ((location.search as { c?: string }).c ?? null)
+      : dock.open
+        ? dock.threadId
+        : null;
   const [popups, setPopups] = useState<MessagePopup[]>([]);
 
   // Latest values for the long-lived listener.
@@ -99,7 +105,7 @@ export function MessagePopups() {
     <div
       aria-live="polite"
       aria-label="New messages"
-      className="pointer-events-none fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-3 z-50 flex w-[min(22rem,calc(100vw-1.5rem))] flex-col gap-2 md:bottom-5 md:right-5"
+      className="pointer-events-none fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-3 z-50 flex w-[min(22rem,calc(100vw-1.5rem))] flex-col gap-2 md:bottom-20 md:right-5"
     >
       {popups.map((popup) => (
         <MessagePopupCard
@@ -231,7 +237,14 @@ function MessagePopupCard({ popup, onDismiss }: { popup: MessagePopup; onDismiss
         <Link
           to="/messages"
           search={{ c: popup.connectionId }}
-          onClick={onDismiss}
+          onClick={(event) => {
+            // Tablet and up: open the thread in the dock instead of leaving.
+            if (window.matchMedia("(min-width: 768px)").matches) {
+              event.preventDefault();
+              messageDock.open(popup.connectionId);
+            }
+            onDismiss();
+          }}
           aria-label={`Open conversation with ${name}`}
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border/60 text-muted-foreground transition-colors hover:text-foreground"
         >
