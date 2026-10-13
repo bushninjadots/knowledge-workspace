@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { calendarToWeeks, pickRepos, summarizeEvents, summarizeRepos } from "./github-profile";
+import {
+  calendarToWeeks,
+  lastPageFromLink,
+  pickRepos,
+  summarizeEvents,
+  summarizeRepos,
+} from "./github-profile";
 
 const repo = (name: string, over: Record<string, unknown> = {}) => ({
   full_name: `me/${name}`,
@@ -29,6 +35,16 @@ describe("summarizeRepos", () => {
     expect(s.repos.map((r) => r.name)).toEqual(["b", "a"]);
     expect(s.total_stars).toBe(11);
     expect(s.total_forks).toBe(3);
+  });
+  it("lists the repos they forked, newest first, and counts them", () => {
+    const s = summarizeRepos([
+      repo("mine"),
+      repo("old-fork", { fork: true, pushed_at: "2026-01-01T00:00:00Z" }),
+      repo("new-fork", { fork: true, pushed_at: "2026-10-01T00:00:00Z" }),
+      repo("private-fork", { fork: true, private: true }),
+    ]);
+    expect(s.forked.map((f) => f.name)).toEqual(["new-fork", "old-fork"]);
+    expect(s.forked_count).toBe(2);
   });
   it("weights languages by repo size", () => {
     const s = summarizeRepos([
@@ -147,5 +163,16 @@ describe("pickRepos", () => {
     expect(pickRepos({ ...snap, pinned: null }, "pinned", [], 1).map((r) => r.name)).toEqual([
       "star",
     ]);
+  });
+});
+
+describe("lastPageFromLink", () => {
+  it("reads the last page, or null when everything fit on one page", () => {
+    expect(
+      lastPageFromLink(
+        '<https://api.github.com/user/1/starred?per_page=6&page=2>; rel="next", <https://api.github.com/user/1/starred?per_page=6&page=7>; rel="last"',
+      ),
+    ).toBe(7);
+    expect(lastPageFromLink(null)).toBeNull();
   });
 });

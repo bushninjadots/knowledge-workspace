@@ -27,6 +27,7 @@ import {
   Plus,
   Star,
   CircleDot,
+  GitFork,
 } from "lucide-react";
 import { BlockTitle } from "@/components/tethyr/blocks/block-title";
 import { BlockEmptyState } from "@/components/tethyr/blocks/block-empty-state";
@@ -69,6 +70,8 @@ type Parts = {
   languages: boolean;
   repos: boolean;
   recent: boolean;
+  forked: boolean;
+  starred: boolean;
 };
 
 /**
@@ -85,6 +88,8 @@ export function githubBlockParts(config: BlockConfig): Parts {
     languages: on("showLanguages", "languages"),
     repos: on("showRepos", "repos"),
     recent: on("showRecent", "recent"),
+    forked: on("showForked", "forked"),
+    starred: on("showStarred", "starred"),
   };
 }
 
@@ -203,6 +208,8 @@ function ProfileGitHubBlock({ config, context }: BlockProps) {
     languages: parts.languages && languages.length > 0,
     repos: parts.repos && (repos.length > 0 || (!snapshot && linkedRepos.length > 0)),
     recent: parts.recent && (snapshot?.recent.length ?? 0) > 0,
+    forked: parts.forked && (snapshot?.forked?.length ?? 0) > 0,
+    starred: parts.starred && (snapshot?.starred?.length ?? 0) > 0,
   };
   const isEmpty = !Object.values(shows).some(Boolean);
   const isLoading =
@@ -251,8 +258,25 @@ function ProfileGitHubBlock({ config, context }: BlockProps) {
             value: snapshot.contributions.total,
           },
         { label: snapshot.public_repos === 1 ? "repo" : "repos", value: snapshot.public_repos },
-        snapshot.total_stars > 0 && { label: "stars", value: snapshot.total_stars },
+        // What their own work has earned…
+        {
+          label: snapshot.total_stars === 1 ? "star earned" : "stars earned",
+          value: snapshot.total_stars,
+        },
+        {
+          label: snapshot.total_forks === 1 ? "fork of their work" : "forks of their work",
+          value: snapshot.total_forks,
+        },
         { label: snapshot.followers === 1 ? "follower" : "followers", value: snapshot.followers },
+        // …and what they've starred and forked from others.
+        typeof snapshot.starred_count === "number" && {
+          label: "starred",
+          value: snapshot.starred_count,
+        },
+        typeof snapshot.forked_count === "number" && {
+          label: "forked",
+          value: snapshot.forked_count,
+        },
       ].filter((s): s is { label: string; value: number } => !!s)
     : [];
 
@@ -416,9 +440,21 @@ function ProfileGitHubBlock({ config, context }: BlockProps) {
                     </span>
                   )}
                   {repo.stars > 0 && (
-                    <span className="inline-flex shrink-0 items-center gap-0.5 tabular-nums">
+                    <span
+                      className="inline-flex shrink-0 items-center gap-0.5 tabular-nums"
+                      aria-label={`${repo.stars} star${repo.stars === 1 ? "" : "s"}`}
+                    >
                       <Star className="h-3 w-3" aria-hidden />
                       {repo.stars.toLocaleString()}
+                    </span>
+                  )}
+                  {repo.forks > 0 && (
+                    <span
+                      className="inline-flex shrink-0 items-center gap-0.5 tabular-nums"
+                      aria-label={`${repo.forks} fork${repo.forks === 1 ? "" : "s"}`}
+                    >
+                      <GitFork className="h-3 w-3" aria-hidden />
+                      {repo.forks.toLocaleString()}
                     </span>
                   )}
                   {repo.pushed_at && <span>Updated {timeAgo(repo.pushed_at)}</span>}
@@ -436,6 +472,68 @@ function ProfileGitHubBlock({ config, context }: BlockProps) {
             );
           })}
         </ul>
+      )}
+
+      {(shows.forked || shows.starred) && snapshot && (
+        <div className="grid gap-4 sm:grid-cols-2">
+          {shows.forked && (
+            <div className="min-w-0 space-y-1.5">
+              <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                <GitFork className="h-3.5 w-3.5" aria-hidden />
+                Forked · {snapshot.forked_count}
+              </p>
+              <ul className="space-y-1">
+                {snapshot.forked.slice(0, limit).map((fork) => (
+                  <li key={fork.full_name} className="min-w-0 text-sm">
+                    <a
+                      href={`https://github.com/${fork.full_name}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block truncate hover:underline"
+                    >
+                      {fork.name}
+                    </a>
+                    {fork.parent && (
+                      <span className="block truncate text-xs text-muted-foreground">
+                        from {fork.parent}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {shows.starred && (
+            <div className="min-w-0 space-y-1.5">
+              <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                <Star className="h-3.5 w-3.5" aria-hidden />
+                Recently starred
+                {typeof snapshot.starred_count === "number" && ` · ${snapshot.starred_count}`}
+              </p>
+              <ul className="space-y-1">
+                {snapshot.starred.slice(0, limit).map((star) => (
+                  <li key={star.full_name} className="min-w-0 text-sm">
+                    <a
+                      href={`https://github.com/${star.full_name}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block truncate hover:underline"
+                    >
+                      {star.full_name}
+                    </a>
+                    <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                      {star.language && <span>{star.language}</span>}
+                      <span className="inline-flex items-center gap-0.5 tabular-nums">
+                        <Star className="h-3 w-3" aria-hidden />
+                        {star.stars.toLocaleString()}
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
       )}
 
       {shows.recent && snapshot && (
@@ -483,7 +581,7 @@ registerBlock({
   label: "GitHub",
   title: "GitHub",
   description:
-    "Your GitHub at a glance: profile, a year of contributions, languages, the repos you choose and what you've shipped lately.",
+    "Your GitHub at a glance: profile, stars and forks, a year of contributions, languages, the repos you choose, what you've forked and starred, and what you've shipped lately.",
   icon: "Github",
   contentSource: "data",
   defaults: {
@@ -495,6 +593,8 @@ registerBlock({
     showLanguages: true,
     showRepos: true,
     showRecent: true,
+    showForked: true,
+    showStarred: true,
     showDescriptions: true,
   },
   fields: [
@@ -526,6 +626,8 @@ registerBlock({
     { key: "showLanguages", label: "Languages", type: "toggle" },
     { key: "showRepos", label: "Repositories", type: "toggle" },
     { key: "showDescriptions", label: "Repo descriptions", type: "toggle" },
+    { key: "showForked", label: "Repos they forked", type: "toggle" },
+    { key: "showStarred", label: "Repos they starred", type: "toggle" },
     { key: "showRecent", label: "Recent activity", type: "toggle" },
   ],
   component: ProfileGitHubBlock,

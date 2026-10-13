@@ -55,6 +55,17 @@ export type GithubProfileSnapshot = {
   languages: { language: string; share: number; repos: number }[];
   /** Public, non-fork repos, most starred first (up to 30). */
   repos: GithubProfileRepo[];
+  /** Repos they forked from someone else (newest activity first, up to 10). */
+  forked: { full_name: string; name: string; parent: string | null; pushed_at: string | null }[];
+  forked_count: number;
+  /** How many repos they've starred, and the most recent few. */
+  starred_count: number | null;
+  starred: {
+    full_name: string;
+    description: string | null;
+    language: string | null;
+    stars: number;
+  }[];
   /** Pinned repo full names, when GitHub could tell us (needs a token). */
   pinned: string[] | null;
   /** The year's contribution calendar, when available (needs a token). */
@@ -143,7 +154,19 @@ export function summarizeRepos(raw: RawRepo[]) {
     .filter((l) => l.share > 0)
     .slice(0, 8);
 
+  const forked = raw
+    .filter((r) => r.fork && !r.private)
+    .sort((a, b) => (Date.parse(b.pushed_at ?? "") || 0) - (Date.parse(a.pushed_at ?? "") || 0))
+    .map((r) => ({
+      full_name: r.full_name,
+      name: r.name,
+      parent: null as string | null,
+      pushed_at: r.pushed_at,
+    }));
+
   return {
+    forked: forked.slice(0, 10),
+    forked_count: forked.length,
     repos: repos.slice(0, 30),
     total_stars: own.reduce((n, r) => n + (r.stargazers_count ?? 0), 0),
     total_forks: own.reduce((n, r) => n + (r.forks_count ?? 0), 0),
@@ -277,11 +300,22 @@ export function calendarToWeeks(weeks: CalendarWeek[]): CommitActivityWeek[] {
 const GRAPHQL_QUERY = `query($login: String!) {
   user(login: $login) {
     pinnedItems(first: 6, types: REPOSITORY) { nodes { ... on Repository { nameWithOwner isPrivate } } }
+    starredRepositories { totalCount }
+    repositories(first: 10, isFork: true, privacy: PUBLIC, orderBy: { field: PUSHED_AT, direction: DESC }) {
+      totalCount
+      nodes { nameWithOwner parent { nameWithOwner } }
+    }
     contributionsCollection {
       contributionCalendar { totalContributions weeks { contributionDays { date contributionCount } } }
     }
   }
 }`;
+
+/** The last page number in GitHub's Link header, or null when it all fit on one page. */
+export function lastPageFromLink(link: string | null): number | null {
+  const last = link ? /[?&]page=(\d+)>;\s*rel="last"/.exec(link) : null;
+  return last ? Number(last[1]) : null;
+}
 
 export type GithubProfileFetch =
   | { ok: true; snapshot: GithubProfileSnapshot }
@@ -306,13 +340,14 @@ export async function fetchGithubProfileSnapshot(
   if (!userRes.ok) return { ok: false, reason: "unreachable" };
   const u = (await userRes.json()) as Record<string, unknown>;
 
-  const [reposRes, eventsRes, graphRes] = await Promise.all([
+  const [reposRes, eventsRes, starredRes, graphRes] = await Promise.all([
     fetchWithTimeout(`https://api.github.com/users/${user}/repos?per_page=100&sort=pushed`, {
       headers,
     }),
     fetchWithTimeout(`https://api.github.com/users/${user}/events/public?per_page=100`, {
       headers,
     }),
+    fetchWithTimeout(`https://api.github.com/users/${user}/starred?per_page=6`, { headers }),
     token
       ? fetchWithTimeout("https://api.github.com/graphql", {
           method: "POST",
@@ -327,6 +362,37 @@ export async function fetchGithubProfileSnapshot(
   const repoSummary = summarizeRepos(rawRepos);
   const events = summarizeEvents(rawEvents);
 
+  type RawStar = {
+    full_name: string;
+    description: string | null;
+    language: string | null;
+    stargazers_count: number;
+    private?: boolean;
+  };
+  const rawStars = starredRes?.ok ? ((await starredRes.json()) as RawStar[]) : [];
+  const starred = rawStars
+    .filter((r) => !r.private)
+    .map((r) => ({
+      full_name: r.full_name,
+      description: r.description,
+      language: r.language,
+      stars: r.stargazers_count ?? 0,
+    }));
+  // Exact count: GraphQL's totalCount when there's a token (below); else the
+  // full pages before the last one plus what's on the last.
+  let starredCount: number | null = null;
+  if (starredRes?.ok) {
+    const lastPage = lastPageFromLink(starredRes.headers.get("link"));
+    if (lastPage === null) starredCount = rawStars.length;
+    else if (!token) {
+      const tail = await fetchWithTimeout(
+        `https://api.github.com/users/${user}/starred?per_page=6&page=${lastPage}`,
+        { headers },
+      );
+      if (tail?.ok) starredCount = (lastPage - 1) * 6 + ((await tail.json()) as unknown[]).length;
+    }
+  }
+
   let pinned: string[] | null = null;
   let contributions: GithubProfileSnapshot["contributions"] = null;
   if (graphRes?.ok) {
@@ -334,6 +400,11 @@ export async function fetchGithubProfileSnapshot(
       data?: {
         user?: {
           pinnedItems?: { nodes?: { nameWithOwner?: string; isPrivate?: boolean }[] };
+          starredRepositories?: { totalCount: number };
+          repositories?: {
+            totalCount: number;
+            nodes?: { nameWithOwner: string; parent?: { nameWithOwner: string } | null }[];
+          };
           contributionsCollection?: {
             contributionCalendar?: { totalContributions: number; weeks: CalendarWeek[] };
           };
@@ -345,6 +416,19 @@ export async function fetchGithubProfileSnapshot(
       pinned = (g.pinnedItems?.nodes ?? [])
         .filter((n) => n.nameWithOwner && !n.isPrivate)
         .map((n) => n.nameWithOwner as string);
+      if (typeof g.starredRepositories?.totalCount === "number") {
+        starredCount = g.starredRepositories.totalCount;
+      }
+      const parents = new Map(
+        (g.repositories?.nodes ?? []).map((n) => [
+          n.nameWithOwner,
+          n.parent?.nameWithOwner ?? null,
+        ]),
+      );
+      repoSummary.forked = repoSummary.forked.map((f) => ({
+        ...f,
+        parent: parents.get(f.full_name) ?? f.parent,
+      }));
       const cal = g.contributionsCollection?.contributionCalendar;
       if (cal) contributions = { total: cal.totalContributions, weeks: calendarToWeeks(cal.weeks) };
     }
@@ -368,6 +452,8 @@ export async function fetchGithubProfileSnapshot(
       following: num(u.following),
       public_repos: num(u.public_repos),
       ...repoSummary,
+      starred_count: starredCount,
+      starred,
       pinned,
       contributions,
       ...events,
