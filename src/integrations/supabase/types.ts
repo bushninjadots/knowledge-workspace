@@ -1289,6 +1289,7 @@ export type Database = {
           position: number;
           url: string;
           user_id: string;
+          web_url: string | null;
         };
         Insert: {
           app_id: string;
@@ -1298,6 +1299,7 @@ export type Database = {
           position?: number;
           url: string;
           user_id: string;
+          web_url?: string | null;
         };
         Update: {
           app_id?: string;
@@ -1307,6 +1309,7 @@ export type Database = {
           position?: number;
           url?: string;
           user_id?: string;
+          web_url?: string | null;
         };
         Relationships: [
           {
@@ -3999,6 +4002,7 @@ export type Database = {
         Args: { p_space_id: string; p_user_id?: string };
         Returns: boolean;
       };
+      journal_summary: { Args: { p_profile_id: string }; Returns: Json };
       launch_metrics: { Args: never; Returns: Json };
       log_activity: {
         Args: { _kind: string; _metadata?: Json; _profile_id: string };

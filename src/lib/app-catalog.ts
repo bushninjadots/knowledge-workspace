@@ -64,6 +64,9 @@ type DeepLink = {
   build: (input: string) => string;
   /** URL schemes this app's launcher links may use. */
   schemes: string[];
+  /** Where the tile goes when the app isn't installed on this device. */
+  webFallback: string;
+  webFallbackHint: string;
 };
 
 export type AppDef = {
@@ -82,10 +85,12 @@ export type AppDef = {
   forProjects?: boolean;
 };
 
-const folder = (scheme: string): DeepLink => ({
+const folder = (scheme: string, webFallback: string, webFallbackHint: string): DeepLink => ({
   inputLabel: "Folder path",
   placeholder: "/Users/you/code/my-app",
   schemes: [scheme],
+  webFallback,
+  webFallbackHint,
   build: (input) => {
     const path = input.trim().replace(/^~(?=\/)/, "");
     return `${scheme}://file${path.startsWith("/") ? "" : "/"}${path.split("/").map(encodeURIComponent).join("/").replace(/%3A/gi, ":")}`;
@@ -194,7 +199,7 @@ export const APPS: AppDef[] = [
     icon: Code2,
     hosts: ["vscode.dev"],
     placeholder: "https://vscode.dev/github/you/repo",
-    deepLink: folder("vscode"),
+    deepLink: folder("vscode", "https://vscode.dev", "e.g. https://vscode.dev/github/you/repo"),
     forProjects: false,
   },
   {
@@ -205,7 +210,7 @@ export const APPS: AppDef[] = [
     mono: "Cu",
     hosts: ["cursor.com"],
     placeholder: "https://cursor.com",
-    deepLink: folder("cursor"),
+    deepLink: folder("cursor", "https://cursor.com", "e.g. your repo on GitHub"),
     forProjects: false,
   },
   {
@@ -220,6 +225,8 @@ export const APPS: AppDef[] = [
       inputLabel: "Folder path",
       placeholder: "/Users/you/code/my-app",
       schemes: ["zed"],
+      webFallback: "https://zed.dev",
+      webFallbackHint: "e.g. your repo on GitHub",
       build: (p) => `zed://file${p.startsWith("/") ? "" : "/"}${p}`,
     },
     forProjects: false,
@@ -307,6 +314,8 @@ export const APPS: AppDef[] = [
       inputLabel: "Vault name",
       placeholder: "Work notes",
       schemes: ["obsidian"],
+      webFallback: "https://obsidian.md",
+      webFallbackHint: "e.g. your Obsidian Publish site",
       build: (v) => `obsidian://open?vault=${encodeURIComponent(v.trim())}`,
     },
   },
@@ -862,4 +871,10 @@ export function groupApps(apps: AppDef[], query = ""): { category: AppCategory; 
     else groups.set(app.category, [app]);
   }
   return [...groups.entries()].map(([category, list]) => ({ category, apps: list }));
+}
+
+/** The web page a launcher tile opens when its desktop app isn't installed. */
+export function webFallbackFor(appId: string, saved?: string | null): string | null {
+  if (saved && /^https:\/\//.test(saved)) return saved;
+  return getApp(appId)?.deepLink?.webFallback ?? null;
 }

@@ -4,7 +4,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { createJournalToken } from "@/lib/journal-server";
+import { createJournalToken, syncProjectJournal } from "@/lib/journal-server";
 import type { JournalEntryLite, JournalKind } from "@/lib/journal";
 
 const sb = supabase;
@@ -213,5 +213,58 @@ export function useProjectJournal(projectId: string | undefined) {
     },
     enabled: !!projectId,
     staleTime: 60_000,
+  });
+}
+
+/* ── Project sync ──────────────────────────────────────────────────────── */
+
+const SYNC_AT_KEY = "tethyr-journal-project-sync";
+
+/** Pull feat/fix commits from your projects' GitHub/GitLab repos. */
+export function useSyncProjectJournal() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (projectId?: string) => syncProjectJournal({ data: { projectId } }),
+    onSuccess: (result) => {
+      try {
+        window.localStorage.setItem(SYNC_AT_KEY, String(Date.now()));
+      } catch {
+        /* per-device convenience only */
+      }
+      if (result.added > 0) void qc.invalidateQueries({ queryKey: JOURNAL_KEY });
+    },
+  });
+}
+
+/** Has this device synced in the last `minutes`? */
+export function syncedRecently(minutes = 10): boolean {
+  try {
+    const at = Number(window.localStorage.getItem(SYNC_AT_KEY) ?? 0);
+    return Date.now() - at < minutes * 60_000;
+  } catch {
+    return false;
+  }
+}
+
+type JournalSummary = {
+  did: number;
+  fixed: number;
+  decided: number;
+  learned: number;
+  active_days: number;
+  total: number;
+};
+
+/** Last-30-day numbers for a member's journal (counts only, never text). */
+export function useJournalSummary(profileId: string | undefined) {
+  return useQuery({
+    queryKey: [...JOURNAL_KEY, "summary", profileId ?? ""],
+    queryFn: async () => {
+      const { data, error } = await sb.rpc("journal_summary", { p_profile_id: profileId! });
+      if (error) throw error;
+      return data as unknown as JournalSummary;
+    },
+    enabled: !!profileId,
+    staleTime: 5 * 60_000,
   });
 }

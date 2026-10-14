@@ -16,6 +16,8 @@ export interface SuggestionFacts {
   availability: string | null;
   /** Connected to GitHub (Settings → GitHub). */
   githubConnected?: boolean;
+  /** Journal entries in the last 30 days. */
+  journalCount?: number;
 }
 
 export interface BlockSuggestion {
@@ -36,6 +38,11 @@ export function suggestBlocks(
       type: "profile-projects",
       when: facts.projectCount > 0,
       reason: `You have ${plural(facts.projectCount, "project")} visitors can't see yet.`,
+    },
+    {
+      type: "profile-journal",
+      when: (facts.journalCount ?? 0) > 0,
+      reason: `${facts.journalCount === 1 ? "1 journal entry" : `${facts.journalCount} journal entries`} in the last 30 days — show what you've been building.`,
     },
     {
       type: "profile-github",

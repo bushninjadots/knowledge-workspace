@@ -20,6 +20,7 @@ import {
   getApp,
   isDeepLink,
   isLaunchableUrl,
+  webFallbackFor,
   type AppDef,
 } from "@/lib/app-catalog";
 import { friendlyError } from "@/lib/error-message";
@@ -27,10 +28,36 @@ import { cn } from "@/lib/utils";
 import { AppIcon } from "./app-icon";
 import { AppPicker } from "./app-picker";
 
-function launch(url: string) {
-  // Desktop apps open through their own scheme; web apps in a new tab.
-  if (isDeepLink(url)) window.location.href = url;
-  else window.open(url, "_blank", "noopener,noreferrer");
+/**
+ * Open a tile. Web apps open in a new tab. Desktop apps open through their own
+ * scheme; if nothing takes over the page within a moment (the app isn't
+ * installed on this device — a phone, someone else's laptop), the web version
+ * opens in a new tab instead.
+ */
+function launch(item: MemberApp, name: string) {
+  if (!isDeepLink(item.url)) {
+    window.open(item.url, "_blank", "noopener,noreferrer");
+    return;
+  }
+  const fallback = webFallbackFor(item.app_id, item.web_url);
+  let left = false;
+  const onLeave = () => {
+    left = true;
+  };
+  window.addEventListener("blur", onLeave, { once: true });
+  document.addEventListener("visibilitychange", onLeave, { once: true });
+  window.location.href = item.url;
+  window.setTimeout(() => {
+    window.removeEventListener("blur", onLeave);
+    document.removeEventListener("visibilitychange", onLeave);
+    if (left || !fallback) return;
+    const tab = window.open(fallback, "_blank", "noopener,noreferrer");
+    // Popup blocked: offer it instead.
+    if (!tab)
+      toast(`${name} didn't open on this device`, {
+        action: { label: "Open on the web", onClick: () => window.open(fallback, "_blank") },
+      });
+  }, 1200);
 }
 
 function AddAppDialog({
@@ -45,11 +72,13 @@ function AddAppDialog({
   const [mode, setMode] = useState<"desktop" | "web">("desktop");
   const [input, setInput] = useState("");
   const [label, setLabel] = useState("");
+  const [webUrl, setWebUrl] = useState("");
 
   function reset() {
     setApp(null);
     setInput("");
     setLabel("");
+    setWebUrl("");
     setMode("desktop");
   }
 
@@ -63,7 +92,12 @@ function AddAppDialog({
     if (!app || !valid) return;
     try {
       await add.mutateAsync([
-        { app_id: app.id, url, label: label.trim() || suggestedLabel.slice(0, 40) || null },
+        {
+          app_id: app.id,
+          url,
+          label: label.trim() || suggestedLabel.slice(0, 40) || null,
+          web_url: desktop && /^https:\/\//.test(webUrl.trim()) ? webUrl.trim() : null,
+        },
       ]);
       toast.success(`${app.name} added`);
       reset();
@@ -160,6 +194,23 @@ function AddAppDialog({
             {!desktop && input.trim() && !valid && (
               <p className="text-[11px] text-destructive">Use a full https:// link.</p>
             )}
+            {desktop && (
+              <label className="block space-y-1 text-xs font-medium">
+                If {app.name} isn't installed, open (optional)
+                <Input
+                  value={webUrl}
+                  onChange={(e) => setWebUrl(e.target.value)}
+                  placeholder={app.deepLink!.webFallbackHint}
+                />
+                <span className="block font-normal text-muted-foreground">
+                  On a phone or another computer the tile opens this instead
+                  {webUrl.trim()
+                    ? ""
+                    : ` — or ${app.deepLink!.webFallback.replace("https://", "")}`}
+                  .
+                </span>
+              </label>
+            )}
             <label className="block space-y-1 text-xs font-medium">
               Name on the tile (optional)
               <Input
@@ -202,7 +253,7 @@ function Tile({
     <li className="relative">
       <button
         type="button"
-        onClick={() => !editing && launch(item.url)}
+        onClick={() => !editing && launch(item, name)}
         title={desktop ? `Open ${name} on this computer` : `Open ${name}`}
         className="group flex w-20 flex-col items-center gap-1.5 rounded-xl p-2 text-center transition-colors hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >

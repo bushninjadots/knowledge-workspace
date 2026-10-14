@@ -3,7 +3,9 @@ import { LinkedSpaceCard } from "@/components/tethyr/community/linked-space-card
 import { useParams, useNavigate, useSearch } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useDominantColor, withAlpha } from "@/lib/dominant-color";
-import { useCurrentUser } from "@/hooks/use-current-user";
+import { useCurrentUser, useSkillsCatalog } from "@/hooks/use-current-user";
+import { ProjectDialog } from "@/components/tethyr/profile-sections";
+import type { ProjectRow } from "@/components/tethyr/profile/types";
 import {
   useMilestones,
   useProjectUpdates,
@@ -112,6 +114,8 @@ export function ProjectPage() {
   const { data: me } = useCurrentUser();
   const navigate = useNavigate();
   const [joinModalOpen, setJoinModalOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const { data: skillsCatalog = [] } = useSkillsCatalog();
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [projectSearchOpen, setProjectSearchOpen] = useState(false);
   const [preselectPath, setPreselectPath] = useState<string | null>(null);
@@ -481,6 +485,7 @@ export function ProjectPage() {
         onFork={handleFork}
         onJoin={canJoin ? () => setJoinModalOpen(true) : undefined}
         onSignIn={isSignedOut ? signInToJoin : undefined}
+        onEdit={isOwner ? () => setEditOpen(true) : undefined}
         onPostUpdate={
           isOwner || isContributor
             ? () => {
@@ -874,6 +879,17 @@ export function ProjectPage() {
             onJumpSection={jumpToSection}
           />
         </Suspense>
+      )}
+      {isOwner && editOpen && me?.userId && (
+        <ProjectDialog
+          project={project as unknown as ProjectRow}
+          userId={me.userId}
+          allSkills={skillsCatalog}
+          initialSkillIds={skills.map((skill) => skill.id)}
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          onSaved={() => setEditOpen(false)}
+        />
       )}
     </Shell>
   );

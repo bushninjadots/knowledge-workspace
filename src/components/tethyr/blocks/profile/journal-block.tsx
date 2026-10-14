@@ -3,65 +3,124 @@ import { BlockTitle } from "@/components/tethyr/blocks/block-title";
 import { BlockEmptyState } from "@/components/tethyr/blocks/block-empty-state";
 import { KindBadge } from "@/components/tethyr/journal/journal-parts";
 import { Skeleton } from "@/components/ui/skeleton";
-import { usePublicJournal } from "@/hooks/use-journal";
+import { useJournalSummary, usePublicJournal } from "@/hooks/use-journal";
 import { registerBlock } from "@/lib/block-registry";
 import type { BlockProps } from "@/lib/page-blocks";
 
-/** Journal entries the member chose to share: what they built, fixed, decided, learned. */
+/**
+ * "About" from the dev journal: the last 30 days in numbers (counts only —
+ * private entries never show), what the member is working on now, and the
+ * entries they chose to share.
+ */
 function ProfileJournalBlock({ config, context }: BlockProps) {
   const { blockId, isEditing, onBlockEmptyChange } = context;
   const profileId = context.ownerType === "profile" ? context.ownerId : undefined;
   const count = Math.min(Math.max(Number(config.count) || 6, 1), 20);
-  const { data: entries, isLoading } = usePublicJournal(profileId, count);
-  const hasContent = (entries?.length ?? 0) > 0;
+  const showStats = config.showStats !== false;
+  const showNow = config.showNow !== false;
+  const showEntries = config.showEntries !== false;
+  const { data: entries, isLoading } = usePublicJournal(profileId, Math.max(count, 10));
+  const { data: summary, isLoading: summaryLoading } = useJournalSummary(
+    showStats ? profileId : undefined,
+  );
+
+  const now = (entries ?? []).find((e) => e.kind === "next");
+  const shown = (entries ?? []).filter((e) => e.kind !== "next").slice(0, count);
+  const stats = summary
+    ? [
+        { label: "built", value: summary.did },
+        { label: "fixed", value: summary.fixed },
+        { label: summary.decided === 1 ? "decision" : "decisions", value: summary.decided },
+        { label: "learned", value: summary.learned },
+        {
+          label: summary.active_days === 1 ? "active day" : "active days",
+          value: summary.active_days,
+        },
+      ].filter((s) => s.value > 0)
+    : [];
+  const hasContent =
+    (showStats && stats.length > 0) || (showNow && !!now) || (showEntries && shown.length > 0);
+  const loading = isLoading || (showStats && summaryLoading);
 
   useEffect(() => {
-    if (isLoading || !blockId) return;
+    if (loading || !blockId) return;
     onBlockEmptyChange?.(blockId, !hasContent);
-  }, [blockId, hasContent, isEditing, isLoading, onBlockEmptyChange]);
+  }, [blockId, hasContent, isEditing, loading, onBlockEmptyChange]);
 
-  if (isLoading) return <Skeleton className="h-24 w-full rounded-xl" />;
-  if (!entries || !hasContent) {
+  if (loading) return <Skeleton className="h-24 w-full rounded-xl" />;
+  if (!hasContent) {
     return isEditing ? (
       <BlockEmptyState
-        label="Journal highlights"
-        detail="In your Journal, tap the eye on an entry to share it. Shared entries show up here — everything else stays private."
+        label="Dev journal"
+        detail="Log as you work in your Journal (or let your AI assistant and git do it). Your monthly numbers show here; tap the eye on an entry to share it. Everything else stays private."
       />
     ) : null;
   }
+
   return (
-    <div>
-      <BlockTitle config={config}>Journal highlights</BlockTitle>
-      <ul className="mt-2 space-y-2.5">
-        {entries.map((e) => (
-          <li key={e.id} className="flex items-start gap-2.5">
-            <KindBadge kind={e.kind} />
-            <div className="min-w-0">
-              <p className="text-sm break-words">
-                {e.source_url ? (
-                  <a
-                    href={e.source_url}
-                    target="_blank"
-                    rel="noopener noreferrer nofollow"
-                    className="hover:underline"
-                  >
-                    {e.body}
-                  </a>
-                ) : (
-                  e.body
-                )}
-              </p>
-              <p className="text-[11px] text-muted-foreground">
-                {new Date(e.occurred_at).toLocaleDateString("en-GB", {
-                  day: "numeric",
-                  month: "short",
-                })}
-                {e.project ? ` · ${e.project.title}` : ""}
-              </p>
-            </div>
-          </li>
-        ))}
-      </ul>
+    <div className="space-y-4">
+      <BlockTitle config={config}>Dev journal</BlockTitle>
+
+      {showStats && stats.length > 0 && (
+        <div>
+          <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+            Last 30 days
+          </p>
+          <dl className="mt-1.5 flex flex-wrap gap-x-5 gap-y-2">
+            {stats.map((s) => (
+              <div key={s.label} className="flex items-baseline gap-1.5">
+                <dd className="text-lg font-semibold tabular-nums">{s.value}</dd>
+                <dt className="text-xs text-muted-foreground">{s.label}</dt>
+              </div>
+            ))}
+          </dl>
+        </div>
+      )}
+
+      {showNow && now && (
+        <div className="rounded-lg bg-surface-elevated/60 px-3 py-2">
+          <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+            Working on now
+          </p>
+          <p className="mt-0.5 text-sm">
+            {now.body}
+            {now.project && <span className="text-muted-foreground"> · {now.project.title}</span>}
+          </p>
+        </div>
+      )}
+
+      {showEntries && shown.length > 0 && (
+        <ul className="space-y-2.5">
+          {shown.map((e) => (
+            <li key={e.id} className="flex items-start gap-2.5">
+              <KindBadge kind={e.kind} />
+              <div className="min-w-0">
+                <p className="text-sm break-words">
+                  {e.source_url ? (
+                    <a
+                      href={e.source_url}
+                      target="_blank"
+                      rel="noopener noreferrer nofollow"
+                      className="hover:underline"
+                    >
+                      {e.body}
+                    </a>
+                  ) : (
+                    e.body
+                  )}
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  {new Date(e.occurred_at).toLocaleDateString("en-GB", {
+                    day: "numeric",
+                    month: "short",
+                  })}
+                  {e.project ? ` · ${e.project.title}` : ""}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
@@ -69,12 +128,16 @@ function ProfileJournalBlock({ config, context }: BlockProps) {
 registerBlock({
   type: "profile-journal",
   category: "work",
-  label: "Journal highlights",
-  title: "Journal highlights",
-  description: "Entries you share from your dev journal — built, fixed, decided, learned.",
+  label: "Dev journal",
+  title: "Dev journal",
+  description:
+    "From your journal: the last 30 days in numbers, what you're working on now, and entries you share.",
   icon: "NotebookPen",
-  defaults: { count: "6" },
+  defaults: { count: "6", showStats: true, showNow: true, showEntries: true },
   fields: [
+    { key: "showStats", label: "Show the last 30 days in numbers", type: "toggle" },
+    { key: "showNow", label: "Show what I'm working on now", type: "toggle" },
+    { key: "showEntries", label: "Show shared entries", type: "toggle" },
     {
       key: "count",
       label: "Entries to show",

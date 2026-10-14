@@ -1,8 +1,8 @@
 // The dev journal's building blocks, shared by the Notes dock's Log tab and
 // the /journal page: write a line, show a line, copy the standup.
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Check, ClipboardCopy, Eye, EyeOff, Trash2 } from "lucide-react";
+import { Check, ClipboardCopy, Eye, EyeOff, RefreshCw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   Select,
@@ -15,8 +15,10 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import {
   toLite,
   useAddJournalEntry,
+  syncedRecently,
   useDeleteJournalEntry,
   useJournalEntries,
+  useSyncProjectJournal,
   useUpdateJournalEntry,
   type JournalEntry,
 } from "@/hooks/use-journal";
@@ -300,5 +302,49 @@ export function CopyStandupButton({ className }: { className?: string }) {
       )}
       Copy my standup
     </button>
+  );
+}
+
+/**
+ * Pull feat/fix commits from your projects' repos into the journal. Runs on
+ * its own when the journal opens (at most every 10 minutes on this device).
+ */
+export function ProjectSyncButton({ auto = false }: { auto?: boolean }) {
+  const sync = useSyncProjectJournal();
+  const [label, setLabel] = useState<string | null>(null);
+  const run = useCallback(
+    (quiet: boolean) =>
+      sync.mutate(undefined, {
+        onSuccess: (r) => {
+          const text =
+            r.repos === 0
+              ? "No GitHub or GitLab repo linked to your projects yet"
+              : r.added > 0
+                ? `${r.added} new from your projects`
+                : "Up to date with your projects";
+          setLabel(text);
+          if (!quiet && r.added > 0) toast.success(text);
+        },
+        onError: () => setLabel("Couldn't reach your repos just now"),
+      }),
+    [sync],
+  );
+  useEffect(() => {
+    if (auto && !syncedRecently()) run(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auto]);
+  return (
+    <span className="inline-flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+      <button
+        type="button"
+        onClick={() => run(false)}
+        disabled={sync.isPending}
+        className="inline-flex items-center gap-1.5 rounded-full border border-border/70 px-3 py-1.5 font-medium text-foreground transition-colors hover:bg-surface-elevated disabled:opacity-50"
+      >
+        <RefreshCw className={cn("h-3.5 w-3.5", sync.isPending && "animate-spin")} aria-hidden />
+        Sync from projects
+      </button>
+      {label && <span>{label}</span>}
+    </span>
   );
 }

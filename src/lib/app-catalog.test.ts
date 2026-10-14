@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { APPS, detectApp, getApp, groupApps, isLaunchableUrl, PROJECT_APPS } from "./app-catalog";
+import {
+  APPS,
+  detectApp,
+  getApp,
+  groupApps,
+  isLaunchableUrl,
+  PROJECT_APPS,
+  webFallbackFor,
+} from "./app-catalog";
 
 describe("app catalog", () => {
   it("has unique ids", () => {
@@ -42,5 +50,16 @@ describe("app catalog", () => {
     const groups = groupApps(APPS, "git");
     expect(groups.flatMap((g) => g.apps.map((a) => a.id))).toContain("gitlab");
     expect(groups.every((g) => g.apps.length > 0)).toBe(true);
+  });
+});
+
+describe("web fallbacks", () => {
+  it("uses the member's own page, else the app's site", () => {
+    expect(webFallbackFor("vscode", "https://vscode.dev/github/me/app")).toBe(
+      "https://vscode.dev/github/me/app",
+    );
+    expect(webFallbackFor("obsidian", null)).toBe("https://obsidian.md");
+    expect(webFallbackFor("obsidian", "javascript:alert(1)")).toBe("https://obsidian.md");
+    expect(webFallbackFor("linear", null)).toBeNull();
   });
 });

@@ -385,7 +385,7 @@ describe("fetchRepoCommits", () => {
           sha: "abcdef1234567890",
           html_url: "https://github.com/owner/repo/commit/abcdef1",
           commit: {
-            message: "Ship the new flow\\n\\nDetails",
+            message: "Ship the new flow\n\nDetails",
             author: { name: "A Builder", date: "2026-08-20T10:00:00Z" },
           },
           author: { login: "builder" },

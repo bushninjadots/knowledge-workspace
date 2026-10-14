@@ -2,6 +2,7 @@ import {
   Share2,
   UserPlus,
   PenSquare,
+  Pencil,
   Star,
   GitBranch,
   Trophy,
@@ -85,6 +86,7 @@ export function ProjectHeader({
   onJoin,
   onSignIn,
   onPostUpdate,
+  onEdit,
   onOpenDiscussions,
   onOpenNeeds,
   onOpenPeople,
@@ -119,6 +121,8 @@ export function ProjectHeader({
   onJoin?: () => void;
   onSignIn?: () => void;
   onPostUpdate?: () => void;
+  /** Owner only: open the project editor (name, images, links, details). */
+  onEdit?: () => void;
   onOpenDiscussions?: () => void;
   onOpenNeeds?: () => void;
   onOpenPeople?: () => void;
@@ -449,6 +453,15 @@ export function ProjectHeader({
               >
                 <GitBranch className="h-3.5 w-3.5" />
                 Fork
+              </button>
+            )}
+            {onEdit && (
+              <button
+                onClick={onEdit}
+                className="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-surface px-3 py-2 text-xs font-medium text-foreground transition-lift hover:border-border-strong"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+                Edit project
               </button>
             )}
             <button

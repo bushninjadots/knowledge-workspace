@@ -6,6 +6,7 @@ import { Fragment, useMemo, useState } from "react";
 import { Plus, Search, Sparkles } from "lucide-react";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { getAllBlocks, getBlock } from "@/lib/block-registry";
+import { useJournalSummary } from "@/hooks/use-journal";
 import type { BlockDefinition } from "@/lib/page-blocks";
 import { cn } from "@/lib/utils";
 import { findSection, sectionLabel } from "@/lib/studio-grid";
@@ -72,6 +73,7 @@ export function GBlockPalette(props: GStudioSurfaceProps) {
     [query, usedTypes],
   );
   const github = useGithubConnection();
+  const { data: journal } = useJournalSummary(me?.userId);
   const suggestions = useMemo(
     () =>
       suggestBlocks(props.layout, {
@@ -84,8 +86,9 @@ export function GBlockPalette(props: GStudioSurfaceProps) {
         yearsExperience: me?.profile?.years_experience ?? null,
         availability: me?.profile?.availability ?? null,
         githubConnected: github.connected,
+        journalCount: journal?.total ?? 0,
       }).filter((s) => getBlock(s.type)),
-    [me, props.layout, github.connected],
+    [me, props.layout, github.connected, journal?.total],
   );
   const blockItem = (def: BlockDefinition, reason?: string) => (
     <button

@@ -35,3 +35,24 @@ export const createJournalToken = createServerFn({ method: "POST" })
     if (error || !row) return { ok: false as const, error: "Couldn't create the token." };
     return { ok: true as const, id: row.id, token };
   });
+
+/** Pull feat/fix commits from the member's project repos into their journal. */
+export const syncProjectJournal = createServerFn({ method: "POST" })
+  .validator((d: { projectId?: string } | undefined) => ({
+    projectId: typeof d?.projectId === "string" ? d.projectId : undefined,
+  }))
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context, data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { syncProjectsToJournal } = await import("./project-journal-sync");
+    const { publicGithubToken } = await import("./github-refresh");
+    const { data: stored } = await supabaseAdmin
+      .from("user_github_tokens")
+      .select("token")
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    return syncProjectsToJournal(supabaseAdmin, context.userId, {
+      projectId: data.projectId,
+      githubToken: stored?.token ?? publicGithubToken(),
+    });
+  });

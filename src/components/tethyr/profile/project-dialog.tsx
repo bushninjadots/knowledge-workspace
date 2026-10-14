@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Camera, Check, Github, Loader2, Search as SearchIcon, X } from "lucide-react";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
@@ -7,6 +8,7 @@ import { validateImageFile, isSafeUrl } from "@/lib/validators";
 import { GitHubConnect } from "./github-connect";
 import { AppLinksEditor } from "@/components/tethyr/apps/app-links-editor";
 import { PROJECT_APPS } from "@/lib/app-catalog";
+import { syncProjectJournal } from "@/lib/journal-server";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -63,6 +65,13 @@ export function ProjectDialog({
   const [progress, setProgress] = useState(project?.progress_percent ?? 0);
   const [coverPath, setCoverPath] = useState<string | null>(project?.cover_url ?? null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  // Wherever the dialog was opened from (Studio, dashboard, sidebar), every
+  // list that shows projects picks up the change.
+  const refreshProjectLists = () => {
+    for (const key of [["explore-projects"], ["current-user"], ["project-detail"]])
+      void queryClient.invalidateQueries({ queryKey: key });
+  };
   const [links, setLinks] = useState<Record<string, string>>(project?.links ?? {});
   const [tags, setTags] = useState<string[]>(project?.tags ?? []);
   const [tagInput, setTagInput] = useState("");
@@ -313,6 +322,18 @@ export function ProjectDialog({
 
     setSaving(false);
     toast.success(project ? "Project updated" : "Project published");
+    refreshProjectLists();
+    // "Where it lives" → journal: pull feat/fix commits from a linked repo.
+    if (cleanLinks.github || cleanLinks.gitlab || importedRepo) {
+      void syncProjectJournal({ data: { projectId: project?.id } })
+        .then((r) => {
+          if (r.added > 0) {
+            void queryClient.invalidateQueries({ queryKey: ["journal"] });
+            toast.success(`${r.added} commit${r.added === 1 ? "" : "s"} added to your dev journal`);
+          }
+        })
+        .catch(() => undefined);
+    }
     onSaved();
     onOpenChange(false);
   }
@@ -323,6 +344,7 @@ export function ProjectDialog({
     if (error) return toast.error(friendlyError(error));
     toast.success("Deleted");
     setConfirmDeleteOpen(false);
+    refreshProjectLists();
     onSaved();
     onOpenChange(false);
   }

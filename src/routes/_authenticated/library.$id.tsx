@@ -15,7 +15,7 @@ import {
   Globe,
   Upload,
   FolderOpen,
-  Code2,
+  Type,
   FileCode2,
   Github,
   Unlink,
@@ -147,8 +147,8 @@ function LibraryItemPage() {
     if (currentFormat !== targetFormat && content.trim()) {
       const confirmed = window.confirm(
         target === "code"
-          ? "Convert this doc to Markdown? Rich-text formatting is translated as faithfully as possible."
-          : "Convert this Markdown into rich text?",
+          ? "Switch this note to Markdown? Rich-text formatting is translated as faithfully as possible."
+          : "Switch this Markdown note to rich text?",
       );
       if (!confirmed) return;
       void import("@/lib/content-format").then(({ htmlToMarkdown, markdownToHtml }) => {
@@ -344,44 +344,27 @@ function LibraryItemPage() {
         {/* Editor / code-doc workspace */}
         {(item.type === "note" || item.type === "document") && (
           <>
-            <div className="mb-4 rounded-xl border border-trust/20 bg-trust/5 p-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <div className="flex items-center gap-2 text-sm font-semibold">
-                    {workspaceMode === "code" ? (
-                      <FileCode2 className="h-4 w-4 text-trust" />
-                    ) : (
-                      <Code2 className="h-4 w-4 text-ai" />
-                    )}
-                    {workspaceMode === "code" ? "Code workspace" : "Docs workspace"}
-                  </div>
-                  <p className="mt-1 max-w-2xl text-xs text-muted-foreground">
-                    {workspaceMode === "code"
-                      ? "Write a snippet, implementation note, or README. Use Code block for syntax-highlighted code."
-                      : "Explain the idea, decisions, and next steps. Add code blocks whenever a reader needs the implementation."}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <SegmentedControl
-                    value={workspaceMode}
-                    onChange={handleModeSwitch}
-                    ariaLabel="Workspace mode"
-                    size="sm"
-                    className="w-fit"
-                    options={[
-                      { value: "docs", label: "Docs", icon: Code2 },
-                      { value: "code", label: "Code", icon: FileCode2 },
-                    ]}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setPreview((value) => !value)}
-                    className="rounded-md px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    {preview ? "Edit" : "Preview"}
-                  </button>
-                </div>
-              </div>
+            {/* One small switch: rich text, or Markdown (for READMEs, Obsidian,
+                and files synced from GitHub). */}
+            <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
+              <SegmentedControl
+                value={workspaceMode}
+                onChange={handleModeSwitch}
+                ariaLabel="Format"
+                size="sm"
+                className="w-fit"
+                options={[
+                  { value: "docs", label: "Rich text", icon: Type },
+                  { value: "code", label: "Markdown", icon: FileCode2 },
+                ]}
+              />
+              <button
+                type="button"
+                onClick={() => setPreview((value) => !value)}
+                className="rounded-md px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {preview ? "Edit" : "Preview"}
+              </button>
             </div>
             {preview ? (
               workspaceMode === "code" ? (

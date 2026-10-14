@@ -299,6 +299,8 @@ export function parseCommitMessage(message: string): { kind: JournalKind; body: 
   if (conventional) {
     const [, type, scope, rest] = conventional;
     const t = type.toLowerCase();
+    // Dependency bumps (Renovate, Dependabot, "fix(deps): …") aren't the story.
+    if (!tagged && scope && /^deps(-dev)?$/i.test(scope)) return null;
     const body = clean(scope ? `${rest} (${scope})` : rest);
     if (!body) return null;
     if (t === "fix") return { kind: "fixed", body };

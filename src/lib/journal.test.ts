@@ -152,6 +152,7 @@ describe("parseCommitMessage", () => {
       body: "redirect loop on logout",
     });
     expect(parseCommitMessage("chore: bump deps")).toBeNull();
+    expect(parseCommitMessage("fix(deps): update all non-major dependencies")).toBeNull();
     expect(parseCommitMessage("Merge branch 'main'")).toBeNull();
     expect(parseCommitMessage("wip")).toBeNull();
   });

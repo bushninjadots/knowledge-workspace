@@ -1,6 +1,7 @@
 import {
   Bell,
   Compass,
+  FolderOpen,
   Home,
   Link2,
   MessageSquare,
@@ -27,10 +28,10 @@ export const navigationGroups = [
     label: "Workspace",
     items: [
       { to: "/dashboard", label: "Dashboard", icon: Home },
-      // The weekly habit. (Library left the nav on purpose: it's a notes tool,
-      // not part of the loop; projects and search still open it.)
+      // The weekly habit and the daily log, then the full-size Notes dock.
       { to: "/ships", label: "Ship log", icon: Rocket },
       { to: "/journal", label: "Journal", icon: NotebookPen },
+      { to: "/library", label: "Library", icon: FolderOpen },
     ],
   },
   {

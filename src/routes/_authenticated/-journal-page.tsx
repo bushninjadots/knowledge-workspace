@@ -13,6 +13,7 @@ import {
   JournalComposer,
   JournalEntryRow,
   KIND_TONE,
+  ProjectSyncButton,
   useStandup,
 } from "@/components/tethyr/journal/journal-parts";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -73,7 +74,12 @@ export function JournalPage() {
       <PageHeader
         title="Dev journal"
         description="Log a line as you work — what you did, fixed, decided, learned, where you're stuck. Tethyr turns it into your standup, your weekly ship and your monthly brag doc, and your tools can log for you. Private unless you share an entry."
-        actions={<CopyStandupButton />}
+        actions={
+          <>
+            <ProjectSyncButton auto />
+            <CopyStandupButton />
+          </>
+        }
       />
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">

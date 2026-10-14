@@ -8,6 +8,8 @@ export type MemberApp = {
   app_id: string;
   label: string | null;
   url: string;
+  /** Web version for when the desktop app isn't installed here. */
+  web_url: string | null;
   position: number;
 };
 
@@ -20,7 +22,7 @@ export function useMemberApps() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("member_apps")
-        .select("id, app_id, label, url, position")
+        .select("id, app_id, label, url, web_url, position")
         .eq("user_id", me!.userId)
         .order("position")
         .order("created_at");
@@ -36,13 +38,16 @@ export function useAddMemberApps() {
   const qc = useQueryClient();
   const { data: me } = useCurrentUser();
   return useMutation({
-    mutationFn: async (apps: { app_id: string; url: string; label?: string | null }[]) => {
+    mutationFn: async (
+      apps: { app_id: string; url: string; label?: string | null; web_url?: string | null }[],
+    ) => {
       const { error } = await supabase.from("member_apps").insert(
         apps.map((a, i) => ({
           user_id: me!.userId,
           app_id: a.app_id,
           url: a.url,
           label: a.label?.trim() || null,
+          web_url: a.web_url?.trim() || null,
           // Seconds since 1970 keep new apps after older ones.
           position: Math.floor(Date.now() / 1000) + i,
         })),

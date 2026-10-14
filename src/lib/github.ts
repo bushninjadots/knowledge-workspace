@@ -369,7 +369,7 @@ export async function fetchRepoCommits(
     return [
       {
         sha: row.sha,
-        message: row.commit.message.split("\\n")[0].trim(),
+        message: row.commit.message.split("\n")[0].trim(),
         html_url: row.html_url,
         committed_at: row.commit.author?.date ?? new Date().toISOString(),
         author_login: row.author?.login ?? null,
