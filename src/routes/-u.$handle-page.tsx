@@ -1,16 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { Link, useParams, useSearch } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  ArrowRight,
-  Github,
-  Globe,
-  Instagram,
-  Link2,
-  Twitch,
-  Twitter,
-  Youtube,
-} from "lucide-react";
+import { ArrowRight, Link2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { avatarShapeCss, avatarRingCss } from "@/components/ui/avatar";
 import {
@@ -25,6 +16,9 @@ import { useDominantColor } from "@/lib/dominant-color";
 import { PageShell } from "@/components/tethyr/page/page-shell";
 import { useProfilePage } from "@/hooks/use-profile-page";
 import { useAuthUser, useCurrentUser } from "@/hooks/use-current-user";
+import { AppIcon } from "@/components/tethyr/apps/app-icon";
+import { detectApp, getApp } from "@/lib/app-catalog";
+import { safeHref } from "@/lib/validators";
 import { ProfileWorkEvidence } from "@/components/tethyr/profile/work-evidence";
 import { ProfileCommunityHelp } from "@/components/tethyr/profile/community-help";
 import { ProfileGraphSummary } from "@/components/tethyr/profile/profile-graph-summary";
@@ -308,16 +302,6 @@ function ProfileSkeleton() {
   );
 }
 
-const SOCIAL_ICONS: Record<string, typeof Globe> = {
-  website: Globe,
-  github: Github,
-  x: Twitter,
-  twitter: Twitter,
-  instagram: Instagram,
-  youtube: Youtube,
-  twitch: Twitch,
-};
-
 /** Fallback for people who haven't published a Studio yet. Everyone gets a
  *  published page only once they customize + publish, so this is what the large
  *  majority of profiles actually render — which makes it the most important
@@ -455,18 +439,18 @@ function BasicProfile({
                 </a>
               ))}
               {social.map(([key, url]) => {
-                const Icon = SOCIAL_ICONS[key] ?? Globe;
+                const app = getApp(key) ?? detectApp(url);
                 return (
                   <a
                     key={key}
-                    href={url}
+                    href={safeHref(url)}
                     target="_blank"
-                    rel="noreferrer"
-                    aria-label={key}
-                    title={key}
-                    className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-border/60 bg-background/60 text-muted-foreground transition-lift hover:text-foreground"
+                    rel="noopener noreferrer"
+                    aria-label={app?.name ?? key}
+                    title={app?.name ?? key}
+                    className="inline-flex items-center rounded-full transition-lift hover:-translate-y-px"
                   >
-                    <Icon className="h-3.5 w-3.5" />
+                    <AppIcon app={app} size="sm" className="rounded-full" />
                   </a>
                 );
               })}

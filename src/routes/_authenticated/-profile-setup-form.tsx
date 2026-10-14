@@ -2,20 +2,7 @@
 // with a completeness ring. Rendered by ProfilePage (-profile-page.tsx).
 
 import { useState } from "react";
-import {
-  Camera,
-  Clock,
-  Github,
-  Globe,
-  Instagram,
-  Link2,
-  Loader2,
-  MapPin,
-  Pencil,
-  Sparkles,
-  Twitch,
-  Twitter,
-} from "lucide-react";
+import { Camera, Clock, Globe, Link2, Loader2, MapPin, Pencil, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -39,16 +26,11 @@ import {
   validateProfileInput,
   validateProfileUrl,
 } from "@/lib/profile-validation";
+import { AppLinksEditor } from "@/components/tethyr/apps/app-links-editor";
+import { APPS } from "@/lib/app-catalog";
 
-const SOCIAL_ICONS: Record<string, typeof Globe> = {
-  website: Globe,
-  youtube: Twitter,
-  instagram: Instagram,
-  x: Twitter,
-  tiktok: Sparkles,
-  twitch: Twitch,
-  github: Github,
-};
+// Where a member can be found: everything but desktop-only editors.
+const PROFILE_APPS = APPS.filter((a) => a.category !== "editor");
 
 type ProfileType = import("@/hooks/use-current-user").Profile;
 
@@ -688,30 +670,16 @@ export function ProfileSetupForm({
             <Globe className="h-4 w-4 text-muted-foreground" />
             <h4 className="text-sm font-medium">Social links</h4>
           </div>
-          <div className="mt-2 space-y-3">
-            {Object.entries(SOCIAL_ICONS).map(([key, Icon]) => {
-              const url = form.social_links[key] ?? "";
-              return (
-                <div key={key} className="space-y-1.5">
-                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                    {key.charAt(0).toUpperCase() + key.slice(1)}
-                  </Label>
-                  <div className="flex items-center gap-2">
-                    <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                    <Input
-                      value={url}
-                      onChange={(e) =>
-                        setForm((f) => ({
-                          ...f,
-                          social_links: { ...f.social_links, [key]: e.target.value },
-                        }))
-                      }
-                      placeholder={`https://${key}.com/you`}
-                    />
-                  </div>
-                </div>
-              );
-            })}
+          <p className="mt-1 text-xs text-muted-foreground">
+            Where people can find you and your work — they show as app icons on your profile.
+          </p>
+          <div className="mt-2">
+            <AppLinksEditor
+              value={form.social_links}
+              onChange={(next) => setForm((f) => ({ ...f, social_links: next }))}
+              apps={PROFILE_APPS}
+              suggested={["github", "linkedin", "x", "website", "gitlab", "dribbble"]}
+            />
           </div>
         </Card>
 

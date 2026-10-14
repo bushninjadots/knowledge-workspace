@@ -16,6 +16,7 @@ import {
 } from "@/lib/profile-completeness";
 import { NextStepsList } from "@/components/tethyr/next-steps";
 import { ShipWeekPrompt } from "@/components/tethyr/ships/ship-week-prompt";
+import { AppLauncher } from "@/components/tethyr/apps/app-launcher";
 import { CreateProjectButton } from "@/components/tethyr/create-project-button";
 import { FirstSessionOnboarding } from "@/components/tethyr/first-session-onboarding";
 import {
@@ -370,6 +371,7 @@ function DashboardContent({
             pendingInviteCount === 0 &&
             unreadMessageCount === 0
           ) && renderModule("today")}
+          <AppLauncher />
           <ProjectReturnShelf />
           <FocusBand
             pct={pct}

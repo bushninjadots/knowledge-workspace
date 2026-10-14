@@ -19,7 +19,10 @@ import {
   Sparkles,
   Award,
   Check,
+  NotebookPen,
 } from "lucide-react";
+import { useProjectJournal } from "@/hooks/use-journal";
+import { entryLine } from "@/lib/journal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -63,6 +66,7 @@ type ActivityItem = {
     | "contribution"
     | "contributor"
     | "role"
+    | "journal"
     | "founded";
   title: string;
   body?: string;
@@ -83,6 +87,7 @@ const KIND_ICON: Record<ActivityItem["kind"], typeof PenSquare> = {
   contribution: Sparkles,
   contributor: UserPlus,
   role: Briefcase,
+  journal: NotebookPen,
   founded: Rocket,
 };
 
@@ -96,6 +101,7 @@ const KIND_TINT: Record<ActivityItem["kind"], string> = {
   contribution: "bg-primary/10 text-primary",
   contributor: "bg-teaching/10 text-teaching",
   role: "bg-ai/10 text-ai",
+  journal: "bg-teaching/10 text-teaching",
   founded: "bg-trust/10 text-trust",
 };
 
@@ -109,6 +115,7 @@ const KIND_LABEL: Record<ActivityItem["kind"], string> = {
   contribution: "Contribution",
   contributor: "Contributor",
   role: "Role",
+  journal: "Journal",
   founded: "Founded",
 };
 
@@ -238,6 +245,7 @@ export function ProjectActivityTab({
   const createContribution = useCreateProjectContribution();
   const recognize = useRecognizeProjectActivity();
   const { data: me } = useCurrentUser();
+  const { data: journal } = useProjectJournal(projectId);
   const { data: activityRows } = useProjectActivity(projectId);
   const { data: recognitions = [] } = useQuery({
     queryKey: ["project-recognitions", projectId],
@@ -334,10 +342,25 @@ export function ProjectActivityTab({
         ? activityRows.map(fromActivityRow)
         : buildFallbackItems(updates, milestones, discussions, projectFiles, repos);
 
-    return [...(foundingItem ? [foundingItem] : []), ...sourceItems].sort(
+    // Journal lines people chose to share under this project.
+    const journalItems: ActivityItem[] = (journal ?? []).map((entry) => ({
+      id: `j-${entry.id}`,
+      kind: "journal",
+      title: entryLine(
+        { kind: entry.kind, body: entry.body, occurred_at: entry.occurred_at },
+        false,
+      ),
+      body: entry.detail ?? undefined,
+      authorId: entry.author_id,
+      authorName: entry.author?.display_name ?? entry.author?.handle ?? undefined,
+      authorHandle: entry.author?.handle ?? null,
+      at: entry.occurred_at,
+    }));
+
+    return [...(foundingItem ? [foundingItem] : []), ...sourceItems, ...journalItems].sort(
       (a, b) => new Date(b.at).getTime() - new Date(a.at).getTime(),
     );
-  }, [activityRows, updates, milestones, discussions, projectFiles, repos, founding]);
+  }, [activityRows, updates, milestones, discussions, projectFiles, repos, founding, journal]);
 
   useEffect(() => {
     if (!isOwner || !repos.some((repo) => repo.provider === "github")) return;

@@ -57,6 +57,8 @@ The loop needs a reason to come back every week. That is the **Ship log** (`/shi
 
 The **Dev journal** (`/journal`, and the Log tab in the Notes dock) is the daily layer under it: one-line entries that become the standup, the weekly ship draft and the monthly brag doc. It is the answer to "not everyone uses GitHub": AI coding assistants log through the MCP server, git hooks work with any host, and anything else can use the REST API (`docs/JOURNAL_API.md`). Entries are private unless shared. (Decision, 2026-10-14.)
 
+**Apps** (`src/lib/app-catalog.ts`) are one catalog used everywhere a tool is named: "Where it lives" on projects (step 1 of creating one), "where to find me" on profiles, and the member's private **Your apps** launcher on the dashboard, which can open desktop apps directly (Obsidian vault, VS Code / Cursor / Zed folder) — those deep links live only in `member_apps`, never on public pages. Tiles use the app's colour and an icon or monogram, not copied logos.
+
 **Library** is out of the main navigation on purpose (2026-10-14): it is a notes tool, not part of the loop. Members reach it through the **Notes dock** — a pop-up beside Messages on every signed-in page (More → Notes on phones) to jot notes, upload files, pictures and video, search and edit — and from project resources, GitHub notes and search. `/library` is the full-size view.
 
 Every substantial feature should strengthen at least one transition in this loop. If it does not help people discover work, find collaborators, collaborate, build, contribute, or become known through contribution, its product justification should be explicit.

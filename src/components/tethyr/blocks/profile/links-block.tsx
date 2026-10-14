@@ -2,7 +2,9 @@ import { useEffect } from "react";
 import { BlockTitle } from "@/components/tethyr/blocks/block-title";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ExternalLink, LinkIcon } from "lucide-react";
+import { ExternalLink } from "lucide-react";
+import { AppIcon } from "@/components/tethyr/apps/app-icon";
+import { detectApp, getApp } from "@/lib/app-catalog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BlockEmptyState } from "@/components/tethyr/blocks/block-empty-state";
 import { registerBlock } from "@/lib/block-registry";
@@ -80,17 +82,20 @@ function ProfileLinksBlock({ context, config }: BlockProps) {
             <ExternalLink className="h-3 w-3" /> {link.label}
           </a>
         ))}
-        {social.map(([platform, url]) => (
-          <a
-            key={platform}
-            href={safeHref(url)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs text-foreground hover:bg-surface-elevated transition-colors"
-          >
-            <LinkIcon className="h-3 w-3" /> {platform}
-          </a>
-        ))}
+        {social.map(([platform, url]) => {
+          const app = getApp(platform) ?? detectApp(url);
+          return (
+            <a
+              key={platform}
+              href={safeHref(url)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface py-1 pr-3 pl-1 text-xs text-foreground hover:bg-surface-elevated transition-colors"
+            >
+              <AppIcon app={app} size="sm" className="rounded-full" /> {app?.name ?? platform}
+            </a>
+          );
+        })}
       </div>
     </div>
   );

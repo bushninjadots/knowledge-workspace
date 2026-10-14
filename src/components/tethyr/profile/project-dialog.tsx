@@ -5,6 +5,8 @@ import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
 import { validateImageFile, isSafeUrl } from "@/lib/validators";
 import { GitHubConnect } from "./github-connect";
+import { AppLinksEditor } from "@/components/tethyr/apps/app-links-editor";
+import { PROJECT_APPS } from "@/lib/app-catalog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,7 +23,6 @@ import {
   PROJECT_STATUS_LABEL,
   PROJECT_STATUS_STYLE,
   PROJECT_CREATION_STEPS,
-  PROJECT_LINK_KEYS,
   canContinueProjectCreation,
 } from "./types";
 import type { ProjectRow, ProjectSkill, ProjectStatus } from "./types";
@@ -124,6 +125,12 @@ export function ProjectDialog({
       resetImport();
     }
   }, [open, project?.id, resetImport]);
+
+  // An imported repo is where the project lives — show it in "Where it lives".
+  useEffect(() => {
+    if (importedRepo?.url)
+      setLinks((current) => (current.github ? current : { ...current, github: importedRepo.url }));
+  }, [importedRepo?.url]);
 
   const panelClass = (step: number) => (project || creationStep === step ? "space-y-3" : "hidden");
 
@@ -613,6 +620,17 @@ export function ProjectDialog({
                 onChange={(e) => setVision(e.target.value)}
               />
             </Field>
+            <Field label="Where it lives">
+              <p className="-mt-1 mb-2 text-xs text-muted-foreground">
+                Repo, design file, docs, board, live app, community — wherever the work happens.
+              </p>
+              <AppLinksEditor
+                value={links}
+                onChange={setLinks}
+                apps={PROJECT_APPS}
+                suggested={["github", "gitlab", "figma", "notion", "linear", "website", "vercel"]}
+              />
+            </Field>
           </div>
           <div className={panelClass(1)}>
             <Field label="Status">
@@ -710,24 +728,6 @@ export function ProjectDialog({
             </Field>
           </div>
           <div className={panelClass(2)}>
-            <Field label="Links">
-              <div className="space-y-2">
-                {PROJECT_LINK_KEYS.map(({ key, label, icon: Icon }) => (
-                  <div key={key} className="flex items-center gap-2">
-                    <div className="flex w-28 items-center gap-1.5 text-xs text-muted-foreground">
-                      <Icon className="h-3.5 w-3.5" />
-                      {label}
-                    </div>
-                    <Input
-                      placeholder={`https://…`}
-                      value={links[key] ?? ""}
-                      onChange={(e) => setLinks({ ...links, [key]: e.target.value })}
-                    />
-                  </div>
-                ))}
-              </div>
-            </Field>
-
             <Field label="Tags">
               <div className="flex flex-wrap gap-2">
                 {tags.map((t) => (

@@ -1280,6 +1280,44 @@ export type Database = {
         };
         Relationships: [];
       };
+      member_apps: {
+        Row: {
+          app_id: string;
+          created_at: string;
+          id: string;
+          label: string | null;
+          position: number;
+          url: string;
+          user_id: string;
+        };
+        Insert: {
+          app_id: string;
+          created_at?: string;
+          id?: string;
+          label?: string | null;
+          position?: number;
+          url: string;
+          user_id: string;
+        };
+        Update: {
+          app_id?: string;
+          created_at?: string;
+          id?: string;
+          label?: string | null;
+          position?: number;
+          url?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "member_apps_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       messages: {
         Row: {
           body: string;

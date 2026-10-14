@@ -7,7 +7,6 @@ import {
   Trophy,
   MessageCircle,
   CalendarDays,
-  Link as LinkIcon,
   Lock,
   Globe2,
   Zap,
@@ -20,7 +19,9 @@ import { formatDistanceToNowStrict } from "date-fns";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import type { ProjectDetail } from "@/hooks/use-projects";
-import { PROJECT_STATUS_STYLE, PROJECT_LINK_KEYS } from "@/components/tethyr/profile-sections";
+import { PROJECT_STATUS_STYLE } from "@/components/tethyr/profile-sections";
+import { AppIcon } from "@/components/tethyr/apps/app-icon";
+import { detectApp, getApp } from "@/lib/app-catalog";
 import { safeHref } from "@/lib/validators";
 import { ProfileLink } from "@/components/tethyr/profile-link";
 import { PersonPill } from "@/components/tethyr/person-pill";
@@ -399,18 +400,17 @@ export function ProjectHeader({
                 </span>
               )}
               {links.map(([key, url]) => {
-                const meta = PROJECT_LINK_KEYS.find((l) => l.key === key);
-                const Icon = meta?.icon ?? LinkIcon;
+                const app = getApp(key) ?? detectApp(url);
                 return (
                   <a
                     key={key}
                     href={safeHref(url)}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/40 px-2.5 py-0.5 text-[11px] text-muted-foreground transition-lift hover:text-foreground"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/40 py-0.5 pr-2.5 pl-1 text-[11px] text-muted-foreground transition-lift hover:text-foreground"
                   >
-                    <Icon className="h-3 w-3" />
-                    {meta?.label ?? key}
+                    <AppIcon app={app} size="xs" />
+                    {app?.name ?? key}
                   </a>
                 );
               })}

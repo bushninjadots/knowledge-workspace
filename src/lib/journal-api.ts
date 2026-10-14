@@ -302,6 +302,28 @@ const MCP_TOOLS = [
     },
   },
   {
+    name: "wrap_up_session",
+    title: "Wrap up this session",
+    description:
+      "At the end of a working session, log what happened in one go: what was built, fixed, decided and learned, anything still blocking, and the next steps — so the user (and you, next time) can pick up where you left off. Use short plain-language lines; only the meaningful parts; never secrets, credentials, personal data or proprietary code. Private unless the user asks to share.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project: { type: "string", description: "Tethyr project name, if any." },
+        did: { type: "array", items: { type: "string" }, description: "Built / shipped." },
+        fixed: {
+          type: "array",
+          items: { type: "string" },
+          description: "Bugs fixed (with cause).",
+        },
+        decided: { type: "array", items: { type: "string" }, description: "Decisions and why." },
+        learned: { type: "array", items: { type: "string" }, description: "Things learned." },
+        stuck: { type: "array", items: { type: "string" }, description: "Open blockers." },
+        next: { type: "array", items: { type: "string" }, description: "Next steps." },
+      },
+    },
+  },
+  {
     name: "get_journal",
     title: "Read recent journal",
     description:
@@ -325,6 +347,23 @@ const MCP_TOOLS = [
     title: "List Tethyr projects",
     description: "The user's Tethyr projects, to file journal entries under the right one.",
     inputSchema: { type: "object", properties: {} },
+  },
+];
+
+// Prompts show up as slash commands in clients that support them
+// (Claude Code: /mcp__tethyr__wrap_up).
+const MCP_PROMPTS = [
+  {
+    name: "wrap_up",
+    title: "Wrap up this session",
+    description: "Log what this session built, fixed, decided and learned, plus next steps.",
+    text: "Let's wrap up this session for my Tethyr dev journal. Look back over what we did together and call the wrap_up_session tool with short, plain-language lines for what we built, fixed (with the cause), decided (and why), learned, anything still blocking, and the next steps. Only the meaningful parts — skip trivial edits — and never include secrets, credentials or proprietary code. Then show me what you logged.",
+  },
+  {
+    name: "standup",
+    title: "My standup",
+    description: "Draft today's standup from the Tethyr journal.",
+    text: "Call draft_standup and show me my standup, ready to paste. If anything we did today isn't in it yet, offer to log it first.",
   },
 ];
 
@@ -354,6 +393,21 @@ async function callTool(
     const kind = isJournalKind(args.kind) ? args.kind : "did";
     return text(
       `Logged to Tethyr (${kind}): ${String(args.summary ?? "").slice(0, 200)}${args.public === true ? " — shown on profile" : " — private"}`,
+    );
+  }
+  if (name === "wrap_up_session") {
+    const entries = (["did", "fixed", "decided", "learned", "stuck", "next"] as const).flatMap(
+      (kind) =>
+        (Array.isArray(args[kind]) ? (args[kind] as unknown[]) : [])
+          .filter((line): line is string => typeof line === "string" && !!line.trim())
+          .slice(0, 6)
+          .map((body) => ({ kind, body, project: args.project, source: client })),
+    );
+    if (entries.length === 0) return text("Nothing to log — pass at least one line.", true);
+    const result = await addEntries(db, userId, entries.slice(0, BATCH_LIMIT), client);
+    if (!result.ok) return text(result.error, true);
+    return text(
+      `Session logged to Tethyr: ${result.ids.length} entr${result.ids.length === 1 ? "y" : "ies"} (private). The user's standup and weekly ship will include them.`,
     );
   }
   if (name === "get_journal") {
@@ -392,14 +446,25 @@ async function handleRpc(
       const requested = (msg.params as { protocolVersion?: string } | undefined)?.protocolVersion;
       return rpcResult(msg.id, {
         protocolVersion: MCP_VERSIONS.includes(requested ?? "") ? requested : MCP_VERSIONS[0],
-        capabilities: { tools: { listChanged: false } },
+        capabilities: { tools: { listChanged: false }, prompts: { listChanged: false } },
         serverInfo: { name: "tethyr", title: "Tethyr dev journal", version: "1.0.0" },
         instructions:
-          "Tethyr is the user's dev journal. When a meaningful unit of work is done (feature, fix, decision, learning, blocker, next step), call log_progress with one short plain-language sentence. Don't log every edit, and never log secrets or proprietary code. Use get_journal to recall earlier sessions.",
+          "Tethyr is the user's dev journal. When a meaningful unit of work is done (feature, fix, decision, learning, blocker, next step), call log_progress with one short plain-language sentence. At the end of a session, or when the user says they're done, offer to call wrap_up_session. Don't log every edit, and never log secrets or proprietary code. Use get_journal to recall earlier sessions.",
       });
     }
     case "ping":
       return rpcResult(msg.id, {});
+    case "prompts/list":
+      return rpcResult(msg.id, { prompts: MCP_PROMPTS });
+    case "prompts/get": {
+      const name = (msg.params as { name?: string } | undefined)?.name;
+      const prompt = MCP_PROMPTS.find((p) => p.name === name);
+      if (!prompt) return rpcError(msg.id, -32602, `Unknown prompt: ${name}`);
+      return rpcResult(msg.id, {
+        description: prompt.description,
+        messages: [{ role: "user", content: { type: "text", text: prompt.text } }],
+      });
+    }
     case "tools/list":
       return rpcResult(msg.id, { tools: MCP_TOOLS });
     case "tools/call": {

@@ -21,7 +21,7 @@ export const CONNECT_TARGETS: ConnectTarget[] = [
     language: "bash",
     snippet: (o, t) =>
       `claude mcp add --transport http --scope user tethyr "${mcpUrl(o, "claude-code")}" \\\n  --header "Authorization: Bearer ${t}"`,
-    note: 'Then just work. Claude logs the important parts — or ask "log this to Tethyr".',
+    note: 'Then just work. Claude logs the important parts — or ask "log this to Tethyr", and run /mcp__tethyr__wrap_up at the end of a session.',
   },
   {
     id: "cursor",

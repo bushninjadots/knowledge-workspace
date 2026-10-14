@@ -191,3 +191,27 @@ export function useRevokeJournalToken() {
     onSuccess: () => qc.invalidateQueries({ queryKey: TOKENS_KEY }),
   });
 }
+
+type ProjectJournalEntry = JournalEntry & {
+  author: { display_name: string | null; handle: string | null } | null;
+};
+
+/** Entries any member shared under a project — they join its timeline. */
+export function useProjectJournal(projectId: string | undefined) {
+  return useQuery({
+    queryKey: [...JOURNAL_KEY, "project", projectId ?? ""],
+    queryFn: async () => {
+      const { data, error } = await sb
+        .from("journal_entries")
+        .select(`${SELECT}, author:profiles!author_id(display_name, handle)`)
+        .eq("project_id", projectId!)
+        .eq("is_public", true)
+        .order("occurred_at", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return (data ?? []) as unknown as ProjectJournalEntry[];
+    },
+    enabled: !!projectId,
+    staleTime: 60_000,
+  });
+}

@@ -24,7 +24,10 @@ Entries are private unless `public: true`.
 ## MCP (streamable HTTP, stateless, JSON responses)
 
 `POST /api/mcp?client=<tool>` with the same bearer token. Tools:
-`log_progress`, `get_journal`, `draft_standup`, `list_projects`. The
+`log_progress`, `wrap_up_session` (log a whole session's did / fixed /
+decided / learned / stuck / next at once), `get_journal`, `draft_standup`,
+`list_projects`. Prompts (slash commands in Claude Code): `wrap_up`,
+`standup`. Shared entries filed under a project appear on its timeline. The
 `client` query parameter becomes the entry's source ("via Cursor").
 Cross-origin browser requests are refused.
 
