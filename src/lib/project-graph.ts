@@ -11,7 +11,7 @@ type ProjectGraphProject = {
   id: string;
   title: string;
   description?: string | null;
-  visibility?: "public" | "private";
+  visibility?: "public" | "private" | "crew" | "people";
   profile_id?: string | null;
   status?: string | null;
   stage?: string | null;

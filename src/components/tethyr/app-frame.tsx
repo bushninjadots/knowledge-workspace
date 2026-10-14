@@ -212,7 +212,7 @@ export function AppFrame({
             <MobilePrimaryNav onOpenMore={() => setDrawerOpen(true)} />
             <MessagePopups />
             {/* The two docks share the bottom-right corner; one opens at a time. */}
-            <div className="pointer-events-none fixed bottom-5 right-5 z-40 flex items-end gap-3">
+            <div className="pointer-events-none fixed right-0 bottom-6 z-40 flex flex-col items-end gap-2">
               <NotesDock />
               <MessagingDock />
             </div>
@@ -223,7 +223,7 @@ export function AppFrame({
           <button
             type="button"
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="fixed bottom-20 right-4 z-50 flex h-10 w-10 items-center justify-center rounded-full border card-border bg-surface transition-spatial hover:scale-105 hover:bg-surface-elevated md:right-6"
+            className="fixed bottom-20 right-4 z-50 flex h-10 w-10 md:bottom-[8.5rem] md:right-3 items-center justify-center rounded-full border card-border bg-surface transition-spatial hover:scale-105 hover:bg-surface-elevated"
             aria-label="Scroll to top"
           >
             <ArrowUp className="h-4 w-4 text-muted-foreground" />

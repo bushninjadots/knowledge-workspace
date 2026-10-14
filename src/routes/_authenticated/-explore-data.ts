@@ -97,6 +97,8 @@ export function useExploreData({ tab, meId }: { tab: Tab; meId: string | null })
       let query = supabase
         .from("projects")
         .select<typeof PROJECTS_SELECT, ProjectRow>(PROJECTS_SELECT)
+        // Explore is the public shelf — never crew-only, shared or private work.
+        .eq("visibility", "public")
         .order("created_at", { ascending: false })
         .order("id", { ascending: false })
         .limit(PROJECTS_PAGE_SIZE);

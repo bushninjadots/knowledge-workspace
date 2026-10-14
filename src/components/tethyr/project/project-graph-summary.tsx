@@ -2,7 +2,84 @@ import { buildProjectGraph, type ProjectGraphInput } from "@/lib/project-graph";
 import { useGraphTheme } from "@/hooks/use-graph-theme";
 import { ProjectGraphExplorer } from "./project-graph-explorer";
 import { GraphNodeGlyph } from "@/components/tethyr/graph/graph-node-glyph";
-import { GRAPH_NODE_TYPE_LABELS } from "@/lib/graph-model";
+import { GRAPH_NODE_TYPE_LABELS, type GraphNodeType } from "@/lib/graph-model";
+import { useState } from "react";
+
+/** Counted above, listed in Activity and the roadmap — not repeated as chips. */
+const HISTORY_TYPES = new Set<GraphNodeType>(["contribution", "milestone", "credit"]);
+
+const GROUP_ORDER: GraphNodeType[] = [
+  "person",
+  "skill",
+  "project",
+  "repository",
+  "role",
+  "need",
+  "community",
+  "session",
+  "challenge",
+  "discussion",
+  "knowledge",
+  "library_item",
+  "badge",
+];
+
+const GROUP_PREVIEW = 6;
+
+function NodeGroup({
+  type,
+  nodes,
+  radius,
+  gap,
+}: {
+  type: GraphNodeType;
+  nodes: { id: string; type: GraphNodeType; label: string }[];
+  radius: number | string;
+  gap: number | string;
+}) {
+  const [open, setOpen] = useState(false);
+  const shown = open ? nodes : nodes.slice(0, GROUP_PREVIEW);
+  const hidden = nodes.length - shown.length;
+  return (
+    <div role="listitem" className="flex flex-wrap items-baseline gap-x-3 gap-y-2">
+      <p className="w-28 shrink-0 text-xs text-muted-foreground">
+        {GRAPH_NODE_TYPE_LABELS[type]} <span className="tabular-nums">· {nodes.length}</span>
+      </p>
+      <ul className="flex min-w-0 flex-1 flex-wrap" style={{ gap }}>
+        {shown.map((node) => (
+          <li
+            key={node.id}
+            className="border border-border/70 px-2.5 py-1 text-xs"
+            style={{ borderRadius: radius }}
+          >
+            {/* An icon for the kind of thing, not a raw type word; the name
+                is said for screen readers. */}
+            <GraphNodeGlyph
+              type={node.type}
+              className="mr-1 inline align-[-2px] text-muted-foreground"
+            />
+            <span className="sr-only">{GRAPH_NODE_TYPE_LABELS[node.type]}: </span>
+            <span className="font-medium" title={GRAPH_NODE_TYPE_LABELS[node.type]}>
+              {node.label}
+            </span>
+          </li>
+        ))}
+        {(hidden > 0 || open) && nodes.length > GROUP_PREVIEW && (
+          <li>
+            <button
+              type="button"
+              aria-expanded={open}
+              onClick={() => setOpen((v) => !v)}
+              className="px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:underline"
+            >
+              {open ? "Show fewer" : `+${hidden} more`}
+            </button>
+          </li>
+        )}
+      </ul>
+    </div>
+  );
+}
 
 /** The project itself plus at least one other node — otherwise the summary is
  *  just a project counting itself, and the section hides (the graph spec's
@@ -23,9 +100,9 @@ function ProjectGraphSummaryBody({ input }: { input: ProjectGraphInput }) {
     result[node.type] = (result[node.type] ?? 0) + 1;
     return result;
   }, {});
-  const connectedNodes = graph.nodes
-    .filter((node) => node.id !== `project:${input.project.id}`)
-    .slice(0, theme.nodeLimit);
+  const connectedNodes = graph.nodes.filter(
+    (node) => node.id !== `project:${input.project.id}` && !HISTORY_TYPES.has(node.type),
+  );
   const parentProject = graph.edges.find(
     (edge) => edge.from === `project:${input.project.id}` && edge.type === "forked_from",
   );
@@ -46,10 +123,10 @@ function ProjectGraphSummaryBody({ input }: { input: ProjectGraphInput }) {
           id="project-graph-heading"
           className="font-display text-lg font-semibold tracking-tight"
         >
-          Connected work
+          How it connects
         </h2>
         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-          The people, skills, milestones, and resources that give this project its shape.
+          Who's involved, the skills it uses, and the projects, repos and resources around it.
         </p>
       </div>
       <dl className="mt-4 flex flex-wrap gap-x-6 gap-y-3 text-sm">
@@ -111,26 +188,25 @@ function ProjectGraphSummaryBody({ input }: { input: ProjectGraphInput }) {
           </p>
         </div>
       ) : null}
-      <ul aria-label="Connected nodes" className="mt-5 flex flex-wrap" style={{ gap: theme.gap }}>
-        {connectedNodes.map((node) => (
-          <li
-            key={node.id}
-            className="border border-border/70 px-2.5 py-1 text-xs"
-            style={{ borderRadius: theme.nodeRadius }}
-          >
-            {/* An icon for the kind of thing, not a raw type word
-                ("person Maya Chen"); the name is said for screen readers. */}
-            <GraphNodeGlyph
-              type={node.type}
-              className="mr-1 inline align-[-2px] text-muted-foreground"
+      {/* Grouped and folded: a busy project used to print every person,
+          skill, commit and contribution as one long run of chips. Work
+          history (commits, contributions, milestones) is a count above —
+          Activity and the roadmap list it in full. */}
+      <div aria-label="Connected nodes" role="list" className="mt-5 space-y-3">
+        {GROUP_ORDER.map((type) => {
+          const nodes = connectedNodes.filter((node) => node.type === type);
+          if (!nodes.length) return null;
+          return (
+            <NodeGroup
+              key={type}
+              type={type}
+              nodes={nodes}
+              radius={theme.nodeRadius}
+              gap={theme.gap}
             />
-            <span className="sr-only">{GRAPH_NODE_TYPE_LABELS[node.type]}: </span>
-            <span className="font-medium" title={GRAPH_NODE_TYPE_LABELS[node.type]}>
-              {node.label}
-            </span>
-          </li>
-        ))}
-      </ul>
+          );
+        })}
+      </div>
       <ProjectGraphExplorer input={input} />
     </section>
   );

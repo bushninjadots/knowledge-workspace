@@ -76,6 +76,7 @@ const NOTIFICATION_CONFIG: Record<NotificationType, { icon: typeof MessageCircle
     ship_kudos: { icon: Rocket, color: "text-caution" },
     ship_reply: { icon: MessageSquare, color: "text-learning" },
     ship_reminder: { icon: Rocket, color: "text-caution" },
+    project_shipped: { icon: Rocket, color: "text-caution" },
   };
 
 const FALLBACK_CONFIG = { icon: MessageCircle, color: "text-muted-foreground" };

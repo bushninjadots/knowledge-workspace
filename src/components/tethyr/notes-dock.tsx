@@ -106,7 +106,8 @@ export function NotesDock() {
   if (onLibrary) return null;
 
   return (
-    <div className="flex flex-col items-end gap-3">
+    // Panel opens to the left of its tab; the tab hugs the screen edge.
+    <div className="flex flex-row items-end gap-2">
       {open && (
         <section
           aria-label="Notes"
@@ -127,19 +128,30 @@ export function NotesDock() {
         onClick={() => notesDock.toggle()}
         aria-expanded={open}
         aria-label="Notes"
+        title="Notes"
         className={cn(
-          "pointer-events-auto hidden h-11 items-center gap-2 rounded-full border px-4 text-sm font-medium shadow-lg transition-colors md:inline-flex",
+          "group pointer-events-auto relative inline-flex h-11 items-center gap-2 rounded-l-xl rounded-r-none border border-r-0 px-3 text-sm font-medium shadow-md transition-colors",
+          "hidden md:inline-flex",
           open
             ? "border-border/70 bg-surface text-foreground hover:bg-surface-elevated"
             : "border-border/70 bg-card text-foreground hover:bg-surface-elevated",
         )}
       >
         {open ? (
-          <X className="h-4 w-4" aria-hidden />
+          <X className="h-4 w-4 shrink-0" aria-hidden />
         ) : (
-          <StickyNote className="h-4 w-4" aria-hidden />
+          <StickyNote className="h-4 w-4 shrink-0" aria-hidden />
         )}
-        Notes
+        <span
+          className={cn(
+            "overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-200",
+            open
+              ? "max-w-28 opacity-100"
+              : "max-w-0 opacity-0 group-hover:max-w-28 group-hover:opacity-100 group-focus-visible:max-w-28 group-focus-visible:opacity-100",
+          )}
+        >
+          Notes
+        </span>
       </button>
     </div>
   );

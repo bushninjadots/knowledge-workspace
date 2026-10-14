@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { ChevronDown, ChevronRight, Film } from "lucide-react";
 import { useProjectCredits } from "@/hooks/use-credits";
 import { CREDIT_ROLE_ORDER, type CreditRole, type ProjectCredit } from "@/lib/credits";
+import { CollapsibleContent } from "@/components/tethyr/collapsible-content";
 import { timeAgo } from "@/lib/time";
 
 const ROLE_HEADING: Record<CreditRole, string> = {
@@ -126,11 +127,13 @@ export function CreditsRoll({
               <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
                 {ROLE_HEADING[role]}
               </h3>
-              <ul className="space-y-2.5 border-l border-border/60 pl-4">
-                {items.map((credit) => (
-                  <CreditLine key={credit.profile_id} credit={credit} />
-                ))}
-              </ul>
+              <CollapsibleContent maxHeight={320} moreLabel={`Show all ${items.length}`}>
+                <ul className="space-y-2.5 border-l border-border/60 pl-4">
+                  {items.map((credit) => (
+                    <CreditLine key={credit.profile_id} credit={credit} />
+                  ))}
+                </ul>
+              </CollapsibleContent>
             </div>
           );
         })}

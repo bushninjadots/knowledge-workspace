@@ -92,7 +92,8 @@ export function MessagingDock() {
   if (onMessagesPage) return null;
 
   return (
-    <div className="hidden flex-col items-end gap-3 md:flex">
+    // Panel opens to the left of its tab; the tab hugs the screen edge.
+    <div className="hidden flex-row items-end gap-2 md:flex">
       {open && (
         <section
           aria-label="Messages"
@@ -111,21 +112,31 @@ export function MessagingDock() {
         onClick={() => messageDock.toggle()}
         aria-expanded={open}
         aria-label={total > 0 ? `Messages, ${total} unread` : "Messages"}
+        title="Messages"
         className={cn(
-          "pointer-events-auto inline-flex h-11 items-center gap-2 rounded-full border px-4 text-sm font-medium shadow-lg transition-colors",
+          "group pointer-events-auto relative inline-flex h-11 items-center gap-2 rounded-l-xl rounded-r-none border border-r-0 px-3 text-sm font-medium shadow-md transition-colors",
           open
             ? "border-border/70 bg-surface text-foreground hover:bg-surface-elevated"
             : "border-transparent bg-[var(--user-accent,var(--primary))] text-[var(--user-accent-foreground,var(--primary-foreground))] hover:opacity-95",
         )}
       >
         {open ? (
-          <X className="h-4 w-4" aria-hidden />
+          <X className="h-4 w-4 shrink-0" aria-hidden />
         ) : (
-          <MessageCircle className="h-4 w-4" aria-hidden />
+          <MessageCircle className="h-4 w-4 shrink-0" aria-hidden />
         )}
-        Messages
+        <span
+          className={cn(
+            "overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-200",
+            open
+              ? "max-w-28 opacity-100"
+              : "max-w-0 opacity-0 group-hover:max-w-28 group-hover:opacity-100 group-focus-visible:max-w-28 group-focus-visible:opacity-100",
+          )}
+        >
+          Messages
+        </span>
         {total > 0 && !open && (
-          <span className="numeric -mr-1 min-w-5 rounded-full bg-background px-1.5 py-0.5 text-center text-[11px] font-semibold text-foreground">
+          <span className="numeric absolute -top-1.5 -left-1.5 min-w-5 rounded-full bg-background px-1.5 py-0.5 text-center text-[11px] font-semibold text-foreground shadow-sm ring-1 ring-border">
             {total > 99 ? "99+" : total}
           </span>
         )}

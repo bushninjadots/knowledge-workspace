@@ -105,7 +105,7 @@ export function MessagePopups() {
     <div
       aria-live="polite"
       aria-label="New messages"
-      className="pointer-events-none fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-3 z-50 flex w-[min(22rem,calc(100vw-1.5rem))] flex-col gap-2 md:bottom-20 md:right-5"
+      className="pointer-events-none fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-3 z-50 flex w-[min(22rem,calc(100vw-1.5rem))] flex-col gap-2 md:bottom-6 md:right-16"
     >
       {popups.map((popup) => (
         <MessagePopupCard

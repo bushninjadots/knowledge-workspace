@@ -55,6 +55,7 @@ export const TYPE_CATEGORY: Record<NotificationType, NotificationCategory> = {
   ship_kudos: "community",
   ship_reply: "community",
   ship_reminder: "community",
+  project_shipped: "project",
 };
 
 /**

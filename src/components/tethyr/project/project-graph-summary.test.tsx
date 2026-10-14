@@ -18,8 +18,10 @@ describe("ProjectGraphSummary", () => {
   it("renders people, skill, milestone, and relationship counts", () => {
     render(<ProjectGraphSummary input={rich} />);
 
-    expect(screen.getByRole("region", { name: "Connected work" })).toBeInTheDocument();
-    const valueFor = (label: string) => screen.getByText(label).nextElementSibling?.textContent;
+    expect(screen.getByRole("region", { name: "How it connects" })).toBeInTheDocument();
+    // The counts row (a <dt>), not the group label of the same name.
+    const valueFor = (label: string) =>
+      screen.getAllByText(label).find((el) => el.tagName === "DT")?.nextElementSibling?.textContent;
     expect(valueFor("People")).toBe("1");
     expect(valueFor("Skills")).toBe("1");
     expect(valueFor("Milestones")).toBe("1");
@@ -27,9 +29,22 @@ describe("ProjectGraphSummary", () => {
     // each node carries its kind as an icon plus a screen-reader label.
     expect(screen.queryByText("Relationships")).toBeNull();
     const nodes = screen.getByRole("list", { name: "Connected nodes" });
+    // Milestones are counted, not repeated as chips.
+    expect(nodes).not.toHaveTextContent("Launch");
     expect(nodes).toHaveTextContent("People: Ari");
     expect(nodes).toHaveTextContent("Skills: TypeScript");
     expect(nodes).not.toHaveTextContent("person Ari");
+  });
+
+  it("folds a long group behind +N more", async () => {
+    const many: ProjectGraphInput = {
+      ...rich,
+      skills: Array.from({ length: 10 }, (_, i) => ({ name: `Skill ${i}` })),
+    };
+    render(<ProjectGraphSummary input={many} />);
+    expect(screen.queryByText("Skill 9")).toBeNull();
+    screen.getByRole("button", { name: "+4 more" }).click();
+    expect(await screen.findByText("Skill 9")).toBeInTheDocument();
   });
 
   it("renders nothing for a project with no relationships", () => {

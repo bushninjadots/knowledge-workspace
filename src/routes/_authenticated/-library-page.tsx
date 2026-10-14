@@ -26,6 +26,10 @@ import { PageHeader, pageContainerClass } from "@/components/tethyr/page-header"
 
 // Code-split module: the interactive page for its route. See the route
 // file for the eager surface (loader/head) and the lazyRouteComponent wire-up.
+
+/** One look for every action in the Library header. */
+const HEADER_BUTTON = "gap-2 bg-surface/60 text-xs text-foreground hover:bg-surface-elevated";
+
 export function LibraryPage() {
   const navigate = useNavigate();
   const createItem = useCreateItem();
@@ -175,10 +179,11 @@ function LibraryContent({ view, onNewNote }: { view: LibraryView; onNewNote: () 
               <Button
                 size="sm"
                 variant="outline"
-                className="rounded-full"
+                className={HEADER_BUTTON}
                 onClick={() => setCodeDocsOpen(true)}
               >
-                <FileCode2 className="h-3.5 w-3.5" /> Code → docs
+                <FileCode2 className="h-3.5 w-3.5" />
+                Code → docs
               </Button>
 
               <SegmentedControl
@@ -196,18 +201,13 @@ function LibraryContent({ view, onNewNote }: { view: LibraryView; onNewNote: () 
               <Button
                 size="sm"
                 variant="outline"
-                className="gap-2 border-[var(--user-accent-border,var(--border-strong))] bg-surface/60 text-xs text-foreground hover:bg-surface-elevated"
+                className={HEADER_BUTTON}
                 onClick={() => setShowUpload(!showUpload)}
               >
                 Upload
               </Button>
 
-              <Button
-                size="sm"
-                variant="outline"
-                className="gap-2 border-[var(--user-accent-border,var(--border-strong))] bg-surface/60 text-foreground hover:bg-surface-elevated"
-                onClick={onNewNote}
-              >
+              <Button size="sm" variant="outline" className={HEADER_BUTTON} onClick={onNewNote}>
                 <Plus className="h-3.5 w-3.5" />
                 New note
               </Button>

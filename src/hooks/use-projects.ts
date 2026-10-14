@@ -57,7 +57,7 @@ export type ProjectDetail = {
   goal: string | null;
   vision: string | null;
   status: "planning" | "active" | "paused" | "completed";
-  visibility: "public" | "private";
+  visibility: "public" | "private" | "crew" | "people";
   stage: ProjectStage;
   started_at: string;
   progress_percent: number;
@@ -85,6 +85,12 @@ export type ProjectDetail = {
   fork_count?: number;
   /** Owner self-report: whether this project was built with AI assistance. */
   ai_assisted?: boolean;
+  /** Release countdown (20261014200000): when, where to get it, and whether
+   *  it's listed in Explore. */
+  release_at?: string | null;
+  release_note?: string | null;
+  release_links?: Record<string, string> | null;
+  release_public?: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -362,14 +368,15 @@ export function useCreateProjectUpdate() {
 
       if (error) throw error;
 
-      // Auto-publish to community feed as a project_update post — but never
-      // for private projects: their updates stay inside the project.
+      // Auto-publish to community feed as a project_update post — public
+      // projects only: private, crew-only and shared projects keep their
+      // updates inside the project.
       const { data: projRow } = await sb
         .from("projects")
         .select("visibility")
         .eq("id", input.projectId)
         .maybeSingle();
-      if (projRow?.visibility !== "private") {
+      if (projRow?.visibility === "public") {
         try {
           await sb.from("posts").insert({
             author_id: user.id,

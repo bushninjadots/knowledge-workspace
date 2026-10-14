@@ -23,7 +23,7 @@ export interface GraphNode {
   label: string;
   description?: string;
   metadata?: Record<string, unknown>;
-  visibility?: "public" | "private";
+  visibility?: "public" | "private" | "crew" | "people";
 }
 
 /** Human-readable labels for graph node types, shared by every graph view so
@@ -114,7 +114,7 @@ export interface GraphEdge {
     confirmationStatus?: "unconfirmed" | "pending" | "confirmed";
     [key: string]: unknown;
   };
-  visibility?: "public" | "private";
+  visibility?: "public" | "private" | "crew" | "people";
 }
 
 export interface TethyrGraph {

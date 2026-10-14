@@ -8,6 +8,13 @@ import { validateImageFile, isSafeUrl } from "@/lib/validators";
 import { GitHubConnect } from "./github-connect";
 import { AppLinksEditor } from "@/components/tethyr/apps/app-links-editor";
 import { PROJECT_APPS } from "@/lib/app-catalog";
+import type { ProjectAccess } from "@/lib/project-access";
+import {
+  ProjectAccessField,
+  syncProjectViewers,
+  useProjectViewers,
+  type Viewer,
+} from "@/components/tethyr/project/project-access-field";
 import { syncProjectJournal } from "@/lib/journal-server";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,9 +66,7 @@ export function ProjectDialog({
   const [description, setDescription] = useState(project?.description ?? "");
   const [goal, setGoal] = useState(project?.goal ?? "");
   const [status, setStatus] = useState<ProjectStatus>(project?.status ?? "planning");
-  const [visibility, setVisibility] = useState<"public" | "private">(
-    project?.visibility ?? "public",
-  );
+  const [visibility, setVisibility] = useState<ProjectAccess>(project?.visibility ?? "public");
   const [progress, setProgress] = useState(project?.progress_percent ?? 0);
   const [coverPath, setCoverPath] = useState<string | null>(project?.cover_url ?? null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
@@ -73,6 +78,12 @@ export function ProjectDialog({
       void queryClient.invalidateQueries({ queryKey: key });
   };
   const [links, setLinks] = useState<Record<string, string>>(project?.links ?? {});
+  // Who it's shared with ("Selected people"), loaded for existing projects.
+  const { data: savedViewers } = useProjectViewers(project?.id);
+  const [viewers, setViewers] = useState<Viewer[]>([]);
+  useEffect(() => {
+    if (savedViewers) setViewers(savedViewers);
+  }, [savedViewers]);
   const [tags, setTags] = useState<string[]>(project?.tags ?? []);
   const [tagInput, setTagInput] = useState("");
   const [skillIds, setSkillIds] = useState<Set<string>>(new Set(initialSkillIds));
@@ -261,6 +272,14 @@ export function ProjectDialog({
         .from("projects")
         .update({ allow_forks: allowForks, ai_assisted: aiAssisted })
         .eq("id", projectId);
+    }
+
+    if (projectId && visibility === "people") {
+      await syncProjectViewers(
+        projectId,
+        (savedViewers ?? []).map((v) => v.id),
+        viewers.map((v) => v.id),
+      ).catch(() => toast.error("The share list couldn't be saved — try again from Edit project."));
     }
 
     // Sync project_skills against the catalog picker — diff against what
@@ -674,27 +693,15 @@ export function ProjectDialog({
               </div>
             </Field>
 
-            <Field label="Visibility">
-              <div className="flex flex-wrap gap-2">
-                {(["public", "private"] as const).map((v) => (
-                  <button
-                    key={v}
-                    type="button"
-                    onClick={() => setVisibility(v)}
-                    className={`rounded-full border px-3 py-1.5 text-xs transition-lift ${
-                      visibility === v
-                        ? "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent-text,var(--primary))]"
-                        : "border-border bg-background/40 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
-                    }`}
-                  >
-                    {v === "public" ? "Public" : "Private"}
-                  </button>
-                ))}
-              </div>
-              <p className="text-[11px] text-muted-foreground">
-                Public projects appear in Explore and on your profile. Private projects are only
-                visible to you and your contributors.
-              </p>
+            <Field label="Who can see it">
+              <ProjectAccessField
+                value={visibility}
+                onChange={setVisibility}
+                projectId={project?.id}
+                ownerId={userId}
+                viewers={viewers}
+                onViewersChange={setViewers}
+              />
             </Field>
 
             <Field label={`Progress — ${progress}%`}>

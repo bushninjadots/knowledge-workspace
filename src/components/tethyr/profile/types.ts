@@ -51,7 +51,7 @@ export type ProjectRow = {
   goal: string | null;
   vision: string | null;
   status: ProjectStatus;
-  visibility: "public" | "private";
+  visibility: "public" | "private" | "crew" | "people";
   stage: "planning" | "building" | "testing" | "launch" | "growing";
   started_at: string;
   progress_percent: number;

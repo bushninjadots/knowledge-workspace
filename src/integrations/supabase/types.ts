@@ -2666,6 +2666,39 @@ export type Database = {
           },
         ];
       };
+      project_viewers: {
+        Row: {
+          added_at: string;
+          profile_id: string;
+          project_id: string;
+        };
+        Insert: {
+          added_at?: string;
+          profile_id: string;
+          project_id: string;
+        };
+        Update: {
+          added_at?: string;
+          profile_id?: string;
+          project_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "project_viewers_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "project_viewers_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       project_visits: {
         Row: {
           last_seen_at: string;
@@ -2756,6 +2789,11 @@ export type Database = {
           profile_id: string;
           progress_percent: number;
           readme: string | null;
+          release_announced_at: string | null;
+          release_at: string | null;
+          release_links: Json;
+          release_note: string | null;
+          release_public: boolean;
           resources: Json;
           season: string;
           stage: Database["public"]["Enums"]["project_stage"];
@@ -2792,6 +2830,11 @@ export type Database = {
           profile_id: string;
           progress_percent?: number;
           readme?: string | null;
+          release_announced_at?: string | null;
+          release_at?: string | null;
+          release_links?: Json;
+          release_note?: string | null;
+          release_public?: boolean;
           resources?: Json;
           season?: string;
           stage?: Database["public"]["Enums"]["project_stage"];
@@ -2828,6 +2871,11 @@ export type Database = {
           profile_id?: string;
           progress_percent?: number;
           readme?: string | null;
+          release_announced_at?: string | null;
+          release_at?: string | null;
+          release_links?: Json;
+          release_note?: string | null;
+          release_public?: boolean;
           resources?: Json;
           season?: string;
           stage?: Database["public"]["Enums"]["project_stage"];
@@ -3901,6 +3949,7 @@ export type Database = {
         Args: { p_space_id: string; p_user_ids: string[] };
         Returns: undefined;
       };
+      announce_releases: { Args: never; Returns: number };
       apply_studio_composition: {
         Args: {
           p_composition_id: string;
@@ -4003,6 +4052,10 @@ export type Database = {
       };
       is_allowed_storage_upload: {
         Args: { p_bucket: string; p_metadata: Json; p_name: string };
+        Returns: boolean;
+      };
+      is_project_owner: {
+        Args: { p_project_id: string; p_uid: string };
         Returns: boolean;
       };
       is_project_visible: { Args: { project_id: string }; Returns: boolean };
@@ -4116,6 +4169,10 @@ export type Database = {
       project_ai_tag_count: { Args: { p_project_id: string }; Returns: number };
       project_ai_user_tagged: {
         Args: { p_project_id: string };
+        Returns: boolean;
+      };
+      project_shared_with: {
+        Args: { p_project_id: string; p_uid: string };
         Returns: boolean;
       };
       prune_orphaned_media: {

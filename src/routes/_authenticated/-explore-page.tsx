@@ -45,6 +45,7 @@ import {
 import { useExploreData } from "./-explore-data";
 import { ExploreStat, DiscoverSidebar, LoadMoreButton, type Tab } from "./-explore-sidebar";
 import { skillKey, skillKeyMap } from "@/lib/skill-key";
+import { ReleasesShelf } from "@/components/tethyr/explore/releases-shelf";
 import { PageHeader } from "@/components/tethyr/page-header";
 
 // Code-split module: the interactive page for its route. See the route
@@ -650,6 +651,7 @@ export function ExplorePage() {
             </>
           ) : tab === "projects" ? (
             <>
+              {!q.trim() && <ReleasesShelf />}
               <ProjectShelf
                 projects={filteredProjects}
                 meId={meId}

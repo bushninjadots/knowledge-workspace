@@ -9,6 +9,7 @@ import {
   MessageCircle,
   CalendarDays,
   Lock,
+  Users2,
   Globe2,
   Zap,
   Github,
@@ -22,6 +23,7 @@ import { cn } from "@/lib/utils";
 import type { ProjectDetail } from "@/hooks/use-projects";
 import { PROJECT_STATUS_STYLE } from "@/components/tethyr/profile-sections";
 import { AppIcon } from "@/components/tethyr/apps/app-icon";
+import { accessMeta } from "@/lib/project-access";
 import { detectApp, getApp } from "@/lib/app-catalog";
 import { safeHref } from "@/lib/validators";
 import { ProfileLink } from "@/components/tethyr/profile-link";
@@ -203,18 +205,16 @@ export function ProjectHeader({
               )}
               <span
                 className="inline-flex shrink-0 items-center gap-1 rounded-full border border-border/60 px-2.5 py-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground"
-                title={
-                  project.visibility === "private"
-                    ? "Only the owner and contributors can view this project"
-                    : "Anyone can discover this project"
-                }
+                title={accessMeta(project.visibility).help}
               >
-                {project.visibility === "private" ? (
+                {project.visibility === "public" ? (
+                  <Globe2 className="h-3 w-3" />
+                ) : project.visibility === "private" ? (
                   <Lock className="h-3 w-3" />
                 ) : (
-                  <Globe2 className="h-3 w-3" />
+                  <Users2 className="h-3 w-3" />
                 )}
-                {project.visibility === "private" ? "Private" : "Public"}
+                {accessMeta(project.visibility).short}
               </span>
               {project.is_featured && (
                 <span title="Featured project" className="inline-flex">

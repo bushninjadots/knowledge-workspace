@@ -22,7 +22,7 @@ type SkillLite = { id: string; slug: string; name: string; category: string };
 export async function fetchProjectPage(id: string, viewerId: string | null) {
   // Try full column set first; fall back if extended columns are missing.
   const FULL_COLS =
-    "id, profile_id, title, description, goal, vision, status, visibility, stage, started_at, progress_percent, cover_url, gallery, resources, links, tags, uploaded_files, readme, tools, presentation_preset, github_display, season, collaboration_brief, lineage, looking_for_feedback, looking_for_collaborators, is_featured, allow_forks, forked_from_project_id, fork_count, ai_assisted";
+    "id, profile_id, title, description, goal, vision, status, visibility, stage, started_at, progress_percent, cover_url, gallery, resources, links, tags, uploaded_files, readme, tools, presentation_preset, github_display, season, collaboration_brief, lineage, looking_for_feedback, looking_for_collaborators, is_featured, allow_forks, forked_from_project_id, fork_count, ai_assisted, release_at, release_note, release_links, release_public";
   // Fallback deliberately omits the newest columns (uploaded_files, readme,
   // tools, visibility) so a database that hasn't run the latest migrations
   // still loads.

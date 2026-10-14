@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { OpenRolesSection } from "./project-open-roles";
 import { useProjectTeams } from "@/hooks/use-teams";
 import { useConnections } from "@/hooks/use-connections";
+import { CollapsibleContent } from "@/components/tethyr/collapsible-content";
 import { useCurrentUser } from "@/hooks/use-current-user";
 
 const ZERO_HEAT = [0, 0, 0, 0] as const;
@@ -231,96 +232,98 @@ export function ProjectPeopleTab({
             )}
           </div>
         ) : contributors.length === 0 ? null : (
-          <ul className="mt-3 divide-y divide-border/50 surface-inset">
-            {contributors.map((c) => {
-              const connectionId = connectionByProfile.get(c.profile_id);
-              const canMessage = connectionId && c.profile_id !== me?.userId;
-              return (
-                <li
-                  key={c.profile_id}
-                  className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2.5 transition-lift hover:bg-surface-elevated/40 sm:flex-nowrap"
-                >
-                  <ProfileLink
-                    handle={c.profile?.handle}
-                    className="flex min-w-0 flex-1 items-center gap-3"
-                    title={c.profile?.display_name || c.profile?.handle || undefined}
+          <CollapsibleContent className="mt-3" maxHeight={420} moreLabel="Show everyone">
+            <ul className="divide-y divide-border/50 surface-inset">
+              {contributors.map((c) => {
+                const connectionId = connectionByProfile.get(c.profile_id);
+                const canMessage = connectionId && c.profile_id !== me?.userId;
+                return (
+                  <li
+                    key={c.profile_id}
+                    className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2.5 transition-lift hover:bg-surface-elevated/40 sm:flex-nowrap"
                   >
-                    <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-foreground text-background">
-                      {avatarSigned[c.profile_id] ? (
-                        <img
-                          src={avatarSigned[c.profile_id]}
-                          alt=""
-                          width="36"
-                          height="36"
-                          loading="lazy"
-                          decoding="async"
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-background">
-                          {(c.profile?.display_name ?? c.profile?.handle ?? "?")[0].toUpperCase()}
-                        </div>
-                      )}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">
-                        {c.profile?.display_name || c.profile?.handle || "Unknown"}
-                      </p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {contributionRoleNoun(c.role)}
-                        {c.profile?.creator_title ? ` · ${c.profile.creator_title}` : ""}
-                      </p>
-                    </div>
-                  </ProfileLink>
+                    <ProfileLink
+                      handle={c.profile?.handle}
+                      className="flex min-w-0 flex-1 items-center gap-3"
+                      title={c.profile?.display_name || c.profile?.handle || undefined}
+                    >
+                      <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-foreground text-background">
+                        {avatarSigned[c.profile_id] ? (
+                          <img
+                            src={avatarSigned[c.profile_id]}
+                            alt=""
+                            width="36"
+                            height="36"
+                            loading="lazy"
+                            decoding="async"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-background">
+                            {(c.profile?.display_name ?? c.profile?.handle ?? "?")[0].toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">
+                          {c.profile?.display_name || c.profile?.handle || "Unknown"}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {contributionRoleNoun(c.role)}
+                          {c.profile?.creator_title ? ` · ${c.profile.creator_title}` : ""}
+                        </p>
+                      </div>
+                    </ProfileLink>
 
-                  <div className="flex items-center gap-2">
-                    {showHeat && (
-                      <ContributionHeat
-                        counts={heatByProfile.get(c.profile_id) ?? ZERO_HEAT}
-                        name={c.profile?.display_name || c.profile?.handle || "member"}
-                      />
-                    )}
-                    {c.contribution_score > 0 && (
-                      <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary tabular-nums">
-                        {c.contribution_score} {c.contribution_score === 1 ? "pt" : "pts"}
-                      </span>
-                    )}
-                    <div className="hidden min-w-0 flex-wrap items-center gap-1 md:flex">
-                      {c.skills_used.slice(0, 2).map((s) => (
-                        <span
-                          key={s}
-                          className="whitespace-nowrap rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[11px] text-muted-foreground"
-                        >
-                          {s}
-                        </span>
-                      ))}
-                      {c.skills_used.length > 2 && (
-                        <span className="text-[11px] text-muted-foreground">
-                          +{c.skills_used.length - 2}
+                    <div className="flex items-center gap-2">
+                      {showHeat && (
+                        <ContributionHeat
+                          counts={heatByProfile.get(c.profile_id) ?? ZERO_HEAT}
+                          name={c.profile?.display_name || c.profile?.handle || "member"}
+                        />
+                      )}
+                      {c.contribution_score > 0 && (
+                        <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary tabular-nums">
+                          {c.contribution_score} {c.contribution_score === 1 ? "pt" : "pts"}
                         </span>
                       )}
+                      <div className="hidden min-w-0 flex-wrap items-center gap-1 md:flex">
+                        {c.skills_used.slice(0, 2).map((s) => (
+                          <span
+                            key={s}
+                            className="whitespace-nowrap rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[11px] text-muted-foreground"
+                          >
+                            {s}
+                          </span>
+                        ))}
+                        {c.skills_used.length > 2 && (
+                          <span className="text-[11px] text-muted-foreground">
+                            +{c.skills_used.length - 2}
+                          </span>
+                        )}
+                      </div>
+                      {canMessage && (
+                        <Link
+                          to="/messages"
+                          search={{
+                            c: connectionId,
+                            project: projectId,
+                            projectName: projectTitle,
+                          }}
+                          className="shrink-0 rounded-lg p-1.5 text-muted-foreground transition-lift hover:bg-surface-elevated hover:text-foreground"
+                          aria-label={`Message ${
+                            c.profile?.display_name || c.profile?.handle || "member"
+                          }`}
+                        >
+                          <MessageSquare className="h-4 w-4" />
+                        </Link>
+                      )}
                     </div>
-                    {canMessage && (
-                      <Link
-                        to="/messages"
-                        search={{
-                          c: connectionId,
-                          project: projectId,
-                          projectName: projectTitle,
-                        }}
-                        className="shrink-0 rounded-lg p-1.5 text-muted-foreground transition-lift hover:bg-surface-elevated hover:text-foreground"
-                        aria-label={`Message ${
-                          c.profile?.display_name || c.profile?.handle || "member"
-                        }`}
-                      >
-                        <MessageSquare className="h-4 w-4" />
-                      </Link>
-                    )}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+                  </li>
+                );
+              })}
+            </ul>
+          </CollapsibleContent>
         )}
       </section>
 

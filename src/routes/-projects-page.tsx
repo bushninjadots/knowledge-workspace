@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useDominantColor, withAlpha } from "@/lib/dominant-color";
 import { useCurrentUser, useSkillsCatalog } from "@/hooks/use-current-user";
 import { ProjectDialog } from "@/components/tethyr/profile-sections";
+import { ProjectRelease } from "@/components/tethyr/project/project-release";
 import type { ProjectRow } from "@/components/tethyr/profile/types";
 import {
   useMilestones,
@@ -503,6 +504,15 @@ export function ProjectPage() {
         aiUserTagged={aiUserTagged}
         canAiTag={!!me?.userId && !isOwner}
       />
+
+      <div className="mx-auto w-full max-w-7xl px-4 pt-4 empty:hidden sm:px-8">
+        <ProjectRelease
+          project={project}
+          isOwner={isOwner}
+          milestonesTotal={milestones.length}
+          milestonesDone={milestones.filter((m) => m.status === "done").length}
+        />
+      </div>
 
       <ProjectWorkbench
         project={project}

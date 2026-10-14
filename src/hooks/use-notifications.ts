@@ -39,7 +39,8 @@ export type NotificationType =
   | "skill_match"
   | "ship_kudos"
   | "ship_reply"
-  | "ship_reminder";
+  | "ship_reminder"
+  | "project_shipped";
 
 export interface Notification {
   id: string;
