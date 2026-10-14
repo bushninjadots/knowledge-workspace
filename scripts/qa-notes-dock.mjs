@@ -96,6 +96,32 @@ await dock.getByRole("button", { name: "Delete" }).click();
 await page.waitForTimeout(1500);
 log("note deleted", (await dock.getByRole("button", { name: new RegExp(stamp) }).count()) === 0);
 
+// Save a link (paste → "Save link"), with a note under it
+await dock
+  .getByLabel("New note")
+  .fill("https://example.com/qa-docs\nread this before the refactor");
+log(
+  "pasting a link offers Save link",
+  (await dock.getByRole("button", { name: "Save link" }).count()) === 1,
+);
+await dock.getByRole("button", { name: "Save link" }).click();
+await page.waitForTimeout(9000);
+await dock.getByRole("button", { name: "links" }).click();
+await page.waitForTimeout(600);
+const linkRow = dock.getByRole("button", { name: /example\.com/ }).first();
+log("link appears under Links", (await linkRow.count()) === 1);
+await linkRow.click();
+await page.waitForTimeout(1500);
+log(
+  "link opens with its note",
+  (await dock.getByText("read this before the refactor").count()) > 0,
+);
+log("open link offered", (await dock.getByRole("link", { name: /open link/i }).count()) === 1);
+await page.screenshot({ path: `${OUT}/link.png` });
+await dock.getByRole("button", { name: "Delete" }).click();
+await page.waitForTimeout(1500);
+await dock.getByRole("button", { name: "all" }).click();
+
 // Messages and Notes take turns
 await page.getByRole("button", { name: /^Messages/ }).click();
 await page.waitForTimeout(600);

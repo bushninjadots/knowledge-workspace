@@ -43,7 +43,15 @@ import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import { friendlyError } from "@/lib/error-message";
 import { getItemExcerpt } from "@/lib/library-excerpt";
 import { notesDock, useNotesDock } from "@/lib/notes-dock-store";
-import { formatFileSize, itemKind, quickNoteFromText, type ItemKind } from "@/lib/quick-notes";
+import {
+  formatFileSize,
+  itemKind,
+  linkFallbackTitle,
+  noteToHtml,
+  parseQuickLink,
+  quickNoteFromText,
+  type ItemKind,
+} from "@/lib/quick-notes";
 import { SEARCH_MIN_LENGTH } from "@/lib/search";
 import { timeAgo } from "@/lib/time";
 import { cn } from "@/lib/utils";
@@ -62,7 +70,7 @@ const KIND_ICON: Record<ItemKind, LucideIcon> = {
   file: FileText,
 };
 
-type Filter = "all" | "notes" | "files";
+type Filter = "all" | "notes" | "links" | "files";
 
 const iconButton =
   "rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground";
@@ -162,6 +170,7 @@ function DockList() {
   const [filter, setFilter] = useState<Filter>("all");
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(0);
+  const [savingLink, setSavingLink] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const createItem = useCreateItem();
@@ -174,14 +183,55 @@ function DockList() {
     const source = (searching ? found : recent) ?? [];
     return source
       .filter((item) =>
-        filter === "all" ? true : filter === "notes" ? item.type === "note" : item.type !== "note",
+        filter === "all"
+          ? true
+          : filter === "notes"
+            ? item.type === "note"
+            : filter === "links"
+              ? item.type === "link"
+              : item.type === "upload" || item.type === "document",
       )
       .slice(0, 40);
   }, [searching, found, recent, filter]);
 
+  const link = parseQuickLink(draft);
+
+  async function saveLink(url: string, note: string) {
+    setSavingLink(true);
+    try {
+      // Best effort: the page's own title and description, else host + path.
+      let title = linkFallbackTitle(url);
+      let description: string | null = null;
+      try {
+        const { data } = await supabase.functions.invoke("fetch-project-preview", {
+          body: { url },
+        });
+        const preview = data as { name?: string; description?: string | null } | null;
+        if (preview?.name && preview.name !== new URL(url).hostname.replace(/^www\./, ""))
+          title = preview.name.slice(0, 120);
+        description = preview?.description ?? null;
+      } catch {
+        /* keep the fallback title */
+      }
+      const content = note ? noteToHtml(note) : description ? noteToHtml(description) : "";
+      await createItem.mutateAsync({ type: "link", url, title, content });
+      toast.success("Link saved");
+      return true;
+    } catch (error) {
+      toast.error(friendlyError(error, "Couldn't save the link"));
+      return false;
+    } finally {
+      setSavingLink(false);
+    }
+  }
+
   async function saveNote() {
     const text = draft.trim();
     if (!text) return;
+    if (link) {
+      if (await saveLink(link.url, link.note)) setDraft("");
+      return;
+    }
     try {
       const note = quickNoteFromText(text);
       await createItem.mutateAsync({ ...note, type: "note" });
@@ -213,14 +263,26 @@ function DockList() {
   function onDrop(event: DragEvent) {
     event.preventDefault();
     setDragging(false);
-    if (event.dataTransfer.files?.length) void uploadFiles(event.dataTransfer.files);
+    if (event.dataTransfer.files?.length) {
+      void uploadFiles(event.dataTransfer.files);
+      return;
+    }
+    // A link dragged from the address bar or a page.
+    const dropped = (
+      event.dataTransfer.getData("text/uri-list") || event.dataTransfer.getData("text/plain")
+    )
+      .split("\n")
+      .find((line) => line.trim() && !line.startsWith("#"));
+    const parsed = dropped ? parseQuickLink(dropped) : null;
+    if (parsed) void saveLink(parsed.url, "");
   }
 
   return (
     <div
       className="relative flex min-h-0 flex-1 flex-col"
       onDragOver={(e) => {
-        if (Array.from(e.dataTransfer.types).includes("Files")) {
+        const types = Array.from(e.dataTransfer.types);
+        if (types.includes("Files") || types.includes("text/uri-list")) {
           e.preventDefault();
           setDragging(true);
         }
@@ -253,7 +315,7 @@ function DockList() {
             }
           }}
           rows={3}
-          placeholder="Jot something down… (first line is the title)"
+          placeholder="Jot something down, or paste a link… (first line is the title)"
           aria-label="New note"
           className="w-full resize-none rounded-lg border border-input bg-background/60 px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus:border-ring"
         />
@@ -287,10 +349,10 @@ function DockList() {
           </span>
           <button
             type="submit"
-            disabled={!draft.trim() || createItem.isPending}
+            disabled={!draft.trim() || createItem.isPending || savingLink}
             className="ml-auto inline-flex h-7 items-center rounded-full bg-primary px-3 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-40"
           >
-            Save note
+            {savingLink ? "Saving…" : link ? "Save link" : "Save note"}
           </button>
         </div>
       </form>
@@ -311,7 +373,7 @@ function DockList() {
           />
         </div>
         <div className="flex shrink-0 rounded-lg border border-border/60 p-0.5 text-[11px]">
-          {(["all", "notes", "files"] as const).map((value) => (
+          {(["all", "notes", "links", "files"] as const).map((value) => (
             <button
               key={value}
               type="button"
@@ -344,7 +406,9 @@ function DockList() {
               ? "Nothing matches that."
               : filter === "files"
                 ? "No files yet. Add pictures, videos, PDFs or docs — or drop them here."
-                : "Nothing saved yet. Jot an idea above, or drop in a file."}
+                : filter === "links"
+                  ? "No links yet. Paste one above, or drag it in from your browser."
+                  : "Nothing saved yet. Jot an idea above, or drop in a file."}
           </li>
         ) : (
           items.map((item) => <DockRow key={item.id} item={item} />)
@@ -384,7 +448,9 @@ function DockRow({ item }: { item: LibraryItem }) {
   const excerpt =
     kind === "note"
       ? getItemExcerpt(item.content, item.content_format)
-      : [formatFileSize(item.file_size), item.url].filter(Boolean).join(" · ");
+      : kind === "link" && item.url
+        ? linkFallbackTitle(item.url).split("/")[0]
+        : formatFileSize(item.file_size);
   return (
     <li>
       <button
@@ -500,7 +566,7 @@ function DockItem({ id }: { id: string }) {
           <ArrowLeft className="h-4 w-4" />
         </button>
         <span className="text-xs text-muted-foreground" aria-live="polite">
-          {kind === "note" &&
+          {(kind === "note" || kind === "link") &&
             (status === "saving" ? "Saving…" : status === "pending" ? "Editing" : "Saved")}
         </span>
         {item && (
@@ -557,7 +623,7 @@ function DockItem({ id }: { id: string }) {
             }}
             aria-label="Title"
             placeholder="Untitled"
-            readOnly={kind !== "note"}
+            readOnly={kind !== "note" && kind !== "link"}
             className="w-full bg-transparent px-3 pt-3 pb-1 font-display text-lg font-semibold outline-none placeholder:text-muted-foreground"
           />
           {kind === "note" ? (
@@ -596,10 +662,14 @@ function FilePreview({ item, onDownload }: { item: LibraryItem; onDownload: () =
         <a
           href={item.url}
           target="_blank"
-          rel="noopener noreferrer"
-          className="block truncate text-sm text-trust underline"
+          rel="noopener noreferrer nofollow"
+          className="flex items-center gap-3 rounded-lg bg-surface-elevated/60 p-3 text-sm transition-colors hover:bg-surface-elevated"
         >
-          {item.url}
+          <Globe className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
+          <span className="min-w-0">
+            <span className="block truncate font-medium">{linkFallbackTitle(item.url)}</span>
+            <span className="text-xs text-muted-foreground">Open link ↗</span>
+          </span>
         </a>
       ) : media && isLoading ? (
         <Skeleton className="h-48 w-full rounded-lg" />

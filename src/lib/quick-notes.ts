@@ -57,3 +57,37 @@ export function formatFileSize(bytes: number | null | undefined): string {
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
+
+/**
+ * A jot whose first line is a single http(s) link is a saved link; anything
+ * after it is the member's note about it. Null for anything else.
+ */
+export function parseQuickLink(text: string): { url: string; note: string } | null {
+  const lines = text.replace(/\r\n?/g, "\n").trim().split("\n");
+  const first = (lines.shift() ?? "").trim();
+  if (!/^https?:\/\/\S+$/i.test(first)) return null;
+  try {
+    const url = new URL(first);
+    if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+    return { url: url.toString(), note: lines.join("\n").trim() };
+  } catch {
+    return null;
+  }
+}
+
+/** A readable fallback title for a link ("github.com/acme/repo"). */
+export function linkFallbackTitle(url: string): string {
+  try {
+    const u = new URL(url);
+    const path = u.pathname.replace(/\/+$/, "");
+    const label = `${u.hostname.replace(/^www\./, "")}${path}`;
+    return label.length > 80 ? `${label.slice(0, 79)}…` : label;
+  } catch {
+    return url.slice(0, 80);
+  }
+}
+
+/** The note under a saved link, as the Library's HTML paragraphs. */
+export function noteToHtml(note: string): string {
+  return quickNoteFromText(`x\n${note}`).content;
+}
