@@ -247,6 +247,15 @@ function deriveContrastVars(vars: Record<string, string>, scheme?: ThemeScheme):
 
   // Runtime accents inherit the same contrast-safe canvas. This keeps focused
   // controls and active template states readable even when a custom theme flips.
+  // The accent itself follows the theme's primary too — otherwise solid accent
+  // fills (progress bars, accent buttons) keep Tethyr's default blue while
+  // their tints above and below have moved to the theme colour.
+  putIdentity("--user-accent", "var(--primary)");
+  putStructural(
+    "--user-accent-emphasis",
+    `color-mix(in oklab, var(--primary) ${scheme === "dark" || colorScheme(BG) === "dark" ? 78 : 40}%, ${FG})`,
+  );
+  putStructural("--user-accent-glow", "color-mix(in oklab, var(--primary) 6%, transparent)");
   putStructural("--user-accent-foreground", readableCounterpart(vars["--primary"], BG));
   putStructural("--user-accent-subtle", `color-mix(in oklab, var(--primary) 12%, ${BG})`);
   putStructural("--user-accent-border", `color-mix(in oklab, var(--primary) 42%, ${BG})`);

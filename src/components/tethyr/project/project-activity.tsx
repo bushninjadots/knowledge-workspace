@@ -17,7 +17,15 @@ import {
   Plus,
   X,
   Sparkles,
+  Award,
+  Check,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { MilestoneRow, ProjectUpdateRow, DiscussionRow } from "@/hooks/use-projects";
@@ -34,6 +42,8 @@ import {
   useCreateProjectContribution,
   useRecognizeProjectActivity,
 } from "@/hooks/use-project-loop";
+
+const RECOGNITION_KINDS = ["helpful_feedback", "strong_iteration", "made_clearer"] as const;
 import { syncGithubProjectActivity } from "@/lib/github-server";
 import type { ProjectRepo } from "@/hooks/use-project-repos";
 import { timeAgo } from "@/lib/time";
@@ -491,6 +501,7 @@ export function ProjectActivityTab({
               onChange={(event) => setTitle(event.target.value)}
               placeholder="What changed?"
               aria-label="Contribution title"
+              autoFocus
             />
             <Textarea
               value={body}
@@ -615,6 +626,50 @@ export function ProjectActivityTab({
                         </>
                       )}
                       <span>{timeAgo(item.at)}</span>
+                      {item.kind !== "github" &&
+                        me?.userId &&
+                        item.authorId &&
+                        item.authorId !== me.userId &&
+                        activityId && (
+                          // One quiet menu per item rather than a row of chips
+                          // repeated down the whole feed.
+                          <>
+                            <span aria-hidden>·</span>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger
+                                className="inline-flex min-h-6 items-center gap-1 rounded-md pointer-coarse:min-h-10 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                aria-label={`Recognize ${item.authorName ?? "this contribution"}`}
+                              >
+                                <Award className="h-3 w-3" aria-hidden />
+                                {recognizedKinds.size > 0 ? "Recognized" : "Recognize"}
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="start">
+                                {RECOGNITION_KINDS.map((kind) => {
+                                  const already = recognizedKinds.has(kind);
+                                  return (
+                                    <DropdownMenuItem
+                                      key={kind}
+                                      disabled={already || recognize.isPending}
+                                      onSelect={() =>
+                                        recognize.mutate({
+                                          projectActivityId: activityId,
+                                          projectId,
+                                          recipientId: item.authorId!,
+                                          kind,
+                                        })
+                                      }
+                                    >
+                                      {already ? (
+                                        <Check className="h-3.5 w-3.5" aria-hidden />
+                                      ) : null}
+                                      {RECOGNITION_LABELS[kind]}
+                                    </DropdownMenuItem>
+                                  );
+                                })}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </>
+                        )}
                     </div>
                     {item.body && (
                       <div className="prose-custom mt-1.5 text-sm text-foreground/90">
@@ -631,40 +686,6 @@ export function ProjectActivityTab({
                         View commit on GitHub →
                       </a>
                     )}
-                    {item.kind !== "github" &&
-                      me?.userId &&
-                      item.authorId &&
-                      item.authorId !== me.userId &&
-                      activityId && (
-                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                          <span className="text-[11px] text-muted-foreground">Recognize:</span>
-                          {(["helpful_feedback", "strong_iteration", "made_clearer"] as const).map(
-                            (kind) => {
-                              const already = recognizedKinds.has(kind);
-                              return (
-                                <button
-                                  key={kind}
-                                  type="button"
-                                  disabled={already || recognize.isPending}
-                                  onClick={() =>
-                                    recognize.mutate({
-                                      projectActivityId: activityId,
-                                      projectId,
-                                      recipientId: item.authorId!,
-                                      kind,
-                                    })
-                                  }
-                                  className="inline-flex min-h-6 items-center rounded-full border border-border/60 px-2 py-0.5 text-[10px] pointer-coarse:min-h-10 text-muted-foreground transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground disabled:cursor-default disabled:opacity-60"
-                                >
-                                  {already
-                                    ? `✓ ${RECOGNITION_LABELS[kind]}`
-                                    : RECOGNITION_LABELS[kind]}
-                                </button>
-                              );
-                            },
-                          )}
-                        </div>
-                      )}
                   </div>
                 </li>
               );

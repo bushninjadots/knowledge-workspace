@@ -260,12 +260,14 @@ export function ProjectPage() {
         return;
       }
       if (e.key === "/") {
+        // Handled here, so the sidebar's global search (also on "/") stays shut.
         e.preventDefault();
         setProjectSearchOpen(true);
       }
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    // Capture phase: runs before the global search's document listener.
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
   }, [tab, setTab]);
 
   const { data, isLoading, error } = useQuery({
@@ -910,7 +912,7 @@ function ProjectSectionNav({ sectionOrder }: { sectionOrder: ProjectSectionKey[]
   return (
     <nav
       aria-label="Project sections"
-      className="sticky top-16 z-20 mt-6 border-y border-border/60 bg-background/90 py-3 backdrop-blur-sm"
+      className="sticky top-12 z-20 -mx-3 mt-6 border-y border-border/60 bg-background/90 px-3 py-3 backdrop-blur-sm"
     >
       <div className="flex items-center gap-4 overflow-x-auto scrollbar-none">
         <span className="section-label shrink-0">Jump to</span>

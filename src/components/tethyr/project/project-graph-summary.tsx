@@ -1,4 +1,3 @@
-import { Network } from "lucide-react";
 import { buildProjectGraph, type ProjectGraphInput } from "@/lib/project-graph";
 import { useGraphTheme } from "@/hooks/use-graph-theme";
 import { ProjectGraphExplorer } from "./project-graph-explorer";
@@ -40,19 +39,18 @@ function ProjectGraphSummaryBody({ input }: { input: ProjectGraphInput }) {
       aria-labelledby="project-graph-heading"
       className="mt-10 scroll-mt-24 border-t border-border/60 pt-8"
     >
-      <div className="flex items-start gap-3">
-        <Network className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-        <div>
-          <h2
-            id="project-graph-heading"
-            className="font-display text-lg font-semibold tracking-tight"
-          >
-            Connected work
-          </h2>
-          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            The people, skills, milestones, and resources that give this project its shape.
-          </p>
-        </div>
+      {/* No leading icon: the section headings around it (Sessions, Needs,
+          Challenges) start flush, so this one lines up with them. */}
+      <div>
+        <h2
+          id="project-graph-heading"
+          className="font-display text-lg font-semibold tracking-tight"
+        >
+          Connected work
+        </h2>
+        <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+          The people, skills, milestones, and resources that give this project its shape.
+        </p>
       </div>
       <dl className="mt-4 flex flex-wrap gap-x-6 gap-y-3 text-sm">
         <div>

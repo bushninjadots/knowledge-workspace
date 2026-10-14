@@ -111,8 +111,10 @@ export function ProjectWorkbench({
       aria-labelledby="project-workbench-heading"
       className="border-y border-[var(--user-accent-border,var(--border))] bg-background py-4 sm:py-5"
     >
-      <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-        <div className="min-w-0 border-l-2 border-[var(--user-accent,var(--primary))] pl-3">
+      {/* Stacks until lg: at tablet width the text, actions and presentation
+          picker can't share one row without crushing the text column. */}
+      <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 sm:px-8 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0 flex-1 border-l-2 border-[var(--user-accent,var(--primary))] pl-3">
           <div className="flex items-center gap-2">
             <Zap className="h-4 w-4 shrink-0 text-[var(--user-accent-text,var(--primary))]" />
             <p id="project-workbench-heading" className="section-label">

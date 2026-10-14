@@ -24,7 +24,7 @@ export const ProjectTabs = memo(function ProjectTabs({
   counts?: Partial<Record<ProjectTab, number>>;
 }) {
   return (
-    <div className="-mx-4 border-b border-border/60 bg-background/85 px-4 sm:-mx-8 sm:px-8">
+    <div className="-mx-3 border-b border-border/60 bg-background/85 px-3">
       <div className="flex gap-1 overflow-x-auto scrollbar-none">
         {PROJECT_TABS.map((tab, index) => {
           const Icon = tab.icon;

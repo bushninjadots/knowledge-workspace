@@ -168,7 +168,12 @@ export function ProjectCommunityPosts({
           From the community
         </div>
         {showAsk && (
-          <Button size="sm" variant="outline" onClick={() => setAsking(true)}>
+          <Button
+            size="sm"
+            variant="outline"
+            className="shrink-0 rounded-full"
+            onClick={() => setAsking(true)}
+          >
             <MessageSquarePlus className="h-3.5 w-3.5" aria-hidden />
             Ask for feedback
           </Button>

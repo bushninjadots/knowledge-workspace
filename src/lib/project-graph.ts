@@ -145,8 +145,23 @@ function contributionLabel(action: string, metadata?: Record<string, unknown> | 
       return typeof metadata?.milestone_title === "string"
         ? `Completed milestone: ${metadata.milestone_title}`
         : "Completed a milestone";
-    default:
-      return action.replace(/_/g, " ");
+    case "project_evidence_added":
+      return "Added evidence";
+    case "project_evidence_recognized":
+      return "Evidence recognized";
+    case "weekly_show_your_work":
+      return "Showed their work";
+    case "challenge_completed":
+      return "Completed a challenge";
+    case "community_post_created":
+      return "Posted in the community";
+    case "community_comment_created":
+      return "Commented in the community";
+    default: {
+      // Unknown actions still read as a sentence, never as a raw key.
+      const words = action.replace(/_/g, " ");
+      return words.charAt(0).toUpperCase() + words.slice(1);
+    }
   }
 }
 

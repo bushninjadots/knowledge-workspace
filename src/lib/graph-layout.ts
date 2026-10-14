@@ -13,6 +13,8 @@ import type { GraphEdge, GraphNode, TethyrGraph } from "./graph-model";
  *    `omitted` so the view can point at the list alternative (spec §45).
  *  - Honest: only edges whose both endpoints were placed are returned; no
  *    dangling relationships are invented (spec §59).
+ *  - Uncrowded: a ring with more nodes than fit around it spills into extra
+ *    bands just outside it, so nodes never sit on top of each other.
  */
 
 interface GraphLayoutNode {
@@ -23,6 +25,9 @@ interface GraphLayoutNode {
   x: number;
   y: number;
   angle: number;
+  /** Space to each neighbour along its band, in layout units — the view
+   *  hides labels that would not fit in it. */
+  arc: number;
 }
 
 interface GraphLayout {
@@ -38,6 +43,32 @@ const DEFAULT_RING_GAP = 120;
 const DEFAULT_MAX_NODES = 40;
 /** Extra space beyond the outermost ring so node labels are not clipped. */
 const LABEL_PADDING = 0.35;
+/** Closest two nodes may sit along a band, as a share of the ring gap. */
+const MIN_ARC = 0.5;
+/** Distance between the bands of one crowded ring, as a share of the ring gap. */
+const BAND_GAP = 0.5;
+
+/** Split `count` nodes over as few bands (starting at `radius`) as hold them,
+ *  sharing them out by each band's room so the outer band isn't left sparse. */
+function bandsFor(count: number, radius: number, ringGap: number) {
+  const radii: number[] = [];
+  const room: number[] = [];
+  let total = 0;
+  while (total < count) {
+    const r = radius + radii.length * ringGap * BAND_GAP;
+    const fits = Math.max(6, Math.floor((Math.PI * 2 * r) / (ringGap * MIN_ARC)));
+    radii.push(r);
+    room.push(fits);
+    total += fits;
+  }
+  let left = count;
+  return radii.map((r, i) => {
+    const take =
+      i === radii.length - 1 ? left : Math.min(left, Math.round((count * room[i]) / total));
+    left -= take;
+    return { radius: r, count: take };
+  });
+}
 
 function ringSpread(count: number, index: number, ring: number): number {
   // Even angular spacing; odd rings are staggered by half a step so ring 2
@@ -87,30 +118,38 @@ export function computeRadialLayout(
   }
 
   const layoutNodes: GraphLayoutNode[] = [];
-  let maxRing = 0;
+  // Where the next ring starts: one gap beyond the previous ring's outer band.
+  let nextRadius = ringGap;
+  let outerRadius = 0;
   rings.forEach((members, ring) => {
-    maxRing = Math.max(maxRing, ring);
     // Deterministic order: type, then label, then id — so identical graphs
     // always render identically (spec §44).
     const ordered = [...members].sort(
       (a, b) =>
         a.type.localeCompare(b.type) || a.label.localeCompare(b.label) || a.id.localeCompare(b.id),
     );
-    ordered.forEach((node, index) => {
-      if (ring === 0) {
-        layoutNodes.push({ node, ring, x: 0, y: 0, angle: 0 });
-        return;
-      }
-      const angle = ringSpread(ordered.length, index, ring);
-      const radius = ring * ringGap;
-      layoutNodes.push({
-        node,
-        ring,
-        x: Math.cos(angle) * radius,
-        y: Math.sin(angle) * radius,
-        angle,
+    if (ring === 0) {
+      layoutNodes.push({ node: ordered[0], ring, x: 0, y: 0, angle: 0, arc: ringGap });
+      return;
+    }
+    let start = 0;
+    bandsFor(ordered.length, nextRadius, ringGap).forEach((band, b) => {
+      ordered.slice(start, start + band.count).forEach((node, index) => {
+        // Alternate the stagger band to band so neighbouring bands interleave.
+        const angle = ringSpread(band.count, index, ring + b);
+        layoutNodes.push({
+          node,
+          ring,
+          x: Math.cos(angle) * band.radius,
+          y: Math.sin(angle) * band.radius,
+          angle,
+          arc: (Math.PI * 2 * band.radius) / band.count,
+        });
       });
+      start += band.count;
+      outerRadius = band.radius;
     });
+    nextRadius = outerRadius + ringGap;
   });
 
   const edges = graph.edges.filter((edge) => ringBy.has(edge.from) && ringBy.has(edge.to));
@@ -118,7 +157,7 @@ export function computeRadialLayout(
   return {
     nodes: layoutNodes,
     edges,
-    radius: maxRing * ringGap * (1 + LABEL_PADDING),
+    radius: Math.max(outerRadius, ringGap) * (1 + LABEL_PADDING),
     omitted: Math.max(0, graph.nodes.length - placed),
   };
 }

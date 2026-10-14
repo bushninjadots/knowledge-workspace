@@ -47,7 +47,7 @@ export function ProjectChallengesSection({
         </div>
         {canCreate && (
           <Suspense fallback={null}>
-            <CreateChallengeDialog projectId={projectId} />
+            <CreateChallengeDialog projectId={projectId} sectionAction />
           </Suspense>
         )}
       </div>

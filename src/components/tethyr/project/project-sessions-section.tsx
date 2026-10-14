@@ -2,6 +2,7 @@
 
 import { Link } from "@tanstack/react-router";
 import { CalendarPlus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { useProjectSessions } from "@/hooks/use-sessions";
 
 type ProjectSession = NonNullable<ReturnType<typeof useProjectSessions>["data"]>[number];
@@ -34,14 +35,16 @@ export function ProjectSessionsSection({
           </p>
         </div>
         {canSchedule && (
-          <button
+          <Button
             type="button"
+            size="sm"
+            variant="outline"
             onClick={onSchedule}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border/60 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-lift hover:text-foreground"
+            className="shrink-0 rounded-full"
           >
             <CalendarPlus className="h-3 w-3" />
             Schedule session
-          </button>
+          </Button>
         )}
       </div>
 

@@ -25,6 +25,8 @@ export function ProjectJoinModal({
   onClose,
 }: ProjectJoinModalProps) {
   const focusRef = useRef<HTMLDivElement | null>(null);
+  // Filled roles stay on the project for the record but can't be applied to.
+  const unfilledRoles = openRoles.filter((role) => !role.is_filled);
 
   // Scroll the focused role into view once the modal renders (after layout settles).
   useEffect(() => {
@@ -41,14 +43,16 @@ export function ProjectJoinModal({
         <h2 className="font-display text-lg font-semibold">
           Join {projectTitle || "this project"}
         </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Pick a role below to send an application. Your application will stay connected to this
-          project.
-        </p>
+        {unfilledRoles.length > 0 && (
+          <p className="mt-1 text-sm text-muted-foreground">
+            Pick a role below to send an application. Your application will stay connected to this
+            project.
+          </p>
+        )}
 
-        {openRoles.length > 0 ? (
+        {unfilledRoles.length > 0 ? (
           <div className="mt-4 max-h-[55vh] space-y-3 overflow-y-auto pr-1">
-            {openRoles.map((role) => {
+            {unfilledRoles.map((role) => {
               const focused = role.id === focusRoleId;
               return (
                 <div

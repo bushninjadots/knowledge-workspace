@@ -248,7 +248,7 @@ export function ProjectDiscussions({
             className="rounded-full"
           >
             <Plus className="h-3 w-3" />
-            New Thread
+            New thread
           </Button>
         )}
       </div>

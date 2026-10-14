@@ -144,9 +144,12 @@ export function MilestonesTimeline({
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="text-base font-semibold tracking-tight text-foreground">Roadmap</h3>
-            <Badge variant="secondary" className="rounded-full text-[10px]">
-              {doneCount} of {milestones.length} milestone{milestones.length === 1 ? "" : "s"} done
-            </Badge>
+            {milestones.length > 0 && (
+              <Badge variant="secondary" className="rounded-full text-[10px]">
+                {doneCount} of {milestones.length} milestone{milestones.length === 1 ? "" : "s"}{" "}
+                done
+              </Badge>
+            )}
           </div>
           <p className="mt-1 max-w-xl text-xs leading-relaxed text-muted-foreground">
             A shared view of what the team is moving through next.
@@ -160,9 +163,10 @@ export function MilestonesTimeline({
             onClick={() => setShowAdd((value) => !value)}
             aria-expanded={showAdd}
             aria-controls="add-milestone-form"
+            className="shrink-0 rounded-full"
           >
-            <Plus data-icon="inline-start" />
-            {showAdd ? "Close" : "Add milestone"}
+            <Plus className="h-3 w-3" />
+            Add milestone
           </Button>
         )}
       </div>

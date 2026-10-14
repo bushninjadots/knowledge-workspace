@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Plus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -28,12 +29,16 @@ export function CreateChallengeDialog({
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
   projectId,
+  sectionAction = false,
 }: {
   /** Optional controlled mode — lets callers open the dialog from elsewhere. */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   /** Pre-link the new challenge to this project (e.g. opened from a project page). */
   projectId?: string | null;
+  /** Render the trigger as a section action (outline pill with a plus), the
+   *  way the other "add" actions on a project page look. */
+  sectionAction?: boolean;
 } = {}) {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
@@ -100,11 +105,18 @@ export function CreateChallengeDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm">Create Challenge</Button>
+        {sectionAction ? (
+          <Button size="sm" variant="outline" className="shrink-0 rounded-full">
+            <Plus className="h-3 w-3" />
+            Create challenge
+          </Button>
+        ) : (
+          <Button size="sm">Create challenge</Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Create a Challenge</DialogTitle>
+          <DialogTitle>Create a challenge</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <Input

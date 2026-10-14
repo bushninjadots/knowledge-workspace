@@ -174,7 +174,9 @@ export function ProjectHeader({
 
       <div className="mx-auto max-w-7xl px-4 pb-7 sm:px-8">
         <div className="flex flex-wrap items-start justify-between gap-4 pt-6 sm:pt-7">
-          <div className="min-w-0 flex-1">
+          {/* The basis makes the actions wrap below before this column gets
+              squeezed (tablet width with the sidebar open). */}
+          <div className="min-w-0 flex-1 basis-[26rem]">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
                 {project.title}

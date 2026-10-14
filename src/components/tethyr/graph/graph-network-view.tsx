@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { computeRadialLayout } from "@/lib/graph-layout";
 import { GRAPH_NODE_TYPE_LABELS, type GraphNode, type TethyrGraph } from "@/lib/graph-model";
 import { describeRelationship } from "@/lib/graph-path";
@@ -29,6 +29,9 @@ const WEAK_EDGE_TYPES = new Set([
 ]);
 
 const NODE_SIZES = ["h-14 w-14", "h-11 w-11", "h-9 w-9"] as const;
+/** Pixels a node needs along its band to show its label / its full size. */
+const LABEL_ROOM_PX = 84;
+const FULL_SIZE_ROOM_PX = 52;
 
 export function GraphNetworkView({
   graph,
@@ -51,6 +54,16 @@ export function GraphNetworkView({
     [graph, rootId, maxNodes],
   );
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  // The map's drawn width, to judge which labels fit (it shrinks on phones).
+  const mapRef = useRef<HTMLDivElement>(null);
+  const [mapWidth, setMapWidth] = useState(560);
+  useEffect(() => {
+    const el = mapRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(([entry]) => setMapWidth(entry.contentRect.width));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [layout]);
   const focusId = hoveredId ?? selectedId ?? null;
 
   const neighboursOf = useMemo(() => {
@@ -71,6 +84,7 @@ export function GraphNetworkView({
   return (
     <div className="mt-4">
       <div
+        ref={mapRef}
         role="group"
         aria-label="Network map"
         className="relative mx-auto aspect-square w-full max-w-[560px] overflow-hidden"
@@ -107,7 +121,12 @@ export function GraphNetworkView({
           })}
         </svg>
 
-        {layout.nodes.map(({ node, ring, x, y }) => {
+        {layout.nodes.map(({ node, ring, x, y, arc }) => {
+          // Crowded bands drop their labels (the tooltip names a node on
+          // hover or focus) and shrink their nodes so they never overlap.
+          const roomPx = (arc * mapWidth) / size;
+          const showLabel = ring === 0 || roomPx >= LABEL_ROOM_PX;
+          const compact = ring > 0 && roomPx < FULL_SIZE_ROOM_PX;
           const dimmed =
             (neighboursOf !== null && !neighboursOf.has(node.id)) ||
             (isMatch ? !isMatch(node) : false);
@@ -143,7 +162,7 @@ export function GraphNetworkView({
                 <span
                   className={cn(
                     "flex items-center justify-center rounded-full border bg-background transition-colors",
-                    NODE_SIZES[Math.min(ring, NODE_SIZES.length - 1)],
+                    compact ? "h-7 w-7" : NODE_SIZES[Math.min(ring, NODE_SIZES.length - 1)],
                     isRoot
                       ? "border-[var(--user-accent,var(--trust))] text-foreground"
                       : ring === 1
@@ -156,19 +175,21 @@ export function GraphNetworkView({
                   <GraphNodeGlyph
                     type={node.type}
                     className={cn(
-                      isRoot ? "h-5 w-5" : ring === 1 ? "h-4 w-4" : "h-3.5 w-3.5",
+                      isRoot ? "h-5 w-5" : ring === 1 && !compact ? "h-4 w-4" : "h-3.5 w-3.5",
                       ring === 2 && "opacity-80",
                     )}
                   />
                 </span>
-                <span
-                  className={cn(
-                    "max-w-[96px] truncate text-[10px] leading-tight",
-                    isRoot ? "font-medium text-foreground" : "text-muted-foreground",
-                  )}
-                >
-                  {node.label}
-                </span>
+                {showLabel && (
+                  <span
+                    className={cn(
+                      "max-w-[96px] truncate text-[10px] leading-tight",
+                      isRoot ? "font-medium text-foreground" : "text-muted-foreground",
+                    )}
+                  >
+                    {node.label}
+                  </span>
+                )}
               </button>
               {focusId === node.id ? (
                 <div

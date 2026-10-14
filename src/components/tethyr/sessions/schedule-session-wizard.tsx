@@ -221,7 +221,7 @@ export function ScheduleSessionWizard({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl gap-0 p-0 overflow-hidden">
         <DialogHeader className="border-b border-border/60 px-6 py-4">
-          <DialogTitle className="text-lg font-semibold">Schedule a Session</DialogTitle>
+          <DialogTitle className="text-lg font-semibold">Schedule a session</DialogTitle>
         </DialogHeader>
 
         {/* Step Indicator */}

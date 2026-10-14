@@ -65,6 +65,22 @@ describe("computeRadialLayout", () => {
     expect(layout!.edges.length).toBeLessThanOrEqual(placedIds.size);
   });
 
+  it("spills a crowded ring into bands so nodes keep their distance", () => {
+    const graph = starGraph(47);
+    const layout = computeRadialLayout(graph, "project:atlas", { ringGap: 120, maxNodes: 48 });
+
+    const ring1 = layout!.nodes.filter((entry) => entry.ring === 1);
+    expect(ring1).toHaveLength(47);
+    const radii = new Set(ring1.map((entry) => Math.round(Math.hypot(entry.x, entry.y))));
+    expect(radii.size).toBeGreaterThan(1);
+    // No two nodes closer than half a ring gap.
+    for (const a of ring1)
+      for (const b of ring1)
+        if (a !== b) expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThanOrEqual(59);
+    // The layout grows to fit its outer band.
+    expect(layout!.radius).toBeGreaterThan(Math.max(...radii));
+  });
+
   it("returns null when the root is not in the graph", () => {
     const graph = starGraph(3);
     expect(computeRadialLayout(graph, "project:missing")).toBeNull();

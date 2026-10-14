@@ -77,7 +77,7 @@ export function GlobalSearch({
       const target = e.target as HTMLElement | null;
       const typing =
         target && (["INPUT", "TEXTAREA"].includes(target.tagName) || target.isContentEditable);
-      if (typing) return;
+      if (typing || e.defaultPrevented) return;
 
       const commandSearch = (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k";
       const slashSearch = variant === "inline" && e.key === "/";
