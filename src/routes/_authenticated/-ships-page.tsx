@@ -48,7 +48,7 @@ export function ShipsPage() {
             {weekLabel(week, current)}
           </span>
         }
-        description="Every week, post what you shipped — a feature, a fix, a design, something you learned. Tethyr drafts it from your GitHub; you edit and post. Keep the streak going."
+        description="Every week, post what you shipped — a feature, a fix, a design, something you learned. Tethyr drafts it from your journal and GitHub; you edit and post. Keep the streak going."
         actions={
           <div className="flex items-center gap-1">
             <Button

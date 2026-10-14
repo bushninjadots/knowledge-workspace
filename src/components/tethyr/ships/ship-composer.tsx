@@ -3,7 +3,7 @@
 // by the Ship log page and the dashboard.
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Github, Pencil, Rocket, Trash2 } from "lucide-react";
+import { Pencil, Rocket, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,10 +29,16 @@ import {
   SHIP_BODY_MIN,
   SHIP_NEXT_MAX,
   shipErrorMessage,
+  linkedInShareUrl,
+  shipShareText,
+  shipWeekOf,
   streakLabel,
+  xShareUrl,
   type ShipHighlight,
 } from "@/lib/ship-log";
 import { ShipCard, ShipHighlights } from "./ship-card";
+import { toLite, useJournalEntries } from "@/hooks/use-journal";
+import { shipLinesFromJournal } from "@/lib/journal";
 
 export function ShipComposer({ compact = false }: { compact?: boolean }) {
   const { data: me } = useCurrentUser();
@@ -43,6 +49,8 @@ export function ShipComposer({ compact = false }: { compact?: boolean }) {
   const save = useSaveShip(userId);
   const remove = useDeleteShip();
   const draft = useShipDraft();
+  const [weekStart] = useState(() => `${shipWeekOf()}T00:00:00Z`);
+  const { data: weekJournal } = useJournalEntries({ from: weekStart });
 
   const [editing, setEditing] = useState(false);
   const [body, setBody] = useState("");
@@ -66,24 +74,37 @@ export function ShipComposer({ compact = false }: { compact?: boolean }) {
     (p) => p.status !== "completed" || p.id === projectId,
   );
 
-  async function fillFromGithub() {
+  // The week's draft: your journal first (what and why, in your words),
+  // then public GitHub activity when it's connected. Either alone is enough.
+  async function draftWeek() {
+    const fromJournal = shipLinesFromJournal(toLite(weekJournal ?? []));
+    let github: { body: string; highlights: ShipHighlight[] } | null = null;
+    let hasGithub = true;
     try {
       const result = await draft.mutateAsync();
-      if (!result.login) {
-        setNoGithub(true);
-        return;
-      }
-      if (!result.draft || !result.draft.body) {
-        toast.message("No public GitHub activity yet this week — write it in your own words.");
-        return;
-      }
-      setBody((current) =>
-        current.trim() ? `${current.trim()}\n\n${result.draft!.body}` : result.draft!.body,
-      );
-      setHighlights(result.draft.highlights);
+      hasGithub = !!result.login;
+      if (result.draft?.body) github = result.draft;
     } catch {
-      toast.error("Couldn't reach GitHub just now. Try again in a minute.");
+      /* GitHub is optional */
     }
+    const githubLines = github
+      ? github.body
+          .split("\n")
+          .filter((l) => l.startsWith("- "))
+          .map((l) => l.slice(2))
+      : [];
+    const lines = [...fromJournal.lines, ...githubLines];
+    if (lines.length === 0) {
+      setNoGithub(!hasGithub);
+      toast.message(
+        "Nothing logged yet this week — write it in your own words, or log as you go in the Journal.",
+      );
+      return;
+    }
+    const text = `This week I:\n${lines.map((l) => `- ${l}`).join("\n")}`;
+    setBody((current) => (current.trim() ? `${current.trim()}\n\n${text}` : text));
+    if (github) setHighlights(github.highlights);
+    if (fromJournal.nextUp) setNextUp((current) => current || fromJournal.nextUp!);
   }
 
   async function submit() {
@@ -151,6 +172,7 @@ export function ShipComposer({ compact = false }: { compact?: boolean }) {
             </div>
           }
         />
+        <ShareShip body={mine.body} nextUp={mine.next_up} handle={me?.profile?.handle ?? null} />
       </section>
     );
   }
@@ -175,19 +197,23 @@ export function ShipComposer({ compact = false }: { compact?: boolean }) {
           variant="outline"
           className="rounded-full"
           busy={draft.isPending}
-          onClick={fillFromGithub}
+          onClick={draftWeek}
         >
-          <Github /> Draft from GitHub
+          <Sparkles /> Draft my week
         </Button>
       </div>
 
       {noGithub && (
         <p className="mt-3 rounded-lg bg-surface-elevated/60 px-3 py-2 text-xs text-muted-foreground">
-          Connect GitHub in{" "}
+          Log as you go in the{" "}
+          <Link to="/journal" className="text-foreground underline">
+            Journal
+          </Link>{" "}
+          (or let your AI assistant and git do it), or connect GitHub in{" "}
           <Link to="/settings" className="text-foreground underline">
             Settings
           </Link>{" "}
-          and Tethyr writes the first draft for you every week.
+          — and Tethyr writes the first draft for you every week.
         </p>
       )}
 
@@ -261,5 +287,57 @@ export function ShipComposer({ compact = false }: { compact?: boolean }) {
         </div>
       </form>
     </section>
+  );
+}
+
+/** Post this week's ship to LinkedIn or X (their own compose screens), or copy it. */
+function ShareShip({
+  body,
+  nextUp,
+  handle,
+}: {
+  body: string;
+  nextUp: string | null;
+  handle: string | null;
+}) {
+  const origin = typeof window === "undefined" ? "https://tethyr.com" : window.location.origin;
+  const profileUrl = handle ? `${origin}/u/${handle}` : origin;
+  const ship = { body, next_up: nextUp };
+  const linkClass =
+    "inline-flex items-center rounded-full border border-border/70 px-3 py-1 text-xs font-medium transition-colors hover:bg-surface-elevated";
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+      <span>Share this week:</span>
+      <a
+        href={linkedInShareUrl(shipShareText(ship, profileUrl, 3000))}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={linkClass}
+      >
+        LinkedIn
+      </a>
+      <a
+        href={xShareUrl(shipShareText(ship, profileUrl, 280))}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={linkClass}
+      >
+        X
+      </a>
+      <button
+        type="button"
+        className={linkClass}
+        onClick={async () => {
+          try {
+            await navigator.clipboard.writeText(shipShareText(ship, profileUrl));
+            toast.success("Copied — paste it anywhere");
+          } catch {
+            toast.error("Couldn't copy.");
+          }
+        }}
+      >
+        Copy
+      </button>
+    </div>
   );
 }

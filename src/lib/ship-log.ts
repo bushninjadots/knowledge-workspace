@@ -129,3 +129,26 @@ export function shipErrorMessage(error: unknown): string {
     return "Confirm your email first — then you can reply.";
   return "Something went wrong. Try again.";
 }
+
+/** A ship as a post for LinkedIn / X, ending with the member's profile link. */
+export function shipShareText(
+  ship: { body: string; next_up?: string | null },
+  profileUrl: string,
+  maxLength?: number,
+): string {
+  const tail = `\n\nShipping every week on Tethyr → ${profileUrl}`;
+  const next = ship.next_up ? `\n\nNext up: ${ship.next_up}` : "";
+  let body = `${ship.body.trim()}${next}`;
+  if (maxLength && body.length + tail.length > maxLength) {
+    body = `${body.slice(0, Math.max(0, maxLength - tail.length - 1)).trimEnd()}…`;
+  }
+  return `${body}${tail}`;
+}
+
+export function linkedInShareUrl(text: string): string {
+  return `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(text)}`;
+}
+
+export function xShareUrl(text: string): string {
+  return `https://x.com/intent/post?text=${encodeURIComponent(text)}`;
+}

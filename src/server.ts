@@ -125,6 +125,14 @@ export default {
       if (url.pathname === "/api/cron/github-refresh") {
         return addSecurityHeaders(await githubRefreshCron(request));
       }
+      // The dev journal's API and MCP server, for a member's own tools
+      // (token auth, never cookies — see src/lib/journal-api.ts).
+      if (url.pathname === "/api/journal" || url.pathname === "/api/mcp") {
+        const { handleJournalApi, handleMcp } = await import("./lib/journal-api");
+        const response =
+          url.pathname === "/api/mcp" ? await handleMcp(request) : await handleJournalApi(request);
+        return addNoIndexHeader(addSecurityHeaders(response));
+      }
       if (url.pathname === "/robots.txt") {
         return addSecurityHeaders(
           new Response(renderRobots(url.origin), {

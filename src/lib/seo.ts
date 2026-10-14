@@ -130,6 +130,7 @@ export const NO_INDEX_PATHS = [
   "/explore",
   "/library",
   "/ships",
+  "/journal",
   "/profile",
   "/messages",
   "/notifications",

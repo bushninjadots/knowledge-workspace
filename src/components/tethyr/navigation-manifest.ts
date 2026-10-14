@@ -4,6 +4,7 @@ import {
   Home,
   Link2,
   MessageSquare,
+  NotebookPen,
   Rocket,
   Settings,
   Swords,
@@ -29,6 +30,7 @@ export const navigationGroups = [
       // The weekly habit. (Library left the nav on purpose: it's a notes tool,
       // not part of the loop; projects and search still open it.)
       { to: "/ships", label: "Ship log", icon: Rocket },
+      { to: "/journal", label: "Journal", icon: NotebookPen },
     ],
   },
   {

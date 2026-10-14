@@ -16,6 +16,7 @@ import {
   Loader2,
   Maximize2,
   Music,
+  NotebookPen,
   Paperclip,
   Pin,
   Search,
@@ -40,6 +41,13 @@ import {
   type LibraryItem,
 } from "@/hooks/use-library";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
+import { useJournalEntries } from "@/hooks/use-journal";
+import {
+  CopyStandupButton,
+  JournalComposer,
+  JournalEntryRow,
+} from "@/components/tethyr/journal/journal-parts";
+import { dayLabel, groupByDay } from "@/lib/journal";
 import { friendlyError } from "@/lib/error-message";
 import { getItemExcerpt } from "@/lib/library-excerpt";
 import { notesDock, useNotesDock } from "@/lib/notes-dock-store";
@@ -77,7 +85,7 @@ const iconButton =
 
 export function NotesDock() {
   const location = useLocation();
-  const { open, itemId } = useNotesDock();
+  const { open, itemId, tab } = useNotesDock();
 
   useEffect(() => {
     if (!open) return;
@@ -110,7 +118,7 @@ export function NotesDock() {
             "md:static md:inset-auto md:z-auto md:h-[min(36rem,calc(100vh-7rem))] md:w-[24rem]",
           )}
         >
-          {itemId ? <DockItem id={itemId} /> : <DockList />}
+          {itemId ? <DockItem id={itemId} /> : tab === "log" ? <DockJournal /> : <DockList />}
         </section>
       )}
 
@@ -159,6 +167,95 @@ function DockHeader({ children }: { children: React.ReactNode }) {
         <X className="h-4 w-4" />
       </button>
     </header>
+  );
+}
+
+/** Notes (notes, files, links) and Log (the dev journal) share the dock. */
+function DockTabs({ current }: { current: "notes" | "log" }) {
+  const tabs = [
+    { id: "notes" as const, label: "Notes", icon: StickyNote },
+    { id: "log" as const, label: "Log", icon: NotebookPen },
+  ];
+  return (
+    <div role="tablist" aria-label="Notes dock" className="flex items-center gap-1">
+      {tabs.map((t) => (
+        <button
+          key={t.id}
+          type="button"
+          role="tab"
+          aria-selected={current === t.id}
+          onClick={() => notesDock.setTab(t.id)}
+          className={cn(
+            "inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 font-display text-sm font-semibold transition-colors",
+            current === t.id
+              ? "bg-surface-elevated text-foreground"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <t.icon className="h-4 w-4" aria-hidden />
+          {t.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/* ── Log: the dev journal ────────────────────────────────────────────────── */
+
+const WEEK_AGO = () => new Date(Date.now() - 7 * 86_400_000).toISOString();
+
+function DockJournal() {
+  const [from] = useState(WEEK_AGO);
+  const { data: entries, isLoading } = useJournalEntries({ from });
+  const days = groupByDay(entries ?? []);
+  return (
+    <>
+      <DockHeader>
+        <DockTabs current="log" />
+      </DockHeader>
+      <div className="shrink-0 border-b border-border/50 p-3">
+        <JournalComposer compact />
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto px-3">
+        {isLoading ? (
+          <div className="space-y-2 py-3">
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-full" />
+          </div>
+        ) : days.length === 0 ? (
+          <div className="px-2 py-8 text-center text-sm text-muted-foreground">
+            <p className="font-medium text-foreground">Log a line as you work.</p>
+            <p className="mt-1">
+              What you did, fixed, decided or learned — it becomes your standup, your weekly ship
+              and your brag doc. Private unless you share it.
+            </p>
+          </div>
+        ) : (
+          days.map((d) => (
+            <section key={d.day} className="py-2">
+              <h3 className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+                {dayLabel(d.day)}
+              </h3>
+              <ul className="divide-y divide-border/40">
+                {d.entries.map((entry) => (
+                  <JournalEntryRow key={entry.id} entry={entry} />
+                ))}
+              </ul>
+            </section>
+          ))
+        )}
+      </div>
+      <footer className="flex shrink-0 items-center gap-2 border-t border-border/50 px-3 py-2">
+        <CopyStandupButton />
+        <Link
+          to="/journal"
+          onClick={() => notesDock.close()}
+          className="ml-auto text-xs font-medium text-muted-foreground hover:text-foreground hover:underline"
+        >
+          Brag doc & connect tools →
+        </Link>
+      </footer>
+    </>
   );
 }
 
@@ -293,8 +390,7 @@ function DockList() {
       onDrop={onDrop}
     >
       <DockHeader>
-        <StickyNote className="h-4 w-4 text-muted-foreground" aria-hidden />
-        <h2 className="font-display text-base font-semibold">Notes</h2>
+        <DockTabs current="notes" />
       </DockHeader>
 
       {/* Jot */}

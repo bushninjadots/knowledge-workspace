@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   draftShipFromEvents,
+  linkedInShareUrl,
+  shipShareText,
+  xShareUrl,
   safeHighlightUrl,
   shiftWeek,
   shipErrorMessage,
@@ -103,5 +106,22 @@ describe("shipErrorMessage", () => {
     expect(shipErrorMessage(new Error("new row violates row-level security policy"))).toMatch(
       /Confirm your email/,
     );
+  });
+});
+
+describe("sharing", () => {
+  it("ends with the profile link and fits X", () => {
+    const text = shipShareText(
+      { body: "x".repeat(400), next_up: null },
+      "https://t.co/u/maya",
+      280,
+    );
+    expect(text.length).toBeLessThanOrEqual(280);
+    expect(text.endsWith("Shipping every week on Tethyr → https://t.co/u/maya")).toBe(true);
+    expect(shipShareText({ body: "Shipped it", next_up: "docs" }, "https://t/u/a")).toBe(
+      "Shipped it\n\nNext up: docs\n\nShipping every week on Tethyr → https://t/u/a",
+    );
+    expect(xShareUrl("a b")).toBe("https://x.com/intent/post?text=a%20b");
+    expect(linkedInShareUrl("a")).toContain("linkedin.com/feed/?shareActive=true&text=a");
   });
 });

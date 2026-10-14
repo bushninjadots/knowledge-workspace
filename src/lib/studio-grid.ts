@@ -31,6 +31,7 @@ const BLOCK_SIZES: Record<string, [number, number, number, number]> = {
   "profile-achievements": [6, 4, 3, 2],
   "profile-community-help": [6, 4, 3, 2],
   "profile-ship-log": [6, 5, 3, 3],
+  "profile-journal": [6, 4, 3, 3],
   "profile-gallery": [12, 5, 4, 3],
   "profile-currently-building": [12, 5, 4, 3],
   "profile-proof-of-work": [8, 6, 4, 4],

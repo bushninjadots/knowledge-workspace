@@ -9,7 +9,11 @@ const FAQS = [
   },
   {
     q: "What's the Ship log?",
-    a: "Once a week you post what you shipped — a feature, a fix, a design, something you learned. Connect GitHub and Tethyr drafts it from your commits, pull requests and releases; you edit and post. Others give kudos and reply, and consecutive weeks build a streak.",
+    a: "Once a week you post what you shipped — a feature, a fix, a design, something you learned. Tethyr drafts it from your dev journal and, if you connect it, your GitHub; you edit and post. Others give kudos and reply, and consecutive weeks build a streak.",
+  },
+  {
+    q: "What's the dev journal?",
+    a: "A private log of one-liners as you work — what you did, fixed, decided, learned, where you're stuck. It becomes your daily standup, your weekly ship and a monthly brag doc for reviews and your CV. Your AI coding assistant (Claude Code, Cursor, VS Code, Windsurf) and a git hook on any host can log the important parts for you. Nothing is public unless you share it.",
   },
   {
     q: "How is Tethyr different from GitHub or LinkedIn?",

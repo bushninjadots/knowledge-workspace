@@ -86,8 +86,9 @@ export function HomePage() {
               </h1>
               <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground sm:text-xl lg:mx-0">
                 Post what you shipped, find people to build with, and grow a profile that proves it.
-                Connect GitHub and Tethyr drafts your week for you — developers first, and every
-                designer, maker and indie hacker who builds alongside them.
+                Log as you work — or let your AI assistant and git do it — and Tethyr drafts your
+                week for you. Developers first, and every designer, maker and indie hacker who
+                builds alongside them.
               </p>
               <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
                 {!ctaReady ? (

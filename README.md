@@ -36,6 +36,13 @@ Tethyr asks: **"What are you building next?"**
 - Friday reminder for anyone with a streak to keep; a Ship log block for your Studio
 - Everyone / Following feed, and earlier weeks one click back
 
+### Dev journal
+
+- One-line log as you work (did / fixed / decided / learned / stuck / next), from the Notes dock's Log tab or `/journal`
+- Copy-paste standup, the weekly ship drafted from it, and a monthly brag doc (Markdown — Obsidian/Notion friendly)
+- Your tools log for you: MCP server for AI coding assistants (Claude Code, Cursor, VS Code, Windsurf), a git hook for any host, a REST API — see [docs/JOURNAL_API.md](docs/JOURNAL_API.md)
+- Private by default; share chosen entries to your profile (Journal highlights block). Share ships to LinkedIn / X
+
 ### Identity
 
 - Profiles with handles, creator titles, banners, and personalized accent colors

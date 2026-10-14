@@ -681,6 +681,107 @@ export type Database = {
           },
         ];
       };
+      journal_entries: {
+        Row: {
+          author_id: string;
+          body: string;
+          created_at: string;
+          detail: string | null;
+          id: string;
+          is_public: boolean;
+          kind: string;
+          occurred_at: string;
+          project_id: string | null;
+          resolved_at: string | null;
+          source: string;
+          source_url: string | null;
+        };
+        Insert: {
+          author_id: string;
+          body: string;
+          created_at?: string;
+          detail?: string | null;
+          id?: string;
+          is_public?: boolean;
+          kind?: string;
+          occurred_at?: string;
+          project_id?: string | null;
+          resolved_at?: string | null;
+          source?: string;
+          source_url?: string | null;
+        };
+        Update: {
+          author_id?: string;
+          body?: string;
+          created_at?: string;
+          detail?: string | null;
+          id?: string;
+          is_public?: boolean;
+          kind?: string;
+          occurred_at?: string;
+          project_id?: string | null;
+          resolved_at?: string | null;
+          source?: string;
+          source_url?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "journal_entries_author_id_fkey";
+            columns: ["author_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "journal_entries_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      journal_tokens: {
+        Row: {
+          created_at: string;
+          id: string;
+          last_used_at: string | null;
+          name: string;
+          prefix: string;
+          revoked_at: string | null;
+          token_hash: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          last_used_at?: string | null;
+          name: string;
+          prefix: string;
+          revoked_at?: string | null;
+          token_hash: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          last_used_at?: string | null;
+          name?: string;
+          prefix?: string;
+          revoked_at?: string | null;
+          token_hash?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "journal_tokens_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       layouts: {
         Row: {
           category: string | null;

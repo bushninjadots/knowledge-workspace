@@ -55,6 +55,8 @@ DISCOVER
 
 The loop needs a reason to come back every week. That is the **Ship log** (`/ships`): once a week a member posts what they shipped, drafted from their public GitHub activity; others give kudos and reply; consecutive weeks make a streak; a Friday reminder nudges anyone with a streak. It is the dashboard's weekly ritual and has a Studio block. New features that create a weekly reason to return should hang off the Ship log, not invent a second ritual.
 
+The **Dev journal** (`/journal`, and the Log tab in the Notes dock) is the daily layer under it: one-line entries that become the standup, the weekly ship draft and the monthly brag doc. It is the answer to "not everyone uses GitHub": AI coding assistants log through the MCP server, git hooks work with any host, and anything else can use the REST API (`docs/JOURNAL_API.md`). Entries are private unless shared. (Decision, 2026-10-14.)
+
 **Library** is out of the main navigation on purpose (2026-10-14): it is a notes tool, not part of the loop. Members reach it through the **Notes dock** — a pop-up beside Messages on every signed-in page (More → Notes on phones) to jot notes, upload files, pictures and video, search and edit — and from project resources, GitHub notes and search. `/library` is the full-size view.
 
 Every substantial feature should strengthen at least one transition in this loop. If it does not help people discover work, find collaborators, collaborate, build, contribute, or become known through contribution, its product justification should be explicit.

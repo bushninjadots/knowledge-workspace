@@ -27,8 +27,8 @@ export function ShipWeekPrompt() {
             {shipped
               ? `${streakLabel(streak) ?? "First week on the log"}. See what everyone else shipped and give some kudos.`
               : streak > 0
-                ? `You're on a ${streak}-week streak. A few lines keeps it going — Tethyr drafts it from your GitHub.`
-                : "A few lines is enough. Tethyr drafts it from your GitHub; you edit and post."}
+                ? `You're on a ${streak}-week streak. A few lines keeps it going — Tethyr drafts it from your journal and GitHub.`
+                : "A few lines is enough. Tethyr drafts it from your journal and GitHub; you edit and post."}
           </p>
         </div>
       </div>
