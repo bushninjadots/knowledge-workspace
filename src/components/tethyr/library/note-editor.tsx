@@ -85,7 +85,14 @@ function ToolbarButton({
   );
 }
 
-function Toolbar({ editor }: { editor: ReturnType<typeof useEditor> }) {
+function Toolbar({
+  editor,
+  compact = false,
+}: {
+  editor: ReturnType<typeof useEditor>;
+  /** One scrolling row instead of wrapping (narrow panels). */
+  compact?: boolean;
+}) {
   if (!editor) return null;
 
   function addLink() {
@@ -109,7 +116,12 @@ function Toolbar({ editor }: { editor: ReturnType<typeof useEditor> }) {
   const activeLanguage = (editor.getAttributes("codeBlock").language as string | undefined) ?? "";
 
   return (
-    <div className="flex flex-wrap items-center gap-0.5 border-b border-border/40 px-4 py-2">
+    <div
+      className={cn(
+        "flex items-center gap-0.5 border-b border-border/40",
+        compact ? "flex-nowrap overflow-x-auto px-2 py-1.5" : "flex-wrap px-4 py-2",
+      )}
+    >
       <ToolbarButton
         onClick={() => editor.chain().focus().undo().run()}
         disabled={!editor.can().undo()}
@@ -271,11 +283,14 @@ export function NoteEditor({
   onChange,
   editable = true,
   format = "html",
+  compact = false,
 }: {
   content: string;
   onChange?: (value: string) => void;
   editable?: boolean;
   format?: "html" | "markdown";
+  /** Small surfaces (the Notes dock): a short writing area, no card frame. */
+  compact?: boolean;
 }) {
   const editor = useEditor(
     {
@@ -306,7 +321,9 @@ export function NoteEditor({
       editable,
       editorProps: {
         attributes: {
-          class: "prose-custom focus:outline-none min-h-[60vh] px-4 py-6 text-sm leading-relaxed",
+          class: compact
+            ? "prose-custom focus:outline-none min-h-[12rem] px-3 py-3 text-sm leading-relaxed"
+            : "prose-custom focus:outline-none min-h-[60vh] px-4 py-6 text-sm leading-relaxed",
         },
       },
       onUpdate: ({ editor: e }) => {
@@ -318,7 +335,7 @@ export function NoteEditor({
         );
       },
     },
-    [format],
+    [format, compact],
   );
 
   // ── Upload image to Supabase storage ──
@@ -427,6 +444,15 @@ export function NoteEditor({
   }, [content]);
 
   if (!editor) return null;
+
+  if (compact) {
+    return (
+      <div className="min-w-0">
+        {editable && <Toolbar editor={editor} compact />}
+        <EditorContent editor={editor} />
+      </div>
+    );
+  }
 
   return (
     <Card className="bg-surface/40">

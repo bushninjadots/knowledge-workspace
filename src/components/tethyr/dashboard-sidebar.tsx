@@ -1,6 +1,7 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
-import { LogOut, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { LogOut, PanelLeftClose, PanelLeftOpen, StickyNote } from "lucide-react";
+import { notesDock } from "@/lib/notes-dock-store";
 import { Logo } from "./logo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -195,6 +196,20 @@ export function DashboardSidebar({
                   </Link>
                 );
               })}
+              {/* Phones have no dock launcher, so Notes opens from here. */}
+              {groupIndex === 0 && !collapsed && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onNavigate?.();
+                    notesDock.open();
+                  }}
+                  className="flex h-7 items-center gap-2 rounded-sm px-2 text-left text-[13px] text-muted-foreground transition-colors hover:bg-surface-sunken hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring md:hidden"
+                >
+                  <StickyNote className="h-4 w-4 shrink-0" />
+                  <span className="min-w-0 flex-1 truncate">Notes</span>
+                </button>
+              )}
             </div>
           </div>
         ))}

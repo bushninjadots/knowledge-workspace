@@ -16,6 +16,7 @@ import { EmailVerificationBanner } from "./email-verification-banner";
 import { MobilePrimaryNav } from "./mobile-primary-nav";
 import { MessagePopups } from "./message-popups";
 import { MessagingDock } from "./messaging-dock";
+import { NotesDock } from "./notes-dock";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 
 // Auth-only panels open on user intent — keep their JS (and the search
@@ -210,7 +211,11 @@ export function AppFrame({
           <>
             <MobilePrimaryNav onOpenMore={() => setDrawerOpen(true)} />
             <MessagePopups />
-            <MessagingDock />
+            {/* The two docks share the bottom-right corner; one opens at a time. */}
+            <div className="pointer-events-none fixed bottom-5 right-5 z-40 flex items-end gap-3">
+              <NotesDock />
+              <MessagingDock />
+            </div>
           </>
         )}
 

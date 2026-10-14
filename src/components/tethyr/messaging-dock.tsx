@@ -92,7 +92,7 @@ export function MessagingDock() {
   if (onMessagesPage) return null;
 
   return (
-    <div className="pointer-events-none fixed bottom-5 right-5 z-40 hidden flex-col items-end gap-3 md:flex">
+    <div className="hidden flex-col items-end gap-3 md:flex">
       {open && (
         <section
           aria-label="Messages"
