@@ -40,6 +40,11 @@ export function suggestBlocks(
       reason: `You have ${plural(facts.projectCount, "project")} visitors can't see yet.`,
     },
     {
+      type: "profile-tether",
+      when: facts.projectCount > 0,
+      reason: "Show everything you're tied to as your Tether — it grows with your work.",
+    },
+    {
       type: "profile-journal",
       when: (facts.journalCount ?? 0) > 0,
       reason: `${facts.journalCount === 1 ? "1 journal entry" : `${facts.journalCount} journal entries`} in the last 30 days — show what you've been building.`,

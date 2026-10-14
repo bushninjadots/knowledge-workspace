@@ -3,7 +3,7 @@ import type { GraphNode } from "./graph-model";
 /** Phase 6 graph exploration — a reusable filter over any node list, so search
  *  and type filtering work the same on project, profile, skill, community, and
  *  library graphs without a second implementation. */
-export interface GraphNodeFilter {
+interface GraphNodeFilter {
   /** Free-text match against a node's label and description. */
   query?: string;
   /** Node types to keep. An empty or omitted list keeps every type. */

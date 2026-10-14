@@ -48,7 +48,7 @@ export const GRAPH_NODE_TYPE_LABELS: Record<GraphNodeType, string> = {
   organization: "Organizations",
 };
 
-export type GraphEdgeType =
+type GraphEdgeType =
   | "contributed_to"
   | "has_skill"
   | "demonstrated_skill"
@@ -72,7 +72,7 @@ export type GraphEdgeType =
   | "needs"
   | "offers";
 
-export const GRAPH_EDGE_TYPE_LABELS: Record<GraphEdgeType, string> = {
+const GRAPH_EDGE_TYPE_LABELS: Record<GraphEdgeType, string> = {
   contributed_to: "Contributed to",
   has_skill: "Has skill",
   demonstrated_skill: "Demonstrated skill",

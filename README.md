@@ -48,6 +48,12 @@ Tethyr asks: **"What are you building next?"**
 - Paste code, pick a file from a project's repo, or read a whole project: Tethyr writes a readable doc from the code itself — free, nothing leaves the site
 - Optional "Explain with AI" with your own Anthropic key (Settings), saved to the Library as Markdown or added to the project README
 
+### The Tether
+
+- Your whole story as a living tetherball — you're the pole; projects, collaborators, skills, crews, spaces, repos and what you've shipped orbit on ropes, ring by ring
+- The pole rises through levels (Seed → Galaxy) as your work grows; "Watch it grow" replays it in order
+- On project pages ("How it connects"), as a Studio block, and full-screen at `/tether`; refreshes on its own, with Sync for owners
+
 ### Identity
 
 - Profiles with handles, creator titles, banners, and personalized accent colors

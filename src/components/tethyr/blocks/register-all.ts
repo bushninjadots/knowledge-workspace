@@ -46,6 +46,7 @@ import "./profile/achievements-block";
 import "./profile/community-help-block";
 import "./profile/ship-log-block";
 import "./profile/journal-block";
+import "./profile/tether-block";
 import "./profile/gallery-block";
 import "./profile/collaborators-block";
 import "./profile/activity-heatmap-block";

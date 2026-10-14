@@ -6,6 +6,7 @@ import {
   Link2,
   MessageSquare,
   NotebookPen,
+  Orbit,
   Rocket,
   Settings,
   Swords,
@@ -57,6 +58,7 @@ export const navigationGroups = [
     label: "You",
     items: [
       { to: "/profile", label: "Your Studio", icon: User },
+      { to: "/tether", label: "Your Tether", icon: Orbit },
       { to: "/studio", label: "Edit Studio", icon: Settings },
       { to: "/settings", label: "Settings", icon: Settings },
     ],
