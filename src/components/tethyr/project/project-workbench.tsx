@@ -109,7 +109,7 @@ export function ProjectWorkbench({
   return (
     <section
       aria-labelledby="project-workbench-heading"
-      className="border-y border-[var(--user-accent-border,var(--border))] bg-background py-4 sm:py-5"
+      className="border-y border-border bg-background py-4 sm:py-5"
     >
       {/* Stacks until lg: at tablet width the text, actions and presentation
           picker can't share one row without crushing the text column. */}

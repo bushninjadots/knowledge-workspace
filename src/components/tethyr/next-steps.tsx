@@ -26,7 +26,7 @@ export const NextStepsList = memo(function NextStepsList({ items }: { items: Sec
         <Link
           to={first.cta?.href ?? "/profile"}
           search={first.cta?.search}
-          className="group flex flex-1 items-center gap-3 rounded-xl border border-[var(--user-accent-border,var(--border-strong))] bg-[var(--user-accent-subtle,var(--surface-elevated))] px-4 py-3 transition-lift hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
+          className="group flex flex-1 items-center gap-3 rounded-xl border card-border bg-[var(--user-accent-subtle,var(--surface-elevated))] px-4 py-3 transition-lift hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
         >
           <span
             aria-hidden

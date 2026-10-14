@@ -109,7 +109,7 @@ export function ProjectPeopleTab({
       {hasOpenWork && (
         <section
           aria-label="Get involved"
-          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--user-accent-border,var(--border-strong))] bg-[var(--user-accent-subtle,var(--surface-elevated))] p-4"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border card-border bg-[var(--user-accent-subtle,var(--surface-elevated))] p-4"
         >
           <div className="flex items-center gap-3">
             <span

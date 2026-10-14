@@ -583,7 +583,7 @@
    For feed content, tab sections, and listing layouts. */
 @utility surface-section {
   background-color: var(--surface);
-  border: 1px solid var(--card-border-color, var(--user-accent-border, var(--border)));
+  border: 1px solid var(--card-border-color, var(--border));
   border-radius: var(--radius-lg);
 }
 
@@ -968,7 +968,7 @@
 }
 
 @utility card-border {
-  border-color: var(--card-border-color, var(--user-accent-border, var(--border)));
+  border-color: var(--card-border-color, var(--border));
 }
 
 /* ── The three surfaces ──────────────────────────────────────────────────────
@@ -988,7 +988,7 @@
   border-radius: var(--radius-xl);
   border-width: var(--card-border-width, 1px);
   border-style: solid;
-  border-color: var(--card-border-color, var(--user-accent-border, var(--border)));
+  border-color: var(--card-border-color, var(--border));
   background-color: var(--surface);
 }
 

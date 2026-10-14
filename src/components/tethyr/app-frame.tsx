@@ -2,7 +2,6 @@ import {
   lazy,
   Suspense,
   useEffect,
-  useMemo,
   useState,
   type CSSProperties,
   type ReactNode,
@@ -15,7 +14,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { useSiteAccentStyle } from "@/hooks/use-site-accent-style";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { useUserPalette } from "@/lib/dominant-color";
-import { appearanceStyle, isBackgroundActive } from "@/lib/background-themes";
+import { isBackgroundActive } from "@/lib/background-themes";
 import { backFallback, showsBack } from "@/lib/back-navigation";
 import { cn } from "@/lib/utils";
 import { BackgroundLayer } from "./background-layer";
@@ -74,10 +73,10 @@ export function AppFrame({
   const { data: me } = useCurrentUser();
   const palette = useUserPalette(me?.bannerSigned ?? null);
   const siteAccent = useSiteAccentStyle(palette?.dominant);
-  const themeStyle = useMemo(
-    () => ({ ...siteAccent, ...appearanceStyle(me?.background) }),
-    [siteAccent, me?.background],
-  );
+  // Only the site accent here. A member's Studio card-border choice belongs to
+  // their Studio and profile canvases (which apply it themselves); app pages
+  // keep the theme's own neutral outline so cards suit every theme.
+  const themeStyle = siteAccent;
   const hasCustomBackground = isAuthed && isBackgroundActive(me?.background);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
