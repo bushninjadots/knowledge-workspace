@@ -424,7 +424,7 @@ export function ProjectActivityTab({
 
   return (
     <div className="space-y-6">
-      <section className="rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
+      <section className="surface-panel p-3 sm:p-4">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h2 className="flex items-center gap-2 text-sm font-medium text-foreground/80">
             <ActivityIcon className="h-4 w-4 text-muted-foreground" />
@@ -492,7 +492,7 @@ export function ProjectActivityTab({
         )}
 
         {showContribution && (
-          <div className="mb-4 space-y-2 rounded-xl border border-border/60 bg-background/40 p-3">
+          <div className="mb-4 space-y-2 surface-inset p-3">
             <p className="text-xs font-medium text-foreground">
               {weeklyPrompt ? "Show your work this week" : "Record a contribution"}
             </p>
@@ -544,7 +544,7 @@ export function ProjectActivityTab({
         )}
 
         {showPost && (
-          <div className="mb-4 space-y-2 rounded-xl border border-border/60 bg-background/40 p-3">
+          <div className="mb-4 space-y-2 surface-inset p-3">
             <Input
               ref={postTitleRef}
               value={title}

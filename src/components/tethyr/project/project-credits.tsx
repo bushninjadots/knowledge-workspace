@@ -54,7 +54,7 @@ export function CreditsRoll({
   if (isError) {
     return (
       <section className="mt-14">
-        <div className="flex items-center justify-between rounded-xl border border-border/60 bg-background/40 px-4 py-3">
+        <div className="flex items-center justify-between surface-inset px-4 py-3">
           <p className="text-sm text-muted-foreground">Couldn't load credits.</p>
           <button
             onClick={onRetry}

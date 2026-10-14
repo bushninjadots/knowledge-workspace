@@ -139,7 +139,7 @@ export function MilestonesTimeline({
   };
 
   return (
-    <div className="rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
+    <div className="surface-panel p-3 sm:p-4">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -172,10 +172,7 @@ export function MilestonesTimeline({
       </div>
 
       {showAdd && (
-        <div
-          id="add-milestone-form"
-          className="mt-4 flex flex-col gap-2 rounded-lg border border-border/60 bg-background/40 p-3"
-        >
+        <div id="add-milestone-form" className="mt-4 flex flex-col gap-2 surface-inset p-3">
           <Input
             value={title}
             onChange={(event) => setTitle(event.target.value)}

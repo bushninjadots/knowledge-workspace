@@ -121,7 +121,7 @@ export function SkillCommunity({ skillSlug, skillName }: { skillSlug: string; sk
       </div>
 
       {asks.length > 0 ? (
-        <ul className="divide-y divide-border/40 overflow-hidden rounded-xl border border-border/40 bg-surface/40">
+        <ul className="divide-y divide-border/40 overflow-hidden surface-card">
           {asks.map((ask) => (
             <li key={ask.id}>
               <Link
@@ -167,7 +167,7 @@ export function SkillCommunity({ skillSlug, skillName }: { skillSlug: string; sk
                 <Link
                   to="/community"
                   search={{ space: space.slug } as Record<string, string>}
-                  className="block rounded-xl border border-border/40 bg-surface/40 px-3 py-2.5 transition-colors hover:bg-surface-sunken"
+                  className="block surface-card px-3 py-2.5 transition-colors hover:bg-surface-sunken"
                 >
                   <span className="block truncate text-sm font-medium">{space.name}</span>
                   {space.tagline && (

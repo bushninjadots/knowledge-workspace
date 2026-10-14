@@ -48,10 +48,7 @@ export function NotificationFeed({ notifications, isLoading, onNavigate }: Notif
     return (
       <div className="space-y-3">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div
-            key={i}
-            className="flex items-start gap-3 rounded-xl border border-border/40 bg-surface/40 p-4"
-          >
+          <div key={i} className="flex items-start gap-3 surface-card p-4">
             <Skeleton className="h-8 w-8 rounded-lg" />
             <div className="flex-1 space-y-2">
               <Skeleton className="h-4 w-3/4" />

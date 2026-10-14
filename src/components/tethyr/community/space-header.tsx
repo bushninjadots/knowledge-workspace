@@ -186,7 +186,7 @@ export function SpaceHeader({
           </div>
 
           <div className="mt-3 flex flex-wrap items-center gap-2.5">
-            <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-[1.75rem]">
+            <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
               {space.name}
             </h1>
             {space.visibility === "private" && (

@@ -119,7 +119,7 @@ export function DiscoverSidebar({ tab }: { tab: Tab }) {
       )}
 
       {/* Contextual hint based on tab */}
-      <div className="rounded-xl border border-border/40 bg-surface/30 p-4">
+      <div className="surface-card p-4">
         <p className="text-xs text-muted-foreground leading-relaxed">
           {tab === "projects"
             ? "Browse projects from the community as a shelf, grid or list, or search for something specific."

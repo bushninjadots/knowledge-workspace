@@ -50,6 +50,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CreditsRoll } from "@/components/tethyr/project/project-credits";
 import { ContributionGraph } from "@/components/tethyr/profile/contribution-graph";
 import { ActivityTimeline } from "@/components/tethyr/activity-timeline";
+import { pageContainerClass } from "@/components/tethyr/page-header";
 
 const ROLE_LABEL: Record<TeamRole, string> = {
   lead: "Leads",
@@ -107,7 +108,7 @@ export function TeamPage({
   const memberIds = members.map((m) => m.profile_id);
 
   return (
-    <div className="animate-room-enter mx-auto max-w-5xl bg-noise px-4 pb-16 pt-6 sm:px-8">
+    <div className={pageContainerClass("default", "animate-room-enter bg-noise pb-16")}>
       {pendingInvite && (
         <div className="mb-8 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--user-accent-border,var(--border-strong))] bg-[var(--user-accent-subtle,var(--surface-elevated))] px-4 py-3">
           <p className="text-sm text-foreground">You've been invited to join this crew.</p>
@@ -139,8 +140,8 @@ export function TeamPage({
         <div className="flex flex-col gap-4 px-2 sm:flex-row sm:items-end sm:gap-6">
           <TeamAvatar team={team} isLead={isLead} onChanged={() => {}} />
           <div className="min-w-0 flex-1 pb-1">
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Crew</p>
-            <h1 className="mt-1 font-display text-3xl font-semibold text-foreground sm:text-4xl">
+            <p className="section-label">Crew</p>
+            <h1 className="mt-2 font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
               {team.name}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">/{team.slug}</p>
@@ -202,7 +203,7 @@ export function TeamPage({
         {memberIds.length === 0 ? (
           <p className="text-sm text-muted-foreground">No activity yet.</p>
         ) : (
-          <div className="rounded-xl bg-surface-elevated/30 p-4">
+          <div className="surface-panel p-4">
             <ContributionGraph profileIds={memberIds} />
             <div className="mt-5">
               <ActivityTimeline profileIds={memberIds} limit={6} />
@@ -742,7 +743,7 @@ function Management({ team }: { team: TeamRow }) {
   }
 
   return (
-    <section aria-labelledby="crew-settings" className="rounded-xl bg-surface-elevated/30 p-5">
+    <section aria-labelledby="crew-settings" className="surface-panel p-5">
       <h2 id="crew-settings" className="mb-4 text-sm font-semibold text-foreground/80">
         Crew settings
       </h2>
@@ -792,7 +793,7 @@ function Management({ team }: { team: TeamRow }) {
               setDescDraft(team.description ?? "");
               setEditingDesc(true);
             }}
-            className="block w-full rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-left text-sm transition-lift hover:border-[var(--user-accent-border,var(--border-strong))]"
+            className="block w-full surface-inset px-3 py-2 text-left text-sm transition-lift hover:border-[var(--user-accent-border,var(--border-strong))]"
           >
             {team.description ? (
               <span className="whitespace-pre-wrap text-foreground/80">{team.description}</span>
@@ -889,7 +890,7 @@ function Management({ team }: { team: TeamRow }) {
                 <button
                   onClick={() => handleAttach(p.id)}
                   disabled={attaching === p.id}
-                  className="flex w-full items-center justify-between gap-2 rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-left text-sm transition-lift hover:border-[var(--user-accent-border,var(--border-strong))]"
+                  className="flex w-full items-center justify-between gap-2 surface-inset px-3 py-2 text-left text-sm transition-lift hover:border-[var(--user-accent-border,var(--border-strong))]"
                 >
                   <span className="truncate">{p.title}</span>
                   {attaching === p.id && (

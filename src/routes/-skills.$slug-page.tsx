@@ -9,12 +9,12 @@ import { fetchSkillBySlug, skillQueryKey } from "./-skills.$slug-data";
 import { useHubStats } from "./-skills.$slug-queries";
 import {
   CATEGORY_BADGES,
-  WORKSHOP_ICONS,
   formatSummary,
   SkillOverview,
   SkillPeople,
   SkillProjects,
 } from "./-skills.$slug-sections";
+import { PageHeader, pageContainerClass } from "@/components/tethyr/page-header";
 
 type TabId = "overview" | "people" | "projects";
 
@@ -51,7 +51,7 @@ export function SkillPage() {
   if (!skill) {
     return (
       <Shell>
-        <div className="flex min-h-screen items-center justify-center bg-background px-4">
+        <div className="flex min-h-[60vh] items-center justify-center px-4">
           <div className="max-w-md text-center">
             <h1 className="text-xl font-semibold text-foreground">Skill not found</h1>
             <p className="mt-2 text-sm text-muted-foreground">
@@ -67,37 +67,24 @@ export function SkillPage() {
   }
 
   const categoryBadge = CATEGORY_BADGES[skill.category] ?? CATEGORY_BADGES["Creative"];
-  const WorkshopIcon = WORKSHOP_ICONS[Math.abs(skill.name.charCodeAt(0)) % WORKSHOP_ICONS.length];
 
   return (
     <Shell>
-      <div className="animate-room-enter mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-8">
-        {/* Header — the frame's Back button handles going back */}
-        <div className="flex min-w-0 items-start gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <WorkshopIcon className="h-6 w-6" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="font-display text-2xl font-semibold sm:text-3xl">{skill.name}</h1>
-            <div className="mt-1 flex flex-wrap items-center gap-2">
-              <span
-                className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${categoryBadge.color}`}
-              >
-                <categoryBadge.icon className="h-2.5 w-2.5" />
-                {skill.category}
-              </span>
-              <span className="text-xs text-muted-foreground">Hub</span>
-            </div>
-            {stats.data && (
-              <p className="mt-1 text-xs font-medium tabular-nums text-muted-foreground">
-                {formatSummary(stats.data)}
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Divider */}
-        <div className="h-px bg-border" />
+      <div className={pageContainerClass("default", "animate-room-enter space-y-6")}>
+        <PageHeader
+          className="mb-2"
+          eyebrow="Skill"
+          title={skill.name}
+          meta={
+            <span
+              className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${categoryBadge.color}`}
+            >
+              <categoryBadge.icon className="h-2.5 w-2.5" />
+              {skill.category}
+            </span>
+          }
+          description={stats.data ? formatSummary(stats.data) : undefined}
+        />
 
         {/* Tabs — Skill hub sections */}
         <div className="relative">
@@ -152,9 +139,5 @@ export function SkillPage() {
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
-  return (
-    <SectionShell backTo="/skills" className="bg-noise">
-      {children}
-    </SectionShell>
-  );
+  return <SectionShell className="bg-noise">{children}</SectionShell>;
 }

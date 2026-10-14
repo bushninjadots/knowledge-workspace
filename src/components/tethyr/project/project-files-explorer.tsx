@@ -120,7 +120,7 @@ function FileViewer({ file }: { file: TreeFile | null }) {
   const Icon = getFileIconType(file.name);
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-xl border card-border bg-background/40">
+    <div className="flex h-full flex-col overflow-hidden surface-inset">
       <div className="flex items-center gap-2 border-b border-border/40 px-3 py-2">
         <Icon className="h-4 w-4 text-muted-foreground" />
         <span className="min-w-0 flex-1 truncate font-mono text-xs text-foreground">
@@ -449,7 +449,7 @@ export function ProjectFilesExplorer({
                     return (
                       <div
                         key={`${f.dir || ""}/${f.name}`}
-                        className="group flex items-center gap-2.5 rounded-lg border border-border/40 bg-background/40 px-3 py-2"
+                        className="group flex items-center gap-2.5 surface-inset px-3 py-2"
                       >
                         <Icon className="h-4 w-4 shrink-0 text-muted-foreground/70" />
                         <div className="min-w-0 flex-1">

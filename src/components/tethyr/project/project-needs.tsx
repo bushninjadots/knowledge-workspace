@@ -157,7 +157,7 @@ export function ProjectNeeds({
             e.preventDefault();
             void handleAdd();
           }}
-          className="mt-4 space-y-3 rounded-xl border border-border/60 bg-surface/40 p-4"
+          className="mt-4 space-y-3 surface-card p-4"
         >
           <Input
             value={title}

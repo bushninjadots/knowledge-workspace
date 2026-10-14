@@ -79,10 +79,7 @@ function DiscussionThread({
   const name = discussion.author?.display_name || discussion.author?.handle || "Unknown";
 
   return (
-    <div
-      id={`discussion-${discussion.id}`}
-      className="scroll-mt-28 rounded-xl border border-border/60 bg-background/40 p-4"
-    >
+    <div id={`discussion-${discussion.id}`} className="scroll-mt-28 surface-inset p-4">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -235,7 +232,7 @@ export function ProjectDiscussions({
   if (!isContributor && discussions.length === 0) return null;
 
   return (
-    <div className="rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
+    <div className="surface-panel p-3 sm:p-4">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-sm font-medium text-foreground/80">Team threads</h3>
         {isContributor && (
@@ -254,7 +251,7 @@ export function ProjectDiscussions({
       </div>
 
       {showAdd && (
-        <div className="mb-4 space-y-2 rounded-xl border border-border/60 bg-background/40 p-3">
+        <div className="mb-4 space-y-2 surface-inset p-3">
           <div className="flex gap-2">
             <Input
               value={title}

@@ -158,7 +158,7 @@ export function ProjectReposSection({
   if (!isOwner && (!repos || repos.length === 0)) return null;
 
   return (
-    <div id="project-repos" className="scroll-mt-40 rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
+    <div id="project-repos" className="scroll-mt-40 surface-panel p-3 sm:p-4">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="flex items-center gap-2 text-sm font-medium text-foreground/80">
           <Code2 className="h-4 w-4 text-muted-foreground" />
@@ -200,7 +200,7 @@ export function ProjectReposSection({
         )}
       </div>
       {showPicker && (
-        <div className="mb-4 rounded-xl border border-border/60 bg-background/40 p-3">
+        <div className="mb-4 surface-inset p-3">
           <p className="mb-2 text-[11px] uppercase tracking-wider text-muted-foreground">
             Your GitHub repositories
           </p>
@@ -227,7 +227,7 @@ export function ProjectReposSection({
                       )
                     }
                     disabled={addRepo.isPending}
-                    className="flex w-full items-center justify-between gap-2 rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-left text-sm transition-lift hover:border-[var(--user-accent-border,var(--border-strong))]"
+                    className="flex w-full items-center justify-between gap-2 surface-inset px-3 py-2 text-left text-sm transition-lift hover:border-[var(--user-accent-border,var(--border-strong))]"
                   >
                     <span className="min-w-0 flex-1 truncate">{r.full_name}</span>
                     {r.language && (
@@ -243,7 +243,7 @@ export function ProjectReposSection({
         </div>
       )}
       {showAdd && (
-        <div className="mb-4 flex gap-2 rounded-xl border border-border/60 bg-background/40 p-3">
+        <div className="mb-4 flex gap-2 surface-inset p-3">
           <Input
             value={url}
             onChange={(e) => setUrl(e.target.value)}

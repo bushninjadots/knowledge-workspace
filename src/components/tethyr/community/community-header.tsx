@@ -178,7 +178,7 @@ export const CommunityHeader = memo(function CommunityHeader({
     <header className="mb-6">
       <div className="flex flex-col gap-4 @3xl:flex-row @3xl:items-end @3xl:justify-between">
         <div className="min-w-0">
-          <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-[1.75rem]">
+          <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
             {navTitle(nav)}
           </h1>
           <p className="mt-1 max-w-lg text-sm text-muted-foreground">{navDescription(nav)}</p>

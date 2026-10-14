@@ -229,7 +229,7 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
 
   if (pageQuery.isError) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="flex min-h-[60vh] items-center justify-center px-4">
         <div className="max-w-sm text-center">
           <p className="text-sm text-muted-foreground">Your studio could not load.</p>
           <Button variant="outline" size="sm" className="mt-3" onClick={() => pageQuery.refetch()}>

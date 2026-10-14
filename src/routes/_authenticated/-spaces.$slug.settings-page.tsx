@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import {
-  ArrowLeft,
   Globe,
   Lock,
   Trash2,
@@ -58,6 +57,7 @@ import {
 } from "@/components/tethyr/community/space-identity-settings";
 import { isHexColor, normalizeLinks, normalizeTopics } from "@/lib/space-identity";
 import { useSpaceAccent } from "@/components/tethyr/community/space-media";
+import { PageHeader, pageContainerClass } from "@/components/tethyr/page-header";
 
 // Code-split module: the interactive page for its route. See the route
 // file for the eager surface (loader/head) and the lazyRouteComponent wire-up.
@@ -304,7 +304,7 @@ export function SpaceSettingsPage() {
 
   return (
     <div
-      className="community-fields mx-auto max-w-3xl px-4 py-8"
+      className={pageContainerClass("narrow", "community-fields")}
       // The page wears the space's colour, so the preview is the whole page.
       style={
         {
@@ -312,26 +312,22 @@ export function SpaceSettingsPage() {
         } as CSSProperties
       }
     >
-      <div className="mb-8 flex items-start gap-3">
-        <Link
-          to="/community"
-          search={{ space: space.slug }}
-          aria-label="Back to the community"
-          className="mt-1 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-        <div className="min-w-0">
-          <h1 className="font-display text-2xl font-semibold tracking-tight">
-            {isOwner ? "Customize your space" : "Space settings"}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {isOwner
-              ? `Make ${space.name} your own — its look, its story and how people join.`
-              : `Moderation tools for ${space.name}. Only the owner can change its identity.`}
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow={space.name}
+        title={isOwner ? "Customize your space" : "Space settings"}
+        description={
+          isOwner
+            ? "Make it your own — its look, its story and how people join."
+            : "Moderation tools. Only the owner can change the space's identity."
+        }
+        actions={
+          <Button size="sm" variant="outline" asChild>
+            <Link to="/spaces/$slug/reports" params={{ slug: space.slug }}>
+              Reports
+            </Link>
+          </Button>
+        }
+      />
 
       <form onSubmit={handleSave} className="space-y-10">
         <SpaceIdentitySettings

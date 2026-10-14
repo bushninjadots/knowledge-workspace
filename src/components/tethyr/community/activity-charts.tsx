@@ -90,7 +90,7 @@ export const ActivityCharts = memo(function ActivityCharts() {
 
   if (isLoading) {
     return (
-      <div className="mb-6 rounded-xl bg-surface-elevated/30 p-4">
+      <div className="mb-6 surface-panel p-4">
         <div className="mb-4 h-4 w-32 animate-gentle-pulse rounded bg-surface-elevated" />
         <div className="flex gap-6">
           <div className="flex-1">

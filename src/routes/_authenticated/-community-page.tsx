@@ -118,7 +118,7 @@ export function CommunityPage() {
           activeSpace ? "h-[32rem]" : "h-80",
         )}
       />
-      <div className="relative mx-auto grid w-full max-w-[1180px] gap-8 px-4 pb-28 pt-5 md:px-8 md:pb-12 md:pt-8 xl:grid-cols-[minmax(0,1fr)_17rem]">
+      <div className="relative mx-auto grid w-full max-w-[1180px] gap-8 px-4 pb-28 pt-8 sm:px-6 md:pb-12 xl:grid-cols-[minmax(0,1fr)_17rem]">
         <div className="@container min-w-0">
           <CommunityTabs
             active={nav}

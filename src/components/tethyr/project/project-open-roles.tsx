@@ -68,7 +68,7 @@ export function OpenRolesSection({
   if (!isOwner && unfilledRoles.length === 0) return null;
 
   return (
-    <div className="rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
+    <div className="surface-panel p-3 sm:p-4">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-sm font-medium text-foreground/80">Open roles</h3>
         {isOwner && (
@@ -87,7 +87,7 @@ export function OpenRolesSection({
       </div>
 
       {showAdd && (
-        <div className="mb-4 space-y-2 rounded-xl border border-border/60 bg-background/40 p-3">
+        <div className="mb-4 space-y-2 surface-inset p-3">
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}

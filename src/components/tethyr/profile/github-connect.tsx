@@ -118,7 +118,7 @@ export function GitHubConnect({
 
   if (isLoading) {
     return (
-      <div className="rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
+      <div className="surface-panel p-3 sm:p-4">
         <div className="h-16 animate-gentle-pulse rounded-lg bg-surface/60" />
       </div>
     );
@@ -126,7 +126,7 @@ export function GitHubConnect({
 
   if (githubAccount) {
     return (
-      <div id="github-integration" className="rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
+      <div id="github-integration" className="surface-panel p-3 sm:p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#24292e] text-white">
@@ -172,7 +172,7 @@ export function GitHubConnect({
         </div>
 
         {/* Shared token row — one entry covers profile + all project repo/README flows */}
-        <div className="mt-3 rounded-lg border border-border/60 bg-background/40 px-3 py-2">
+        <div className="mt-3 surface-inset px-3 py-2">
           <div className="flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-2">
               <KeyRound className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -281,7 +281,7 @@ export function GitHubConnect({
   }
 
   return (
-    <div id="github-integration" className="rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
+    <div id="github-integration" className="surface-panel p-3 sm:p-4">
       <div className="space-y-3">
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-muted-foreground">GitHub username</label>

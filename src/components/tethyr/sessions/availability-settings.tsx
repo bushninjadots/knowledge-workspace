@@ -208,7 +208,7 @@ export function AvailabilitySettings({
   if (availability.length === 0) {
     return (
       <div className="space-y-6">
-        <div className="rounded-xl border border-border/60 bg-surface/20 p-8 text-center">
+        <div className="surface-card p-8 text-center">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-surface-elevated">
             <Clock className="h-5 w-5 text-muted-foreground" />
           </div>
@@ -223,10 +223,7 @@ export function AvailabilitySettings({
           <h3 className="text-sm font-semibold text-foreground">Weekly Schedule</h3>
           <div className="grid grid-cols-7 gap-2">
             {DAYS.map((day) => (
-              <div
-                key={day}
-                className="flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-surface/30 p-3"
-              >
+              <div key={day} className="flex flex-col items-center gap-2 surface-card p-3">
                 <span className="text-[11px] font-semibold text-muted-foreground">{day}</span>
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-elevated text-[11px] text-muted-foreground">
                   —

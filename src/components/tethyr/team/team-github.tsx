@@ -83,10 +83,7 @@ export function TeamGitHub({ team, isLead }: { team: TeamRow; isLead: boolean })
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {repos.map((repo) => (
-            <li
-              key={repo.full_name}
-              className="flex min-w-0 flex-col gap-1.5 rounded-xl bg-surface-elevated/30 p-4"
-            >
+            <li key={repo.full_name} className="flex min-w-0 flex-col gap-1.5 surface-panel p-4">
               <a
                 href={`https://github.com/${repo.full_name}`}
                 target="_blank"

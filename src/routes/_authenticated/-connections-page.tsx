@@ -23,6 +23,7 @@ import {
   useDeleteConnection,
   type ConnectionWithProfile,
 } from "@/hooks/use-connections";
+import { PageContainer, PageHeader } from "@/components/tethyr/page-header";
 
 // Code-split module: the interactive page for its route. See the route
 // file for the eager surface (loader/head) and the lazyRouteComponent wire-up.
@@ -62,18 +63,16 @@ export function ConnectionsPage() {
   };
 
   return (
-    <div className="animate-room-enter mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
-      <header className="mb-6">
-        <div className="flex items-baseline gap-3">
-          <h1 className="font-display text-2xl font-semibold sm:text-3xl">Connections</h1>
-          {accepted.length > 0 && (
+    <PageContainer className="animate-room-enter">
+      <PageHeader
+        title="Connections"
+        meta={
+          accepted.length > 0 && (
             <span className="text-sm text-muted-foreground">{accepted.length} connected</span>
-          )}
-        </div>
-        <p className="mt-1 text-sm text-muted-foreground">
-          The people you build with. Open a profile to see their work, or start a conversation.
-        </p>
-      </header>
+          )
+        }
+        description="The people you build with. Open a profile to see their work, or start a conversation."
+      />
 
       {/* Incoming requests — most important pending action */}
       {incoming.length > 0 && (
@@ -201,10 +200,7 @@ export function ConnectionsPage() {
           </h2>
           <div className="space-y-2">
             {outgoing.map((c) => (
-              <div
-                key={c.id}
-                className="flex items-center gap-3 rounded-xl border border-border/60 bg-background/40 px-4 py-3"
-              >
+              <div key={c.id} className="flex items-center gap-3 surface-inset px-4 py-3">
                 <Avatar conn={c} />
                 <div className="min-w-0 flex-1">
                   <Name conn={c} />
@@ -250,7 +246,7 @@ export function ConnectionsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </PageContainer>
   );
 }
 
@@ -302,7 +298,7 @@ function FriendCard({ conn }: { conn: ConnectionWithProfile }) {
   const title = conn.other?.creator_title || conn.other?.category || "—";
 
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-surface-elevated/30 px-4 py-3 transition-lift hover:border-[var(--user-accent-border,var(--border-strong))]">
+    <div className="flex items-center gap-3 surface-card px-4 py-3 transition-lift hover:border-[var(--user-accent-border,var(--border-strong))]">
       <Avatar conn={conn} size="lg" />
       <div className="min-w-0 flex-1">
         <Name conn={conn} />

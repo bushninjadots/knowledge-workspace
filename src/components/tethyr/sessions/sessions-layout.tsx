@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { SessionsSidebar, type SessionsTab } from "./sessions-sidebar";
 import { OverviewCards, NextSessionCountdown } from "./overview-cards";
 import { TodaySchedule } from "./today-schedule";
@@ -23,6 +22,7 @@ import {
   useSessionAvailability,
   type SessionWithParticipants,
 } from "@/hooks/use-sessions";
+import { PageHeader, pageContainerClass } from "@/components/tethyr/page-header";
 
 export function SessionsLayout() {
   const navigate = useNavigate();
@@ -81,7 +81,7 @@ export function SessionsLayout() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] animate-room-enter">
+    <div className="flex h-[calc(100dvh-3rem)] animate-room-enter">
       {/* Left Sidebar */}
       <div className="hidden w-56 shrink-0 border-r border-border/60 bg-surface/30 bg-noise p-4 lg:block">
         <SessionsSidebar
@@ -92,7 +92,9 @@ export function SessionsLayout() {
       </div>
 
       {/* Main Content */}
-      <ScrollArea className="flex-1">
+      {/* A plain scroller: Radix ScrollArea's table wrapper grows to the tab
+          strip's full width and pushes the page off-screen on phones. */}
+      <div className="min-w-0 flex-1 overflow-y-auto">
         <div className="border-b border-border/60 bg-surface/30 px-2 py-2 lg:hidden">
           <div className="overflow-x-auto">
             <SessionsSidebar
@@ -103,20 +105,17 @@ export function SessionsLayout() {
             />
           </div>
         </div>
-        <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6 lg:p-8">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="font-display text-2xl font-semibold tracking-tight">Sessions</h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Manage your collaborations, mentoring, and meetings.
-              </p>
-            </div>
-            <Button onClick={() => setWizardOpen(true)}>
-              <Plus className="h-4 w-4" aria-hidden />
-              Schedule session
-            </Button>
-          </div>
+        <div className={pageContainerClass("default", "space-y-6")}>
+          <PageHeader
+            title="Sessions"
+            description="Manage your collaborations, mentoring, and meetings."
+            actions={
+              <Button onClick={() => setWizardOpen(true)}>
+                <Plus className="h-4 w-4" aria-hidden />
+                Schedule session
+              </Button>
+            }
+          />
 
           {/* Tab content */}
           {activeTab === "board" && <SessionsBoard onSchedule={() => setWizardOpen(true)} />}
@@ -166,7 +165,7 @@ export function SessionsLayout() {
             <AvailabilitySettings availability={availability} onSaved={refetchAvailability} />
           )}
         </div>
-      </ScrollArea>
+      </div>
 
       <ScheduleSessionWizard open={wizardOpen} onOpenChange={setWizardOpen} />
     </div>

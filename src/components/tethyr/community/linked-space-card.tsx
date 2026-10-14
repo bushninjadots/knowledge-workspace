@@ -62,10 +62,7 @@ export function LinkedSpaceCard({
   return (
     <section
       aria-label={space ? `${space.name} space` : `Start a ${copy.noun} space`}
-      className={cn(
-        "flex flex-wrap items-center gap-3 rounded-xl border border-border/60 bg-surface-elevated/30 p-4",
-        className,
-      )}
+      className={cn("flex flex-wrap items-center gap-3 surface-card p-4", className)}
     >
       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[color-mix(in_oklab,var(--user-accent,var(--primary))_14%,transparent)] text-[var(--user-accent-text,var(--foreground))]">
         <MessagesSquare className="h-4 w-4" aria-hidden />

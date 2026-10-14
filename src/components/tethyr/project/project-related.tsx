@@ -54,7 +54,7 @@ export function RelatedProjectsSection({
       </div>
 
       {isPending ? (
-        <ul className="mt-4 divide-y divide-border/50 rounded-xl border border-border/40 bg-background/40">
+        <ul className="mt-4 divide-y divide-border/50 surface-inset">
           {Array.from({ length: 3 }).map((_, i) => (
             <li key={i} className="flex items-center gap-3 px-3 py-3">
               <span className="h-8 w-8 shrink-0 rounded-full bg-foreground/10" />
@@ -66,7 +66,7 @@ export function RelatedProjectsSection({
           ))}
         </ul>
       ) : (
-        <ul className="mt-4 divide-y divide-border/50 rounded-xl border border-border/40 bg-background/40">
+        <ul className="mt-4 divide-y divide-border/50 surface-inset">
           {data?.map((item) => (
             <RelatedRow key={item.id} item={item} />
           ))}

@@ -148,7 +148,7 @@ export function ContributionGraph({
           <span>
             {totalLabel} in the last {WEEKS} weeks
           </span>
-          <div className="flex rounded-lg border border-border/60 bg-background/40 p-0.5">
+          <div className="flex surface-inset p-0.5">
             <button
               type="button"
               onClick={() => setMode("events")}

@@ -269,16 +269,6 @@ function LibraryItemPage() {
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
         {/* Top bar */}
         <div className="mb-6 flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => navigate({ to: "/library" })}
-            aria-label="Back to Library"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-
           <div className="flex-1" />
 
           {/* Last saved */}

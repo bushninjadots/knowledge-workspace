@@ -56,7 +56,7 @@ export function GitHubSettingsSection() {
   const [redirecting, setRedirecting] = useState(false);
 
   return (
-    <section id="github" className="scroll-mt-20 rounded-lg border border-border bg-card p-5">
+    <section id="github" className="scroll-mt-20 surface-card p-5">
       <h2 className="flex items-center gap-2 text-sm font-semibold">
         <Github className="h-4 w-4 text-muted-foreground" />
         GitHub
@@ -333,7 +333,7 @@ export function GitHubStatusChip({ className }: { className?: string }) {
     <Link
       {...GITHUB_SETTINGS}
       className={cn(
-        "flex items-center gap-3 rounded-xl border border-border/60 bg-surface-elevated/30 px-3 py-2.5 transition-colors hover:bg-surface-elevated/60",
+        "flex items-center gap-3 surface-card px-3 py-2.5 transition-colors hover:bg-surface-elevated/60",
         className,
       )}
     >
@@ -387,7 +387,7 @@ export function GitHubDashboardNudge() {
   return (
     <aside
       aria-label="Connect GitHub"
-      className="flex flex-wrap items-center gap-3 rounded-xl border border-border/60 bg-surface-elevated/30 px-4 py-3"
+      className="flex flex-wrap items-center gap-3 surface-card px-4 py-3"
     >
       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-elevated text-muted-foreground">
         <Github className="h-4 w-4" aria-hidden />

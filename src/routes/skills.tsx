@@ -21,6 +21,7 @@ import { SectionShell } from "@/components/tethyr/section-shell";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { seoMeta } from "@/lib/seo";
+import { PageHeader } from "@/components/tethyr/page-header";
 
 const skillsSearchSchema = z.object({
   // Optional (no .default()) so a bare /skills URL stays bare — a default
@@ -39,7 +40,7 @@ export const Route = createFileRoute("/skills")({
     }),
   component: SkillsDirectoryRoute,
   errorComponent: () => (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+    <div className="flex min-h-[60vh] items-center justify-center px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold text-foreground">Skills unavailable</h1>
         <p className="mt-2 text-sm text-muted-foreground">
@@ -98,8 +99,9 @@ function SkillRow({
   counts: SkillActivityCounts | undefined;
 }) {
   return (
-    <span className="flex items-center gap-4 px-4 py-3">
-      <span className="min-w-0 flex-1">
+    // Counts sit under the name on phones, beside it from sm up.
+    <span className="flex w-full min-w-0 flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:gap-4">
+      <span className="min-w-0 sm:flex-1">
         <span className="block truncate text-sm font-medium text-foreground group-hover:underline">
           {name}
         </span>
@@ -184,7 +186,7 @@ function SkillsDirectoryPage() {
           >
             <div className="h-8 w-40 rounded bg-surface-sunken" />
             <div className="h-10 w-full max-w-xl rounded-md bg-surface-sunken" />
-            <div className="h-40 rounded-xl border border-border/40 bg-surface/40" />
+            <div className="h-40 surface-card" />
             <div className="grid gap-8 sm:grid-cols-2">
               {Array.from({ length: 4 }).map((_, index) => (
                 <div key={index} className="space-y-3">
@@ -216,20 +218,15 @@ function SkillsDirectoryPage() {
   }
 
   return (
-    <SectionShell backTo="/explore" className="bg-noise">
-      <header className="px-4 pb-10 pt-12 sm:px-6">
+    <SectionShell className="bg-noise">
+      <div className="px-4 pt-8 sm:px-6">
         <div className="mx-auto max-w-6xl">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-            Discover
-          </p>
-          <h1 className="mt-1 font-display text-2xl font-semibold text-foreground sm:text-3xl">
-            Skills
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-            Find something to learn, share, practice, or build with. Each skill is a hub connecting
-            the people who share it, the people growing it, and the projects using it.
-          </p>
-          <div className="relative mt-6 max-w-xl">
+          <PageHeader
+            className="mb-6"
+            title="Skills"
+            description="Find something to learn, share, practice, or build with. Each skill is a hub connecting the people who share it, the people growing it, and the projects using it."
+          />
+          <div className="relative mb-10 max-w-xl">
             <Search
               className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
               aria-hidden="true"
@@ -254,7 +251,7 @@ function SkillsDirectoryPage() {
             )}
           </div>
         </div>
-      </header>
+      </div>
 
       <div className="px-4 pb-16 sm:px-6">
         <div className="mx-auto max-w-6xl space-y-12">

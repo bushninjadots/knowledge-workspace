@@ -745,7 +745,7 @@ function StepSchedule({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-surface/50 px-4 py-3">
+        <div className="flex items-center gap-2 surface-card px-4 py-3">
           <Repeat className="h-4 w-4 text-muted-foreground" />
           <div className="flex-1">
             <div className="text-sm font-medium text-foreground">Recurring session</div>
@@ -788,7 +788,7 @@ function StepConfirm({ state, organizerName }: { state: WizardState; organizerNa
         </p>
       </div>
 
-      <div className="rounded-xl border border-border/60 bg-surface/50 p-4 space-y-3">
+      <div className="surface-card p-4 space-y-3">
         {/* Title + type */}
         <div className="flex items-start gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--user-accent-subtle,var(--trust-subtle))] text-[var(--user-accent-text,var(--trust))]">

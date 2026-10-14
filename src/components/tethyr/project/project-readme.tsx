@@ -225,7 +225,7 @@ export function ProjectReadmeTab({
         {editing ? (
           <div className="pt-4">
             {/* Editor toolbar: Write / Preview / Changes */}
-            <div className="mb-3 flex items-center gap-1 rounded-xl border border-border/40 bg-background/40 p-1">
+            <div className="mb-3 flex items-center gap-1 surface-inset p-1">
               {(
                 [
                   { id: "write", label: "Write", icon: Pencil },
@@ -258,7 +258,7 @@ export function ProjectReadmeTab({
             )}
 
             {editorView === "preview" && (
-              <div className="prose-custom min-h-[24rem] overflow-auto rounded-xl border border-border/40 bg-background/40 px-5 py-5">
+              <div className="prose-custom min-h-[24rem] overflow-auto surface-inset px-5 py-5">
                 <Markdown
                   remarkPlugins={[remarkGfm]}
                   components={makeHeadingComponents(parseReadmeSections(draft))}
@@ -654,7 +654,7 @@ function ChangesView({ before, after }: { before: string; after: string }) {
 
   if (lines.every((l) => l.type === "same")) {
     return (
-      <div className="flex min-h-[24rem] flex-col items-center justify-center gap-2 rounded-xl border border-border/40 bg-background/40 px-6 text-center">
+      <div className="flex min-h-[24rem] flex-col items-center justify-center gap-2 surface-inset px-6 text-center">
         <Diff className="h-7 w-7 text-muted-foreground/40" />
         <p className="text-sm text-muted-foreground">No changes yet — edit the README above.</p>
       </div>
@@ -662,7 +662,7 @@ function ChangesView({ before, after }: { before: string; after: string }) {
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border/40 bg-background/40">
+    <div className="overflow-hidden surface-inset">
       <div className="flex items-center gap-3 border-b border-border/40 px-4 py-2 font-mono text-[11px]">
         <span className="text-trust">+{added}</span>
         <span className="text-destructive">-{removed}</span>

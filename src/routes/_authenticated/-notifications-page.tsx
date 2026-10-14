@@ -20,6 +20,7 @@ import {
   notificationViewUnreadCounts,
   type NotificationCategoryViewKey,
 } from "@/lib/notification-categories";
+import { pageContainerClass } from "@/components/tethyr/page-header";
 
 // Code-split module: the interactive page for its route. See the route
 // file for the eager surface (loader/head) and the lazyRouteComponent wire-up.
@@ -81,13 +82,9 @@ export function NotificationsPage() {
 
   return (
     <div className="animate-room-enter min-h-screen bg-noise">
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+      <div className={pageContainerClass()}>
         <NotificationHeader />
-        <section className="mt-6 min-w-0" aria-label="Notifications content">
-          <p className="mb-3 text-sm text-muted-foreground">
-            Start with <span className="font-medium text-foreground">Needs action</span> when you
-            want to focus on decisions and replies; everything else can wait.
-          </p>
+        <section className="min-w-0" aria-label="Notifications content">
           <SegmentedControl
             value={activeCategory}
             onChange={(value) => {

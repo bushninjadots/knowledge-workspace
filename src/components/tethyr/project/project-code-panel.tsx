@@ -296,7 +296,7 @@ export function ProjectCodePanel({
                   Customize
                 </button>
                 {customizing && (
-                  <div className="mt-1 space-y-0.5 rounded-lg border border-border/60 bg-background/40 p-2">
+                  <div className="mt-1 space-y-0.5 surface-inset p-2">
                     {DISPLAY_OPTIONS.map(({ key, label }) => {
                       const on = githubDisplayShows(project.github_display, key);
                       return (

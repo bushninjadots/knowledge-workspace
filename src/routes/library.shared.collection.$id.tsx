@@ -3,13 +3,12 @@
 // its notes/links rendered read-only; uploads show metadata only (files stay
 // private to the owner's storage session). Revoking the collection's `shared`
 // flag hides everything at once via RLS.
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, BookOpen, ExternalLink, FileText, Globe, Upload } from "lucide-react";
+import { createFileRoute } from "@tanstack/react-router";
+import { BookOpen, ExternalLink, FileText, Globe, Upload } from "lucide-react";
 import { useSharedLibraryCollection } from "@/hooks/use-library";
 import { SectionShell } from "@/components/tethyr/section-shell";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
 import { seoMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/library/shared/collection/$id")({
@@ -28,22 +27,8 @@ function SharedCollectionPage() {
   const { data, isLoading } = useSharedLibraryCollection(id);
 
   return (
-    <SectionShell backTo="/" mainClassName="bg-background">
-      <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
-        <div className="mb-6">
-          <Button
-            asChild
-            variant="ghost"
-            size="sm"
-            className="-ml-2 gap-1.5 text-xs text-muted-foreground"
-          >
-            <Link to="/">
-              <ArrowLeft className="h-3.5 w-3.5" />
-              Tethyr
-            </Link>
-          </Button>
-        </div>
-
+    <SectionShell mainClassName="bg-background">
+      <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6">
         {isLoading ? (
           <div className="space-y-4">
             <Skeleton className="h-8 w-2/3 rounded-lg" />
@@ -66,7 +51,7 @@ function SharedCollectionPage() {
                 <BookOpen className="h-3.5 w-3.5" aria-hidden />
                 Shared from a Tethyr library
               </p>
-              <h1 className="mt-2 font-display text-2xl font-bold text-foreground sm:text-3xl">
+              <h1 className="mt-2 font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
                 {data.name}
               </h1>
               <p className="mt-1 text-sm text-muted-foreground">

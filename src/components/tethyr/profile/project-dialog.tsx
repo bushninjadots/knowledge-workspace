@@ -505,7 +505,7 @@ export function ProjectDialog({
                               Connect your GitHub account to list your repositories here — public
                               repos work without a token, a token adds private ones.
                             </p>
-                            <div className="rounded-lg border border-border/60 bg-background/40 p-2">
+                            <div className="surface-inset p-2">
                               <GitHubConnect />
                             </div>
                           </div>
@@ -830,7 +830,7 @@ export function ProjectDialog({
               </div>
             </Field>
 
-            <div className="grid gap-2 rounded-xl border card-border bg-background/40 p-4">
+            <div className="grid gap-2 surface-inset p-4">
               <Toggle
                 label="Featured"
                 description="Pin to top of your profile"

@@ -971,6 +971,35 @@
   border-color: var(--card-border-color, var(--user-accent-border, var(--border)));
 }
 
+/* ── The three surfaces ──────────────────────────────────────────────────────
+   Every boxed thing on an app page is one of these, so a panel on one page
+   looks like a panel on the next:
+   - surface-panel: a section's container — soft fill, no outline.
+   - surface-card:  one bounded item (a row, a tile) — outline and fill;
+                    the same surface as <Card>.
+   - surface-inset: something nested inside a panel or card (a form group,
+                    a well) — quieter fill, faint outline. */
+@utility surface-panel {
+  border-radius: var(--radius-xl);
+  background-color: color-mix(in oklab, var(--surface-elevated) 30%, transparent);
+}
+
+@utility surface-card {
+  border-radius: var(--radius-xl);
+  border-width: var(--card-border-width, 1px);
+  border-style: solid;
+  border-color: var(--card-border-color, var(--user-accent-border, var(--border)));
+  background-color: var(--surface);
+}
+
+@utility surface-inset {
+  border-radius: var(--radius-lg);
+  border-width: 1px;
+  border-style: solid;
+  border-color: color-mix(in oklab, var(--border) 60%, transparent);
+  background-color: color-mix(in oklab, var(--background) 40%, transparent);
+}
+
 /* Guaranteed scrim behind text placed on user-supplied images. Always dark
    enough for white text regardless of the underlying image. */
 @utility on-media-scrim {

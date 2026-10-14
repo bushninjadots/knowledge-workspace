@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import {
-  ArrowLeft,
   Calendar,
   CalendarPlus,
   Clock,
@@ -49,6 +48,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import { downloadSessionIcs } from "@/lib/session-ical";
 import { RouteErrorBoundary } from "@/components/tethyr/route-error-boundary";
+import { pageContainerClass } from "@/components/tethyr/page-header";
 
 export const Route = createFileRoute("/_authenticated/sessions/$id")({
   head: () => ({
@@ -93,7 +93,7 @@ function SessionDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto min-h-screen max-w-4xl space-y-6 bg-background px-4 py-8">
+      <div className={pageContainerClass("default", "space-y-6")}>
         <Skeleton className="h-28 rounded-xl" />
         <div className="grid gap-4 md:grid-cols-3">
           <Skeleton className="h-40 rounded-xl md:col-span-2" />
@@ -105,11 +105,14 @@ function SessionDetailPage() {
 
   if (!session) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="flex min-h-[60vh] items-center justify-center px-4">
         <div className="max-w-md text-center">
           <h1 className="text-xl font-semibold text-foreground">Session not found</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            It may have been cancelled, or it&apos;s private to the people taking part.
+          </p>
           <Link to="/sessions" className="mt-4 inline-block text-sm text-primary hover:underline">
-            Back to sessions
+            Browse sessions
           </Link>
         </div>
       </div>
@@ -120,22 +123,8 @@ function SessionDetailPage() {
   const myParticipant = session.participants?.find((p) => p.profile_id === me?.userId);
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Top bar */}
-      <div className="sticky top-0 z-10 border-b border-border/60 bg-background/80">
-        <div className="mx-auto flex h-12 max-w-7xl items-center gap-3 px-4 sm:px-6">
-          <button
-            onClick={() => navigate({ to: "/sessions" })}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            aria-label="Back to sessions"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </button>
-          <span className="text-sm font-medium text-foreground truncate">Sessions</span>
-        </div>
-      </div>
-
-      <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
+    <div className="min-h-screen bg-noise">
+      <div className={pageContainerClass("default", "space-y-6")}>
         <HeroSection session={session} />
 
         {/* Info + Status — 2-column on desktop */}

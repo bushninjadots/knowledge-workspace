@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import type { Notification } from "@/hooks/use-notifications";
 import { getNotificationDestination } from "@/lib/notification-destinations";
 import { TYPE_CATEGORY } from "@/lib/notification-categories";
+import { notificationBodyText } from "@/lib/notification-text";
 
 function timeAgo(dateStr: string): string {
   const now = Date.now();
@@ -91,7 +92,9 @@ export function NotificationDropdown() {
               <div className="min-w-0 flex-1">
                 <p className="text-sm leading-snug">{n.title}</p>
                 {n.body && (
-                  <p className="mt-0.5 line-clamp-1 text-[11px] text-muted-foreground">{n.body}</p>
+                  <p className="mt-0.5 line-clamp-1 text-[11px] text-muted-foreground">
+                    {notificationBodyText(n)}
+                  </p>
                 )}
                 <p className="mt-0.5 text-[11px] text-muted-foreground">{timeAgo(n.created_at)}</p>
               </div>

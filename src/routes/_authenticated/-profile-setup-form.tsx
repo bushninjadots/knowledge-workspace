@@ -854,7 +854,7 @@ export function CompletenessRing({ value, label = "Complete" }: { value: number;
   const offset = c - (value / 100) * c;
   const gradientId = "completeness-ring";
   return (
-    <div className="flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-background/40 p-3">
+    <div className="flex flex-col items-center gap-2 surface-inset p-3">
       <div className="relative h-20 w-20" role="img" aria-label={`Profile completeness: ${value}%`}>
         <svg viewBox="0 0 80 80" className="h-full w-full -rotate-90">
           <circle cx="40" cy="40" r={r} stroke="hsl(var(--border))" strokeWidth="6" fill="none" />

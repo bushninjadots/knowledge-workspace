@@ -151,10 +151,7 @@ export function SkillOverview({
       />
 
       {/* What is this skill? */}
-      <section
-        aria-labelledby="overview-whatis"
-        className="rounded-xl bg-surface-elevated/30 p-4 sm:p-5"
-      >
+      <section aria-labelledby="overview-whatis" className="surface-panel p-4 sm:p-5">
         <h3 id="overview-whatis" className="font-display text-lg font-semibold">
           What is {skillName}?
         </h3>
@@ -349,7 +346,7 @@ export function PeoplePreviewColumn({
   emptyText: string;
 }) {
   return (
-    <div className="rounded-xl border border-border/60 bg-surface/40 p-3">
+    <div className="surface-card p-3">
       <h4 className="flex items-center gap-2 text-sm font-semibold">
         <span
           className={`flex h-6 w-6 items-center justify-center rounded-md text-background ${accentClass}`}

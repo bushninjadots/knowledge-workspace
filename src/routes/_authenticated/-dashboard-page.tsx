@@ -36,6 +36,7 @@ import { useSessionRequests } from "@/hooks/use-sessions";
 import { useConnections } from "@/hooks/use-connections";
 import { useUnreadCounts } from "@/hooks/use-messages";
 import { useProjectReturnChanges } from "@/hooks/use-project-loop";
+import { PageHeader, pageContainerClass } from "@/components/tethyr/page-header";
 
 // Code-split module: the interactive page for its route. See the route
 // file for the eager surface (loader/head) and the lazyRouteComponent wire-up.
@@ -335,32 +336,26 @@ function DashboardContent({
   );
   return (
     <div className="animate-room-enter min-h-screen bg-noise">
-      <div className="mx-auto max-w-7xl space-y-8 px-4 py-6 sm:px-6 sm:py-8">
+      <div className={pageContainerClass("default", "space-y-8")}>
         {/* Compact greeting — the workspace starts at "what am I working on",
             not a second landing page. Studio and create-project live where
             they're used: the first-session guide, the Today module, the
             workspace grid, and the account menu. */}
         <section aria-labelledby="dashboard-next-move-heading" className="space-y-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="section-label">{onboarding ? "Welcome" : "Welcome back"}</p>
-              <h1
-                id="dashboard-next-move-heading"
-                className="mt-1 font-display text-xl font-semibold tracking-tight sm:text-2xl"
-              >
-                Hey {firstName}
-              </h1>
-              {reputationScore != null && reputationScore > 0 && (
-                <p className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+          <PageHeader
+            className="mb-0"
+            title={<span id="dashboard-next-move-heading">Hey {firstName}</span>}
+            meta={
+              reputationScore != null &&
+              reputationScore > 0 && (
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                   <Award className="h-3.5 w-3.5 text-[var(--user-accent-text,var(--trust))]" />
                   {reputationScore} rep
-                </p>
-              )}
-            </div>{" "}
-            <p className="max-w-xs text-left text-xs leading-relaxed text-muted-foreground sm:text-right">
-              Pick up an active project, respond to people, or make your work easier to discover.
-            </p>
-          </div>
+                </span>
+              )
+            }
+            description="Pick up an active project, respond to people, or make your work easier to discover."
+          />
           <FirstSessionOnboarding data={data} />
           {/* While the setup guide is up, a card that can only say "all
               clear" is noise; it returns once there's a project or something

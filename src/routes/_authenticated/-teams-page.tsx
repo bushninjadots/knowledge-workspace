@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { PageHeader, pageContainerClass } from "@/components/tethyr/page-header";
 
 // Code-split module: the interactive page for its route. See the route
 // file for the eager surface (loader/head) and the lazyRouteComponent wire-up.
@@ -54,26 +55,22 @@ export function TeamsPage() {
   }
 
   return (
-    <div className="animate-room-enter min-h-screen bg-noise px-4 py-8 sm:px-8">
-      <div className="mx-auto max-w-5xl">
-        <header className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-border/60 pb-5">
-          <div>
-            <p className="section-label">Build together</p>
-            <h1 className="mt-1 font-display text-2xl font-semibold">Your teams</h1>
-            <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-              Crews make the people behind the work visible. Keep projects, roles, and credit in one
-              place.
-            </p>
-          </div>
-          <Button
-            onClick={() => setCreating((open) => !open)}
-            variant="outline"
-            className="gap-1.5"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Form a crew
-          </Button>
-        </header>
+    <div className="animate-room-enter min-h-screen bg-noise">
+      <div className={pageContainerClass()}>
+        <PageHeader
+          title="Your teams"
+          description="Crews make the people behind the work visible. Keep projects, roles, and credit in one place."
+          actions={
+            <Button
+              onClick={() => setCreating((open) => !open)}
+              variant="outline"
+              className="gap-1.5"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Form a crew
+            </Button>
+          }
+        />
 
         {creating && (
           <section className="mb-8 border-y border-[var(--user-accent-border,var(--border-strong))] bg-[var(--user-accent-subtle,var(--surface-elevated))] px-4 py-4">

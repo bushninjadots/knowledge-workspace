@@ -161,7 +161,7 @@ export function ProjectCommunityPosts({
   const showAsk = canAsk && !!project;
 
   return (
-    <div className="rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
+    <div className="surface-panel p-3 sm:p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-sm font-medium text-foreground/80">
           <MessageCircle className="h-4 w-4" aria-hidden />

@@ -47,7 +47,7 @@ export const NextStepsList = memo(function NextStepsList({ items }: { items: Sec
                 <Link
                   to={s.cta?.href ?? "/profile"}
                   search={s.cta?.search}
-                  className="group flex items-center gap-3 rounded-xl border border-border/60 bg-surface/50 px-4 py-2.5 transition-lift hover:border-border-strong hover:bg-surface-elevated"
+                  className="group flex items-center gap-3 surface-card px-4 py-2.5 transition-lift hover:border-border-strong hover:bg-surface-elevated"
                 >
                   <span className="h-2 w-2 shrink-0 rounded-full border border-muted-foreground/50" />
                   <span className="truncate text-sm text-muted-foreground">{s.label}</span>

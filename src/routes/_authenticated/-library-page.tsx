@@ -21,6 +21,7 @@ import {
   type LibraryCollection,
 } from "@/hooks/use-library";
 import type { LibraryView } from "@/components/tethyr/library/library-sidebar";
+import { PageHeader, pageContainerClass } from "@/components/tethyr/page-header";
 
 // Code-split module: the interactive page for its route. See the route
 // file for the eager surface (loader/head) and the lazyRouteComponent wire-up.
@@ -65,14 +66,11 @@ export function LibraryPage() {
 function BoardsPane() {
   return (
     <div className="animate-room-enter min-h-screen bg-noise">
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
-        <div className="mb-5">
-          <h1 className="font-display text-2xl font-bold">Boards</h1>
-          <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-            Kanban for any workflow — reading queues, pipelines, research moves. Cards can wrap
-            library items or stand alone.
-          </p>
-        </div>
+      <div className={pageContainerClass()}>
+        <PageHeader
+          title="Boards"
+          description="Kanban for any workflow — reading queues, pipelines, research moves. Cards can wrap library items or stand alone."
+        />
         <LibraryBoards />
       </div>
     </div>
@@ -159,53 +157,51 @@ function LibraryContent({ view, onNewNote }: { view: LibraryView; onNewNote: () 
 
   return (
     <div className="animate-room-enter min-h-screen bg-noise">
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
-        {/* Header */}
-        <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h1 className="font-display text-2xl font-bold">{title}</h1>
-            <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-              {view.type === "all"
-                ? "Keep the references, snippets, and working notes that help your projects move."
-                : `${items.length} ${items.length === 1 ? "item" : "items"}`}
-            </p>
-          </div>
-          {/* The controls wrap instead of overflowing on narrow screens. */}
-          <div className="flex flex-wrap items-center gap-2">
-            <LibrarySearchBar value={search} onChange={setSearch} className="w-64 sm:w-72" />
+      <div className={pageContainerClass()}>
+        <PageHeader
+          title={title}
+          description={
+            view.type === "all"
+              ? "Keep the references, snippets, and working notes that help your projects move."
+              : `${items.length} ${items.length === 1 ? "item" : "items"}`
+          }
+          actions={
+            <>
+              <LibrarySearchBar value={search} onChange={setSearch} className="w-full sm:w-72" />
 
-            <SegmentedControl
-              value={layout}
-              onChange={setLayout}
-              ariaLabel="Library layout"
-              size="sm"
-              className="w-fit"
-              options={[
-                { value: "grid", label: "", icon: LayoutGrid, ariaLabel: "Grid view" },
-                { value: "list", label: "", icon: List, ariaLabel: "List view" },
-              ]}
-            />
+              <SegmentedControl
+                value={layout}
+                onChange={setLayout}
+                ariaLabel="Library layout"
+                size="sm"
+                className="w-fit"
+                options={[
+                  { value: "grid", label: "", icon: LayoutGrid, ariaLabel: "Grid view" },
+                  { value: "list", label: "", icon: List, ariaLabel: "List view" },
+                ]}
+              />
 
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-2 border-[var(--user-accent-border,var(--border-strong))] bg-surface/60 text-xs text-foreground hover:bg-surface-elevated"
-              onClick={() => setShowUpload(!showUpload)}
-            >
-              Upload
-            </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-2 border-[var(--user-accent-border,var(--border-strong))] bg-surface/60 text-xs text-foreground hover:bg-surface-elevated"
+                onClick={() => setShowUpload(!showUpload)}
+              >
+                Upload
+              </Button>
 
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-2 border-[var(--user-accent-border,var(--border-strong))] bg-surface/60 text-foreground hover:bg-surface-elevated"
-              onClick={onNewNote}
-            >
-              <Plus className="h-3.5 w-3.5" />
-              New note
-            </Button>
-          </div>
-        </div>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-2 border-[var(--user-accent-border,var(--border-strong))] bg-surface/60 text-foreground hover:bg-surface-elevated"
+                onClick={onNewNote}
+              >
+                <Plus className="h-3.5 w-3.5" />
+                New note
+              </Button>
+            </>
+          }
+        />
 
         {/* Upload zone */}
         {showUpload && (

@@ -47,10 +47,7 @@ function SectionSkeleton() {
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div
-            key={i}
-            className="h-44 animate-gentle-pulse rounded-xl border border-border/60 bg-surface"
-          />
+          <div key={i} className="h-44 animate-gentle-pulse surface-card" />
         ))}
       </div>
     </section>
@@ -231,7 +228,7 @@ export function HomePage() {
       <Suspense fallback={<SectionSkeleton />}>
         <SectionReveal>
           <section className="px-4 py-24 sm:px-6">
-            <div className="relative mx-auto max-w-5xl overflow-hidden rounded-xl border border-border/60 bg-surface p-12 text-center sm:p-20">
+            <div className="relative mx-auto max-w-5xl overflow-hidden surface-card p-12 text-center sm:p-20">
               <div className="bg-grid pointer-events-none absolute inset-0 opacity-20" />
               <div className="relative">
                 <h2 className="font-display text-3xl font-semibold sm:text-4xl lg:text-5xl">

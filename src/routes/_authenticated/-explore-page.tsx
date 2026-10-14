@@ -45,6 +45,7 @@ import {
 import { useExploreData } from "./-explore-data";
 import { ExploreStat, DiscoverSidebar, LoadMoreButton, type Tab } from "./-explore-sidebar";
 import { skillKey, skillKeyMap } from "@/lib/skill-key";
+import { PageHeader } from "@/components/tethyr/page-header";
 
 // Code-split module: the interactive page for its route. See the route
 // file for the eager surface (loader/head) and the lazyRouteComponent wire-up.
@@ -279,7 +280,8 @@ export function ExplorePage() {
 
   return (
     <div className="animate-room-enter min-h-screen bg-noise">
-      <div className="mx-auto flex max-w-[90rem] gap-6 px-4 py-6 sm:px-6 sm:py-8">
+      {/* Wider than the standard container: this page carries a filter rail. */}
+      <div className="mx-auto flex w-full max-w-[90rem] gap-6 px-4 py-8 sm:px-6">
         {/* Main content */}
         <div className="min-w-0 flex-1">
           {/* Mobile discover panel trigger — sidebar content is hidden below lg */}
@@ -298,37 +300,17 @@ export function ExplorePage() {
               Filters
             </Button>
           </div>
-          <section className="mb-7 border-b border-border/60 pb-7">
-            <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-              <div className="max-w-2xl">
-                <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-[var(--user-accent-text,var(--learning))]">
-                  <span className="h-px w-8 bg-[var(--user-accent,var(--learning))]" />
-                  Creative studios
-                </div>
-                <h1 className="font-title text-4xl font-semibold tracking-[-0.04em] text-balance sm:text-5xl">
-                  Find the work worth joining.
-                </h1>
-                <p className="mt-3 max-w-xl text-base leading-relaxed text-muted-foreground">
-                  {
-                    "Explore projects in motion, meet the people making them, and find an opening where your contribution matters."
-                  }
-                </p>
-              </div>
-              <div className="grid grid-cols-3 gap-5 border-l border-border/60 pl-5 text-left sm:min-w-52">
+          <PageHeader
+            title="Explore"
+            description="Projects in motion, the people making them, and openings where your contribution matters."
+            actions={
+              <div className="grid grid-cols-3 gap-5 text-left">
                 <ExploreStat value={projects?.length ?? 0} label="projects" />
                 <ExploreStat value={creators?.length ?? 0} label="people" />
                 <ExploreStat value={opportunities?.length ?? 0} label="openings" />
               </div>
-            </div>
-          </section>
-
-          <div className="mb-4 max-w-2xl">
-            <p className="section-label">Find your next connection</p>
-            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Browse the work people are making, meet collaborators, or find an open role to join.
-              Start with one of the three paths below.
-            </p>
-          </div>
+            }
+          />
 
           {/* Tab bar */}
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -336,7 +318,7 @@ export function ExplorePage() {
               value={tab}
               onChange={setTab}
               ariaLabel="Explore views"
-              className="w-fit"
+              className="w-fit max-w-full overflow-x-auto scrollbar-none"
               options={[
                 { value: "projects", label: "Projects", icon: Folder },
                 { value: "creators", label: "People", icon: Users },
@@ -356,7 +338,7 @@ export function ExplorePage() {
             <>
               {/* Search + sort + need scope — one row so the results surface right below the needs band */}
               <div className="mb-4 flex flex-wrap items-center gap-2">
-                <div className="flex flex-1 items-center gap-2 rounded-xl border border-border/60 bg-surface px-3 py-2">
+                <div className="flex flex-1 items-center gap-2 surface-card px-3 py-2">
                   <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
                   <Input
                     value={q}

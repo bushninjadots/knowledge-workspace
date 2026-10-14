@@ -5,7 +5,6 @@ import {
   Trophy,
   Users,
   Calendar,
-  ArrowLeft,
   Check,
   CheckCircle2,
   Clock,
@@ -39,6 +38,7 @@ import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { supabase } from "@/integrations/supabase/client";
 import { safeHref, isSafeUrl, sanitizeFilename, validateLibraryFile } from "@/lib/validators";
+import { pageContainerClass } from "@/components/tethyr/page-header";
 
 export const Route = createFileRoute("/_authenticated/challenges/$id")({
   head: () => ({
@@ -74,7 +74,9 @@ function ChallengeDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 flex justify-center items-center min-h-[50vh]">
+      <div
+        className={pageContainerClass("default", "flex min-h-[50vh] items-center justify-center")}
+      >
         <div className="flex flex-col items-center gap-3 text-muted-foreground">
           <Clock className="h-8 w-8 animate-spin text-primary" />
           <p className="text-sm font-medium">Loading challenge details...</p>
@@ -85,19 +87,19 @@ function ChallengeDetailPage() {
 
   if (error || !challenge) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 space-y-6">
-        <Link
-          to="/challenges"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" /> Back to Challenges
-        </Link>
-        <div className="rounded-xl bg-surface-elevated/30 p-8 text-center">
+      <div className={pageContainerClass("default", "space-y-6")}>
+        <div className="surface-panel p-8 text-center">
           <Trophy className="h-12 w-12 text-muted-foreground mx-auto" />
-          <h2 className="mt-4 font-display text-xl font-semibold">Challenge Not Found</h2>
+          <h2 className="mt-4 font-display text-xl font-semibold">Challenge not found</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             This challenge may have been removed or does not exist.
           </p>
+          <Link
+            to="/challenges"
+            className="mt-4 inline-block text-sm text-primary underline-offset-4 hover:underline"
+          >
+            Browse challenges
+          </Link>
         </div>
       </div>
     );
@@ -207,16 +209,9 @@ function ChallengeDetailPage() {
 
   return (
     <div className="animate-room-enter min-h-screen bg-noise">
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 space-y-6">
-        <Link
-          to="/challenges"
-          className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" /> Back to Challenges
-        </Link>
-
+      <div className={pageContainerClass("default", "space-y-6")}>
         {/* Challenge Header */}
-        <div className="rounded-xl bg-surface-elevated/30 p-5 sm:p-6 space-y-5">
+        <div className="surface-panel p-5 sm:p-6 space-y-5">
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
             <div className="space-y-3 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
@@ -268,7 +263,7 @@ function ChallengeDetailPage() {
                 )}
               </div>
 
-              <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
+              <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
                 {challenge.title}
               </h1>
 
@@ -341,7 +336,7 @@ function ChallengeDetailPage() {
             )}
 
             {challenge.pass_criteria && (
-              <div className="mt-2 rounded-xl border card-border bg-background/40 p-4">
+              <div className="mt-2 surface-inset p-4">
                 <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   <ListChecks className="h-3.5 w-3.5" />
                   Pass criteria
@@ -593,7 +588,7 @@ function ChallengeDetailPage() {
           )}
 
         {/* Participant Roster */}
-        <div className="rounded-xl bg-surface-elevated/30 p-5 sm:p-6 space-y-4">
+        <div className="surface-panel p-5 sm:p-6 space-y-4">
           <h2 className="text-[13px] font-semibold uppercase tracking-[0.04em] text-foreground flex items-center gap-2">
             <Users className="h-4 w-4 text-muted-foreground" /> Participants (
             {challenge.participant_count ?? 0})
@@ -752,7 +747,7 @@ function SubmissionLink({ url }: { url: string | null }) {
       href={href}
       target="_blank"
       rel="noreferrer"
-      className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs text-foreground hover:border-primary/40"
+      className="inline-flex items-center gap-1.5 surface-card px-3 py-1.5 text-xs text-foreground hover:border-primary/40"
     >
       <FileText className="h-3.5 w-3.5" />
       {label}

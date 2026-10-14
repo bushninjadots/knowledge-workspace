@@ -36,6 +36,7 @@ import { deleteAccount } from "@/lib/account-server";
 import { friendlyError } from "@/lib/error-message";
 import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes";
 import type { ProfileBackground } from "@/lib/background-themes";
+import { PageHeader, pageContainerClass } from "@/components/tethyr/page-header";
 
 export function SettingsPage() {
   const navigate = useNavigate();
@@ -151,19 +152,15 @@ export function SettingsPage() {
 
   return (
     <div className="animate-room-enter min-h-screen bg-noise">
-      <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
-        <header className="mb-8">
-          <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
-            Settings
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Account, security, GitHub, and what you want to hear about — all in one place.
-          </p>
-        </header>
+      <div className={pageContainerClass("narrow")}>
+        <PageHeader
+          title="Settings"
+          description="Account, security, GitHub, and what you want to hear about — all in one place."
+        />
 
         <div className="space-y-8">
           {/* Account & security */}
-          <section className="rounded-lg border border-border bg-card p-5">
+          <section className="surface-card p-5">
             <h2 className="flex items-center gap-2 text-sm font-semibold">
               <KeyRound className="h-4 w-4 text-muted-foreground" />
               Account &amp; security
@@ -242,7 +239,7 @@ export function SettingsPage() {
           </section>
 
           {/* Site appearance: Tethyr itself. Profile appearance lives in Studio. */}
-          <section id="site-appearance" className="rounded-lg border border-border bg-card p-5">
+          <section id="site-appearance" className="surface-card p-5">
             <h2 className="flex items-center gap-2 text-sm font-semibold">
               <Paintbrush className="h-4 w-4 text-muted-foreground" />
               Site appearance
@@ -280,7 +277,7 @@ export function SettingsPage() {
           <GitHubSettingsSection />
 
           {/* Notifications */}
-          <section className="rounded-lg border border-border bg-card p-5">
+          <section className="surface-card p-5">
             <h2 className="flex items-center gap-2 text-sm font-semibold">
               <Bell className="h-4 w-4 text-muted-foreground" />
               Notifications
@@ -332,7 +329,7 @@ export function SettingsPage() {
           </section>
 
           {/* Where things live */}
-          <section className="rounded-lg border border-border bg-card p-5">
+          <section className="surface-card p-5">
             <h2 className="flex items-center gap-2 text-sm font-semibold">
               <User className="h-4 w-4 text-muted-foreground" />
               Your space
@@ -344,14 +341,14 @@ export function SettingsPage() {
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
               <Link
                 to="/profile"
-                className="flex items-center gap-2.5 rounded-lg border border-border/60 bg-background/40 px-3 py-2.5 text-sm transition-lift hover:bg-surface-elevated/40"
+                className="flex items-center gap-2.5 surface-inset px-3 py-2.5 text-sm transition-lift hover:bg-surface-elevated/40"
               >
                 <User className="h-4 w-4 text-muted-foreground" />
                 Studio — identity, skills, links
               </Link>
               <Link
                 to="/profile"
-                className="flex items-center gap-2.5 rounded-lg border border-border/60 bg-background/40 px-3 py-2.5 text-sm transition-lift hover:bg-surface-elevated/40"
+                className="flex items-center gap-2.5 surface-inset px-3 py-2.5 text-sm transition-lift hover:bg-surface-elevated/40"
               >
                 <Palette className="h-4 w-4 text-muted-foreground" />
                 Studio — appearance
@@ -359,14 +356,14 @@ export function SettingsPage() {
               <Link
                 to="/sessions"
                 search={{ tab: "availability" }}
-                className="flex items-center gap-2.5 rounded-lg border border-border/60 bg-background/40 px-3 py-2.5 text-sm transition-lift hover:bg-surface-elevated/40"
+                className="flex items-center gap-2.5 surface-inset px-3 py-2.5 text-sm transition-lift hover:bg-surface-elevated/40"
               >
                 <CalendarClock className="h-4 w-4 text-muted-foreground" />
                 Sessions — weekly schedule
               </Link>
               <Link
                 to="/notifications"
-                className="flex items-center gap-2.5 rounded-lg border border-border/60 bg-background/40 px-3 py-2.5 text-sm transition-lift hover:bg-surface-elevated/40"
+                className="flex items-center gap-2.5 surface-inset px-3 py-2.5 text-sm transition-lift hover:bg-surface-elevated/40"
               >
                 <Bell className="h-4 w-4 text-muted-foreground" />
                 Notifications page

@@ -38,6 +38,7 @@ import {
 import { useRespondConnection } from "@/hooks/use-connections";
 import type { Notification, NotificationType } from "@/hooks/use-notifications";
 import { timeAgo } from "@/lib/time";
+import { notificationBodyText } from "@/lib/notification-text";
 
 const NOTIFICATION_CONFIG: Record<NotificationType, { icon: typeof MessageCircle; color: string }> =
   {
@@ -176,8 +177,11 @@ export function NotificationCard({ notification, onNavigate }: NotificationCardP
           )}
         </p>
         {notification.body && (
-          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground" title={notification.body}>
-            {notification.body}
+          <p
+            className="mt-1 line-clamp-2 text-xs text-muted-foreground"
+            title={notificationBodyText(notification) ?? undefined}
+          >
+            {notificationBodyText(notification)}
           </p>
         )}
         <div className="mt-2 flex items-center gap-2">

@@ -188,7 +188,7 @@ export function ProjectPeopleTab({
       )}
 
       {/* People roster */}
-      <section className="rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
+      <section className="surface-panel p-3 sm:p-4">
         <h2 className="flex items-center gap-2 text-sm font-medium text-foreground/80">
           <UsersIcon className="h-4 w-4 text-muted-foreground" />
           Project people
@@ -231,7 +231,7 @@ export function ProjectPeopleTab({
             )}
           </div>
         ) : contributors.length === 0 ? null : (
-          <ul className="mt-3 divide-y divide-border/50 rounded-xl border border-border/40 bg-background/40">
+          <ul className="mt-3 divide-y divide-border/50 surface-inset">
             {contributors.map((c) => {
               const connectionId = connectionByProfile.get(c.profile_id);
               const canMessage = connectionId && c.profile_id !== me?.userId;
@@ -337,7 +337,7 @@ export function ProjectPeopleTab({
         </div>
         <OpenRolesSection roles={openRoles} projectId={projectId} isOwner={isOwner} />
         {unfilledRoles.length === 0 && !isContributor && !isOwner && (
-          <div className="rounded-xl bg-surface-elevated/30 p-4 text-center">
+          <div className="surface-panel p-4 text-center">
             <HandHeart className="mx-auto h-6 w-6 text-muted-foreground/40" />
             <p className="mt-2 text-sm text-muted-foreground">
               No open roles right now — but this project is worth watching.

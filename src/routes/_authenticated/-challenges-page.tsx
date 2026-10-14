@@ -14,6 +14,7 @@ import { ChallengeCard } from "@/components/tethyr/community/challenge-card";
 import { CreateChallengeDialog } from "@/components/tethyr/community/create-challenge-dialog";
 import { EmptyState } from "@/components/tethyr/empty-state";
 import { Input } from "@/components/ui/input";
+import { PageContainer, PageHeader } from "@/components/tethyr/page-header";
 
 // Code-split module: the interactive page for its route. See the route
 // file for the eager surface (loader/head) and the lazyRouteComponent wire-up.
@@ -184,52 +185,49 @@ function ChallengesContent() {
 
   return (
     <div className="animate-room-enter min-h-screen bg-noise">
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 space-y-6">
-        {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="font-display text-2xl font-semibold sm:text-3xl">Challenges</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Structured builds that help you level up, earn badges, and grow your reputation.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <div
-              role="group"
-              aria-label="Challenges layout"
-              className="flex rounded-lg border border-border/40 bg-surface/40 p-0.5"
-            >
-              <button
-                onClick={() => setLayout("grid")}
-                className={`rounded-md p-1.5 transition-colors ${
-                  layout === "grid"
-                    ? "bg-surface-elevated text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-                aria-label="Grid view"
-                aria-pressed={layout === "grid"}
+      <PageContainer className="space-y-6">
+        <PageHeader
+          title="Challenges"
+          description="Structured builds that help you level up, earn badges, and grow your reputation."
+          actions={
+            <>
+              <div
+                role="group"
+                aria-label="Challenges layout"
+                className="flex rounded-lg border border-border/40 bg-surface/40 p-0.5"
               >
-                <LayoutGrid className="h-3.5 w-3.5" />
-              </button>
-              <button
-                onClick={() => setLayout("list")}
-                className={`rounded-md p-1.5 transition-colors ${
-                  layout === "list"
-                    ? "bg-surface-elevated text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-                aria-label="Rows view"
-                aria-pressed={layout === "list"}
-              >
-                <List className="h-3.5 w-3.5" />
-              </button>
-            </div>
-            <CreateChallengeDialog open={createOpen} onOpenChange={setCreateOpen} />
-          </div>
-        </div>
+                <button
+                  onClick={() => setLayout("grid")}
+                  className={`rounded-md p-1.5 transition-colors ${
+                    layout === "grid"
+                      ? "bg-surface-elevated text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  aria-label="Grid view"
+                  aria-pressed={layout === "grid"}
+                >
+                  <LayoutGrid className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  onClick={() => setLayout("list")}
+                  className={`rounded-md p-1.5 transition-colors ${
+                    layout === "list"
+                      ? "bg-surface-elevated text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  aria-label="Rows view"
+                  aria-pressed={layout === "list"}
+                >
+                  <List className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              <CreateChallengeDialog open={createOpen} onOpenChange={setCreateOpen} />
+            </>
+          }
+        />
 
         {/* Filters */}
-        <div className="space-y-4 rounded-xl bg-surface-elevated/30 p-4">
+        <div className="space-y-4 surface-panel p-4">
           {/* Search */}
           <div className="flex items-center gap-2 rounded-xl border card-border bg-background/60 px-3 py-2">
             <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -408,7 +406,7 @@ function ChallengesContent() {
             )}
           </>
         )}
-      </div>
+      </PageContainer>
     </div>
   );
 }

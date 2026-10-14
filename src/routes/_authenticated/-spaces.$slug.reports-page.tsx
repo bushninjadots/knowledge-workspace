@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { Link, useNavigate, useParams } from "@tanstack/react-router";
+import { Link, useParams } from "@tanstack/react-router";
 import {
-  ArrowLeft,
   Lock,
   ShieldAlert,
   CheckCircle2,
@@ -34,6 +33,7 @@ import {
   useBanMember,
   type PostReportRow,
 } from "@/hooks/use-community-spaces";
+import { PageHeader, pageContainerClass } from "@/components/tethyr/page-header";
 
 // Code-split module: the interactive page for its route. See the route
 // file for the eager surface (loader/head) and the lazyRouteComponent wire-up.
@@ -45,7 +45,6 @@ const STATUS_LABEL: Record<PostReportRow["status"], string> = {
 
 export function SpaceReportsPage() {
   const { slug } = useParams({ from: "/_authenticated/spaces/$slug/reports" });
-  const navigate = useNavigate();
   const { data: space, isLoading } = useCommunitySpace(slug);
   const { data: reports = [], isLoading: reportsLoading } = useSpaceReportHistory(space?.id ?? "");
   const updateReport = useUpdateReportStatus();
@@ -94,38 +93,20 @@ export function SpaceReportsPage() {
   const open = reports.filter((r) => r.status === "open");
   const closed = reports.filter((r) => r.status !== "open");
 
-  const spaceSlug = space.slug;
-
-  function goBack() {
-    navigate({ to: "/community", search: { space: spaceSlug } });
-  }
-
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
-      <div className="mb-8 flex items-start gap-3">
-        <button
-          type="button"
-          onClick={goBack}
-          aria-label="Back to the community"
-          className="mt-1 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <div className="min-w-0">
-          <h1 className="font-display text-2xl font-semibold tracking-tight">Reports inbox</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Review member reports for {space.name} — resolve or dismiss them, and see the moderation
-            history.
-          </p>
-        </div>
-        <div className="ml-auto flex shrink-0 items-center gap-2">
+    <div className={pageContainerClass("narrow")}>
+      <PageHeader
+        eyebrow={space.name}
+        title="Reports inbox"
+        description="Review member reports — resolve or dismiss them, and see the moderation history."
+        actions={
           <Button size="sm" variant="outline" asChild>
             <Link to="/spaces/$slug/settings" params={{ slug: space.slug }}>
               Settings
             </Link>
           </Button>
-        </div>
-      </div>
+        }
+      />
 
       {reportsLoading ? (
         <div className="space-y-3 py-10">

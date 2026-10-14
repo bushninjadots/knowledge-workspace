@@ -96,7 +96,7 @@ export function ResourcesSection({
   if (!isOwner && resources.length === 0) return null;
 
   return (
-    <div className="rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
+    <div className="surface-panel p-3 sm:p-4">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-sm font-medium text-foreground/80">Resources</h3>
         {isOwner && (
@@ -111,7 +111,7 @@ export function ResourcesSection({
       </div>
 
       {showAdd && (
-        <div className="mb-4 space-y-2 rounded-xl border border-border/60 bg-background/40 p-3">
+        <div className="mb-4 space-y-2 surface-inset p-3">
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -211,7 +211,7 @@ export function ProjectLibrarySection({
   if (!items || items.length === 0) return null;
 
   return (
-    <div className="rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
+    <div className="surface-panel p-3 sm:p-4">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-sm font-medium text-foreground/80">Library</h3>
         {isOwner && (
@@ -400,7 +400,7 @@ export function GallerySection({
   if (gallery.length === 0 && !isOwner) return null;
 
   return (
-    <div className="rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
+    <div className="surface-panel p-3 sm:p-4">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="text-sm font-medium text-foreground/80">Demonstrations</h3>
@@ -420,7 +420,7 @@ export function GallerySection({
       </div>
 
       {showAdd && (
-        <div className="mb-4 space-y-2 rounded-xl border border-border/60 bg-background/40 p-3">
+        <div className="mb-4 space-y-2 surface-inset p-3">
           <input
             ref={fileRef}
             type="file"
