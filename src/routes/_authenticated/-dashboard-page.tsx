@@ -15,6 +15,7 @@ import {
   type Section,
 } from "@/lib/profile-completeness";
 import { NextStepsList } from "@/components/tethyr/next-steps";
+import { ShipWeekPrompt } from "@/components/tethyr/ships/ship-week-prompt";
 import { CreateProjectButton } from "@/components/tethyr/create-project-button";
 import { FirstSessionOnboarding } from "@/components/tethyr/first-session-onboarding";
 import {
@@ -356,6 +357,9 @@ function DashboardContent({
             }
             description="Pick up an active project, respond to people, or make your work easier to discover."
           />
+          {/* GitHub first: it fills the profile, imports projects and drafts
+              the weekly ship, so it's the fastest start for most members. */}
+          <GitHubDashboardNudge />
           <FirstSessionOnboarding data={data} />
           {/* While the setup guide is up, a card that can only say "all
               clear" is noise; it returns once there's a project or something
@@ -368,14 +372,12 @@ function DashboardContent({
           ) && renderModule("today")}
           <ProjectReturnShelf />
           <FocusBand
-            projectId={activeProjects[0]?.id ?? null}
             pct={pct}
             remaining={remaining}
             doneSteps={doneSteps}
             totalSteps={totalSteps}
             showSetupPrompt={!onboarding}
           />
-          {!onboarding && <GitHubDashboardNudge />}
         </section>
 
         <section aria-labelledby="dashboard-modules-heading" className="space-y-6">
@@ -416,14 +418,12 @@ function DashboardContent({
 /* ── Focus band: weekly ritual + profile setup folded into one band ── */
 
 function FocusBand({
-  projectId,
   pct,
   remaining,
   doneSteps,
   totalSteps,
   showSetupPrompt,
 }: {
-  projectId: string | null;
   pct: number;
   remaining: Section[];
   doneSteps: number;
@@ -431,44 +431,20 @@ function FocusBand({
   /** False while the first-session essentials are still open. */
   showSetupPrompt: boolean;
 }) {
-  const showWeekly = !!projectId;
+  // The weekly ritual is the Ship log — for everyone, project or not.
+  const showWeekly = true;
   const showComplete = showSetupPrompt && pct >= 100;
   const showSetup = showSetupPrompt && !showComplete && remaining.length > 0;
-  if (!showWeekly && !showComplete && !showSetup) return null;
 
   const twoCol = showWeekly && (showComplete || showSetup);
 
   return (
     <section
       aria-labelledby={showWeekly ? "weekly-show-your-work-heading" : "dashboard-focus-heading"}
-      className="border-y border-[var(--user-accent-border,var(--border-strong))] bg-[var(--user-accent-subtle,var(--surface-elevated))] py-4"
+      className="border-y border-border bg-[var(--user-accent-subtle,var(--surface-elevated))] py-4"
     >
       <div className={twoCol ? "grid items-start gap-6 lg:grid-cols-2" : ""}>
-        {showWeekly && projectId && (
-          <div className="flex min-w-0 flex-col items-start gap-3 self-start">
-            <div className="flex min-w-0 items-start gap-3">
-              <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-[var(--user-accent-text,var(--primary))]" />
-              <div className="min-w-0">
-                <p className="section-label">Weekly ritual</p>
-                <h2 id="weekly-show-your-work-heading" className="mt-1 text-sm font-semibold">
-                  What moved your work forward this week?
-                </h2>
-                <p className="mt-1 max-w-2xl text-xs text-muted-foreground">
-                  One sentence, image, GIF, video, or link is enough. Leave a useful trace for the
-                  people following along.
-                </p>
-              </div>
-            </div>
-            <Link
-              to="/projects/$id"
-              params={{ id: projectId }}
-              search={{ tab: "activity", focus: "weekly" } as Record<string, string>}
-              className="ml-7 inline-flex shrink-0 items-center gap-1.5 rounded-md bg-[var(--user-accent,var(--primary))] px-3 py-2 text-xs font-semibold text-[var(--user-accent-foreground,var(--background))] transition-fade hover:opacity-90"
-            >
-              Add this week’s evidence <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-        )}
+        {showWeekly && <ShipWeekPrompt />}
 
         {showComplete && (
           <div className={twoCol ? "min-w-0 lg:border-l lg:border-border/60 lg:pl-6" : "min-w-0"}>

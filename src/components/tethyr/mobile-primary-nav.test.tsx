@@ -21,7 +21,7 @@ describe("MobilePrimaryNav", () => {
   it("uses the same labels as the desktop sidebar", () => {
     render(<MobilePrimaryNav onOpenMore={() => {}} />);
     expect(screen.getByRole("link", { name: "Dashboard" })).toHaveAttribute("href", "/dashboard");
-    expect(screen.getByRole("link", { name: "Your Studio" })).toHaveAttribute("href", "/profile");
+    expect(screen.getByRole("link", { name: "Ship log" })).toHaveAttribute("href", "/ships");
     expect(screen.getByRole("link", { name: "Explore" })).toHaveAttribute("href", "/explore");
     expect(screen.getByRole("link", { name: "Messages" })).toHaveAttribute("href", "/messages");
   });
@@ -32,13 +32,10 @@ describe("MobilePrimaryNav", () => {
     expect(screen.getByRole("link", { name: "Explore" })).not.toHaveAttribute("aria-current");
   });
 
-  it("marks the your studio tab active on the studio route", () => {
-    vi.mocked(useRouterState).mockReturnValue("/profile" as never);
+  it("marks the ship log tab active on the ship log route", () => {
+    vi.mocked(useRouterState).mockReturnValue("/ships" as never);
     render(<MobilePrimaryNav onOpenMore={() => {}} />);
-    expect(screen.getByRole("link", { name: "Your Studio" })).toHaveAttribute(
-      "aria-current",
-      "page",
-    );
+    expect(screen.getByRole("link", { name: "Ship log" })).toHaveAttribute("aria-current", "page");
   });
 
   it("exposes the More sheet opener", async () => {

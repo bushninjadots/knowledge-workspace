@@ -102,7 +102,7 @@ type RawRepo = {
   size: number;
 };
 
-type RawEvent = {
+export type RawEvent = {
   type: string;
   repo: { name: string };
   created_at: string;

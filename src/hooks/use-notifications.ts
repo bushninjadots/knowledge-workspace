@@ -36,7 +36,10 @@ export type NotificationType =
   | "report_resolved"
   | "solution"
   | "thanks"
-  | "skill_match";
+  | "skill_match"
+  | "ship_kudos"
+  | "ship_reply"
+  | "ship_reminder";
 
 export interface Notification {
   id: string;

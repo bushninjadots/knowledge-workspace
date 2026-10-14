@@ -14,6 +14,7 @@ import {
   absolutizeRelativeLinks,
   fetchUserRepos,
   validateGitHubToken,
+  fetchWithTimeout,
   type GithubCommitLite,
   type GithubRepoLite,
   type RepoMeta,
@@ -21,6 +22,8 @@ import {
   type CommitActivityResult,
 } from "./github";
 import type { GithubSource } from "./github-source";
+import type { RawEvent } from "./github-profile";
+import type { ShipDraft } from "./ship-log";
 import { publicGithubToken, type ProfileGithubResult, type RefreshSummary } from "./github-refresh";
 
 async function getStoredToken(userId: string): Promise<string | null> {
@@ -456,4 +459,43 @@ export const refreshTeamGithub = createServerFn({ method: "POST" })
       team as { id: string; social_links: Record<string, string> | null },
     );
     return ok ? { ok: true as const } : { ok: false as const, reason: "unavailable" as const };
+  });
+
+/**
+ * Draft this week's ship from the signed-in member's public GitHub activity.
+ * Uses their connected account; null when there is none.
+ */
+export const draftShipFromGithub = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ login: string | null; draft: ShipDraft | null }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { draftShipFromEvents, shipWeekOf } = await import("./ship-log");
+    const [{ data: account }, { data: snapshot }] = await Promise.all([
+      supabaseAdmin
+        .from("connected_accounts")
+        .select("username")
+        .eq("user_id", context.userId)
+        .eq("provider", "github")
+        .maybeSingle(),
+      supabaseAdmin
+        .from("profile_github")
+        .select("username")
+        .eq("profile_id", context.userId)
+        .maybeSingle(),
+    ]);
+    const login = (account?.username as string | undefined) ?? snapshot?.username ?? null;
+    if (!login || !/^[a-z\d](?:[a-z\d-]{0,38})$/i.test(login)) return { login: null, draft: null };
+    const token = await repoToken(context.userId);
+    const res = await fetchWithTimeout(
+      `https://api.github.com/users/${login}/events/public?per_page=100`,
+      {
+        headers: {
+          Accept: "application/vnd.github+json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      },
+    );
+    if (!res?.ok) return { login, draft: null };
+    const raw = (await res.json()) as RawEvent[];
+    return { login, draft: draftShipFromEvents(raw, shipWeekOf()) };
   });

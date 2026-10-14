@@ -52,6 +52,9 @@ export const TYPE_CATEGORY: Record<NotificationType, NotificationCategory> = {
   solution: "reputation",
   thanks: "reputation",
   skill_match: "community",
+  ship_kudos: "community",
+  ship_reply: "community",
+  ship_reminder: "community",
 };
 
 /**

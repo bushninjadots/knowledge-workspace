@@ -1,8 +1,8 @@
 # Tethyr
 
-> **"It's where people build things together and get known for what they make."**
+> **"Ship every week. Get known for what you build."**
 
-Tethyr is the collaboration network where builders — developers, designers, writers, musicians, researchers, founders, artists, and anyone making something tangible — create projects together in public, grow through real contributions, and become known for what they make, not what they claim.
+Tethyr is where developers — and the designers, makers, writers and indie hackers who build alongside them — post what they ship each week, find people to build with, and grow a profile that proves it. Connect GitHub and Tethyr drafts your week for you; you edit and post.
 
 ---
 
@@ -28,6 +28,13 @@ Tethyr asks: **"What are you building next?"**
 ---
 
 ## Features
+
+### Ship log (the weekly habit)
+
+- One short "what I shipped" note per week, drafted from your public GitHub activity (commits, merged PRs, releases)
+- Kudos and replies from other builders; consecutive weeks build a streak
+- Friday reminder for anyone with a streak to keep; a Ship log block for your Studio
+- Everyone / Following feed, and earlier weeks one click back
 
 ### Identity
 

@@ -393,10 +393,10 @@ export function GitHubDashboardNudge() {
         <Github className="h-4 w-4" aria-hidden />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium">Build on GitHub? Connect it once.</p>
+        <p className="text-sm font-medium">Build on GitHub? Start there.</p>
         <p className="text-xs text-muted-foreground">
-          Bring in your README, start projects from your repos and show your commit activity on your
-          Studio.
+          Bring in your README and repos as projects, show your activity on your Studio, and let
+          Tethyr draft your weekly ship for you.
         </p>
       </div>
       <div className="flex items-center gap-2">

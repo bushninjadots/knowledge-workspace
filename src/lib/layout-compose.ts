@@ -46,7 +46,7 @@ export const ROLES = {
   gallery: ["profile-gallery"],
   highlights: ["highlights", "profile-contribution-stats"],
   achievements: ["profile-achievements", "profile-community-help"],
-  activity: ["profile-activity-heatmap"],
+  activity: ["profile-activity-heatmap", "profile-ship-log"],
   github: ["profile-github"],
   network: ["profile-collaboration-network", "profile-collaborators"],
   links: ["profile-links", "featured-link"],

@@ -1,11 +1,4 @@
-import {
-  lazy,
-  Suspense,
-  useEffect,
-  useState,
-  type CSSProperties,
-  type ReactNode,
-} from "react";
+import { lazy, Suspense, useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { ArrowLeft, ArrowUp, Bell, Menu, Search, WifiOff } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";

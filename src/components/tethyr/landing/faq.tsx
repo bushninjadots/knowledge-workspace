@@ -5,11 +5,15 @@ const FAQS = [
   },
   {
     q: "Who is Tethyr for?",
-    a: "Developers, designers, writers, musicians, researchers, founders, artists — anyone making something tangible and looking for collaborators.",
+    a: "Developers first — and the designers, makers, writers and indie hackers who build alongside them. If you make things and want people to make them with, you're in the right place.",
+  },
+  {
+    q: "What's the Ship log?",
+    a: "Once a week you post what you shipped — a feature, a fix, a design, something you learned. Connect GitHub and Tethyr drafts it from your commits, pull requests and releases; you edit and post. Others give kudos and reply, and consecutive weeks build a streak.",
   },
   {
     q: "How is Tethyr different from GitHub or LinkedIn?",
-    a: "GitHub showcases code; LinkedIn showcases résumés. Tethyr showcases the journey — your projects, contributions, and growth, all in public.",
+    a: "GitHub holds your code; LinkedIn holds your résumé. Tethyr is the weekly story of what you're building — pulled from GitHub, told in your words — and the people you meet through it.",
   },
   {
     q: "Do I need to have a project to join?",
@@ -17,7 +21,7 @@ const FAQS = [
   },
   {
     q: "How does reputation work?",
-    a: "Reputation comes from real contributions — completed milestones, endorsements from peers, and challenges you've won — not from self-promotion.",
+    a: "It comes from what you actually do — what you ship, the people you help, endorsements from people you've built with — not from self-promotion. Profiles show the work itself, not a score.",
   },
 ];
 

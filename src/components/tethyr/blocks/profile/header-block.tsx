@@ -127,7 +127,8 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
   const showTitle = config.showTitle !== false;
   const showHandle = config.showHandle !== false;
   const showLocation = config.showLocation !== false;
-  const showReputation = config.showReputation !== false;
+  // Opt-in: profiles lead with the work, not a score.
+  const showReputation = config.showReputation === true;
   const showBanner = config.showBanner !== false;
   const showBuilding = config.showBuilding !== false;
   const showAvailability = config.showAvailability !== false;
@@ -361,7 +362,7 @@ registerBlock({
     showTitle: true,
     showHandle: true,
     showLocation: true,
-    showReputation: true,
+    showReputation: false,
     showBanner: true,
     showBuilding: true,
     showAvailability: true,

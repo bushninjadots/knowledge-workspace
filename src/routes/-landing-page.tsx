@@ -77,16 +77,17 @@ export function HomePage() {
             <div className="text-center lg:text-left">
               <span className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-surface/60 px-4 py-1.5 text-xs text-muted-foreground animate-stagger">
                 <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                Early access — now open
+                Early access — for developers and the people they build with
               </span>
               <h1 className="mt-7 max-w-3xl font-display text-[3.25rem] font-semibold leading-[0.98] tracking-[-0.045em] sm:text-6xl md:text-7xl lg:text-[5.75rem]">
-                Build together.
+                Ship every week.
                 <br />
-                Get known for what you make
+                Get known for what you build
               </h1>
               <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground sm:text-xl lg:mx-0">
-                The collaboration network where builders create projects together, grow through real
-                contributions, and earn recognition for the work they do — not the claims they make.
+                Post what you shipped, find people to build with, and grow a profile that proves it.
+                Connect GitHub and Tethyr drafts your week for you — developers first, and every
+                designer, maker and indie hacker who builds alongside them.
               </p>
               <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
                 {!ctaReady ? (
@@ -143,11 +144,11 @@ export function HomePage() {
                 id="tethyr-loop-title"
                 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl"
               >
-                Let the work lead the way.
+                Connect, ship, build together.
               </h2>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                Every useful connection starts with something made. Move from discovery to
-                contribution without losing the thread.
+                Every useful connection starts with something made. Bring your work in, post what
+                moves each week, and meet the people building next to you.
               </p>
             </div>
             <Link
@@ -161,21 +162,21 @@ export function HomePage() {
             {[
               {
                 step: "01",
-                title: "Discover work",
-                text: "Find projects with a point of view.",
-                href: "/explore",
+                title: "Bring your work",
+                text: "Connect GitHub — projects and activity in a minute.",
+                href: "/signup",
               },
               {
                 step: "02",
-                title: "Meet builders",
-                text: "See who is making the work real.",
-                href: "/explore",
+                title: "Ship weekly",
+                text: "Post what you shipped. Tethyr writes the first draft.",
+                href: "/signup",
               },
               {
                 step: "03",
-                title: "Contribute",
-                text: "Join a project and become known.",
-                href: "/signup",
+                title: "Build together",
+                text: "Find collaborators through their work, not a résumé.",
+                href: "/explore",
               },
             ].map((item) => (
               <Link
@@ -232,11 +233,11 @@ export function HomePage() {
               <div className="bg-grid pointer-events-none absolute inset-0 opacity-20" />
               <div className="relative">
                 <h2 className="font-display text-3xl font-semibold sm:text-4xl lg:text-5xl">
-                  Ready to build something together?
+                  Ready to ship this week?
                 </h2>
                 <p className="mx-auto mt-5 max-w-xl text-muted-foreground">
-                  Claim your handle, start a project, and join builders creating work that speaks
-                  for itself. You're known by what you make — not what you claim.
+                  Claim your handle, connect GitHub, and post your first ship. You're known by what
+                  you make — not what you claim.
                 </p>
                 <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
                   {!ctaReady ? (

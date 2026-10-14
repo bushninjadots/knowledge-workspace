@@ -204,7 +204,7 @@ export function Footer() {
           <p className="text-xs text-muted-foreground">
             © {new Date().getFullYear()} Tethyr. Known by what you make.
           </p>
-          <p className="text-xs text-muted-foreground">Build together. Grow together.</p>
+          <p className="text-xs text-muted-foreground">Ship every week. Build together.</p>
         </div>
       </div>
     </footer>

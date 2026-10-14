@@ -47,6 +47,10 @@ export function friendlyError(
     if (typeof m === "string") message = m;
   }
 
+  // Server guards raise "code: Sentence for the member." — show the sentence.
+  const coded = message.match(/^(?:email_unconfirmed|rate_limited|report_rate_limited):\s*(.+)$/s);
+  if (coded) return coded[1].trim();
+
   if (!message.trim()) return fallback;
   if (message.startsWith("{") || message.startsWith("[")) return fallback;
   if (INTERNAL_PATTERNS.some((re) => re.test(message))) return fallback;

@@ -1,10 +1,10 @@
 import {
   Bell,
   Compass,
-  FolderOpen,
   Home,
   Link2,
   MessageSquare,
+  Rocket,
   Settings,
   Swords,
   Tags,
@@ -26,7 +26,9 @@ export const navigationGroups = [
     label: "Workspace",
     items: [
       { to: "/dashboard", label: "Dashboard", icon: Home },
-      { to: "/library", label: "Library", icon: FolderOpen },
+      // The weekly habit. (Library left the nav on purpose: it's a notes tool,
+      // not part of the loop; projects and search still open it.)
+      { to: "/ships", label: "Ship log", icon: Rocket },
     ],
   },
   {
@@ -60,8 +62,8 @@ export const navigationGroups = [
 
 export const mobilePrimaryNav = [
   navigationGroups[0].items[0],
+  navigationGroups[0].items[1],
   navigationGroups[1].items[0],
-  navigationGroups[3].items[0],
   navigationGroups[2].items[3],
 ] as const;
 

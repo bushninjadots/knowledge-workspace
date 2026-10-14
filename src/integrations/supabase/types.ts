@@ -3061,6 +3061,129 @@ export type Database = {
           },
         ];
       };
+      ship_kudos: {
+        Row: {
+          created_at: string;
+          giver_id: string;
+          ship_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          giver_id: string;
+          ship_id: string;
+        };
+        Update: {
+          created_at?: string;
+          giver_id?: string;
+          ship_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ship_kudos_giver_id_fkey";
+            columns: ["giver_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ship_kudos_ship_id_fkey";
+            columns: ["ship_id"];
+            isOneToOne: false;
+            referencedRelation: "ships";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      ship_replies: {
+        Row: {
+          author_id: string;
+          body: string;
+          created_at: string;
+          id: string;
+          ship_id: string;
+        };
+        Insert: {
+          author_id: string;
+          body: string;
+          created_at?: string;
+          id?: string;
+          ship_id: string;
+        };
+        Update: {
+          author_id?: string;
+          body?: string;
+          created_at?: string;
+          id?: string;
+          ship_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ship_replies_author_id_fkey";
+            columns: ["author_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ship_replies_ship_id_fkey";
+            columns: ["ship_id"];
+            isOneToOne: false;
+            referencedRelation: "ships";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      ships: {
+        Row: {
+          author_id: string;
+          body: string;
+          created_at: string;
+          highlights: Json;
+          id: string;
+          next_up: string | null;
+          project_id: string | null;
+          updated_at: string;
+          week_start: string;
+        };
+        Insert: {
+          author_id: string;
+          body: string;
+          created_at?: string;
+          highlights?: Json;
+          id?: string;
+          next_up?: string | null;
+          project_id?: string | null;
+          updated_at?: string;
+          week_start?: string;
+        };
+        Update: {
+          author_id?: string;
+          body?: string;
+          created_at?: string;
+          highlights?: Json;
+          id?: string;
+          next_up?: string | null;
+          project_id?: string | null;
+          updated_at?: string;
+          week_start?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ships_author_id_fkey";
+            columns: ["author_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ships_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       skill_endorsements: {
         Row: {
           created_at: string;
@@ -3646,6 +3769,7 @@ export type Database = {
           space_id: string;
         }[];
       };
+      current_ship_week: { Args: never; Returns: string };
       decline_project_role_application: {
         Args: {
           p_application_id: string;
@@ -3684,6 +3808,7 @@ export type Database = {
           parent_id: string;
         }[];
       };
+      has_confirmed_email: { Args: { p_user_id: string }; Returns: boolean };
       increment_fork_count: { Args: { layout_id: string }; Returns: undefined };
       increment_usage_count: {
         Args: { template_id: string };
@@ -3735,6 +3860,7 @@ export type Database = {
         Args: { p_space_id: string; p_user_id?: string };
         Returns: boolean;
       };
+      launch_metrics: { Args: never; Returns: Json };
       log_activity: {
         Args: { _kind: string; _metadata?: Json; _profile_id: string };
         Returns: undefined;
@@ -3887,6 +4013,15 @@ export type Database = {
       rollback_page_version: {
         Args: { _page_id: string; _version: number };
         Returns: undefined;
+      };
+      send_ship_reminders: { Args: never; Returns: number };
+      ship_streak: { Args: { p_profile_id: string }; Returns: number };
+      ship_streaks: {
+        Args: { p_profile_ids: string[] };
+        Returns: {
+          profile_id: string;
+          streak: number;
+        }[];
       };
       show_limit: { Args: never; Returns: number };
       show_trgm: { Args: { "": string }; Returns: string[] };

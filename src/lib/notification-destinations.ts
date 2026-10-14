@@ -24,7 +24,8 @@ type NotificationDestination =
   | { to: "/projects/$id"; params: { id: string } }
   | { to: "/challenges" }
   | { to: "/challenges/$id"; params: { id: string } }
-  | { to: "/teams/$slug"; params: { slug: string } };
+  | { to: "/teams/$slug"; params: { slug: string } }
+  | { to: "/ships" };
 
 /**
  * Every notification must resolve to a permission-safe product destination.
@@ -87,6 +88,10 @@ export function getNotificationDestination(
       return entity_id
         ? { to: "/challenges/$id", params: { id: entity_id } }
         : { to: "/challenges" };
+    case "ship_kudos":
+    case "ship_reply":
+    case "ship_reminder":
+      return { to: "/ships" };
     case "join_approved":
     case "join_rejected":
     case "post_report":

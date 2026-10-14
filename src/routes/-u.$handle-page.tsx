@@ -24,7 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useDominantColor } from "@/lib/dominant-color";
 import { PageShell } from "@/components/tethyr/page/page-shell";
 import { useProfilePage } from "@/hooks/use-profile-page";
-import { useCurrentUser } from "@/hooks/use-current-user";
+import { useAuthUser, useCurrentUser } from "@/hooks/use-current-user";
 import { ProfileWorkEvidence } from "@/components/tethyr/profile/work-evidence";
 import { ProfileCommunityHelp } from "@/components/tethyr/profile/community-help";
 import { ProfileGraphSummary } from "@/components/tethyr/profile/profile-graph-summary";
@@ -239,6 +239,7 @@ function Shell({
             bannerColor={bannerColor}
           />
           {children}
+          <MadeWithTethyr compact />
         </main>
       </div>
     );
@@ -256,7 +257,36 @@ function Shell({
         bannerColor={bannerColor}
       />
       {children}
+      <MadeWithTethyr />
     </SectionShell>
+  );
+}
+
+/** Every shared profile is an invitation: a quiet credit for visitors, and a
+ *  way to claim their own when they aren't a member yet. Embeds (on other
+ *  sites) always carry the credit. */
+function MadeWithTethyr({ compact = false }: { compact?: boolean }) {
+  const { data: authUser, isLoading } = useAuthUser();
+  if (!compact && (isLoading || authUser)) return null;
+  return (
+    <footer className="relative flex flex-wrap items-center justify-center gap-x-3 gap-y-1 px-4 py-6 text-xs text-muted-foreground">
+      <a
+        href="/"
+        target={compact ? "_blank" : undefined}
+        rel={compact ? "noopener" : undefined}
+        className="font-medium text-foreground hover:underline"
+      >
+        Made with Tethyr
+      </a>
+      {!compact && (
+        <>
+          <span aria-hidden>·</span>
+          <Link to="/signup" className="hover:text-foreground hover:underline">
+            Ship every week and get known for what you build — claim your handle
+          </Link>
+        </>
+      )}
+    </footer>
   );
 }
 

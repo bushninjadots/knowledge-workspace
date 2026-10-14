@@ -10,9 +10,9 @@ let warnedMissingSiteUrl = false;
 
 export const SITE = {
   name: "Tethyr",
-  tagline: "Build together, get known for what you make",
+  tagline: "Ship every week, get known for what you build",
   description:
-    "Tethyr is the collaboration network where builders create projects together, grow through real contributions, and become known for what they make — not what they claim.",
+    "Tethyr is where developers — and the designers, makers and indie hackers they build with — post what they ship each week, find people to build with, and grow a profile that proves it, drafted straight from GitHub.",
 };
 
 export function canonicalLinks(path: string) {
@@ -129,6 +129,7 @@ export const NO_INDEX_PATHS = [
   "/dashboard",
   "/explore",
   "/library",
+  "/ships",
   "/profile",
   "/messages",
   "/notifications",

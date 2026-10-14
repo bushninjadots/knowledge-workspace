@@ -8,7 +8,7 @@ Tethyr is a creative collaboration network where people become known through wha
 
 The product helps builders find meaningful work, meet people through that work, collaborate in public, and build a reputation grounded in visible contribution.
 
-Tethyr serves developers, designers, writers, musicians, researchers, founders, artists, and anyone making something tangible.
+Tethyr is **developer-first, not developer-only**: it leads with developers (GitHub is the fastest way in) and welcomes the designers, makers, writers and indie hackers who build alongside them. Copy, onboarding and examples speak to developers first; nothing should shut anyone else out. (Decision, 2026-10-14.)
 
 ### The Larger Vision
 
@@ -50,6 +50,12 @@ DISCOVER
   → Become known
   → DISCOVER
 ```
+
+### The Weekly Habit: Ship Log
+
+The loop needs a reason to come back every week. That is the **Ship log** (`/ships`): once a week a member posts what they shipped, drafted from their public GitHub activity; others give kudos and reply; consecutive weeks make a streak; a Friday reminder nudges anyone with a streak. It is the dashboard's weekly ritual and has a Studio block. New features that create a weekly reason to return should hang off the Ship log, not invent a second ritual.
+
+**Library** is out of the main navigation on purpose (2026-10-14): it is a notes tool, not part of the loop. It stays reachable from project resources, GitHub notes and search.
 
 Every substantial feature should strengthen at least one transition in this loop. If it does not help people discover work, find collaborators, collaborate, build, contribute, or become known through contribution, its product justification should be explicit.
 

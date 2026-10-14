@@ -21,6 +21,7 @@ import {
   UserX,
   Swords,
   Flag,
+  Rocket,
   Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -72,6 +73,9 @@ const NOTIFICATION_CONFIG: Record<NotificationType, { icon: typeof MessageCircle
     solution: { icon: CheckCircle, color: "text-trust" },
     thanks: { icon: Heart, color: "text-caution" },
     skill_match: { icon: Sparkles, color: "text-ai" },
+    ship_kudos: { icon: Rocket, color: "text-caution" },
+    ship_reply: { icon: MessageSquare, color: "text-learning" },
+    ship_reminder: { icon: Rocket, color: "text-caution" },
   };
 
 const FALLBACK_CONFIG = { icon: MessageCircle, color: "text-muted-foreground" };
