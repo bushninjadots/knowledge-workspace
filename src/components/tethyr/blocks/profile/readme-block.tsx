@@ -17,6 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { BlockEmptyState } from "@/components/tethyr/blocks/block-empty-state";
 import { ReadmeMarkdown } from "@/components/tethyr/blocks/readme-markdown";
+import { CollapsibleContent } from "@/components/tethyr/collapsible-content";
 import { ReadmeEditorDialog } from "@/components/tethyr/blocks/readme-editor-dialog";
 import {
   ProfileReadmeGitHub,
@@ -108,7 +109,13 @@ function ProfileReadmeBlock({ config, context }: BlockProps) {
         README
       </BlockTitle>
       {caption && <p className="text-2xs text-muted-foreground">{caption}</p>}
-      <ReadmeMarkdown>{readme}</ReadmeMarkdown>
+      {config.collapseLong === false ? (
+        <ReadmeMarkdown>{readme}</ReadmeMarkdown>
+      ) : (
+        <CollapsibleContent moreLabel="Show the full README">
+          <ReadmeMarkdown>{readme}</ReadmeMarkdown>
+        </CollapsibleContent>
+      )}
       {editor}
     </div>
   );
@@ -122,8 +129,11 @@ registerBlock({
   description:
     "The long-form introduction to you. Markdown — write it here or import and sync it from GitHub.",
   icon: "FileText",
-  defaults: { showHeading: true },
-  fields: [{ key: "showHeading", label: "Show README heading", type: "toggle" }],
+  defaults: { showHeading: true, collapseLong: true },
+  fields: [
+    { key: "showHeading", label: "Show README heading", type: "toggle" },
+    { key: "collapseLong", label: "Fold a long README (Show all)", type: "toggle" },
+  ],
   component: ProfileReadmeBlock,
 });
 

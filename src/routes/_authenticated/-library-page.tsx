@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useDebounced } from "@/hooks/use-debounced";
 import { Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
-import { Plus, LayoutGrid, List, AlertTriangle } from "lucide-react";
+import { Plus, LayoutGrid, List, AlertTriangle, FileCode2 } from "lucide-react";
+import { CodeDocsDialog } from "@/components/tethyr/code-docs/code-docs-dialog";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import { Button } from "@/components/ui/button";
@@ -80,6 +81,7 @@ function BoardsPane() {
 function LibraryContent({ view, onNewNote }: { view: LibraryView; onNewNote: () => void }) {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
+  const [codeDocsOpen, setCodeDocsOpen] = useState(false);
   // Dense rows are the default: library items are comparable list data, and
   // the gallery stays one toggle away.
   const [layout, setLayout] = useState<"grid" | "list">("list");
@@ -157,6 +159,7 @@ function LibraryContent({ view, onNewNote }: { view: LibraryView; onNewNote: () 
 
   return (
     <div className="animate-room-enter min-h-screen bg-noise">
+      {codeDocsOpen && <CodeDocsDialog open={codeDocsOpen} onOpenChange={setCodeDocsOpen} />}
       <div className={pageContainerClass()}>
         <PageHeader
           title={title}
@@ -168,6 +171,15 @@ function LibraryContent({ view, onNewNote }: { view: LibraryView; onNewNote: () 
           actions={
             <>
               <LibrarySearchBar value={search} onChange={setSearch} className="w-full sm:w-72" />
+
+              <Button
+                size="sm"
+                variant="outline"
+                className="rounded-full"
+                onClick={() => setCodeDocsOpen(true)}
+              >
+                <FileCode2 className="h-3.5 w-3.5" /> Code → docs
+              </Button>
 
               <SegmentedControl
                 value={layout}

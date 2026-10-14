@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { useProjectJournal } from "@/hooks/use-journal";
 import { entryLine } from "@/lib/journal";
+import { groupCommitRuns } from "@/lib/activity-rows";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -76,6 +77,66 @@ type ActivityItem = {
   authorHandle?: string | null;
   at: string;
 };
+
+const PAGE = 15;
+
+/** A same-day run of commits as one row; open it to see each commit. */
+function CommitRun({ items }: { items: ActivityItem[] }) {
+  const [open, setOpen] = useState(false);
+  const repos = [
+    ...new Set(
+      items
+        .map((i) => (typeof i.metadata?.repository === "string" ? i.metadata.repository : null))
+        .filter((r): r is string => !!r),
+    ),
+  ];
+  return (
+    <li className="relative">
+      <span className="absolute -left-[2.15rem] flex h-7 w-7 items-center justify-center rounded-full bg-surface-elevated text-foreground">
+        <GitCommit className="h-3.5 w-3.5" />
+      </span>
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="min-w-0 text-left"
+      >
+        <p className="text-sm font-medium text-foreground hover:underline">
+          {items.length} commits
+          {repos.length ? ` to ${repos.map((r) => r.split("/")[1] ?? r).join(", ")}` : ""}
+        </p>
+        <p className="mt-0.5 text-[11px] text-muted-foreground">
+          {timeAgo(items[0].at)} · {open ? "hide" : "show"} commits
+        </p>
+      </button>
+      {open && (
+        <ul className="mt-2 space-y-1.5 border-l border-border/50 pl-3">
+          {items.map((c) => (
+            <li key={c.id} className="text-xs">
+              {typeof c.metadata?.url === "string" ? (
+                <a
+                  href={safeHref(c.metadata.url as string)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="hover:underline"
+                >
+                  {c.title}
+                </a>
+              ) : (
+                c.title
+              )}
+              <span className="text-muted-foreground">
+                {" "}
+                · {typeof c.metadata?.author_login === "string" ? c.metadata.author_login : ""}{" "}
+                {timeAgo(c.at)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </li>
+  );
+}
 
 const KIND_ICON: Record<ActivityItem["kind"], typeof PenSquare> = {
   update: PenSquare,
@@ -362,6 +423,25 @@ export function ProjectActivityTab({
     );
   }, [activityRows, updates, milestones, discussions, projectFiles, repos, founding, journal]);
 
+  // Hundreds of commits shouldn't bury everything else: same-day commit runs
+  // fold into one row, the list pages, and a filter splits updates/commits.
+  const [filter, setFilter] = useState<"all" | "updates" | "commits">("all");
+  const [limit, setLimit] = useState(PAGE);
+  const rows = useMemo(
+    () =>
+      groupCommitRuns(
+        items.filter((i) =>
+          filter === "all"
+            ? true
+            : filter === "commits"
+              ? i.kind === "github"
+              : i.kind !== "github",
+        ),
+      ),
+    [items, filter],
+  );
+  const visibleRows = rows.slice(0, limit);
+
   useEffect(() => {
     if (!isOwner || !repos.some((repo) => repo.provider === "github")) return;
     setSyncingGithub(true);
@@ -601,6 +681,36 @@ export function ProjectActivityTab({
           </div>
         )}
 
+        {items.some((i) => i.kind === "github") && (
+          <div role="radiogroup" aria-label="Show" className="mb-4 flex flex-wrap gap-1 text-xs">
+            {(
+              [
+                ["all", "Everything"],
+                ["updates", "Updates & milestones"],
+                ["commits", "Commits"],
+              ] as const
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={filter === value}
+                onClick={() => {
+                  setFilter(value);
+                  setLimit(PAGE);
+                }}
+                className={`rounded-full border px-3 py-1 transition-colors ${
+                  filter === value
+                    ? "border-border-strong bg-surface-elevated font-medium text-foreground"
+                    : "border-border/60 text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
+
         {items.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             No activity yet — milestones, updates, discussions, files, and repositories will show up
@@ -608,7 +718,10 @@ export function ProjectActivityTab({
           </p>
         ) : (
           <ol className="relative ml-2 space-y-5 border-l border-border/60 pl-5">
-            {items.map((item) => {
+            {visibleRows.map((row) => {
+              if (row.type === "commits")
+                return <CommitRun key={`c-${row.items[0].id}`} items={row.items} />;
+              const item = row.item;
               const Icon = KIND_ICON[item.kind];
               const activityId = item.id.startsWith("a-") ? item.id.slice(2) : null;
               const recognizedKinds = new Set(
@@ -714,6 +827,17 @@ export function ProjectActivityTab({
               );
             })}
           </ol>
+        )}
+        {rows.length > limit && (
+          <div className="mt-5 flex justify-center">
+            <button
+              type="button"
+              onClick={() => setLimit((n) => n + PAGE * 2)}
+              className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-surface px-3 py-1.5 text-xs font-medium transition-colors hover:bg-surface-elevated"
+            >
+              Show more ({rows.length - limit} older)
+            </button>
+          </div>
         )}
       </section>
     </div>

@@ -198,6 +198,7 @@ export function useCreateItem() {
       collection_id?: string;
       project_id?: string | null;
       url?: string;
+      content_format?: "html" | "markdown";
     }) => {
       if (!me?.userId) throw new Error("Not authenticated");
       const { data, error } = await supabase
@@ -210,6 +211,7 @@ export function useCreateItem() {
           collection_id: input.collection_id ?? null,
           project_id: input.project_id ?? null,
           url: input.url ?? null,
+          content_format: input.content_format ?? "html",
         })
         .select()
         .single();

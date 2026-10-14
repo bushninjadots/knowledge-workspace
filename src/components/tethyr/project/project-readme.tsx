@@ -3,7 +3,10 @@ import { Link } from "@tanstack/react-router";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { MARKDOWN_COMPONENTS } from "@/components/tethyr/blocks/readme-markdown";
+import { CollapsibleContent } from "@/components/tethyr/collapsible-content";
+import { CodeDocsDialog } from "@/components/tethyr/code-docs/code-docs-dialog";
 import {
+  BookOpenText,
   Pencil,
   X,
   Plus,
@@ -69,6 +72,7 @@ export function ProjectReadmeTab({
   const { data: repos = [] } = useProjectRepos(project.id);
 
   const [editing, setEditing] = useState(false);
+  const [explaining, setExplaining] = useState(false);
   const [editorView, setEditorView] = useState<EditorView>("write");
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
@@ -189,6 +193,14 @@ export function ProjectReadmeTab({
     <div className="content-safe min-w-0 max-w-full space-y-8">
       {presentationPreset === "demo-first" && mediaSection}
       <ReadingProgress />
+      {explaining && (
+        <CodeDocsDialog
+          open={explaining}
+          onOpenChange={setExplaining}
+          initialSource="project"
+          projectId={project.id}
+        />
+      )}
 
       {/* README is the project homepage — a document surface on the page
           itself, not a card in front of it. */}
@@ -201,6 +213,17 @@ export function ProjectReadmeTab({
             <FileText className="h-4 w-4 text-muted-foreground" />
             README
           </h2>
+          {!editing && (repos.some((r) => r.provider === "github") || !!project.links?.github) && (
+            <button
+              type="button"
+              onClick={() => setExplaining(true)}
+              className="ml-auto inline-flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition-lift hover:text-foreground"
+              title="Write a 'How this project works' page from the code"
+            >
+              <BookOpenText className="h-3 w-3" />
+              Explain this project
+            </button>
+          )}
           {isOwner && !editing && (
             <div className="flex items-center gap-2">
               {repos.length > 0 && (
@@ -342,11 +365,17 @@ export function ProjectReadmeTab({
                   </div>
                 )}
                 {project.readme ? (
-                  <div className="prose-custom py-6">
-                    <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                      {project.readme}
-                    </Markdown>
-                  </div>
+                  <CollapsibleContent
+                    className="py-6"
+                    moreLabel="Show the full README"
+                    lessLabel="Show less"
+                  >
+                    <div className="prose-custom">
+                      <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                        {project.readme}
+                      </Markdown>
+                    </div>
+                  </CollapsibleContent>
                 ) : fallbackDoc ? (
                   <div className="prose-custom py-6">
                     <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>

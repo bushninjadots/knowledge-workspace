@@ -171,6 +171,7 @@ describe("useCreateItem", () => {
           collection_id: null,
           project_id: null,
           url: null,
+          content_format: "html",
         },
       },
     ]);

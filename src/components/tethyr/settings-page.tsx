@@ -1,5 +1,6 @@
 import { SiteAppearancePanel } from "./site-appearance-panel";
 import { GitHubSettingsSection } from "./github/github-settings";
+import { AiKeySettingsSection } from "./code-docs/ai-key-settings";
 import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
@@ -275,6 +276,7 @@ export function SettingsPage() {
 
           {/* GitHub — the one home for the connection and what it powers */}
           <GitHubSettingsSection />
+          <AiKeySettingsSection />
 
           {/* Notifications */}
           <section className="surface-card p-5">

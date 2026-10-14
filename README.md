@@ -43,6 +43,11 @@ Tethyr asks: **"What are you building next?"**
 - Your tools log for you: MCP server for AI coding assistants (Claude Code, Cursor, VS Code, Windsurf), a git hook for any host, a REST API — see [docs/JOURNAL_API.md](docs/JOURNAL_API.md)
 - Private by default; share chosen entries to your profile (Dev journal Studio block: 30-day numbers, working on now, shared entries). Share ships to LinkedIn / X
 
+### Code → docs
+
+- Paste code, pick a file from a project's repo, or read a whole project: Tethyr writes a readable doc from the code itself — free, nothing leaves the site
+- Optional "Explain with AI" with your own Anthropic key (Settings), saved to the Library as Markdown or added to the project README
+
 ### Identity
 
 - Profiles with handles, creator titles, banners, and personalized accent colors
